@@ -78,7 +78,6 @@ export class AutoTrackerNode extends Node {
       fill: 'rgba(0,255,128,0.75)',
       visible: false,
     } );
-    this.addChild( this.trailPath );
 
     // ── Crosshair at current tracked position ────────────────────────────
     this.crosshairH = new Line( -CROSSHAIR_SIZE, 0, CROSSHAIR_SIZE, 0, {
