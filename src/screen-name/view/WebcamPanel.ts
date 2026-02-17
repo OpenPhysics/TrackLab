@@ -1,10 +1,13 @@
-import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
-import { PhetFont } from "scenerystack/scenery-phet";
-import { Panel, TextPushButton } from "scenerystack/sun";
+import { Shape } from "scenerystack/kite";
+import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
+import { CloseButton, PhetFont, RefreshButton, StopIconShape } from "scenerystack/scenery-phet";
+import { Panel, RectangularPushButton } from "scenerystack/sun";
+import { Tandem } from "scenerystack/tandem";
 import { WebcamRecorder, fixWebmDuration } from "../../webcam.js";
+import TrackLabColors from "../../TrackLabColors.js";
+import { cameraSolidShape, checkSolidShape } from "scenerystack/sun";
 
 const FONT = new PhetFont( 14 );
-const TITLE_FONT = new PhetFont( { size: 16, weight: 'bold' } );
 
 type WebcamPanelOptions = {
   onVideoReady: ( blob: Blob, duration: number ) => void;
@@ -46,7 +49,9 @@ export class WebcamPanel extends Node {
     this.previewElement.muted = true;
     this.previewElement.playsInline = true;
     this.previewElement.style.display = 'block';
-    this.previewElement.style.background = '#000';
+    TrackLabColors.videoBackgroundColorProperty.link( c => {
+      this.previewElement.style.background = c.toCSS();
+    } );
     const previewDOM = new DOM( this.previewElement, { allowInput: false } );
 
     // ── Review video ──────────────────────────────────────────────────────
@@ -56,51 +61,86 @@ export class WebcamPanel extends Node {
     this.reviewElement.controls = true;
     this.reviewElement.playsInline = true;
     this.reviewElement.style.display = 'block';
-    this.reviewElement.style.background = '#000';
+    TrackLabColors.videoBackgroundColorProperty.link( c => {
+      this.reviewElement.style.background = c.toCSS();
+    } );
     const reviewDOM = new DOM( this.reviewElement, { allowInput: true } );
 
     // ── Status ────────────────────────────────────────────────────────────
-    this.statusText = new Text( '', { font: FONT, fill: '#ddd' } );
+    this.statusText = new Text( '', { font: FONT, fill: TrackLabColors.textMutedProperty } );
 
     // ── Buttons: preview phase ────────────────────────────────────────────
-    const cancelButton = new TextPushButton( 'Cancel', {
-      font: FONT,
+    const cancelButton = new CloseButton( {
+      baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      pathOptions: { stroke: TrackLabColors.textOnDarkProperty },
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Cancel',
       listener: () => { this.cleanup(); options.onCancel(); },
     } );
 
-    const startButton = new TextPushButton( 'Start Recording', {
-      font: FONT,
-      baseColor: '#c00',
-      textFill: 'white',
+    const recordIcon = new Path( Shape.circle( 0, 0, 8 ), {
+      fill: TrackLabColors.textOnDarkProperty,
+    } );
+    const startButton = new RectangularPushButton( {
+      content: recordIcon,
+      baseColor: TrackLabColors.buttonRecordProperty,
+      xMargin: 8,
+      yMargin: 6,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Start Recording',
       listener: () => this.startRecording(),
     } );
 
-    const stopButton = new TextPushButton( 'Stop Recording', {
-      font: FONT,
-      baseColor: '#800',
-      textFill: 'white',
+    const stopIconSize = 14;
+    const stopIcon = new Path( new StopIconShape( stopIconSize ), {
+      fill: TrackLabColors.textOnDarkProperty,
+    } );
+    stopIcon.translation = stopIcon.bounds.center.negated();
+    const stopButton = new RectangularPushButton( {
+      content: stopIcon,
+      baseColor: TrackLabColors.buttonStopProperty,
+      xMargin: 8,
+      yMargin: 6,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Stop Recording',
       listener: () => this.stopRecording(),
     } );
 
     // ── Buttons: review phase ─────────────────────────────────────────────
-    const rerecordButton = new TextPushButton( 'Re-record', {
-      font: FONT,
+    const rerecordButton = new RefreshButton( {
+      baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      iconHeight: 20,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Re-record',
       listener: () => this.goToPreview(),
     } );
 
-    const useVideoButton = new TextPushButton( 'Use Video', {
-      font: FONT,
-      baseColor: '#2a2',
-      textFill: 'white',
+    const useVideoIcon = new Path( checkSolidShape, {
+      scale: 0.35,
+      fill: TrackLabColors.textOnDarkProperty,
+    } );
+    const useVideoButton = new RectangularPushButton( {
+      content: useVideoIcon,
+      baseColor: TrackLabColors.buttonSuccessProperty,
+      xMargin: 8,
+      yMargin: 6,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Use Video',
       listener: () => this.useVideo( options.onVideoReady ),
     } );
 
     // ── Layer: preview ────────────────────────────────────────────────────
+    const cameraIcon = new Path( cameraSolidShape, {
+      scale: 0.4,
+      fill: TrackLabColors.textMutedProperty,
+      accessibleName: 'Camera',
+    } );
     this.previewLayer = new VBox( {
       children: [
         new HBox( {
-          children: [ new Text( 'Camera:', { font: FONT, fill: '#ddd' } ), cameraSelectDOM ],
+          children: [ cameraIcon, cameraSelectDOM ],
           spacing: 8,
+          align: 'center',
         } ),
         previewDOM,
         new HBox( {
@@ -130,9 +170,14 @@ export class WebcamPanel extends Node {
     this.reviewLayer.visible = false;
 
     // ── Full panel ────────────────────────────────────────────────────────
+    const titleIcon = new Path( cameraSolidShape, {
+      scale: 0.6,
+      fill: TrackLabColors.textOnDarkProperty,
+      accessibleName: 'Record from Webcam',
+    } );
     const content = new VBox( {
       children: [
-        new Text( 'Record from Webcam', { font: TITLE_FONT, fill: 'white' } ),
+        titleIcon,
         this.previewLayer,
         this.reviewLayer,
         this.statusText,
@@ -142,8 +187,8 @@ export class WebcamPanel extends Node {
     } );
 
     this.addChild( new Panel( content, {
-      fill: 'rgba(20,20,40,0.97)',
-      stroke: '#555',
+      fill: TrackLabColors.webcamPanelFillProperty,
+      stroke: TrackLabColors.panelStrokeProperty,
       cornerRadius: 10,
       xMargin: 20,
       yMargin: 15,

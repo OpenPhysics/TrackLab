@@ -2,6 +2,7 @@ import { Circle, DragListener, Node, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Vector2 } from "scenerystack/dot";
 import { NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import TrackLabColors from "../../TrackLabColors.js";
 
 const ARROW_LENGTH = 120;
 const HANDLE_FRACTION = 1 / 3;
@@ -22,7 +23,7 @@ export class CoordinateSystemNode extends Node {
 
     // X axis arrow (horizontal, pointing right)
     rotatingNode.addChild( new ArrowNode( 0, 0, ARROW_LENGTH, 0, {
-      fill: '#f44',
+      fill: TrackLabColors.axisXColorProperty,
       stroke: null,
       headWidth: 12,
       headHeight: 10,
@@ -31,7 +32,7 @@ export class CoordinateSystemNode extends Node {
 
     // Y axis arrow (vertical, pointing up — negative Y in screen coords)
     rotatingNode.addChild( new ArrowNode( 0, 0, 0, -ARROW_LENGTH, {
-      fill: '#4c4',
+      fill: TrackLabColors.axisYColorProperty,
       stroke: null,
       headWidth: 12,
       headHeight: 10,
@@ -40,14 +41,14 @@ export class CoordinateSystemNode extends Node {
 
     rotatingNode.addChild( new Text( 'x', {
       font: FONT,
-      fill: '#f44',
+      fill: TrackLabColors.axisXColorProperty,
       left: ARROW_LENGTH + 6,
       centerY: 0,
     } ) );
 
     rotatingNode.addChild( new Text( 'y', {
       font: FONT,
-      fill: '#4c4',
+      fill: TrackLabColors.axisYColorProperty,
       centerX: 0,
       bottom: -ARROW_LENGTH - 4,
     } ) );
@@ -56,8 +57,8 @@ export class CoordinateSystemNode extends Node {
     const handleDisk = new Circle( 8, {
       x: ARROW_LENGTH * HANDLE_FRACTION,
       y: 0,
-      fill: 'rgba(255, 220, 50, 0.9)',
-      stroke: 'white',
+      fill: TrackLabColors.calibrationHandleProperty,
+      stroke: TrackLabColors.textOnDarkProperty,
       lineWidth: 1.5,
       cursor: 'crosshair',
     } );
@@ -65,8 +66,8 @@ export class CoordinateSystemNode extends Node {
 
     // ── Origin marker ─────────────────────────────────────────────────────
     const originMarker = new Circle( 5, {
-      fill: 'white',
-      stroke: '#777',
+      fill: TrackLabColors.originFillProperty,
+      stroke: TrackLabColors.originStrokeProperty,
       lineWidth: 1,
     } );
 

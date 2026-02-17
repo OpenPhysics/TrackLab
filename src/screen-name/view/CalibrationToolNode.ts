@@ -5,6 +5,7 @@ import { Range, Vector2 } from "scenerystack/dot";
 import { DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import TrackLabColors from "../../TrackLabColors.js";
 
 const FONT = new PhetFont( 14 );
 const ENDPOINT_RADIUS = 8;
@@ -35,7 +36,7 @@ export class CalibrationToolNode extends Node {
 
     // ── Connecting line ────────────────────────────────────────────────────
     const calibrationLine = new Line( 0, 0, 0, 0, {
-      stroke: 'rgba(255, 255, 100, 0.8)',
+      stroke: TrackLabColors.calibrationStrokeProperty,
       lineWidth: 2,
       lineDash: [ 8, 4 ],
     } );
@@ -43,8 +44,8 @@ export class CalibrationToolNode extends Node {
 
     // ── Endpoint circles ──────────────────────────────────────────────────
     const makeEndpoint = () => new Circle( ENDPOINT_RADIUS, {
-      fill: 'rgba(255, 255, 100, 0.85)',
-      stroke: 'white',
+      fill: TrackLabColors.calibrationFillProperty,
+      stroke: TrackLabColors.textOnDarkProperty,
       lineWidth: 1.5,
       cursor: 'crosshair',
     } );
@@ -78,8 +79,8 @@ export class CalibrationToolNode extends Node {
 
     const distanceButton = new TextPushButton( buttonLabelProperty, {
       font: FONT,
-      baseColor: '#334',
-      textFill: 'white',
+      baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      textFill: TrackLabColors.textOnDarkProperty,
       listener: () => {
         keypadDialog.beginEdit(
           ( value: number ) => { this.distanceProperty.value = value; },
@@ -108,8 +109,8 @@ export class CalibrationToolNode extends Node {
         align: 'center',
       } ),
       {
-        fill: 'rgba(20, 20, 40, 0.90)',
-        stroke: '#888',
+        fill: TrackLabColors.panelFillProperty,
+        stroke: TrackLabColors.panelStrokeLightProperty,
         cornerRadius: 6,
         xMargin: 8,
         yMargin: 6,

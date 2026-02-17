@@ -5,6 +5,7 @@ import { Tandem } from "scenerystack/tandem";
 import { Vector2 } from "scenerystack/dot";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
+import TrackLabColors from "../../TrackLabColors.js";
 
 const VIDEO_W = 640;
 const VIDEO_H = 360;
@@ -58,40 +59,41 @@ export class AutoTrackerNode extends Node {
     // ── Hint text ────────────────────────────────────────────────────────
     this.hintText = new Text( 'Drag on video to select object to track', {
       font: new PhetFont( { size: 15, weight: 'bold' } ),
-      fill: 'rgba(255,255,100,0.9)',
+      fill: TrackLabColors.trackerHintFillProperty,
     } );
     this.hintText.center = new Vector2( VIDEO_W / 2, VIDEO_H / 2 );
     this.addChild( this.hintText );
 
     // ── Selection rectangle ───────────────────────────────────────────────
     this.selectionRect = new Rectangle( 0, 0, 0, 0, {
-      stroke: 'rgba(255,255,0,0.9)',
+      stroke: TrackLabColors.trackerSelectionStrokeProperty,
       lineWidth: 2,
       lineDash: [ 6, 3 ],
-      fill: 'rgba(255,255,0,0.08)',
+      fill: TrackLabColors.trackerSelectionFillProperty,
       visible: false,
     } );
     this.addChild( this.selectionRect );
 
     // ── Trail (filled dots at past positions) ─────────────────────────────
     this.trailPath = new Path( null, {
-      fill: 'rgba(0,255,128,0.75)',
+      fill: TrackLabColors.trackerTrailFillProperty,
       visible: false,
     } );
 
     // ── Crosshair at current tracked position ────────────────────────────
+    const crosshairStroke = TrackLabColors.trackerCrosshairStrokeProperty;
     this.crosshairH = new Line( -CROSSHAIR_SIZE, 0, CROSSHAIR_SIZE, 0, {
-      stroke: 'rgba(255,60,60,0.95)',
+      stroke: crosshairStroke,
       lineWidth: 2,
       visible: false,
     } );
     this.crosshairV = new Line( 0, -CROSSHAIR_SIZE, 0, CROSSHAIR_SIZE, {
-      stroke: 'rgba(255,60,60,0.95)',
+      stroke: crosshairStroke,
       lineWidth: 2,
       visible: false,
     } );
     this.crosshairCircle = new Path( Shape.circle( 0, 0, 6 ), {
-      stroke: 'rgba(255,60,60,0.95)',
+      stroke: crosshairStroke,
       lineWidth: 2,
       visible: false,
     } );
@@ -163,6 +165,7 @@ export class AutoTrackerNode extends Node {
 
       this.trail.push( pt );
       if ( this.trail.length > MAX_TRAIL ) this.trail.shift();
+      console.log( `[AutoTracker] x=${pt.x.toFixed( 1 )}, y=${pt.y.toFixed( 1 )}` );
       this.updateTrackerVisuals( pt );
     };
     videoElement.addEventListener( 'timeupdate', onFrame );

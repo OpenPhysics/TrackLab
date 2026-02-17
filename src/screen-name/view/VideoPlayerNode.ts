@@ -2,11 +2,13 @@ import { BooleanProperty, DerivedProperty, EnumerationProperty, Property } from 
 import { Dimension2, Range } from "scenerystack/dot";
 import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
-import { ComboBox, type ComboBoxItem, Slider, TextPushButton } from "scenerystack/sun";
+import { CameraButton } from "scenerystack/scenery-phet";
+import { ComboBox, type ComboBoxItem, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import type { SimModel } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
+import TrackLabColors from "../../TrackLabColors.js";
 
 const LABEL_FONT = new PhetFont( 14 );
 
@@ -38,7 +40,9 @@ export class VideoPlayerNode extends Node {
     this.videoElement.preload = 'metadata';
     this.videoElement.crossOrigin = 'anonymous';
     this.videoElement.style.display = 'block';
-    this.videoElement.style.background = '#000';
+    TrackLabColors.videoBackgroundColorProperty.link( c => {
+      this.videoElement.style.background = c.toCSS();
+    } );
 
     const videoNode = new DOM( this.videoElement, { allowInput: false } );
 
@@ -196,10 +200,11 @@ export class VideoPlayerNode extends Node {
     } );
     webcamPanel.visible = false;
 
-    const webcamButton = new TextPushButton( 'Record Webcam', {
-      font: LABEL_FONT,
-      baseColor: '#336',
-      textFill: 'white',
+    const webcamButton = new CameraButton( {
+      baseColor: TrackLabColors.buttonBaseDarkProperty,
+      iconFill: TrackLabColors.textOnDarkProperty,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: 'Record Webcam',
       listener: async () => {
         model.isPlayingProperty.value = false;
         webcamPanel.visible = true;
