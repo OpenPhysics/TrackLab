@@ -35,5 +35,17 @@
     "angle": "Angle",
     "mass": "Masse",
     "gravity": "Gravité"
+  },
+  "keyboardShortcuts": {
+    "title": "Raccourcis clavier",
+    "simulationControls": "Contrôles de simulation",
+    "graphInteractions": "Interactions avec le graphique",
+    "playPauseSimulation": "Lecture/Pause de la simulation",
+    "resetSimulation": "Réinitialiser la simulation",
+    "stepBackward": "Reculer d'un pas",
+    "stepForward": "Avancer d'un pas",
+    "resetZoom": "Réinitialiser le zoom",
+    "zoomInOut": "Zoom avant/arrière",
+    "panView": "Déplacer la vue"
   }
 }

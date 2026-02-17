@@ -35,5 +35,17 @@
     "angle": "Angle",
     "mass": "Mass",
     "gravity": "Gravity"
+  },
+  "keyboardShortcuts": {
+    "title": "Keyboard Shortcuts",
+    "simulationControls": "Simulation Controls",
+    "graphInteractions": "Graph Interactions",
+    "playPauseSimulation": "Play/Pause Simulation",
+    "resetSimulation": "Reset Simulation",
+    "stepBackward": "Step Backward",
+    "stepForward": "Step Forward",
+    "resetZoom": "Reset Zoom",
+    "zoomInOut": "Zoom In/Out",
+    "panView": "Pan View"
   }
 }

@@ -57,6 +57,36 @@ export class StringManager {
     };
   }
 
+
+   /**
+   * Get keyboard shortcuts string properties
+   */
+   public getKeyboardShortcutsStrings(): {
+    titleStringProperty: ReadOnlyProperty<string>;
+    simulationControlsStringProperty: ReadOnlyProperty<string>;
+    graphInteractionsStringProperty: ReadOnlyProperty<string>;
+    playPauseSimulationStringProperty: ReadOnlyProperty<string>;
+    resetSimulationStringProperty: ReadOnlyProperty<string>;
+    stepBackwardStringProperty: ReadOnlyProperty<string>;
+    stepForwardStringProperty: ReadOnlyProperty<string>;
+    resetZoomStringProperty: ReadOnlyProperty<string>;
+    zoomInOutStringProperty: ReadOnlyProperty<string>;
+    panViewStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      titleStringProperty: this.stringProperties.keyboardShortcuts.titleStringProperty,
+      simulationControlsStringProperty: this.stringProperties.keyboardShortcuts.simulationControlsStringProperty,
+      graphInteractionsStringProperty: this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
+      playPauseSimulationStringProperty: this.stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
+      resetSimulationStringProperty: this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
+      stepBackwardStringProperty: this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
+      stepForwardStringProperty: this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
+      resetZoomStringProperty: this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
+      zoomInOutStringProperty: this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
+      panViewStringProperty: this.stringProperties.keyboardShortcuts.panViewStringProperty,
+    };
+  }
+  
   /**
    * Get playback control string properties
    */
