@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 /**
  * Vite plugin that serves ./videos/ as /videos/ with proper Range-request
@@ -36,8 +36,8 @@ function serveVideos() {
         if ( rangeHeader ) {
           const match = rangeHeader.match( /bytes=(\d+)-(\d*)/ );
           if ( match ) {
-            const start = parseInt( match[ 1 ] );
-            const end = match[ 2 ] ? parseInt( match[ 2 ] ) : total - 1;
+            const start = parseInt( match[ 1 ], 10 );
+            const end = match[ 2 ] ? parseInt( match[ 2 ], 10 ) : total - 1;
             res.writeHead( 206, {
               ...headers,
               "Content-Range": `bytes ${ start }-${ end }/${ total }`,
