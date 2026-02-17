@@ -23,4 +23,7 @@ init({
   splashDataURI: madeWithSceneryStackSplashDataURI,
 
   allowLocaleSwitching: true,
+
+  // Required when supportsProjectorMode: true is used in PreferencesModel
+  colorProfiles: ["default", "projector"],
 });
