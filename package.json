@@ -18,6 +18,9 @@
     "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@techstark/opencv-js": "^4.12.0-release.1",
     "scenerystack": "^3.0.0"
   },
   "devDependencies": {

@@ -5,6 +5,13 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   // So the build can be served from an arbitrary path
   base: "./",
+  server: {
+    headers: {
+      // Required for SharedArrayBuffer used by @ffmpeg/ffmpeg
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
   plugins: [
     VitePWA({
       registerType: "autoUpdate",
