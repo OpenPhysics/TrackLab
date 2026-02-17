@@ -107,6 +107,7 @@ export class CalibrationToolNode extends Node {
         yMargin: 6,
       }
     );
+    midpointPanel.setScaleMagnitude( 0.5 );
     this.addChild( midpointPanel );
 
     // ── Update geometry when endpoints move ───────────────────────────────
