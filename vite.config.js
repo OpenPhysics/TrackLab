@@ -1,5 +1,67 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import fs from "fs";
+import path from "path";
+
+/**
+ * Vite plugin that serves ./videos/ as /videos/ with proper Range-request
+ * support (required for video seeking) and copies the directory to dist on build.
+ */
+function serveVideos() {
+  return {
+    name: "serve-videos",
+    configureServer( server ) {
+      server.middlewares.use( ( req, res, next ) => {
+        if ( !req.url?.startsWith( "/videos/" ) ) return next();
+
+        const filename = decodeURIComponent( req.url.slice( "/videos/".length ).split( "?" )[ 0 ] );
+        const videosDir = path.resolve( "videos" );
+        const filePath = path.resolve( videosDir, filename );
+
+        // Prevent directory traversal
+        if ( !filePath.startsWith( videosDir + path.sep ) ) return next();
+        if ( !fs.existsSync( filePath ) ) return next();
+
+        const stat = fs.statSync( filePath );
+        const total = stat.size;
+        const ext = path.extname( filename ).toLowerCase();
+        const mimeType = ext === ".webm" ? "video/webm" : "video/mp4";
+        const headers = {
+          "Content-Type": mimeType,
+          "Accept-Ranges": "bytes",
+          "Cross-Origin-Resource-Policy": "same-origin",
+        };
+
+        const rangeHeader = req.headers.range;
+        if ( rangeHeader ) {
+          const match = rangeHeader.match( /bytes=(\d+)-(\d*)/ );
+          if ( match ) {
+            const start = parseInt( match[ 1 ] );
+            const end = match[ 2 ] ? parseInt( match[ 2 ] ) : total - 1;
+            res.writeHead( 206, {
+              ...headers,
+              "Content-Range": `bytes ${ start }-${ end }/${ total }`,
+              "Content-Length": end - start + 1,
+            } );
+            fs.createReadStream( filePath, { start, end } ).pipe( res );
+            return;
+          }
+        }
+
+        res.writeHead( 200, { ...headers, "Content-Length": total } );
+        fs.createReadStream( filePath ).pipe( res );
+      } );
+    },
+    closeBundle() {
+      const src = path.resolve( "videos" );
+      const dest = path.resolve( "dist", "videos" );
+      if ( !fs.existsSync( dest ) ) fs.mkdirSync( dest, { recursive: true } );
+      for ( const file of fs.readdirSync( src ) ) {
+        fs.copyFileSync( path.join( src, file ), path.join( dest, file ) );
+      }
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +75,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    serveVideos(),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {

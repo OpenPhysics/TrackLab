@@ -1,13 +1,10 @@
 import { Node } from "scenerystack/scenery";
-import { StringManager } from "../../i18n/StringManager.js";
+import { BasicActionsKeyboardHelpSection } from "scenerystack/scenery-phet";
 
 export class KeyboardShortcutsNode extends Node {
   public constructor() {
     super();
 
-    const strings = StringManager.getInstance().getKeyboardShortcutsStrings();
-
-    // TODO: build keyboard shortcuts UI using strings
-    void strings;
+    this.addChild( new BasicActionsKeyboardHelpSection() );
   }
 }
