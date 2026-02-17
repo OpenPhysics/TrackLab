@@ -10,16 +10,13 @@ import { VideoPlayerNode } from "./VideoPlayerNode.js";
 /**
  * Builds a Transform3 from the coordinate-system tool and calibration tool.
  *
- * The transform maps real-world model coordinates → view (pixel) coordinates:
- *   vx = origin.x + s·(mx·cosθ + my·sinθ)
- *   vy = origin.y + s·(mx·sinθ − my·cosθ)
+ * Composed as:  T(origin) · R(θ) · S(s, −s)
  *
- * where:
- *   origin = coord-system view position (pixels)
- *   θ      = coord-system rotation angle (clockwise in screen space)
- *   s      = pixels per model unit  =  |p2−p1| / calibrationDistance
+ *   S(s, −s)  — scale model units to pixels, flip Y (model +y points up)
+ *   R(θ)      — rotate by the coord-system angle (clockwise on screen)
+ *   T(origin) — translate so model origin lands on the coord-system view position
  *
- * The Y-axis is inverted relative to the screen (model +y points up).
+ * where s = |p2 − p1| / calibrationDistance  (pixels per model unit).
  * Returns the identity transform when the calibration segment has zero length.
  */
 function buildModelViewTransform(
@@ -33,17 +30,13 @@ function buildModelViewTransform(
   if ( pixelDist < 1e-6 || dist < 1e-9 ) {
     return new Transform3( Matrix3.IDENTITY );
   }
-  const s = pixelDist / dist;
-  const c = Math.cos( angle );
-  const sinA = Math.sin( angle );
+  const s = pixelDist / dist; // pixels per model unit
 
-  // Affine matrix (row-major):
-  //   [ s·cosθ   s·sinθ   origin.x ]
-  //   [ s·sinθ  −s·cosθ   origin.y ]
-  //   [ 0        0         1       ]
-  return new Transform3(
-    Matrix3.affine( s * c, s * sinA, origin.x, s * sinA, -s * c, origin.y )
-  );
+  const matrix = Matrix3.translationFromVector( origin )
+    .timesMatrix( Matrix3.rotation2( angle ) )
+    .timesMatrix( Matrix3.scaling( s, -s ) );
+
+  return new Transform3( matrix );
 }
 
 export class SimScreenView extends ScreenView {
