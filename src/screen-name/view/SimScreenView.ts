@@ -4,6 +4,7 @@ import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
+import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
@@ -51,7 +52,7 @@ export class SimScreenView extends ScreenView {
     this.videoPlayerNode.center = this.layoutBounds.center.plusXY( 0, -20 );
     this.addChild( this.videoPlayerNode );
 
-    // Both overlay tools appear once a video with a finite duration is loaded.
+    // True once a video with a finite duration has been loaded.
     const videoLoadedProperty = new DerivedProperty( [ model.durationProperty ], d => d > 0 );
 
     // The video element is 640×360.  videoCenter approximates the video element center.
@@ -59,16 +60,26 @@ export class SimScreenView extends ScreenView {
     const VIDEO_HEIGHT = 360;
     const videoCenter = this.layoutBounds.center.plusXY( 0, -20 );
 
+    // Combined visibility: video loaded AND user-toggled model flag.
+    const axesShownProperty = new DerivedProperty(
+      [ videoLoadedProperty, model.axesVisibleProperty ],
+      ( loaded, visible ) => loaded && visible
+    );
+    const calibrationShownProperty = new DerivedProperty(
+      [ videoLoadedProperty, model.calibrationVisibleProperty ],
+      ( loaded, visible ) => loaded && visible
+    );
+
     // Coord system origin: center of the left half of the video (¼ from left edge, mid-height).
     this.coordinateSystemNode = new CoordinateSystemNode(
-      videoLoadedProperty,
+      axesShownProperty,
       videoCenter.plusXY( -VIDEO_WIDTH / 4, 0 )
     );
     this.addChild( this.coordinateSystemNode );
 
     // Calibration line: horizontally centered, ¼ above the video bottom (¾ from top).
     this.calibrationToolNode = new CalibrationToolNode(
-      videoLoadedProperty,
+      calibrationShownProperty,
       this,
       videoCenter.plusXY( 0, VIDEO_HEIGHT / 4 )
     );
@@ -89,6 +100,12 @@ export class SimScreenView extends ScreenView {
         );
       }
     );
+
+    // ── Control panel (left side) ─────────────────────────────────────────
+    const controlPanel = new ControlPanel( model );
+    controlPanel.left = this.layoutBounds.left + 10;
+    controlPanel.centerY = this.layoutBounds.centerY;
+    this.addChild( controlPanel );
 
     const resetAllButton = new ResetAllButton( {
       listener: () => {

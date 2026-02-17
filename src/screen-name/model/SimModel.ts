@@ -7,9 +7,16 @@ export class SimModel {
   public readonly durationProperty = new Property<number>( 0 );
   public readonly videoUrlProperty = new Property<string | null>( null );
 
+  // ── Overlay visibility ────────────────────────────────────────────────
+  public readonly axesVisibleProperty = new BooleanProperty( true );
+  public readonly calibrationVisibleProperty = new BooleanProperty( true );
+
+  // ── Future features (not yet implemented) ────────────────────────────
+  public readonly magnifyVideoProperty = new BooleanProperty( false );
+  public readonly autoTrackingProperty = new BooleanProperty( false );
+
   // Maps between real-world model coordinates and view (pixel) coordinates.
   // Updated by SimScreenView whenever the coordinate system or calibration tool changes.
-  // Initially the identity transform; becomes meaningful once the user has placed both tools.
   public readonly modelViewTransformProperty = new Property<Transform3>(
     new Transform3( Matrix3.IDENTITY )
   );
@@ -19,8 +26,10 @@ export class SimModel {
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
     this.videoUrlProperty.reset();
-    // modelViewTransformProperty is intentionally not reset here;
-    // it is recomputed from the view tools which reset independently.
+    this.axesVisibleProperty.reset();
+    this.calibrationVisibleProperty.reset();
+    this.magnifyVideoProperty.reset();
+    this.autoTrackingProperty.reset();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
