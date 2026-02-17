@@ -14,13 +14,17 @@
     "check": "tsc --noEmit",
     "serve": "serve -s dist",
     "watch": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.2",
+    "@types/node": "^25.2.3",
+    "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0"
