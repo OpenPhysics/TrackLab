@@ -1,10 +1,13 @@
+import { DerivedProperty } from "scenerystack/axon";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import type { SimModel } from "../model/SimModel.js";
+import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
 export class SimScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
+  private readonly coordinateSystemNode: CoordinateSystemNode;
 
   public constructor( model: SimModel, options?: ScreenViewOptions ) {
     super( options );
@@ -12,6 +15,14 @@ export class SimScreenView extends ScreenView {
     this.videoPlayerNode = new VideoPlayerNode( model, this );
     this.videoPlayerNode.center = this.layoutBounds.center.plusXY( 0, -20 );
     this.addChild( this.videoPlayerNode );
+
+    // Coordinate system is visible once a video with a finite duration is loaded.
+    const videoLoadedProperty = new DerivedProperty( [ model.durationProperty ], d => d > 0 );
+    this.coordinateSystemNode = new CoordinateSystemNode(
+      videoLoadedProperty,
+      this.layoutBounds.center.plusXY( 0, -20 )
+    );
+    this.addChild( this.coordinateSystemNode );
 
     const resetAllButton = new ResetAllButton( {
       listener: () => {
@@ -25,7 +36,7 @@ export class SimScreenView extends ScreenView {
   }
 
   public reset(): void {
-    // reset view state if needed
+    this.coordinateSystemNode.reset();
   }
 
   public override step( dt: number ): void {
