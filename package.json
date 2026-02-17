@@ -4,11 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "npx vite",
-    "build": "npx tsc && npx vite build",
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
+    "fix": "biome check --write .",
+    "release": "npm version patch && git push && git push --tags",
+    "check": "tsc --noEmit",
+    "serve": "serve -s dist",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"
