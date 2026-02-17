@@ -8,8 +8,8 @@ const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont( { size: 14, weight: 'bold' } );
 
 export class CoordinateSystemNode extends Node {
-  private readonly viewPositionProperty: Property<Vector2>;
-  private readonly rotationAngleProperty: NumberProperty;
+  public readonly viewPositionProperty: Property<Vector2>;
+  public readonly rotationAngleProperty: NumberProperty;
 
   public constructor( videoLoadedProperty: TReadOnlyProperty<boolean>, initialPosition: Vector2 ) {
     super();

@@ -16,10 +16,10 @@ type Unit = typeof UNITS[ number ];
 const DISTANCE_RANGE = new Range( 0.001, 100000 );
 
 export class CalibrationToolNode extends Node {
-  private readonly distanceProperty: NumberProperty;
-  private readonly unitProperty: Property<Unit>;
-  private readonly point1Property: Property<Vector2>;
-  private readonly point2Property: Property<Vector2>;
+  public readonly distanceProperty: NumberProperty;
+  public readonly unitProperty: Property<Unit>;
+  public readonly point1Property: Property<Vector2>;
+  public readonly point2Property: Property<Vector2>;
 
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,

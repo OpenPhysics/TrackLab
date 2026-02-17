@@ -1,10 +1,50 @@
-import { DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty, Multilink } from "scenerystack/axon";
+import { Matrix3, Transform3, Vector2 } from "scenerystack/dot";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
+
+/**
+ * Builds a Transform3 from the coordinate-system tool and calibration tool.
+ *
+ * The transform maps real-world model coordinates → view (pixel) coordinates:
+ *   vx = origin.x + s·(mx·cosθ + my·sinθ)
+ *   vy = origin.y + s·(mx·sinθ − my·cosθ)
+ *
+ * where:
+ *   origin = coord-system view position (pixels)
+ *   θ      = coord-system rotation angle (clockwise in screen space)
+ *   s      = pixels per model unit  =  |p2−p1| / calibrationDistance
+ *
+ * The Y-axis is inverted relative to the screen (model +y points up).
+ * Returns the identity transform when the calibration segment has zero length.
+ */
+function buildModelViewTransform(
+  origin: Vector2,
+  angle: number,
+  p1: Vector2,
+  p2: Vector2,
+  dist: number
+): Transform3 {
+  const pixelDist = p1.distance( p2 );
+  if ( pixelDist < 1e-6 || dist < 1e-9 ) {
+    return new Transform3( Matrix3.IDENTITY );
+  }
+  const s = pixelDist / dist;
+  const c = Math.cos( angle );
+  const sinA = Math.sin( angle );
+
+  // Affine matrix (row-major):
+  //   [ s·cosθ   s·sinθ   origin.x ]
+  //   [ s·sinθ  −s·cosθ   origin.y ]
+  //   [ 0        0         1       ]
+  return new Transform3(
+    Matrix3.affine( s * c, s * sinA, origin.x, s * sinA, -s * c, origin.y )
+  );
+}
 
 export class SimScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
@@ -21,8 +61,7 @@ export class SimScreenView extends ScreenView {
     // Both overlay tools appear once a video with a finite duration is loaded.
     const videoLoadedProperty = new DerivedProperty( [ model.durationProperty ], d => d > 0 );
 
-    // The video element is 640×360.  videoCenter is the VideoPlayerNode center, which
-    // approximates the video element center (VBox source row ≈ controls row in height).
+    // The video element is 640×360.  videoCenter approximates the video element center.
     const VIDEO_WIDTH = 640;
     const VIDEO_HEIGHT = 360;
     const videoCenter = this.layoutBounds.center.plusXY( 0, -20 );
@@ -41,6 +80,22 @@ export class SimScreenView extends ScreenView {
       videoCenter.plusXY( 0, VIDEO_HEIGHT / 4 )
     );
     this.addChild( this.calibrationToolNode );
+
+    // ── ModelViewTransform: recomputed whenever either tool changes ────────
+    Multilink.multilink(
+      [
+        this.coordinateSystemNode.viewPositionProperty,
+        this.coordinateSystemNode.rotationAngleProperty,
+        this.calibrationToolNode.point1Property,
+        this.calibrationToolNode.point2Property,
+        this.calibrationToolNode.distanceProperty,
+      ],
+      ( origin, angle, p1, p2, dist ) => {
+        model.modelViewTransformProperty.value = buildModelViewTransform(
+          origin, angle, p1, p2, dist
+        );
+      }
+    );
 
     const resetAllButton = new ResetAllButton( {
       listener: () => {
