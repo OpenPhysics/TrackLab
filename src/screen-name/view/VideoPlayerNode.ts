@@ -6,6 +6,7 @@ import { ComboBox, type ComboBoxItem, Slider, TextPushButton } from "scenerystac
 import { Tandem } from "scenerystack/tandem";
 import type { SimModel } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
+import { AutoTrackerNode } from "./AutoTrackerNode.js";
 
 const LABEL_FONT = new PhetFont( 14 );
 
@@ -22,7 +23,7 @@ const VIDEO_FILES = [
 ] as const;
 
 export class VideoPlayerNode extends Node {
-  private readonly videoElement: HTMLVideoElement;
+  public readonly videoElement: HTMLVideoElement;
   private readonly model: SimModel;
   private isScrubbing = false;
 
@@ -61,6 +62,19 @@ export class VideoPlayerNode extends Node {
     // ── Enabled state: only true once a video with finite duration is loaded ──
     const videoLoadedProperty = new BooleanProperty( false );
     model.durationProperty.link( d => { videoLoadedProperty.value = d > 0; } );
+
+    // ── Auto-tracking overlay ──────────────────────────────────────────────
+    // Layered directly on top of the video element at (0,0), so its local
+    // coordinates correspond 1:1 to video-pixel coordinates.
+    const autoTrackingShownProperty = new DerivedProperty(
+      [ videoLoadedProperty, model.autoTrackingProperty ],
+      ( loaded, tracking ) => loaded && tracking
+    );
+    const autoTrackerNode = new AutoTrackerNode( this.videoElement, autoTrackingShownProperty );
+
+    const videoLayer = new Node( {
+      children: [ videoNode, autoTrackerNode ],
+    } );
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     const timeSpeedProperty = new EnumerationProperty( TimeSpeed.NORMAL );
@@ -158,6 +172,7 @@ export class VideoPlayerNode extends Node {
     selectedVideoProperty.lazyLink( filename => {
       if ( filename ) {
         model.isPlayingProperty.value = false;
+        autoTrackerNode.reset();
         this.loadUrl( `./videos/${ filename }` );
       }
     } );
@@ -167,6 +182,7 @@ export class VideoPlayerNode extends Node {
       onVideoReady: ( blob, duration ) => {
         webcamPanel.visible = false;
         model.isPlayingProperty.value = false;
+        autoTrackerNode.reset();
         const blobUrl = URL.createObjectURL( blob );
         this.videoElement.src = blobUrl;
         this.videoElement.load();
@@ -204,7 +220,7 @@ export class VideoPlayerNode extends Node {
     } );
 
     const mainContent = new VBox( {
-      children: [ sourceRow, videoNode, controlsRow ],
+      children: [ sourceRow, videoLayer, controlsRow ],
       spacing: 10,
       align: 'center',
     } );
