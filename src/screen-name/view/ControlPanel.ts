@@ -1,11 +1,9 @@
-import { Circle, HBox, Line, Node, Text, VBox } from "scenerystack/scenery";
-import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
+import { Circle, Line, Node, VBox } from "scenerystack/scenery";
+import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
 import type { SimModel } from "../model/SimModel.js";
 
-const LABEL_FONT = new PhetFont( 13 );
 const ICON_SIZE = 20; // bounding box each icon targets
-const LABEL_COLOR = '#ddd';
 
 // ── Icons ─────────────────────────────────────────────────────────────────
 
@@ -71,16 +69,8 @@ function trackingIcon(): Node {
 
 // ── Helper ────────────────────────────────────────────────────────────────
 
-function makeRow( icon: Node, label: string, property: SimModel['axesVisibleProperty'] ): Checkbox {
-  const content = new HBox( {
-    children: [
-      icon,
-      new Text( label, { font: LABEL_FONT, fill: LABEL_COLOR } ),
-    ],
-    spacing: 8,
-    align: 'center',
-  } );
-  return new Checkbox( property, content, {
+function makeRow( icon: Node, property: SimModel['axesVisibleProperty'] ): Checkbox {
+  return new Checkbox( property, icon, {
     checkboxColor: '#ddd',
     checkboxColorBackground: 'rgba(255,255,255,0.1)',
   } );
@@ -92,10 +82,10 @@ export class ControlPanel extends Panel {
   public constructor( model: SimModel ) {
     const rows = new VBox( {
       children: [
-        makeRow( axesIcon(),        'Axes Visible',              model.axesVisibleProperty ),
-        makeRow( calibrationIcon(), 'Calibration Tool Visible',  model.calibrationVisibleProperty ),
-        makeRow( magnifyIcon(),     'Magnify Around Cursor',     model.magnifyVideoProperty ),
-        makeRow( trackingIcon(),    'Enable Auto Tracking',      model.autoTrackingProperty ),
+        makeRow( axesIcon(),        model.axesVisibleProperty ),
+        makeRow( calibrationIcon(), model.calibrationVisibleProperty ),
+        makeRow( magnifyIcon(),     model.magnifyVideoProperty ),
+        makeRow( trackingIcon(),    model.autoTrackingProperty ),
       ],
       spacing: 12,
       align: 'left',
