@@ -56,16 +56,24 @@ export class CalibrationToolNode extends Node {
     // ── Keypad dialog ─────────────────────────────────────────────────────
     const keypadDialog = new KeypadDialog( {
       keypadLayout: Keypad.PositiveDecimalLayout,
+      keypadOptions: {
+        accumulatorOptions: {
+          maxDigitsRightOfMantissa: 4,
+        },
+      },
       tandem: Tandem.OPT_OUT,
     } );
-    // Pattern shown inside the dialog as "Range: {{min}} – {{max}}"
-    const rangePatternProperty = new Property( '{{min}} – {{max}}' );
+    // Pattern shown inside the dialog as "Range: {{min}} – {{max}} <unit>"
+    const rangePatternProperty = new DerivedProperty(
+      [ this.unitProperty ],
+      ( unit: Unit ) => `{{min}} – {{max}} ${unit}`
+    );
 
     // ── Midpoint panel ────────────────────────────────────────────────────
-    // Button showing current value; clicking it opens the keypad.
+    // Button showing current value + unit; clicking it opens the keypad.
     const buttonLabelProperty = new DerivedProperty(
-      [ this.distanceProperty ],
-      ( dist: number ) => dist.toFixed( 1 )
+      [ this.distanceProperty, this.unitProperty ],
+      ( dist: number, unit: Unit ) => `${dist.toFixed( 2 )} ${unit}`
     );
 
     const distanceButton = new TextPushButton( buttonLabelProperty, {
