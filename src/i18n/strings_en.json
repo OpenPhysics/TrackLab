@@ -1,0 +1,39 @@
+{
+  "title": "trackLab",
+  "screens": {
+    "sim": "Simulation"
+  },
+  "controls": {
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "step": "Step",
+    "speed": "Speed",
+    "record": "Record",
+    "stop": "Stop"
+  },
+  "tracking": {
+    "track": "Track",
+    "target": "Target",
+    "origin": "Origin",
+    "calibrate": "Calibrate",
+    "scale": "Scale",
+    "position": "Position",
+    "velocity": "Velocity",
+    "acceleration": "Acceleration"
+  },
+  "video": {
+    "openFile": "Open File",
+    "frameRate": "Frame Rate",
+    "currentFrame": "Frame",
+    "duration": "Duration",
+    "export": "Export"
+  },
+  "measurement": {
+    "time": "Time",
+    "distance": "Distance",
+    "angle": "Angle",
+    "mass": "Mass",
+    "gravity": "Gravity"
+  }
+}
