@@ -20,12 +20,26 @@ export class SimScreenView extends ScreenView {
 
     // Both overlay tools appear once a video with a finite duration is loaded.
     const videoLoadedProperty = new DerivedProperty( [ model.durationProperty ], d => d > 0 );
+
+    // The video element is 640×360.  videoCenter is the VideoPlayerNode center, which
+    // approximates the video element center (VBox source row ≈ controls row in height).
+    const VIDEO_WIDTH = 640;
+    const VIDEO_HEIGHT = 360;
     const videoCenter = this.layoutBounds.center.plusXY( 0, -20 );
 
-    this.coordinateSystemNode = new CoordinateSystemNode( videoLoadedProperty, videoCenter );
+    // Coord system origin: center of the left half of the video (¼ from left edge, mid-height).
+    this.coordinateSystemNode = new CoordinateSystemNode(
+      videoLoadedProperty,
+      videoCenter.plusXY( -VIDEO_WIDTH / 4, 0 )
+    );
     this.addChild( this.coordinateSystemNode );
 
-    this.calibrationToolNode = new CalibrationToolNode( videoLoadedProperty, this, videoCenter );
+    // Calibration line: horizontally centered, ¼ above the video bottom (¾ from top).
+    this.calibrationToolNode = new CalibrationToolNode(
+      videoLoadedProperty,
+      this,
+      videoCenter.plusXY( 0, VIDEO_HEIGHT / 4 )
+    );
     this.addChild( this.calibrationToolNode );
 
     const resetAllButton = new ResetAllButton( {

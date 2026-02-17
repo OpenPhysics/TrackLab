@@ -65,7 +65,7 @@ export class CalibrationToolNode extends Node {
     // Button showing current value; clicking it opens the keypad.
     const buttonLabelProperty = new DerivedProperty(
       [ this.distanceProperty ],
-      ( dist: number ) => dist.toFixed( 3 )
+      ( dist: number ) => dist.toFixed( 1 )
     );
 
     const distanceButton = new TextPushButton( buttonLabelProperty, {
