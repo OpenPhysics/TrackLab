@@ -9,13 +9,13 @@
 export type TrackPoint = {
   frame: number;
   time: number; // seconds
-  x: number;   // model x-coordinate
-  y: number;   // model y-coordinate
+  x: number; // model x-coordinate
+  y: number; // model y-coordinate
 };
 
 export type Track = {
   id: string;
-  symbol: string;          // single uppercase letter: 'A', 'B', 'C', ...
-  color: string;           // CSS hex color
+  symbol: string; // single uppercase letter: 'A', 'B', 'C', ...
+  color: string; // CSS hex color
   points: readonly TrackPoint[];
 };

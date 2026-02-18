@@ -165,8 +165,6 @@ export class VideoPlayerNode extends Node {
     // ── Magnifier (zoomed view near the cursor) ─────────────────────────────
     const MAG_SIZE = 100; // Canvas diameter in pixels
     const MAG_ZOOM = 4; // Magnification factor
-    const MAG_OFFSET_X = 30; // Offset from cursor (right)
-    const MAG_OFFSET_Y = -80; // Offset from cursor (above)
 
     const magCanvas = document.createElement("canvas");
     magCanvas.width = MAG_SIZE;
@@ -186,10 +184,23 @@ export class VideoPlayerNode extends Node {
 
     /** Redraws the magnifier canvas showing a zoomed region of the video. */
     const updateMagnifier = (localX: number, localY: number) => {
-      // Source rectangle: centered on cursor, size = MAG_SIZE / MAG_ZOOM
-      const srcSize = MAG_SIZE / MAG_ZOOM;
-      const sx = localX - srcSize / 2;
-      const sy = localY - srcSize / 2;
+      // drawImage uses the video's intrinsic (natural) resolution as source
+      // coordinates, but localX/localY are in display space (0–640, 0–360).
+      // Scale to intrinsic pixels so the source rectangle is centered correctly.
+      const scaleX =
+        this.videoElement.videoWidth > 0
+          ? this.videoElement.videoWidth / this.videoElement.width
+          : 1;
+      const scaleY =
+        this.videoElement.videoHeight > 0
+          ? this.videoElement.videoHeight / this.videoElement.height
+          : 1;
+
+      // Source rectangle in intrinsic pixels, centered on the cursor position.
+      const srcW = (MAG_SIZE / MAG_ZOOM) * scaleX;
+      const srcH = (MAG_SIZE / MAG_ZOOM) * scaleY;
+      const sx = localX * scaleX - srcW / 2;
+      const sy = localY * scaleY - srcH / 2;
 
       // Clear and draw the magnified portion
       magCtx.clearRect(0, 0, MAG_SIZE, MAG_SIZE);
@@ -205,8 +216,8 @@ export class VideoPlayerNode extends Node {
         this.videoElement,
         sx,
         sy,
-        srcSize,
-        srcSize, // source rect
+        srcW,
+        srcH, // source rect (intrinsic pixels)
         0,
         0,
         MAG_SIZE,
@@ -252,17 +263,24 @@ export class VideoPlayerNode extends Node {
         cursorNode.translation = localPt;
         cursorNode.visible = true;
 
-        // Position magnifier offset from cursor, clamped to stay within overlay
-        let magX = localPt.x + MAG_OFFSET_X;
-        let magY = localPt.y + MAG_OFFSET_Y;
-        // Keep magnifier inside the video bounds
-        magX = Math.max(0, Math.min(magX, 640 - MAG_SIZE));
-        magY = Math.max(0, Math.min(magY, 360 - MAG_SIZE));
+        // Centre the magnifier on the cursor, clamped to stay within the overlay
+        const magX = Math.max(
+          0,
+          Math.min(localPt.x - MAG_SIZE / 2, 640 - MAG_SIZE),
+        );
+        const magY = Math.max(
+          0,
+          Math.min(localPt.y - MAG_SIZE / 2, 360 - MAG_SIZE),
+        );
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
-        updateMagnifier(localPt.x, localPt.y);
-        magnifierNode.visible = true;
+        if (model.magnifyVideoProperty.value) {
+          updateMagnifier(localPt.x, localPt.y);
+          magnifierNode.visible = true;
+        } else {
+          magnifierNode.visible = false;
+        }
       },
       exit: () => {
         cursorNode.visible = false;
@@ -301,6 +319,10 @@ export class VideoPlayerNode extends Node {
     model.activeTrackIdProperty.link((activeId) => {
       digitizingOverlay.visible = activeId !== null;
       if (!activeId) cursorNode.visible = false;
+    });
+
+    model.magnifyVideoProperty.link((magnify) => {
+      if (!magnify) magnifierNode.visible = false;
     });
 
     digitizingOverlay.addInputListener(

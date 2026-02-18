@@ -57,11 +57,10 @@ export class StringManager {
     };
   }
 
-
-   /**
+  /**
    * Get keyboard shortcuts string properties
    */
-   public getKeyboardShortcutsStrings(): {
+  public getKeyboardShortcutsStrings(): {
     titleStringProperty: ReadOnlyProperty<string>;
     simulationControlsStringProperty: ReadOnlyProperty<string>;
     graphInteractionsStringProperty: ReadOnlyProperty<string>;
@@ -74,19 +73,31 @@ export class StringManager {
     panViewStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      titleStringProperty: this.stringProperties.keyboardShortcuts.titleStringProperty,
-      simulationControlsStringProperty: this.stringProperties.keyboardShortcuts.simulationControlsStringProperty,
-      graphInteractionsStringProperty: this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
-      playPauseSimulationStringProperty: this.stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
-      resetSimulationStringProperty: this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
-      stepBackwardStringProperty: this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
-      stepForwardStringProperty: this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
-      resetZoomStringProperty: this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
-      zoomInOutStringProperty: this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
-      panViewStringProperty: this.stringProperties.keyboardShortcuts.panViewStringProperty,
+      titleStringProperty:
+        this.stringProperties.keyboardShortcuts.titleStringProperty,
+      simulationControlsStringProperty:
+        this.stringProperties.keyboardShortcuts
+          .simulationControlsStringProperty,
+      graphInteractionsStringProperty:
+        this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
+      playPauseSimulationStringProperty:
+        this.stringProperties.keyboardShortcuts
+          .playPauseSimulationStringProperty,
+      resetSimulationStringProperty:
+        this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
+      stepBackwardStringProperty:
+        this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
+      stepForwardStringProperty:
+        this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
+      resetZoomStringProperty:
+        this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
+      zoomInOutStringProperty:
+        this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
+      panViewStringProperty:
+        this.stringProperties.keyboardShortcuts.panViewStringProperty,
     };
   }
-  
+
   /**
    * Get playback control string properties
    */
@@ -173,14 +184,12 @@ export class StringManager {
     gravityStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      timeStringProperty:
-        this.stringProperties.measurement.timeStringProperty,
+      timeStringProperty: this.stringProperties.measurement.timeStringProperty,
       distanceStringProperty:
         this.stringProperties.measurement.distanceStringProperty,
       angleStringProperty:
         this.stringProperties.measurement.angleStringProperty,
-      massStringProperty:
-        this.stringProperties.measurement.massStringProperty,
+      massStringProperty: this.stringProperties.measurement.massStringProperty,
       gravityStringProperty:
         this.stringProperties.measurement.gravityStringProperty,
     };
