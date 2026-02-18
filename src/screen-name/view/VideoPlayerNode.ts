@@ -155,6 +155,38 @@ export class VideoPlayerNode extends Node {
       }
     } );
 
+    // ── Time and frame info display ────────────────────────────────────────
+    const formatDuration = ( seconds: number ): string => {
+      if ( !Number.isFinite( seconds ) || seconds <= 0 ) return '0:00';
+      const mins = Math.floor( seconds / 60 );
+      const secs = Math.floor( seconds % 60 );
+      return `${ mins }:${ String( secs ).padStart( 2, '0' ) }`;
+    };
+
+    const totalTimeTextProperty = new DerivedProperty(
+      [ model.durationProperty ],
+      ( duration: number ) => formatDuration( duration )
+    );
+
+    const frameCountTextProperty = new DerivedProperty(
+      [ model.currentTimeProperty, model.durationProperty ],
+      ( time: number, duration: number ) => {
+        if ( duration <= 0 ) return '0/0';
+        const current = Math.round( time / FRAME_DURATION );
+        const total = Math.round( duration / FRAME_DURATION );
+        return `${ current }/${ total }`;
+      }
+    );
+
+    const totalTimeLabel = new Text( totalTimeTextProperty, { font: LABEL_FONT } );
+    const frameCountLabel = new Text( frameCountTextProperty, { font: LABEL_FONT } );
+
+    const infoDisplay = new VBox( {
+      children: [ totalTimeLabel, frameCountLabel ],
+      spacing: 2,
+      align: 'left',
+    } );
+
     // ── Video source ComboBox ─────────────────────────────────────────────
     const selectedVideoProperty = new Property<string | null>( null );
 
@@ -219,7 +251,7 @@ export class VideoPlayerNode extends Node {
     } );
 
     const controlsRow = new HBox( {
-      children: [ timeControlNode, scrubber ],
+      children: [ infoDisplay, timeControlNode, scrubber ],
       spacing: 16,
       align: 'center',
     } );
