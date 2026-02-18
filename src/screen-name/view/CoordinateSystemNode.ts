@@ -1,7 +1,8 @@
-import { Circle, DragListener, Node, Text } from "scenerystack/scenery";
+import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
-import { Vector2 } from "scenerystack/dot";
+import type { Vector2 } from "scenerystack/dot";
 import { NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const ARROW_LENGTH = 120;
@@ -61,6 +62,9 @@ export class CoordinateSystemNode extends Node {
       stroke: TrackLabColors.textOnDarkProperty,
       lineWidth: 1.5,
       cursor: 'crosshair',
+      tagName: 'div',
+      focusable: true,
+      accessibleName: 'Rotation Handle',
     } );
     rotatingNode.addChild( handleDisk );
 
@@ -72,7 +76,13 @@ export class CoordinateSystemNode extends Node {
     } );
 
     // ── Position wrapper: translates with viewPositionProperty ───────────
-    const positionNode = new Node( { children: [ rotatingNode, originMarker ], cursor: 'move' } );
+    const positionNode = new Node( {
+      children: [ rotatingNode, originMarker ],
+      cursor: 'move',
+      tagName: 'div',
+      focusable: true,
+      accessibleName: 'Coordinate System',
+    } );
     this.addChild( positionNode );
 
     // ── Property → scene-graph linkage ────────────────────────────────────
@@ -80,28 +90,34 @@ export class CoordinateSystemNode extends Node {
     this.rotationAngleProperty.link( angle => { rotatingNode.rotation = angle; } );
 
     // ── Drag: translate the entire coordinate system ──────────────────────
-    let startPos = initialPosition.copy();
-    let startPtr = new Vector2( 0, 0 );
-
-    positionNode.addInputListener( new DragListener( {
-      start: ( event ) => {
-        startPos = this.viewPositionProperty.value.copy();
-        startPtr = this.globalToLocalPoint( event.pointer.point );
+    positionNode.addInputListener( new RichDragListener( {
+      positionProperty: this.viewPositionProperty,
+      keyboardDragListenerOptions: {
+        dragSpeed: 300,
+        shiftDragSpeed: 50,
       },
-      drag: ( event ) => {
-        const ptr = this.globalToLocalPoint( event.pointer.point );
-        this.viewPositionProperty.value = startPos.plus( ptr.minus( startPtr ) );
-      },
+      tandem: Tandem.OPT_OUT,
     } ) );
 
     // ── Drag: rotate around origin ────────────────────────────────────────
     // Dragging the handle disk updates the rotation angle based on the
     // pointer's angle relative to the coordinate-system origin.
-    handleDisk.addInputListener( new DragListener( {
-      drag: ( event ) => {
-        const p = positionNode.globalToLocalPoint( event.pointer.point );
-        this.rotationAngleProperty.value = Math.atan2( p.y, p.x );
+    handleDisk.addInputListener( new RichDragListener( {
+      dragListenerOptions: {
+        drag: ( event ) => {
+          const p = positionNode.globalToLocalPoint( event.pointer.point );
+          this.rotationAngleProperty.value = Math.atan2( p.y, p.x );
+        },
       },
+      keyboardDragListenerOptions: {
+        keyboardDragDirection: 'leftRight',
+        dragSpeed: 100,
+        shiftDragSpeed: 20,
+        drag: ( _event, listener ) => {
+          this.rotationAngleProperty.value += listener.modelDelta.x * ( Math.PI / 180 );
+        },
+      },
+      tandem: Tandem.OPT_OUT,
     } ) );
 
     // ── Visibility: only shown once a video with a finite duration is loaded

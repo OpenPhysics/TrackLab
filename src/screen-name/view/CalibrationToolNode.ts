@@ -1,7 +1,7 @@
-import { Circle, DragListener, HBox, Line, Node, Text } from "scenerystack/scenery";
+import { Circle, HBox, Line, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
-import { Range, Vector2 } from "scenerystack/dot";
+import { Range, type Vector2 } from "scenerystack/dot";
 import { DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
@@ -43,14 +43,17 @@ export class CalibrationToolNode extends Node {
     this.addChild( calibrationLine );
 
     // ── Endpoint circles ──────────────────────────────────────────────────
-    const makeEndpoint = () => new Circle( ENDPOINT_RADIUS, {
+    const makeEndpoint = ( accessibleName: string ) => new Circle( ENDPOINT_RADIUS, {
       fill: TrackLabColors.calibrationFillProperty,
       stroke: TrackLabColors.textOnDarkProperty,
       lineWidth: 1.5,
       cursor: 'crosshair',
+      tagName: 'div',
+      focusable: true,
+      accessibleName: accessibleName,
     } );
-    const endpoint1 = makeEndpoint();
-    const endpoint2 = makeEndpoint();
+    const endpoint1 = makeEndpoint( 'Calibration Point 1' );
+    const endpoint2 = makeEndpoint( 'Calibration Point 2' );
     this.addChild( endpoint1 );
     this.addChild( endpoint2 );
 
@@ -135,17 +138,13 @@ export class CalibrationToolNode extends Node {
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     const makeDragListener = ( pointProperty: Property<Vector2> ) => {
-      let startPos = pointProperty.value.copy();
-      let startPtr = new Vector2( 0, 0 );
-      return new DragListener( {
-        start: ( event ) => {
-          startPos = pointProperty.value.copy();
-          startPtr = this.globalToLocalPoint( event.pointer.point );
+      return new RichDragListener( {
+        positionProperty: pointProperty,
+        keyboardDragListenerOptions: {
+          dragSpeed: 200,
+          shiftDragSpeed: 40,
         },
-        drag: ( event ) => {
-          const ptr = this.globalToLocalPoint( event.pointer.point );
-          pointProperty.value = startPos.plus( ptr.minus( startPtr ) );
-        },
+        tandem: Tandem.OPT_OUT,
       } );
     };
     endpoint1.addInputListener( makeDragListener( this.point1Property ) );

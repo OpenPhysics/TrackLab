@@ -53,6 +53,8 @@ export class AutoTrackerNode extends Node {
     const hitArea = new Rectangle( 0, 0, VIDEO_W, VIDEO_H, {
       fill: 'transparent',
       cursor: 'crosshair',
+      tagName: 'div',
+      accessibleName: 'Video tracking area — drag to select object to track',
     } );
     this.addChild( hitArea );
 
