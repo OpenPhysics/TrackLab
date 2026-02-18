@@ -1,5 +1,4 @@
 import { BooleanProperty, Property } from "scenerystack/axon";
-import { Matrix3, Transform3 } from "scenerystack/dot";
 import type { Track, TrackPoint } from "./Track.js";
 
 // ── Track colour palette (one per letter, repeats after 8) ─────────────────
@@ -27,12 +26,6 @@ export class SimModel {
   // ── Future features (not yet implemented) ────────────────────────────
   public readonly magnifyVideoProperty = new BooleanProperty( false );
   public readonly autoTrackingProperty = new BooleanProperty( false );
-
-  // Maps between real-world model coordinates and view (pixel) coordinates.
-  // Updated by SimScreenView whenever the coordinate system or calibration tool changes.
-  public readonly modelViewTransformProperty = new Property<Transform3>(
-    new Transform3( Matrix3.IDENTITY )
-  );
 
   // ── Manual particle tracks ────────────────────────────────────────────
   public readonly tracksProperty = new Property<readonly Track[]>( [] );
@@ -92,6 +85,7 @@ export class SimModel {
     this.magnifyVideoProperty.reset();
     this.autoTrackingProperty.reset();
     this.tracksProperty.value = [];
+
     this.activeTrackIdProperty.value = null;
     this.nextSymbolCode = 65;
   }

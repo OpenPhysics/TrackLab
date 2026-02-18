@@ -4,13 +4,16 @@ import { Shape } from "scenerystack/kite";
 import { Tandem } from "scenerystack/tandem";
 import { Vector2 } from "scenerystack/dot";
 import type { TReadOnlyProperty } from "scenerystack/axon";
+import type { Transform3 } from "scenerystack/dot";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const VIDEO_W = 640;
 const VIDEO_H = 360;
 const MAX_TRAIL = 150;
 const CROSSHAIR_SIZE = 16;
+const FRAME_DURATION = 1 / 30; // assumes 30 fps
 
 /**
  * Transparent SceneryStack overlay that sits directly on top of the video element.
@@ -22,6 +25,8 @@ const CROSSHAIR_SIZE = 16;
  *  4. On each video frame (timeupdate / seeked), the best-match position is
  *     computed via OpenCV template matching and shown as a red crosshair.
  *  5. Past positions are shown as a green trail of dots.
+ *  6. If a track is active (model.activeTrackIdProperty), each new unique frame
+ *     position is recorded to the model via addPointToTrack.
  *
  * Local coordinates of this node correspond directly to video-pixel coordinates
  * (0,0 = top-left of video) because it is added to the same layer as the video
@@ -43,7 +48,9 @@ export class AutoTrackerNode extends Node {
 
   public constructor(
     videoElement: HTMLVideoElement,
-    autoTrackingShownProperty: TReadOnlyProperty<boolean>
+    autoTrackingShownProperty: TReadOnlyProperty<boolean>,
+    model: SimModel,
+    modelViewTransformProperty: TReadOnlyProperty<Transform3>
   ) {
     super( { visible: false } );
 
@@ -170,7 +177,25 @@ export class AutoTrackerNode extends Node {
 
       this.trail.push( pt );
       if ( this.trail.length > MAX_TRAIL ) this.trail.shift();
-this.updateTrackerVisuals( pt );
+      this.updateTrackerVisuals( pt );
+
+      // ── Record position to model if a track is active ─────────────────
+      const activeId = model.activeTrackIdProperty.value;
+      if ( activeId ) {
+        const time = videoElement.currentTime;
+        const frame = Math.round( time / FRAME_DURATION );
+
+        // Avoid duplicate points for the same frame.
+        const activeTrack = model.tracksProperty.value.find( t => t.id === activeId );
+        const alreadyRecorded = activeTrack ? activeTrack.points.some( p => p.frame === frame ) : false;
+
+        if ( !alreadyRecorded ) {
+          // Convert video-pixel coords to global coords, then to model coords.
+          const globalPt = this.localToGlobalPoint( new Vector2( pt.x, pt.y ) );
+          const modelPt = modelViewTransformProperty.value.inversePosition2( globalPt );
+          model.addPointToTrack( activeId, frame, time, modelPt.x, modelPt.y );
+        }
+      }
     };
     videoElement.addEventListener( 'timeupdate', onFrame );
     videoElement.addEventListener( 'seeked', onFrame );

@@ -1,5 +1,5 @@
-import { BooleanProperty, DerivedProperty, EnumerationProperty, Property } from "scenerystack/axon";
-import { Dimension2, Range } from "scenerystack/dot";
+import { BooleanProperty, DerivedProperty, EnumerationProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { Dimension2, Range, type Transform3 } from "scenerystack/dot";
 import { Circle, DOM, FireListener, HBox, Line, Node, Path, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
@@ -31,7 +31,11 @@ export class VideoPlayerNode extends Node {
   private readonly model: SimModel;
   private isScrubbing = false;
 
-  public constructor( model: SimModel, listParent: Node ) {
+  public constructor(
+    model: SimModel,
+    listParent: Node,
+    modelViewTransformProperty: TReadOnlyProperty<Transform3>
+  ) {
     super();
     this.model = model;
 
@@ -76,7 +80,12 @@ export class VideoPlayerNode extends Node {
       [ videoLoadedProperty, model.autoTrackingProperty ],
       ( loaded, tracking ) => loaded && tracking
     );
-    const autoTrackerNode = new AutoTrackerNode( this.videoElement, autoTrackingShownProperty );
+    const autoTrackerNode = new AutoTrackerNode(
+      this.videoElement,
+      autoTrackingShownProperty,
+      model,
+      modelViewTransformProperty
+    );
 
     // ── Manual digitizing overlay ─────────────────────────────────────────
     // Sits on top of the video; active when a track checkbox is checked.
@@ -198,12 +207,20 @@ export class VideoPlayerNode extends Node {
       },
     } );
 
-    // Coloured dots at click positions, filtered by current frame
-    type MarkData = { frame: number; localX: number; localY: number; color: string };
+    // ── Mark data: pixel-space dots for digitized positions ───────────────
+    // trackId is included so that marks can be filtered when a track is deleted.
+    type MarkData = { trackId: string; frame: number; localX: number; localY: number; color: string };
     const markData: MarkData[] = [];
     const marksLayer = new Node( { pickable: false } );
 
     const rebuildMarks = () => {
+      const activeTrackIds = new Set( model.tracksProperty.value.map( t => t.id ) );
+      // Remove any marks whose track has been deleted or all tracks on reset.
+      for ( let i = markData.length - 1; i >= 0; i-- ) {
+        if ( !activeTrackIds.has( markData[ i ].trackId ) ) {
+          markData.splice( i, 1 );
+        }
+      }
       const currentFrame = Math.round( model.currentTimeProperty.value / FRAME_DURATION );
       marksLayer.children = markData
         .filter( m => m.frame <= currentFrame )
@@ -211,6 +228,8 @@ export class VideoPlayerNode extends Node {
     };
 
     model.currentTimeProperty.link( () => rebuildMarks() );
+    // Rebuild (and prune) whenever tracks are added, removed, or cleared.
+    model.tracksProperty.link( () => rebuildMarks() );
 
     model.activeTrackIdProperty.link( activeId => {
       digitizingOverlay.visible = activeId !== null;
@@ -232,10 +251,10 @@ export class VideoPlayerNode extends Node {
         const time = model.currentTimeProperty.value;
         const frame = Math.round( time / FRAME_DURATION );
 
-        const mvt = model.modelViewTransformProperty.value;
+        const mvt = modelViewTransformProperty.value;
         const modelPt = mvt.inversePosition2( globalPt );
 
-        markData.push( { frame, localX: localPt.x, localY: localPt.y, color: track.color } );
+        markData.push( { trackId: activeId, frame, localX: localPt.x, localY: localPt.y, color: track.color } );
         rebuildMarks();
 
         model.addPointToTrack( activeId, frame, time, modelPt.x, modelPt.y );
@@ -451,7 +470,7 @@ export class VideoPlayerNode extends Node {
   /** Pause playback and advance by exactly one frame (1/30 s). */
   public stepForward(): void {
     this.model.isPlayingProperty.value = false;
-    const raw = this.videoElement.currentTime + FRAME_DURATION;
+    const raw = this.videoElement.currentTime + ( 1 / 30 );
     const clamped = Math.max( 0, Math.min( raw, this.videoElement.duration ) );
     this.videoElement.currentTime = clamped;
     this.model.currentTimeProperty.value = clamped;

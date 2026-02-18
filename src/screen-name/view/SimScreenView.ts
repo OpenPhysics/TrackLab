@@ -1,4 +1,4 @@
-import { DerivedProperty, Multilink } from "scenerystack/axon";
+import { DerivedProperty, Multilink, Property } from "scenerystack/axon";
 import { Matrix3, Transform3, Vector2 } from "scenerystack/dot";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
@@ -50,10 +50,6 @@ export class SimScreenView extends ScreenView {
   public constructor( model: SimModel, options?: ScreenViewOptions ) {
     super( options );
 
-    this.videoPlayerNode = new VideoPlayerNode( model, this );
-    this.videoPlayerNode.center = this.layoutBounds.center.plusXY( 0, -20 );
-    this.addChild( this.videoPlayerNode );
-
     // True once a video with a finite duration has been loaded.
     const videoLoadedProperty = new DerivedProperty( [ model.durationProperty ], d => d > 0 );
 
@@ -87,7 +83,10 @@ export class SimScreenView extends ScreenView {
     );
     this.addChild( this.calibrationToolNode );
 
-    // ── ModelViewTransform: recomputed whenever either tool changes ────────
+    // ── ModelViewTransform: lives here in the view, recomputed whenever either tool changes.
+    // The model no longer owns this; it is threaded to child nodes that need it. ──────────
+    const modelViewTransformProperty = new Property<Transform3>( new Transform3( Matrix3.IDENTITY ) );
+
     Multilink.multilink(
       [
         this.coordinateSystemNode.viewPositionProperty,
@@ -97,11 +96,16 @@ export class SimScreenView extends ScreenView {
         this.calibrationToolNode.distanceProperty,
       ],
       ( origin, angle, p1, p2, dist ) => {
-        model.modelViewTransformProperty.value = buildModelViewTransform(
+        modelViewTransformProperty.value = buildModelViewTransform(
           origin, angle, p1, p2, dist
         );
       }
     );
+
+    // ── Video player (depends on tools being created first for the transform) ──
+    this.videoPlayerNode = new VideoPlayerNode( model, this, modelViewTransformProperty );
+    this.videoPlayerNode.center = this.layoutBounds.center.plusXY( 0, -20 );
+    this.addChild( this.videoPlayerNode );
 
     // ── Control panel (left side) ─────────────────────────────────────────
     const controlPanel = new ControlPanel( model );
