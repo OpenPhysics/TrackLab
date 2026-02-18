@@ -1,16 +1,39 @@
 // cv type is 'any' — the OpenCV.js WASM API is dynamic and not fully typed.
 let cvPromise: Promise<any> | null = null;
 
+const CV_LOAD_TIMEOUT_MS = 30_000;
+
 function loadCV(): Promise<any> {
   if ( !cvPromise ) {
-    cvPromise = import( '@techstark/opencv-js' ).then( mod => {
-      const cv = ( mod as any ).default ?? mod;
-      // WASM may already be ready (e.g. in test environments)
-      if ( typeof cv.Mat === 'function' ) return cv;
-      return new Promise<any>( resolve => {
-        cv.onRuntimeInitialized = () => resolve( cv );
+    cvPromise = import( '@techstark/opencv-js' ).then( async mod => {
+      let cv = ( mod as any ).default ?? mod;
+
+      // The default export may itself be a Promise (v4.12.0+).
+      if ( cv instanceof Promise ) {
+        cv = await cv;
+      }
+
+      // WASM may already be ready (e.g. in test environments).
+      if ( typeof cv.Mat === 'function' ) {
+        return cv;
+      }
+
+      // Wait for the Emscripten runtime to initialise, with a timeout so we
+      // never hang indefinitely.
+      return new Promise<any>( ( resolve, reject ) => {
+        const timer = setTimeout( () => {
+          reject( new Error( 'OpenCV WASM initialisation timed out' ) );
+        }, CV_LOAD_TIMEOUT_MS );
+
+        cv.onRuntimeInitialized = () => {
+          clearTimeout( timer );
+          resolve( cv );
+        };
       } );
     } );
+
+    // If loading fails, clear the cached promise so the next attempt can retry.
+    cvPromise.catch( () => { cvPromise = null; } );
   }
   return cvPromise;
 }
@@ -50,20 +73,23 @@ export class OpenCVTracker {
     const imageData = this.ctx.getImageData( 0, 0, this.offscreen.width, this.offscreen.height );
     const frame = this.cv.matFromImageData( imageData );
     const gray = new this.cv.Mat();
-    this.cv.cvtColor( frame, gray, this.cv.COLOR_RGBA2GRAY );
+    try {
+      this.cv.cvtColor( frame, gray, this.cv.COLOR_RGBA2GRAY );
 
-    if ( this.templateMat ) this.templateMat.delete();
+      if ( this.templateMat ) this.templateMat.delete();
 
-    const roi = new this.cv.Rect(
-      Math.round( Math.max( 0, region.x ) ),
-      Math.round( Math.max( 0, region.y ) ),
-      Math.round( Math.min( region.w, this.offscreen.width - region.x ) ),
-      Math.round( Math.min( region.h, this.offscreen.height - region.y ) )
-    );
-    this.templateMat = gray.roi( roi ).clone();
-
-    frame.delete();
-    gray.delete();
+      const roi = new this.cv.Rect(
+        Math.round( Math.max( 0, region.x ) ),
+        Math.round( Math.max( 0, region.y ) ),
+        Math.round( Math.min( region.w, this.offscreen.width - region.x ) ),
+        Math.round( Math.min( region.h, this.offscreen.height - region.y ) )
+      );
+      this.templateMat = gray.roi( roi ).clone();
+    }
+    finally {
+      frame.delete();
+      gray.delete();
+    }
   }
 
   /**
@@ -77,20 +103,22 @@ export class OpenCVTracker {
     const imageData = this.ctx.getImageData( 0, 0, this.offscreen.width, this.offscreen.height );
     const frame = this.cv.matFromImageData( imageData );
     const gray = new this.cv.Mat();
-    this.cv.cvtColor( frame, gray, this.cv.COLOR_RGBA2GRAY );
-
     const result = new this.cv.Mat();
-    this.cv.matchTemplate( gray, this.templateMat, result, this.cv.TM_CCOEFF_NORMED );
-    const { maxLoc } = this.cv.minMaxLoc( result );
+    try {
+      this.cv.cvtColor( frame, gray, this.cv.COLOR_RGBA2GRAY );
+      this.cv.matchTemplate( gray, this.templateMat, result, this.cv.TM_CCOEFF_NORMED );
+      const { maxLoc } = this.cv.minMaxLoc( result );
 
-    frame.delete();
-    gray.delete();
-    result.delete();
-
-    return {
-      x: maxLoc.x + this.templateMat.cols / 2,
-      y: maxLoc.y + this.templateMat.rows / 2,
-    };
+      return {
+        x: maxLoc.x + this.templateMat.cols / 2,
+        y: maxLoc.y + this.templateMat.rows / 2,
+      };
+    }
+    finally {
+      frame.delete();
+      gray.delete();
+      result.delete();
+    }
   }
 
   public dispose(): void {
