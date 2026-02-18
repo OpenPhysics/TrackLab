@@ -2,8 +2,6 @@
 
 A browser-based video analysis tool for tracking and measuring motion in physics videos. Load a video, set up a coordinate system, calibrate real-world distances, and automatically track objects across frames using computer vision.
 
-![TrackLab](public/icons/icon.svg)
-
 ## Features
 
 - **Video playback** — Load from 9 built-in physics sample videos or record your own with a webcam
