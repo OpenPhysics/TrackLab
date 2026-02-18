@@ -7,7 +7,12 @@ import {
 } from "scenerystack/axon";
 import { Matrix3, Range, Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
+import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
 import type { Track, TrackPoint } from "./Track.js";
+
+// Video display dimensions (used by tracker and views)
+export const VIDEO_WIDTH = 640;
+export const VIDEO_HEIGHT = 360;
 
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
@@ -21,8 +26,6 @@ const LAYOUT_CENTER_X = 512; // 1024 / 2
 const LAYOUT_CENTER_Y = 309; // 618 / 2
 const VIDEO_CENTER_X = LAYOUT_CENTER_X; // 512
 const VIDEO_CENTER_Y = LAYOUT_CENTER_Y - 20; // 289
-const VIDEO_WIDTH = 640;
-const VIDEO_HEIGHT = 360;
 const CALIB_HALF_LEN = 100; // pixels from center to each calibration endpoint
 
 // Initial tool positions (view / pixel space)
@@ -74,7 +77,9 @@ export class SimModel {
   public readonly isPlayingProperty = new BooleanProperty(false);
   public readonly currentTimeProperty = new Property<number>(0);
   public readonly durationProperty = new Property<number>(0);
-  public readonly videoUrlProperty = new Property<string | null>(null);
+
+  // ── OpenCV Tracker (computational service) ────────────────────────────
+  public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
 
   // ── Overlay visibility ────────────────────────────────────────────────
   public readonly axesVisibleProperty = new BooleanProperty(true);
@@ -176,7 +181,6 @@ export class SimModel {
     this.isPlayingProperty.reset();
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
-    this.videoUrlProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();
     this.magnifyVideoProperty.reset();
@@ -191,6 +195,7 @@ export class SimModel {
     this.activeTrackIdProperty.value = null;
     this.canAddTrackProperty.value = true;
     this.nextSymbolCode = 65;
+    this.tracker.dispose();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

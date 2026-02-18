@@ -12,11 +12,8 @@ import {
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
-import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
-import type { SimModel } from "../model/SimModel.js";
+import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
-const VIDEO_W = 640;
-const VIDEO_H = 360;
 const MAX_TRAIL = 150;
 const CROSSHAIR_SIZE = 16;
 const FRAME_DURATION = 1 / 30; // assumes 30 fps
@@ -39,7 +36,7 @@ const FRAME_DURATION = 1 / 30; // assumes 30 fps
  * DOM node at position (0,0).
  */
 export class AutoTrackerNode extends Node {
-  private readonly tracker: OpenCVTracker;
+  private readonly model: SimModel;
   private readonly trail: Array<{ x: number; y: number }> = [];
 
   private readonly hintText: Text;
@@ -59,10 +56,10 @@ export class AutoTrackerNode extends Node {
   ) {
     super({ visible: false });
 
-    this.tracker = new OpenCVTracker(VIDEO_W, VIDEO_H);
+    this.model = model;
 
     // ── Transparent hit area (receives drag events) ───────────────────────
-    const hitArea = new Rectangle(0, 0, VIDEO_W, VIDEO_H, {
+    const hitArea = new Rectangle(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT, {
       fill: "transparent",
       cursor: "crosshair",
       tagName: "div",
@@ -75,7 +72,7 @@ export class AutoTrackerNode extends Node {
       font: new PhetFont({ size: 15, weight: "bold" }),
       fill: TrackLabColors.trackerHintFillProperty,
     });
-    this.hintText.center = new Vector2(VIDEO_W / 2, VIDEO_H / 2);
+    this.hintText.center = new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2);
     this.addChild(this.hintText);
 
     // ── Selection rectangle ───────────────────────────────────────────────
@@ -120,7 +117,7 @@ export class AutoTrackerNode extends Node {
     const dragListener = new DragListener({
       start: (event) => {
         this.trail.length = 0;
-        this.tracker.dispose();
+        this.model.tracker.dispose();
         this.setCrosshairVisible(false);
         this.trailPath.shape = null;
         this.trailPath.visible = false;
@@ -161,7 +158,7 @@ export class AutoTrackerNode extends Node {
         if (region.w > 4 && region.h > 4) {
           // initFromVideo is async (loads WASM on first call); tracking begins
           // automatically once `ready` becomes true.
-          this.tracker.initFromVideo(videoElement, region).catch((err) => {
+          this.model.tracker.initFromVideo(videoElement, region).catch((err) => {
             console.error("[AutoTracker] Tracking initialisation failed:", err);
             this.hintText.visible = true;
           });
@@ -175,8 +172,8 @@ export class AutoTrackerNode extends Node {
 
     // ── Track on every video frame ────────────────────────────────────────
     const onFrame = () => {
-      if (!this.visible || !this.tracker.ready) return;
-      const pt = this.tracker.track(videoElement);
+      if (!this.visible || !this.model.tracker.ready) return;
+      const pt = this.model.tracker.track(videoElement);
       if (!pt) return;
 
       this.trail.push(pt);
@@ -241,7 +238,7 @@ export class AutoTrackerNode extends Node {
 
   /** Clear tracking state (template, trail, visuals). */
   public reset(): void {
-    this.tracker.dispose();
+    this.model.tracker.dispose();
     this.trail.length = 0;
     this.selecting = false;
     this.selectionRect.visible = false;

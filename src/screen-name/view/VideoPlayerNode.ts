@@ -26,7 +26,11 @@ import {
 import { ComboBox, type ComboBoxItem, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
-import type { SimModel } from "../model/SimModel.js";
+import {
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+  type SimModel,
+} from "../model/SimModel.js";
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
@@ -84,8 +88,8 @@ export class VideoPlayerNode extends Node {
 
     // ── HTML video element ─────────────────────────────────────────────────
     this.videoElement = document.createElement("video");
-    this.videoElement.width = 640;
-    this.videoElement.height = 360;
+    this.videoElement.width = VIDEO_WIDTH;
+    this.videoElement.height = VIDEO_HEIGHT;
     this.videoElement.preload = "metadata";
     this.videoElement.crossOrigin = "anonymous";
     this.videoElement.style.display = "block";
@@ -110,6 +114,13 @@ export class VideoPlayerNode extends Node {
 
     this.videoElement.addEventListener("ended", () => {
       model.isPlayingProperty.value = false;
+    });
+
+    // Sync model time from video during playback (event-driven, not polled)
+    this.videoElement.addEventListener("timeupdate", () => {
+      if (!this.isScrubbing) {
+        model.currentTimeProperty.value = this.videoElement.currentTime;
+      }
     });
 
     // ── Auto-tracking overlay ──────────────────────────────────────────────
@@ -165,13 +176,20 @@ export class VideoPlayerNode extends Node {
     // ── Magnifier (zoomed view near the cursor) ─────────────────────────────
     const MAG_SIZE = 100; // Canvas diameter in pixels
     const MAG_ZOOM = 4; // Magnification factor
+    const MAG_BORDER_WIDTH = 2;
+    const MAG_CROSSHAIR_RADIUS = 8;
+    const MAG_CROSSHAIR_GAP = 2;
+    const MAG_CROSSHAIR_LINE_WIDTH = 1;
+    const MAG_CROSSHAIR_COLOR = "rgba(255,255,255,0.8)";
 
     const magCanvas = document.createElement("canvas");
     magCanvas.width = MAG_SIZE;
     magCanvas.height = MAG_SIZE;
+    // borderRadius + boxShadow give a round shadow; no CSS border so the
+    // element's layout box stays exactly MAG_SIZE × MAG_SIZE and aligns
+    // pixel-perfectly with the Scenery cursor node.
     Object.assign(magCanvas.style, {
       borderRadius: "50%",
-      border: "2px solid white",
       boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
     });
     const magCtx = magCanvas.getContext("2d");
@@ -182,25 +200,67 @@ export class VideoPlayerNode extends Node {
     magnifierNode.visible = false;
     magnifierNode.pickable = false;
 
-    /** Redraws the magnifier canvas showing a zoomed region of the video. */
-    const updateMagnifier = (localX: number, localY: number) => {
-      // drawImage uses the video's intrinsic (natural) resolution as source
-      // coordinates, but localX/localY are in display space (0–640, 0–360).
-      // Scale to intrinsic pixels so the source rectangle is centered correctly.
-      const scaleX =
-        this.videoElement.videoWidth > 0
-          ? this.videoElement.videoWidth / this.videoElement.width
-          : 1;
-      const scaleY =
-        this.videoElement.videoHeight > 0
-          ? this.videoElement.videoHeight / this.videoElement.height
-          : 1;
+    /**
+     * Computes the rendered video bounds within the display element,
+     * accounting for letterboxing/pillarboxing when aspect ratios differ.
+     */
+    const getRenderedVideoBounds = () => {
+      const displayW = this.videoElement.width;
+      const displayH = this.videoElement.height;
+      const videoW = this.videoElement.videoWidth || displayW;
+      const videoH = this.videoElement.videoHeight || displayH;
 
-      // Source rectangle in intrinsic pixels, centered on the cursor position.
-      const srcW = (MAG_SIZE / MAG_ZOOM) * scaleX;
-      const srcH = (MAG_SIZE / MAG_ZOOM) * scaleY;
-      const sx = localX * scaleX - srcW / 2;
-      const sy = localY * scaleY - srcH / 2;
+      const displayAspect = displayW / displayH;
+      const videoAspect = videoW / videoH;
+
+      let renderedW: number;
+      let renderedH: number;
+      let offsetX: number;
+      let offsetY: number;
+
+      if (videoAspect > displayAspect) {
+        // Video is wider than display: letterboxing (bars on top/bottom)
+        renderedW = displayW;
+        renderedH = displayW / videoAspect;
+        offsetX = 0;
+        offsetY = (displayH - renderedH) / 2;
+      } else {
+        // Video is taller than display: pillarboxing (bars on sides)
+        renderedH = displayH;
+        renderedW = displayH * videoAspect;
+        offsetX = (displayW - renderedW) / 2;
+        offsetY = 0;
+      }
+
+      return { renderedW, renderedH, offsetX, offsetY, videoW, videoH };
+    };
+
+    /** Redraws the magnifier canvas showing a zoomed region of the video.
+     * @param localX - cursor X in overlay coordinates (video region to magnify)
+     * @param localY - cursor Y in overlay coordinates (video region to magnify)
+     * @param crosshairX - X position to draw crosshair within the canvas
+     * @param crosshairY - Y position to draw crosshair within the canvas
+     */
+    const updateMagnifier = (
+      localX: number,
+      localY: number,
+      crosshairX: number,
+      crosshairY: number,
+    ) => {
+      const { renderedW, renderedH, offsetX, offsetY, videoW, videoH } =
+        getRenderedVideoBounds();
+
+      // Convert overlay coordinates to video intrinsic coordinates,
+      // accounting for letterboxing/pillarboxing offset and scale.
+      const videoX = ((localX - offsetX) / renderedW) * videoW;
+      const videoY = ((localY - offsetY) / renderedH) * videoH;
+
+      // Source rectangle size in intrinsic pixels for the desired zoom level.
+      // The magnifier shows (MAG_SIZE / MAG_ZOOM) display pixels worth of video.
+      const srcW = (MAG_SIZE / MAG_ZOOM) * (videoW / renderedW);
+      const srcH = (MAG_SIZE / MAG_ZOOM) * (videoH / renderedH);
+      const sx = videoX - srcW / 2;
+      const sy = videoY - srcH / 2;
 
       // Clear and draw the magnified portion
       magCtx.clearRect(0, 0, MAG_SIZE, MAG_SIZE);
@@ -226,31 +286,48 @@ export class VideoPlayerNode extends Node {
 
       magCtx.restore();
 
-      // Draw crosshair on top (center of magnifier)
-      const center = MAG_SIZE / 2;
-      const crossR = 8;
-      const crossGap = 2;
-      magCtx.strokeStyle = "rgba(255,255,255,0.8)";
-      magCtx.lineWidth = 1;
+      // White border ring drawn on-canvas so it doesn't affect the DOM
+      // element's layout box size (avoids a CSS border offset).
+      magCtx.strokeStyle = "white";
+      magCtx.lineWidth = MAG_BORDER_WIDTH;
+      magCtx.beginPath();
+      magCtx.arc(
+        MAG_SIZE / 2,
+        MAG_SIZE / 2,
+        MAG_SIZE / 2 - MAG_BORDER_WIDTH / 2,
+        0,
+        Math.PI * 2,
+      );
+      magCtx.stroke();
+
+      // Draw crosshair at the cursor position (aligns with the cursor on screen)
+      magCtx.strokeStyle = MAG_CROSSHAIR_COLOR;
+      magCtx.lineWidth = MAG_CROSSHAIR_LINE_WIDTH;
       magCtx.beginPath();
       // Horizontal segments
-      magCtx.moveTo(center - crossR, center);
-      magCtx.lineTo(center - crossGap, center);
-      magCtx.moveTo(center + crossGap, center);
-      magCtx.lineTo(center + crossR, center);
+      magCtx.moveTo(crosshairX - MAG_CROSSHAIR_RADIUS, crosshairY);
+      magCtx.lineTo(crosshairX - MAG_CROSSHAIR_GAP, crosshairY);
+      magCtx.moveTo(crosshairX + MAG_CROSSHAIR_GAP, crosshairY);
+      magCtx.lineTo(crosshairX + MAG_CROSSHAIR_RADIUS, crosshairY);
       // Vertical segments
-      magCtx.moveTo(center, center - crossR);
-      magCtx.lineTo(center, center - crossGap);
-      magCtx.moveTo(center, center + crossGap);
-      magCtx.lineTo(center, center + crossR);
+      magCtx.moveTo(crosshairX, crosshairY - MAG_CROSSHAIR_RADIUS);
+      magCtx.lineTo(crosshairX, crosshairY - MAG_CROSSHAIR_GAP);
+      magCtx.moveTo(crosshairX, crosshairY + MAG_CROSSHAIR_GAP);
+      magCtx.lineTo(crosshairX, crosshairY + MAG_CROSSHAIR_RADIUS);
       magCtx.stroke();
     };
 
-    const digitizingOverlay = new Rectangle(0, 0, 640, 360, {
-      fill: "transparent",
-      cursor: "none", // system cursor hidden; cursorNode takes its place
-      visible: false,
-    });
+    const digitizingOverlay = new Rectangle(
+      0,
+      0,
+      VIDEO_WIDTH,
+      VIDEO_HEIGHT,
+      {
+        fill: "transparent",
+        cursor: "none", // system cursor hidden; cursorNode takes its place
+        visible: false,
+      },
+    );
     digitizingOverlay.addChild(cursorNode);
     digitizingOverlay.addChild(magnifierNode);
 
@@ -266,17 +343,20 @@ export class VideoPlayerNode extends Node {
         // Centre the magnifier on the cursor, clamped to stay within the overlay
         const magX = Math.max(
           0,
-          Math.min(localPt.x - MAG_SIZE / 2, 640 - MAG_SIZE),
+          Math.min(localPt.x - MAG_SIZE / 2, VIDEO_WIDTH - MAG_SIZE),
         );
         const magY = Math.max(
           0,
-          Math.min(localPt.y - MAG_SIZE / 2, 360 - MAG_SIZE),
+          Math.min(localPt.y - MAG_SIZE / 2, VIDEO_HEIGHT - MAG_SIZE),
         );
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
         if (model.magnifyVideoProperty.value) {
-          updateMagnifier(localPt.x, localPt.y);
+          // Crosshair position within the magnifier canvas (cursor relative to magnifier)
+          const crosshairX = localPt.x - magX;
+          const crosshairY = localPt.y - magY;
+          updateMagnifier(localPt.x, localPt.y, crosshairX, crosshairY);
           magnifierNode.visible = true;
         } else {
           magnifierNode.visible = false;
@@ -558,18 +638,6 @@ export class VideoPlayerNode extends Node {
       webcamPanel.centerX = mainContent.centerX;
       webcamPanel.centerY = mainContent.centerY;
     });
-  }
-
-  public step(): void {
-    if (!this.isScrubbing) {
-      const t = this.videoElement.currentTime;
-      if (
-        Number.isFinite(t) &&
-        Math.abs(this.model.currentTimeProperty.value - t) > 0.016
-      ) {
-        this.model.currentTimeProperty.value = t;
-      }
-    }
   }
 
   /** Pause playback and advance by exactly one frame (1/30 s). */
