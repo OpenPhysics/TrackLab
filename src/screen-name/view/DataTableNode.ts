@@ -6,6 +6,10 @@
  *
  * Columns: colour badge with symbol | x position | y position
  * Values are shown in the unit selected in the CalibrationToolNode.
+ *
+ * Performance note: the panel separates structure rebuilds (only on
+ * track add/remove) from value updates (on time or unit change). This
+ * avoids recreating SceneryStack nodes on every video frame.
  */
 
 import { Color } from "scenerystack";
@@ -40,8 +44,15 @@ function getPointAtFrame(track: Track, frame: number): TrackPoint | null {
   return candidates.reduce((best, p) => (p.frame > best.frame ? p : best));
 }
 
-/** Builds one compact row for a track. */
-function buildTrackRow(track: Track, frame: number, unit: string): Node {
+/** Mutable handles into one track row's Text nodes. */
+type RowRefs = {
+  container: Node;
+  xLabel: Text;
+  yLabel: Text;
+};
+
+/** Builds one compact row for a track and returns handles to its mutable labels. */
+function buildTrackRow(track: Track): RowRefs {
   const trackColor = new Color(track.color);
 
   const badge = new Circle(BADGE_R, {
@@ -55,16 +66,12 @@ function buildTrackRow(track: Track, frame: number, unit: string): Node {
 
   const badgeNode = new Node({ children: [badge, symbolLabel] });
 
-  const point = getPointAtFrame(track, frame);
-  const xStr = point ? point.x.toFixed(3) : "—";
-  const yStr = point ? point.y.toFixed(3) : "—";
-
-  const xLabel = new Text(`x: ${xStr} ${unit}`, {
+  const xLabel = new Text("x: — ", {
     font: LABEL_FONT,
     fill: TrackLabColors.textOnDarkProperty,
     maxWidth: PANEL_WIDTH - BADGE_R * 2 - 20,
   });
-  const yLabel = new Text(`y: ${yStr} ${unit}`, {
+  const yLabel = new Text("y: — ", {
     font: LABEL_FONT,
     fill: TrackLabColors.textOnDarkProperty,
     maxWidth: PANEL_WIDTH - BADGE_R * 2 - 20,
@@ -96,7 +103,7 @@ function buildTrackRow(track: Track, frame: number, unit: string): Node {
   bg.rectHeight = row.height + 8;
   bg.top = row.top - 4;
 
-  return container;
+  return { container, xLabel, yLabel };
 }
 
 export class DataTableNode extends Panel {
@@ -142,30 +149,71 @@ export class DataTableNode extends Panel {
       visible: false,
     });
 
-    const rebuildRows = () => {
-      const tracks = model.tracksProperty.value;
-      const currentFrame = Math.round(
+    // ── Live row refs keyed by track ID ───────────────────────────────────
+    // Rows are created/destroyed only when tracks are added or removed.
+    // Value updates (time, unit changes) mutate the Text nodes in-place.
+    const rowRefs = new Map<string, RowRefs>();
+
+    // Last set of visible track IDs (joined string used as cheap fingerprint).
+    let lastVisibleIds = "";
+
+    const updateValues = () => {
+      const frame = Math.round(
         model.currentTimeProperty.value / FRAME_DURATION,
       );
       const unit = unitProperty.value;
 
-      // Find tracks that have at least one point at or before the current frame.
-      const tracksWithData = tracks.filter((t) =>
-        t.points.some((p) => p.frame <= currentFrame),
+      // Determine which tracks have data at or before the current frame.
+      const tracksWithData = model.tracksProperty.value.filter(
+        (t) => rowRefs.has(t.id) && t.points.some((p) => p.frame <= frame),
       );
 
-      if (tracksWithData.length === 0) {
-        rowsVBox.children = [noDataLabel];
-      } else {
-        rowsVBox.children = tracksWithData.map((t) =>
-          buildTrackRow(t, currentFrame, unit),
-        );
+      // Only update VBox children when the visible set changes.
+      const visibleIds = tracksWithData.map((t) => t.id).join(",");
+      if (visibleIds !== lastVisibleIds) {
+        lastVisibleIds = visibleIds;
+        rowsVBox.children =
+          tracksWithData.length === 0
+            ? [noDataLabel]
+            : tracksWithData.map((t) => rowRefs.get(t.id)!.container);
+      }
+
+      // Update Text values in-place (no node reconstruction).
+      for (const track of tracksWithData) {
+        const refs = rowRefs.get(track.id)!;
+        const pt = getPointAtFrame(track, frame);
+        refs.xLabel.string = pt ? `x: ${pt.x.toFixed(3)} ${unit}` : `x: — `;
+        refs.yLabel.string = pt ? `y: ${pt.y.toFixed(3)} ${unit}` : `y: — `;
       }
     };
 
-    model.tracksProperty.link(rebuildRows);
-    model.currentTimeProperty.link(rebuildRows);
-    unitProperty.link(rebuildRows);
+    // ── Rebuild row structure only when track IDs change ──────────────────
+    let lastTrackIds = "";
+    model.tracksProperty.link((tracks) => {
+      const ids = tracks.map((t) => t.id).join(",");
+      if (ids !== lastTrackIds) {
+        lastTrackIds = ids;
+
+        // Remove refs for deleted tracks.
+        for (const id of rowRefs.keys()) {
+          if (!tracks.some((t) => t.id === id)) {
+            rowRefs.delete(id);
+          }
+        }
+        // Add refs for new tracks.
+        for (const track of tracks) {
+          if (!rowRefs.has(track.id)) {
+            rowRefs.set(track.id, buildTrackRow(track));
+          }
+        }
+      }
+
+      // Always refresh values after any track change (handles point additions).
+      updateValues();
+    });
+
+    model.currentTimeProperty.link(updateValues);
+    unitProperty.link(updateValues);
 
     videoLoadedProperty.link((loaded) => {
       this.visible = loaded;

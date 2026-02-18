@@ -129,6 +129,10 @@ export class SimModel {
   public readonly tracksProperty = new Property<readonly Track[]>([]);
   public readonly activeTrackIdProperty = new Property<string | null>(null);
   public readonly canAddTrackProperty = new BooleanProperty(true);
+  // Symbols are assigned sequentially (A → Z) and intentionally not reused
+  // after a track is removed.  Stable, unique symbols matter for data export
+  // and user recognition: re-issuing "A" to a new track after the original "A"
+  // is deleted would be confusing.  The practical limit is 26 tracks per session.
   private nextSymbolCode = 65; // ASCII code for 'A'
 
   public addTrack(): void {
