@@ -1,8 +1,8 @@
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
-import type { Vector2 } from "scenerystack/dot";
-import { NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Tandem } from "scenerystack/tandem";
+import type { TReadOnlyProperty } from "scenerystack/axon";
+import type { SimModel } from "../model/SimModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const ARROW_LENGTH = 120;
@@ -10,14 +10,8 @@ const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont( { size: 14, weight: 'bold' } );
 
 export class CoordinateSystemNode extends Node {
-  public readonly viewPositionProperty: Property<Vector2>;
-  public readonly rotationAngleProperty: NumberProperty;
-
-  public constructor( videoLoadedProperty: TReadOnlyProperty<boolean>, initialPosition: Vector2 ) {
+  public constructor( videoLoadedProperty: TReadOnlyProperty<boolean>, model: SimModel ) {
     super();
-
-    this.viewPositionProperty = new Property<Vector2>( initialPosition.copy() );
-    this.rotationAngleProperty = new NumberProperty( 0 );
 
     // ── Rotating node: axes + rotation handle ─────────────────────────────
     const rotatingNode = new Node();
@@ -75,7 +69,7 @@ export class CoordinateSystemNode extends Node {
       lineWidth: 1,
     } );
 
-    // ── Position wrapper: translates with viewPositionProperty ───────────
+    // ── Position wrapper: translates with model.coordOriginProperty ───────
     const positionNode = new Node( {
       children: [ rotatingNode, originMarker ],
       cursor: 'move',
@@ -86,12 +80,12 @@ export class CoordinateSystemNode extends Node {
     this.addChild( positionNode );
 
     // ── Property → scene-graph linkage ────────────────────────────────────
-    this.viewPositionProperty.link( pos => { positionNode.translation = pos; } );
-    this.rotationAngleProperty.link( angle => { rotatingNode.rotation = angle; } );
+    model.coordOriginProperty.link( pos => { positionNode.translation = pos; } );
+    model.coordAngleProperty.link( angle => { rotatingNode.rotation = angle; } );
 
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener( new RichDragListener( {
-      positionProperty: this.viewPositionProperty,
+      positionProperty: model.coordOriginProperty,
       keyboardDragListenerOptions: {
         dragSpeed: 300,
         shiftDragSpeed: 50,
@@ -106,7 +100,7 @@ export class CoordinateSystemNode extends Node {
       dragListenerOptions: {
         drag: ( event ) => {
           const p = positionNode.globalToLocalPoint( event.pointer.point );
-          this.rotationAngleProperty.value = Math.atan2( p.y, p.x );
+          model.coordAngleProperty.value = Math.atan2( p.y, p.x );
         },
       },
       keyboardDragListenerOptions: {
@@ -114,7 +108,7 @@ export class CoordinateSystemNode extends Node {
         dragSpeed: 100,
         shiftDragSpeed: 20,
         drag: ( _event, listener ) => {
-          this.rotationAngleProperty.value += listener.modelDelta.x * ( Math.PI / 180 );
+          model.coordAngleProperty.value += listener.modelDelta.x * ( Math.PI / 180 );
         },
       },
       tandem: Tandem.OPT_OUT,
@@ -122,10 +116,5 @@ export class CoordinateSystemNode extends Node {
 
     // ── Visibility: only shown once a video with a finite duration is loaded
     videoLoadedProperty.link( loaded => { this.visible = loaded; } );
-  }
-
-  public reset(): void {
-    this.viewPositionProperty.reset();
-    this.rotationAngleProperty.reset();
   }
 }
