@@ -49,6 +49,10 @@ export class AutoTrackerNode extends Node {
   private selecting = false;
   private selStart = Vector2.ZERO;
 
+  // Kept for removeEventListener in dispose()
+  private readonly boundVideoElement: HTMLVideoElement;
+  private readonly boundOnFrame: () => void;
+
   public constructor(
     videoElement: HTMLVideoElement,
     autoTrackingShownProperty: TReadOnlyProperty<boolean>,
@@ -206,6 +210,10 @@ export class AutoTrackerNode extends Node {
     videoElement.addEventListener("timeupdate", onFrame);
     videoElement.addEventListener("seeked", onFrame);
 
+    // Store refs so dispose() can remove the listeners.
+    this.boundVideoElement = videoElement;
+    this.boundOnFrame = onFrame;
+
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     autoTrackingShownProperty.link((shown) => {
       if (!shown) this.reset();
@@ -245,5 +253,12 @@ export class AutoTrackerNode extends Node {
     this.trailPath.shape = null;
     this.trailPath.visible = false;
     this.setCrosshairVisible(false);
+  }
+
+  public override dispose(): void {
+    this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
+    this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
+    this.tracker.dispose();
+    super.dispose();
   }
 }

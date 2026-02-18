@@ -114,12 +114,10 @@ class TrackRowNode extends Node {
       model.activeTrackIdProperty.value === track.id,
     );
 
-    // Sync checkbox from model (when another track becomes active, uncheck this one)
+    // Sync checkbox from model (when another track becomes active, uncheck this one).
+    // Axon Properties deduplicate same-value writes, so no infinite loop can occur.
     model.activeTrackIdProperty.link((activeId) => {
-      const shouldBeChecked = activeId === track.id;
-      if (isDigitizingProperty.value !== shouldBeChecked) {
-        isDigitizingProperty.value = shouldBeChecked;
-      }
+      isDigitizingProperty.value = activeId === track.id;
     });
 
     // Sync model from checkbox
@@ -229,8 +227,14 @@ export class TrackListPanel extends Panel {
       this.visible = loaded;
     });
 
-    // ── Rebuild track rows on every track change ──────────────────────────
+    // ── Rebuild track rows only when track IDs change ─────────────────────
+    // addPointToTrack() also replaces tracksProperty, but the set of IDs is
+    // unchanged in that case, so we skip the expensive row reconstruction.
+    let lastIds = "";
     model.tracksProperty.link((tracks) => {
+      const ids = tracks.map((t) => t.id).join(",");
+      if (ids === lastIds) return;
+      lastIds = ids;
       trackListVBox.children = tracks.map(
         (track) => new TrackRowNode(track, model),
       );
