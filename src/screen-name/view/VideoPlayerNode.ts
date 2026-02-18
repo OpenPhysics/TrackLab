@@ -1,5 +1,5 @@
-import { BooleanProperty, DerivedProperty, EnumerationProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
-import { Dimension2, Range, type Transform3 } from "scenerystack/dot";
+import { BooleanProperty, DerivedProperty, EnumerationProperty, Property } from "scenerystack/axon";
+import { Dimension2, Range } from "scenerystack/dot";
 import { Circle, DOM, FireListener, HBox, Line, Node, Path, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
@@ -31,11 +31,7 @@ export class VideoPlayerNode extends Node {
   private readonly model: SimModel;
   private isScrubbing = false;
 
-  public constructor(
-    model: SimModel,
-    listParent: Node,
-    modelViewTransformProperty: TReadOnlyProperty<Transform3>
-  ) {
+  public constructor( model: SimModel, listParent: Node ) {
     super();
     this.model = model;
 
@@ -80,12 +76,7 @@ export class VideoPlayerNode extends Node {
       [ videoLoadedProperty, model.autoTrackingProperty ],
       ( loaded, tracking ) => loaded && tracking
     );
-    const autoTrackerNode = new AutoTrackerNode(
-      this.videoElement,
-      autoTrackingShownProperty,
-      model,
-      modelViewTransformProperty
-    );
+    const autoTrackerNode = new AutoTrackerNode( this.videoElement, autoTrackingShownProperty, model );
 
     // ── Manual digitizing overlay ─────────────────────────────────────────
     // Sits on top of the video; active when a track checkbox is checked.
@@ -251,7 +242,7 @@ export class VideoPlayerNode extends Node {
         const time = model.currentTimeProperty.value;
         const frame = Math.round( time / FRAME_DURATION );
 
-        const mvt = modelViewTransformProperty.value;
+        const mvt = model.modelViewTransformProperty.value;
         const modelPt = mvt.inversePosition2( globalPt );
 
         markData.push( { trackId: activeId, frame, localX: localPt.x, localY: localPt.y, color: track.color } );

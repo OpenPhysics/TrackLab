@@ -4,7 +4,6 @@ import { Shape } from "scenerystack/kite";
 import { Tandem } from "scenerystack/tandem";
 import { Vector2 } from "scenerystack/dot";
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import type { Transform3 } from "scenerystack/dot";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -49,8 +48,7 @@ export class AutoTrackerNode extends Node {
   public constructor(
     videoElement: HTMLVideoElement,
     autoTrackingShownProperty: TReadOnlyProperty<boolean>,
-    model: SimModel,
-    modelViewTransformProperty: TReadOnlyProperty<Transform3>
+    model: SimModel
   ) {
     super( { visible: false } );
 
@@ -192,7 +190,7 @@ export class AutoTrackerNode extends Node {
         if ( !alreadyRecorded ) {
           // Convert video-pixel coords to global coords, then to model coords.
           const globalPt = this.localToGlobalPoint( new Vector2( pt.x, pt.y ) );
-          const modelPt = modelViewTransformProperty.value.inversePosition2( globalPt );
+          const modelPt = model.modelViewTransformProperty.value.inversePosition2( globalPt );
           model.addPointToTrack( activeId, frame, time, modelPt.x, modelPt.y );
         }
       }
