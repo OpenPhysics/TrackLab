@@ -11,6 +11,7 @@ import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const LABEL_FONT = new PhetFont( 14 );
+const FRAME_DURATION = 1 / 30; // assumes 30 fps
 
 const VIDEO_FILES = [
   { label: 'Ball in Oil',        filename: 'ball_oil.mp4',         tandemName: 'ballOilItem' },
@@ -104,7 +105,6 @@ export class VideoPlayerNode extends Node {
     } );
 
     // ── Step one frame (assumed 30 fps) ────────────────────────────────────
-    const FRAME_DURATION = 1 / 30;
     const seekByFrames = ( direction: number ) => {
       model.isPlayingProperty.value = false;
       const raw = this.videoElement.currentTime + direction * FRAME_DURATION;
@@ -279,6 +279,15 @@ export class VideoPlayerNode extends Node {
         this.model.currentTimeProperty.value = t;
       }
     }
+  }
+
+  /** Pause playback and advance by exactly one frame (1/30 s). */
+  public stepForward(): void {
+    this.model.isPlayingProperty.value = false;
+    const raw = this.videoElement.currentTime + FRAME_DURATION;
+    const clamped = Math.max( 0, Math.min( raw, this.videoElement.duration ) );
+    this.videoElement.currentTime = clamped;
+    this.model.currentTimeProperty.value = clamped;
   }
 
   private loadUrl( url: string ): void {
