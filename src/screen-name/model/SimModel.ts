@@ -36,6 +36,9 @@ export class SimModel {
 
   // ── Manual particle tracks ────────────────────────────────────────────
   public readonly tracksProperty = new Property<readonly Track[]>( [] );
+
+  // The track currently selected for manual digitizing (null = none).
+  public readonly activeTrackIdProperty = new Property<string | null>( null );
   private nextSymbolCode = 65; // ASCII code for 'A'
 
   public addTrack(): void {
@@ -59,6 +62,9 @@ export class SimModel {
   }
 
   public removeTrack( id: string ): void {
+    if ( this.activeTrackIdProperty.value === id ) {
+      this.activeTrackIdProperty.value = null;
+    }
     const removed = this.tracksProperty.value.find( t => t.id === id );
     this.tracksProperty.value = this.tracksProperty.value.filter( t => t.id !== id );
     const remaining = this.tracksProperty.value.map( t => t.symbol ).join( ', ' ) || 'none';
@@ -95,6 +101,7 @@ export class SimModel {
     this.magnifyVideoProperty.reset();
     this.autoTrackingProperty.reset();
     this.tracksProperty.value = [];
+    this.activeTrackIdProperty.value = null;
     this.nextSymbolCode = 65;
   }
 

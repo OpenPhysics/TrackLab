@@ -109,11 +109,7 @@ export class SimScreenView extends ScreenView {
     this.addChild( controlPanel );
 
     // ── Track list panel (right of the video) ────────────────────────────
-    const trackListPanel = new TrackListPanel(
-      model,
-      videoLoadedProperty,
-      () => this.videoPlayerNode.stepForward()
-    );
+    const trackListPanel = new TrackListPanel( model, videoLoadedProperty );
     this.addChild( trackListPanel );
     // Position: just right of the video player, top-aligned with it.
     trackListPanel.left = this.videoPlayerNode.right + 12;

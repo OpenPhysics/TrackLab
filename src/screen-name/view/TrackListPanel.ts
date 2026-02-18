@@ -5,17 +5,19 @@
  *
  * Workflow:
  *  • User clicks "+ Add Track" → a new labelled track box appears (A, B, C …).
- *  • Clicking the track box records a data point at the current frame and
- *    advances the video by one frame (manual digitising).
+ *  • Each track box has a checkbox.  Checking it selects that track for
+ *    digitizing: the cursor over the video becomes a crosshair and clicking
+ *    the video records the position in model coordinates.
+ *  • Only one track can be active at a time (checking one unchecks the others).
  *  • The trash icon removes the track.
  *  • The panel is hidden until a video is loaded.
  */
 
 import { BooleanProperty } from "scenerystack/axon";
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Circle, FireListener, Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { Circle, Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { Panel, RectangularPushButton } from "scenerystack/sun";
+import { Checkbox, Panel, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { Color } from "scenerystack";
 import type { SimModel } from "../model/SimModel.js";
@@ -28,12 +30,11 @@ const ROW_HEIGHT  = 40;    // height of each track box
 const BADGE_R     = 13;    // radius of colour badge circle
 const BADGE_CX    = 22;    // x-centre of badge inside the row
 const TRASH_W     = 34;    // width of the trash button column
+const CHECKBOX_X  = BADGE_CX + BADGE_R + 10; // left edge of checkbox
 
 const HEADER_FONT = new PhetFont( { size: 13, weight: 'bold' } );
 const SYMBOL_FONT = new PhetFont( { size: 15, weight: 'bold' } );
 const LABEL_FONT  = new PhetFont( 12 );
-
-const FRAME_DURATION = 1 / 30; // seconds per frame (30 fps)
 
 // ── Trash-can icon ──────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ function makeTrashIcon(): Node {
 // ── Individual track row ────────────────────────────────────────────────────
 
 class TrackRowNode extends Node {
-  public constructor( track: Track, model: SimModel, onTag: () => void ) {
+  public constructor( track: Track, model: SimModel ) {
     super();
 
     const trackColor = new Color( track.color );
@@ -69,18 +70,6 @@ class TrackRowNode extends Node {
       lineWidth: 1.5,
       pickable: false,
     } );
-
-    // ── Clickable zone (left of the trash button) ─────────────────────────
-    // Separate transparent rectangle so the trash button events don't bubble
-    // up through the same handler.
-    const clickZone = new Rectangle( 0, 0, PANEL_WIDTH - TRASH_W, ROW_HEIGHT, 0, 0, {
-      fill: 'transparent',
-      cursor: 'pointer',
-    } );
-    clickZone.addInputListener( new FireListener( {
-      fire: onTag,
-      tandem: Tandem.OPT_OUT,
-    } ) );
 
     // ── Colour badge with symbol letter ───────────────────────────────────
     const badge = new Circle( BADGE_R, {
@@ -96,6 +85,34 @@ class TrackRowNode extends Node {
     symbolLabel.centerX = BADGE_CX;
     symbolLabel.centerY = ROW_CY;
 
+    // ── Checkbox: activates this track for video digitizing ───────────────
+    const isDigitizingProperty = new BooleanProperty( model.activeTrackIdProperty.value === track.id );
+
+    // Sync checkbox from model (when another track becomes active, uncheck this one)
+    model.activeTrackIdProperty.link( activeId => {
+      const shouldBeChecked = activeId === track.id;
+      if ( isDigitizingProperty.value !== shouldBeChecked ) {
+        isDigitizingProperty.value = shouldBeChecked;
+      }
+    } );
+
+    // Sync model from checkbox
+    isDigitizingProperty.lazyLink( isDigitizing => {
+      if ( isDigitizing ) {
+        model.activeTrackIdProperty.value = track.id;
+      }
+      else if ( model.activeTrackIdProperty.value === track.id ) {
+        model.activeTrackIdProperty.value = null;
+      }
+    } );
+
+    const checkbox = new Checkbox( isDigitizingProperty, new Rectangle( 0, 0, 0, 0 ), {
+      boxWidth: 14,
+      tandem: Tandem.OPT_OUT,
+    } );
+    checkbox.left    = CHECKBOX_X;
+    checkbox.centerY = ROW_CY;
+
     // ── Trash button (right side) ─────────────────────────────────────────
     const trashButton = new RectangularPushButton( {
       content: makeTrashIcon(),
@@ -109,9 +126,9 @@ class TrackRowNode extends Node {
     trashButton.right   = PANEL_WIDTH - 3;
 
     this.addChild( bg );
-    this.addChild( clickZone );
     this.addChild( badge );
     this.addChild( symbolLabel );
+    this.addChild( checkbox );
     this.addChild( trashButton );
   }
 }
@@ -121,8 +138,7 @@ class TrackRowNode extends Node {
 export class TrackListPanel extends Panel {
   public constructor(
     model: SimModel,
-    videoLoadedProperty: TReadOnlyProperty<boolean>,
-    onStepForward: () => void
+    videoLoadedProperty: TReadOnlyProperty<boolean>
   ) {
     // Width enforcer: invisible rectangle keeps the panel wide even when the
     // track list is empty.
@@ -180,15 +196,7 @@ export class TrackListPanel extends Panel {
 
     // ── Rebuild track rows on every track change ──────────────────────────
     model.tracksProperty.link( tracks => {
-      trackListVBox.children = tracks.map( track => {
-        const onTag = () => {
-          const frame = Math.round( model.currentTimeProperty.value / FRAME_DURATION );
-          model.addPointToTrack( track.id, frame, model.currentTimeProperty.value );
-          onStepForward();
-        };
-        return new TrackRowNode( track, model, onTag );
-      } );
-
+      trackListVBox.children = tracks.map( track => new TrackRowNode( track, model ) );
       addButtonEnabledProperty.value = model.canAddTrack();
     } );
   }

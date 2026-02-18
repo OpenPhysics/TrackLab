@@ -1,6 +1,7 @@
 import { BooleanProperty, DerivedProperty, EnumerationProperty, Property } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
-import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
+import { Circle, DOM, FireListener, HBox, Line, Node, Path, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { Shape } from "scenerystack/kite";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { CameraButton } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem, Slider } from "scenerystack/sun";
@@ -77,8 +78,94 @@ export class VideoPlayerNode extends Node {
     );
     const autoTrackerNode = new AutoTrackerNode( this.videoElement, autoTrackingShownProperty );
 
+    // ── Manual digitizing overlay ─────────────────────────────────────────
+    // Sits on top of the video; active when a track checkbox is checked.
+    // Renders a custom crosshair cursor and leaves a colour-matched dot on
+    // each click.
+    const OUTER_R = 12;
+    const INNER_R = 2;
+    const CUR_LW  = 1.5;
+    const CUR_CLR = 'white';
+
+    // Custom cursor: large circle + 4 segments that stop at the empty centre
+    const cursorNode = new Node( {
+      visible: false,
+      pickable: false,
+      children: [
+        new Path( Shape.circle( 0, 0, OUTER_R ), { stroke: CUR_CLR, lineWidth: CUR_LW } ),
+        new Line( -OUTER_R, 0, -INNER_R, 0, { stroke: CUR_CLR, lineWidth: CUR_LW } ),
+        new Line(  INNER_R, 0,  OUTER_R, 0, { stroke: CUR_CLR, lineWidth: CUR_LW } ),
+        new Line( 0, -OUTER_R, 0, -INNER_R, { stroke: CUR_CLR, lineWidth: CUR_LW } ),
+        new Line( 0,  INNER_R, 0,  OUTER_R, { stroke: CUR_CLR, lineWidth: CUR_LW } ),
+      ],
+    } );
+
+    const digitizingOverlay = new Rectangle( 0, 0, 640, 360, {
+      fill: 'transparent',
+      cursor: 'none',   // system cursor hidden; cursorNode takes its place
+      visible: false,
+    } );
+    digitizingOverlay.addChild( cursorNode );
+
+    // Track cursor position
+    digitizingOverlay.addInputListener( {
+      move: event => {
+        cursorNode.translation = digitizingOverlay.globalToLocalPoint( event.pointer.point );
+        cursorNode.visible = true;
+      },
+      exit: () => { cursorNode.visible = false; },
+    } );
+
+    // Coloured dots at click positions, filtered by current frame
+    type MarkData = { frame: number; localX: number; localY: number; color: string };
+    const markData: MarkData[] = [];
+    const marksLayer = new Node( { pickable: false } );
+
+    const rebuildMarks = () => {
+      const currentFrame = Math.round( model.currentTimeProperty.value / FRAME_DURATION );
+      marksLayer.children = markData
+        .filter( m => m.frame <= currentFrame )
+        .map( m => new Circle( 2, { fill: m.color, x: m.localX, y: m.localY } ) );
+    };
+
+    model.currentTimeProperty.link( () => rebuildMarks() );
+
+    model.activeTrackIdProperty.link( activeId => {
+      digitizingOverlay.visible = activeId !== null;
+      if ( !activeId ) cursorNode.visible = false;
+    } );
+
+    digitizingOverlay.addInputListener( new FireListener( {
+      fire: event => {
+        if ( !event ) return;
+        const activeId = model.activeTrackIdProperty.value;
+        if ( !activeId ) return;
+
+        const track = model.tracksProperty.value.find( t => t.id === activeId );
+        if ( !track ) return;
+
+        const globalPt = event.pointer.point;
+        const localPt  = digitizingOverlay.globalToLocalPoint( globalPt );
+
+        const time = model.currentTimeProperty.value;
+        const frame = Math.round( time / FRAME_DURATION );
+
+        markData.push( { frame, localX: localPt.x, localY: localPt.y, color: track.color } );
+        rebuildMarks();
+
+        const mvt = model.modelViewTransformProperty.value;
+        const modelPt = mvt.inversePosition2( globalPt );
+
+        console.log(
+          `[TrackLab] Track ${ track.symbol } → frame ${ frame } (t=${ time.toFixed( 3 ) }s) | x=${ modelPt.x.toFixed( 3 ) }, y=${ modelPt.y.toFixed( 3 ) } (model)`
+        );
+        this.stepForward();
+      },
+      tandem: Tandem.OPT_OUT,
+    } ) );
+
     const videoLayer = new Node( {
-      children: [ videoNode, autoTrackerNode ],
+      children: [ videoNode, autoTrackerNode, digitizingOverlay, marksLayer ],
     } );
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
