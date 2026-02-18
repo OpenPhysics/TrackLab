@@ -57,30 +57,21 @@ export class SimModel {
     const tracks = [ ...this.tracksProperty.value, track ];
     tracks.sort( ( a, b ) => a.symbol.localeCompare( b.symbol ) );
     this.tracksProperty.value = tracks;
-
-    console.log( `[TrackLab] Added track ${ symbol }. Active tracks: ${ tracks.map( t => t.symbol ).join( ', ' ) }` );
   }
 
   public removeTrack( id: string ): void {
     if ( this.activeTrackIdProperty.value === id ) {
       this.activeTrackIdProperty.value = null;
     }
-    const removed = this.tracksProperty.value.find( t => t.id === id );
     this.tracksProperty.value = this.tracksProperty.value.filter( t => t.id !== id );
-    const remaining = this.tracksProperty.value.map( t => t.symbol ).join( ', ' ) || 'none';
-    console.log( `[TrackLab] Removed track ${ removed?.symbol ?? id }. Remaining: ${ remaining }` );
   }
 
-  public addPointToTrack( id: string, frame: number, time: number ): void {
+  public addPointToTrack( id: string, frame: number, time: number, x: number, y: number ): void {
     const tracks = this.tracksProperty.value.map( track => {
       if ( track.id !== id ) return track;
 
-      const point: TrackPoint = { frame, time };
+      const point: TrackPoint = { frame, time, x, y };
       const updated: Track = { ...track, points: [ ...track.points, point ] };
-      console.log(
-        `[TrackLab] Track ${ track.symbol } → frame ${ frame } (t=${ time.toFixed( 3 ) }s) | ${ updated.points.length } point(s) recorded`,
-        updated.points
-      );
       return updated;
     } );
     this.tracksProperty.value = tracks;

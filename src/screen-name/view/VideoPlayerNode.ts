@@ -100,20 +100,102 @@ export class VideoPlayerNode extends Node {
       ],
     } );
 
+    // ── Magnifier (zoomed view near the cursor) ─────────────────────────────
+    const MAG_SIZE = 100;       // Canvas diameter in pixels
+    const MAG_ZOOM = 4;         // Magnification factor
+    const MAG_OFFSET_X = 30;    // Offset from cursor (right)
+    const MAG_OFFSET_Y = -80;   // Offset from cursor (above)
+
+    const magCanvas = document.createElement( 'canvas' );
+    magCanvas.width = MAG_SIZE;
+    magCanvas.height = MAG_SIZE;
+    Object.assign( magCanvas.style, {
+      borderRadius: '50%',
+      border: '2px solid white',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+    } );
+    const magCtx = magCanvas.getContext( '2d' )!;
+
+    const magnifierNode = new DOM( magCanvas, { allowInput: false } );
+    magnifierNode.visible = false;
+    magnifierNode.pickable = false;
+
+    /** Redraws the magnifier canvas showing a zoomed region of the video. */
+    const updateMagnifier = ( localX: number, localY: number ) => {
+      // Source rectangle: centered on cursor, size = MAG_SIZE / MAG_ZOOM
+      const srcSize = MAG_SIZE / MAG_ZOOM;
+      const sx = localX - srcSize / 2;
+      const sy = localY - srcSize / 2;
+
+      // Clear and draw the magnified portion
+      magCtx.clearRect( 0, 0, MAG_SIZE, MAG_SIZE );
+      magCtx.save();
+
+      // Clip to a circle
+      magCtx.beginPath();
+      magCtx.arc( MAG_SIZE / 2, MAG_SIZE / 2, MAG_SIZE / 2, 0, Math.PI * 2 );
+      magCtx.clip();
+
+      // Draw video frame scaled up
+      magCtx.drawImage(
+        this.videoElement,
+        sx, sy, srcSize, srcSize,   // source rect
+        0, 0, MAG_SIZE, MAG_SIZE    // dest rect (full canvas)
+      );
+
+      magCtx.restore();
+
+      // Draw crosshair on top (center of magnifier)
+      const center = MAG_SIZE / 2;
+      const crossR = 8;
+      const crossGap = 2;
+      magCtx.strokeStyle = 'rgba(255,255,255,0.8)';
+      magCtx.lineWidth = 1;
+      magCtx.beginPath();
+      // Horizontal segments
+      magCtx.moveTo( center - crossR, center );
+      magCtx.lineTo( center - crossGap, center );
+      magCtx.moveTo( center + crossGap, center );
+      magCtx.lineTo( center + crossR, center );
+      // Vertical segments
+      magCtx.moveTo( center, center - crossR );
+      magCtx.lineTo( center, center - crossGap );
+      magCtx.moveTo( center, center + crossGap );
+      magCtx.lineTo( center, center + crossR );
+      magCtx.stroke();
+    };
+
     const digitizingOverlay = new Rectangle( 0, 0, 640, 360, {
       fill: 'transparent',
       cursor: 'none',   // system cursor hidden; cursorNode takes its place
       visible: false,
     } );
     digitizingOverlay.addChild( cursorNode );
+    digitizingOverlay.addChild( magnifierNode );
 
     // Track cursor position
     digitizingOverlay.addInputListener( {
       move: event => {
-        cursorNode.translation = digitizingOverlay.globalToLocalPoint( event.pointer.point );
+        const localPt = digitizingOverlay.globalToLocalPoint( event.pointer.point );
+        cursorNode.translation = localPt;
         cursorNode.visible = true;
+
+        // Position magnifier offset from cursor, clamped to stay within overlay
+        let magX = localPt.x + MAG_OFFSET_X;
+        let magY = localPt.y + MAG_OFFSET_Y;
+        // Keep magnifier inside the video bounds
+        magX = Math.max( 0, Math.min( magX, 640 - MAG_SIZE ) );
+        magY = Math.max( 0, Math.min( magY, 360 - MAG_SIZE ) );
+        magnifierNode.x = magX;
+        magnifierNode.y = magY;
+
+        updateMagnifier( localPt.x, localPt.y );
+        magnifierNode.visible = true;
       },
-      exit: () => { cursorNode.visible = false; },
+      exit: () => {
+        cursorNode.visible = false;
+        magnifierNode.visible = false;
+      },
     } );
 
     // Coloured dots at click positions, filtered by current frame
@@ -150,15 +232,13 @@ export class VideoPlayerNode extends Node {
         const time = model.currentTimeProperty.value;
         const frame = Math.round( time / FRAME_DURATION );
 
-        markData.push( { frame, localX: localPt.x, localY: localPt.y, color: track.color } );
-        rebuildMarks();
-
         const mvt = model.modelViewTransformProperty.value;
         const modelPt = mvt.inversePosition2( globalPt );
 
-        console.log(
-          `[TrackLab] Track ${ track.symbol } → frame ${ frame } (t=${ time.toFixed( 3 ) }s) | x=${ modelPt.x.toFixed( 3 ) }, y=${ modelPt.y.toFixed( 3 ) } (model)`
-        );
+        markData.push( { frame, localX: localPt.x, localY: localPt.y, color: track.color } );
+        rebuildMarks();
+
+        model.addPointToTrack( activeId, frame, time, modelPt.x, modelPt.y );
         this.stepForward();
       },
       tandem: Tandem.OPT_OUT,

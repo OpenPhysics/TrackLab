@@ -6,6 +6,7 @@ import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
+import { DataTableNode } from "./DataTableNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
@@ -114,6 +115,14 @@ export class SimScreenView extends ScreenView {
     // Position: just right of the video player, top-aligned with it.
     trackListPanel.left = this.videoPlayerNode.right + 12;
     trackListPanel.top  = this.videoPlayerNode.top;
+
+    // ── Data table (beneath the track list panel, same column) ───────────
+    const dataTableNode = new DataTableNode( model, videoLoadedProperty, this.calibrationToolNode.unitProperty );
+    this.addChild( dataTableNode );
+    dataTableNode.left = trackListPanel.left;
+    trackListPanel.boundsProperty.link( () => {
+      dataTableNode.top = trackListPanel.bottom + 8;
+    } );
 
     const resetAllButton = new ResetAllButton( {
       listener: () => {

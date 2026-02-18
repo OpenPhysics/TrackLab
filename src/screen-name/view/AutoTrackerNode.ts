@@ -170,8 +170,7 @@ export class AutoTrackerNode extends Node {
 
       this.trail.push( pt );
       if ( this.trail.length > MAX_TRAIL ) this.trail.shift();
-      console.log( `[AutoTracker] x=${pt.x.toFixed( 1 )}, y=${pt.y.toFixed( 1 )}` );
-      this.updateTrackerVisuals( pt );
+this.updateTrackerVisuals( pt );
     };
     videoElement.addEventListener( 'timeupdate', onFrame );
     videoElement.addEventListener( 'seeked', onFrame );

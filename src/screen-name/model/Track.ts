@@ -9,6 +9,8 @@
 export type TrackPoint = {
   frame: number;
   time: number; // seconds
+  x: number;   // model x-coordinate
+  y: number;   // model y-coordinate
 };
 
 export type Track = {
