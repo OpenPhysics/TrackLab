@@ -136,19 +136,57 @@ function buildHTMLTable(
     z-index: 1;
   `;
 
-  const addHeaderCell = (text: string) => {
+  const addHeaderCell = (content: string | HTMLElement) => {
     const th = document.createElement("th");
-    th.textContent = text;
+    if (typeof content === "string") {
+      th.textContent = content;
+    } else {
+      th.appendChild(content);
+    }
     th.style.cssText = headerStyle;
     headerRow.appendChild(th);
   };
 
-  addHeaderCell("Frame");
-  addHeaderCell("Time");
+  /**
+   * Create a header cell with colored track symbol.
+   * Format: "x A (m)" where A is colored with the track color
+   */
+  const makeTrackHeader = (prefix: string, track: Track): HTMLElement => {
+    const span = document.createElement("span");
 
-  for (const track of tracks) {
-    addHeaderCell(`x(${track.symbol})`);
-    addHeaderCell(`y(${track.symbol})`);
+    // Prefix (x or y)
+    const prefixText = document.createTextNode(`${prefix} `);
+    span.appendChild(prefixText);
+
+    // Colored symbol
+    const symbolSpan = document.createElement("span");
+    symbolSpan.textContent = track.symbol;
+    symbolSpan.style.cssText = `
+      color: ${track.color};
+      font-weight: bold;
+      text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    `;
+    span.appendChild(symbolSpan);
+
+    // Unit
+    const unitText = document.createTextNode(` (${unit})`);
+    span.appendChild(unitText);
+
+    return span;
+  };
+
+  addHeaderCell("Frame");
+  addHeaderCell("Time (s)");
+
+  if (tracks.length === 0) {
+    // Placeholder columns when no tracks exist
+    addHeaderCell(`x (${unit})`);
+    addHeaderCell(`y (${unit})`);
+  } else {
+    for (const track of tracks) {
+      addHeaderCell(makeTrackHeader("x", track));
+      addHeaderCell(makeTrackHeader("y", track));
+    }
   }
 
   thead.appendChild(headerRow);
@@ -160,7 +198,8 @@ function buildHTMLTable(
   if (dataRows.length === 0) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 2 + tracks.length * 2;
+    // Always at least 4 columns: Frame, Time, x, y
+    td.colSpan = Math.max(4, 2 + tracks.length * 2);
     td.textContent = "No digitized points";
     td.style.cssText = `
       padding: 8px 16px;
