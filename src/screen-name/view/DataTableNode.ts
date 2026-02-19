@@ -307,6 +307,7 @@ function makeDownloadIcon(): Node {
 export class DataTableNode extends Panel {
   private exportCounter = 1;
   private tableWrapper: HTMLDivElement;
+  private readonly disposeDataTable: () => void;
 
   public constructor(
     model: SimModel,
@@ -430,15 +431,37 @@ export class DataTableNode extends Panel {
     };
 
     // ── Reactive updates ─────────────────────────────────────────────────────
-    model.tracksProperty.link(rebuildTable);
-    unitProperty.link(rebuildTable);
+    const tracksListener = () => rebuildTable();
+    model.tracksProperty.link(tracksListener);
+
+    const unitListener = () => rebuildTable();
+    unitProperty.link(unitListener);
 
     // Rebuild table when color profile or locale changes
-    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(rebuildTable);
-    dataTableStrings.frameStringProperty.lazyLink(rebuildTable);
+    const tableHeaderBgListener = () => rebuildTable();
+    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
 
-    videoLoadedProperty.link((loaded) => {
+    const frameStringListener = () => rebuildTable();
+    dataTableStrings.frameStringProperty.lazyLink(frameStringListener);
+
+    const videoLoadedListener = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(videoLoadedListener);
+
+    // Store cleanup function
+    this.disposeDataTable = () => {
+      model.tracksProperty.unlink(tracksListener);
+      unitProperty.unlink(unitListener);
+      TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
+      dataTableStrings.frameStringProperty.unlink(frameStringListener);
+      videoLoadedProperty.unlink(videoLoadedListener);
+      exportButton.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeDataTable();
+    super.dispose();
   }
 }

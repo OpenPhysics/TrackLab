@@ -49,6 +49,7 @@ export class KinematicsGraphNode extends VBox {
   private readonly trackSelectorContainer: Node;
   private readonly listParent: Node;
   private currentComboBox: ComboBox<string | null> | null = null;
+  private readonly disposeKinematicsGraph: () => void;
 
   // Dummy properties for the graph (values aren't used directly, we push data manually)
   private readonly tProperty = new NumberProperty(0);
@@ -153,7 +154,7 @@ export class KinematicsGraphNode extends VBox {
     this.trackSelectorContainer = new Node();
 
     // Update combo box when tracks change (link fires immediately, building initial selector)
-    model.tracksProperty.link((tracks) => {
+    const tracksListener = (tracks: readonly import("../model/Track.js").Track[]) => {
       // Dispose old combo box FIRST to disconnect it from the property
       // (prevents assertion error when property value changes)
       if (this.currentComboBox) {
@@ -175,24 +176,61 @@ export class KinematicsGraphNode extends VBox {
 
       // Build new combo box with updated items
       this.rebuildTrackSelector();
-    });
+    };
+    model.tracksProperty.link(tracksListener);
 
     // Update graph when selected track changes or kinematics update
-    this.selectedTrackProperty.link(() => this.updateGraph());
-    model.trackKinematicsProperty.link(() => this.updateGraph());
+    const selectedTrackListener = () => this.updateGraph();
+    this.selectedTrackProperty.link(selectedTrackListener);
+
+    const kinematicsListener = () => this.updateGraph();
+    model.trackKinematicsProperty.link(kinematicsListener);
 
     // Update graph when axis selection changes
-    this.graph.getXPropertyProperty().lazyLink(() => this.updateGraph());
-    this.graph.getYPropertyProperty().lazyLink(() => this.updateGraph());
+    const xPropertyListener = () => this.updateGraph();
+    this.graph.getXPropertyProperty().lazyLink(xPropertyListener);
+
+    const yPropertyListener = () => this.updateGraph();
+    this.graph.getYPropertyProperty().lazyLink(yPropertyListener);
 
     // Update axis labels when calibration unit changes
     // (the unit properties in the model are derived from calibUnitProperty)
-    model.distanceUnitProperty.lazyLink(() => {
+    const distanceUnitListener = () => {
       this.graph.updateAxisLabels();
-    });
+    };
+    model.distanceUnitProperty.lazyLink(distanceUnitListener);
 
     // Layout
     this.children = [this.trackSelectorContainer, this.graph];
+
+    // Store cleanup function
+    this.disposeKinematicsGraph = () => {
+      model.tracksProperty.unlink(tracksListener);
+      this.selectedTrackProperty.unlink(selectedTrackListener);
+      model.trackKinematicsProperty.unlink(kinematicsListener);
+      this.graph.getXPropertyProperty().unlink(xPropertyListener);
+      this.graph.getYPropertyProperty().unlink(yPropertyListener);
+      model.distanceUnitProperty.unlink(distanceUnitListener);
+      if (this.currentComboBox) {
+        this.currentComboBox.dispose();
+      }
+      this.selectedTrackProperty.dispose();
+      this.graph.dispose();
+      this.tProperty.dispose();
+      this.xProperty.dispose();
+      this.yProperty.dispose();
+      this.vxProperty.dispose();
+      this.vyProperty.dispose();
+      this.speedProperty.dispose();
+      this.axProperty.dispose();
+      this.ayProperty.dispose();
+      this.aMagProperty.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeKinematicsGraph();
+    super.dispose();
   }
 
   /**

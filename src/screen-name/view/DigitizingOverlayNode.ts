@@ -31,6 +31,8 @@ const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the vi
  * Renders a custom crosshair cursor and magnifier, and places dots on click.
  */
 export class DigitizingOverlayNode extends Node {
+  private readonly disposeDigitizingOverlay: () => void;
+
   public constructor(
     videoElement: HTMLVideoElement,
     model: SimModel,
@@ -94,16 +96,21 @@ export class DigitizingOverlayNode extends Node {
     };
     updateShadowStyle();
 
-    TrackLabColors.digitizingMagnifierBorderProperty.link((color) => {
+    const magBorderListener = (color: import("scenerystack").Color) => {
       magBorderColor = color.toCSS();
-    });
-    TrackLabColors.digitizingMagnifierCrosshairProperty.link((color) => {
+    };
+    TrackLabColors.digitizingMagnifierBorderProperty.link(magBorderListener);
+
+    const magCrosshairListener = (color: import("scenerystack").Color) => {
       magCrosshairColor = color.toCSS();
-    });
-    TrackLabColors.digitizingMagnifierShadowProperty.link((color) => {
+    };
+    TrackLabColors.digitizingMagnifierCrosshairProperty.link(magCrosshairListener);
+
+    const magShadowListener = (color: import("scenerystack").Color) => {
       magShadowColor = color.toCSS();
       updateShadowStyle();
-    });
+    };
+    TrackLabColors.digitizingMagnifierShadowProperty.link(magShadowListener);
 
     const magCtx = magCanvas.getContext("2d");
     if (!magCtx)
@@ -281,19 +288,28 @@ export class DigitizingOverlayNode extends Node {
       marksLayer.children = circles;
     };
 
-    model.currentTimeProperty.link(() => rebuildMarks());
-    model.tracksProperty.link(() => rebuildMarks());
-    model.modelViewTransformProperty.link(() => rebuildMarks());
-    model.frameRateProperty.link(() => rebuildMarks());
+    const currentTimeListener = () => rebuildMarks();
+    model.currentTimeProperty.link(currentTimeListener);
 
-    model.activeTrackIdProperty.link((activeId) => {
+    const tracksListener = () => rebuildMarks();
+    model.tracksProperty.link(tracksListener);
+
+    const mvtListener = () => rebuildMarks();
+    model.modelViewTransformProperty.link(mvtListener);
+
+    const frameRateListener = () => rebuildMarks();
+    model.frameRateProperty.link(frameRateListener);
+
+    const activeTrackListener = (activeId: string | null) => {
       digitizingOverlay.visible = activeId !== null;
       if (!activeId) cursorNode.visible = false;
-    });
+    };
+    model.activeTrackIdProperty.link(activeTrackListener);
 
-    model.magnifyVideoProperty.link((magnify) => {
+    const magnifyListener = (magnify: boolean) => {
       if (!magnify) magnifierNode.visible = false;
-    });
+    };
+    model.magnifyVideoProperty.link(magnifyListener);
 
     digitizingOverlay.addInputListener(
       new FireListener({
@@ -327,5 +343,23 @@ export class DigitizingOverlayNode extends Node {
 
     this.addChild(digitizingOverlay);
     this.addChild(marksLayer);
+
+    // Store cleanup function
+    this.disposeDigitizingOverlay = () => {
+      TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
+      TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
+      TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
+      model.currentTimeProperty.unlink(currentTimeListener);
+      model.tracksProperty.unlink(tracksListener);
+      model.modelViewTransformProperty.unlink(mvtListener);
+      model.frameRateProperty.unlink(frameRateListener);
+      model.activeTrackIdProperty.unlink(activeTrackListener);
+      model.magnifyVideoProperty.unlink(magnifyListener);
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeDigitizingOverlay();
+    super.dispose();
   }
 }

@@ -107,6 +107,8 @@ function makeTrashIcon(): Node {
 // ── Individual track row ────────────────────────────────────────────────────
 
 class TrackRowNode extends Node {
+  private readonly disposeTrackRowNode: () => void;
+
   public constructor(track: Track, model: SimModel) {
     super();
 
@@ -150,18 +152,20 @@ class TrackRowNode extends Node {
 
     // Sync checkbox from model (when another track becomes active, uncheck this one).
     // Axon Properties deduplicate same-value writes, so no infinite loop can occur.
-    model.activeTrackIdProperty.link((activeId) => {
+    const activeTrackListener = (activeId: string | null) => {
       isDigitizingProperty.value = activeId === track.id;
-    });
+    };
+    model.activeTrackIdProperty.link(activeTrackListener);
 
     // Sync model from checkbox
-    isDigitizingProperty.lazyLink((isDigitizing) => {
+    const digitizingListener = (isDigitizing: boolean) => {
       if (isDigitizing) {
         model.activeTrackIdProperty.value = track.id;
       } else if (model.activeTrackIdProperty.value === track.id) {
         model.activeTrackIdProperty.value = null;
       }
-    });
+    };
+    isDigitizingProperty.lazyLink(digitizingListener);
 
     const checkbox = new Checkbox(
       isDigitizingProperty,
@@ -192,12 +196,28 @@ class TrackRowNode extends Node {
     this.addChild(symbolLabel);
     this.addChild(checkbox);
     this.addChild(trashButton);
+
+    // Store cleanup function
+    this.disposeTrackRowNode = () => {
+      model.activeTrackIdProperty.unlink(activeTrackListener);
+      isDigitizingProperty.unlink(digitizingListener);
+      checkbox.dispose();
+      trashButton.dispose();
+      isDigitizingProperty.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeTrackRowNode();
+    super.dispose();
   }
 }
 
 // ── TrackListPanel ──────────────────────────────────────────────────────────
 
 export class TrackListPanel extends Panel {
+  private readonly disposeTrackListPanel: () => void;
+
   public constructor(
     model: SimModel,
     videoLoadedProperty: TReadOnlyProperty<boolean>,
@@ -261,21 +281,48 @@ export class TrackListPanel extends Panel {
     });
 
     // ── Show only when video is loaded ────────────────────────────────────
-    videoLoadedProperty.link((loaded) => {
+    const videoLoadedListener = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(videoLoadedListener);
 
     // ── Rebuild track rows only when track IDs change ─────────────────────
     // addPointToTrack() also replaces tracksProperty, but the set of IDs is
     // unchanged in that case, so we skip the expensive row reconstruction.
     let lastIds = "";
-    model.tracksProperty.link((tracks) => {
+    const tracksListener = (tracks: readonly Track[]) => {
       const ids = tracks.map((t) => t.id).join(",");
       if (ids === lastIds) return;
       lastIds = ids;
+      // Dispose old track rows before creating new ones
+      for (const child of trackListVBox.children) {
+        if (child instanceof TrackRowNode) {
+          child.dispose();
+        }
+      }
       trackListVBox.children = tracks.map(
         (track) => new TrackRowNode(track, model),
       );
-    });
+    };
+    model.tracksProperty.link(tracksListener);
+
+    // Store cleanup function
+    this.disposeTrackListPanel = () => {
+      videoLoadedProperty.unlink(videoLoadedListener);
+      model.tracksProperty.unlink(tracksListener);
+      // Dispose all track rows
+      for (const child of trackListVBox.children) {
+        if (child instanceof TrackRowNode) {
+          child.dispose();
+        }
+      }
+      addButtonEnabledProperty.dispose();
+      addButton.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeTrackListPanel();
+    super.dispose();
   }
 }

@@ -32,11 +32,12 @@ const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
  *  1. When visible, shows a "drag to select" hint.
  *  2. User drags a bounding box around the object to track.
  *  3. AutoTrackerNode captures the template and starts tracking.
- *  4. On each video frame (timeupdate / seeked), the best-match position is
+ *  4. If no track is active, a new track is automatically created and activated.
+ *  5. On each video frame (timeupdate / seeked), the best-match position is
  *     computed via OpenCV template matching and shown as a red crosshair.
- *  5. Past positions are shown as a green trail of dots.
- *  6. If a track is active (model.activeTrackIdProperty), each new unique frame
- *     position is recorded to the model via addPointToTrack.
+ *  6. Past positions are shown as a green trail of dots.
+ *  7. Each new unique frame position is recorded to the active track via
+ *     addPointToTrack, transforming from video-pixel to model coordinates.
  *
  * Local coordinates of this node correspond directly to video-pixel coordinates
  * (0,0 = top-left of video) because it is added to the same layer as the video
@@ -172,6 +173,19 @@ export class AutoTrackerNode extends Node {
         };
 
         if (region.w > MIN_REGION_SIZE && region.h > MIN_REGION_SIZE) {
+          // Auto-create a track if none is active
+          if (!this.model.activeTrackIdProperty.value) {
+            this.model.addTrack();
+            // Set the newly created track as active
+            const tracks = this.model.tracksProperty.value;
+            if (tracks.length > 0) {
+              const newTrack = tracks[tracks.length - 1];
+              if (newTrack) {
+                this.model.activeTrackIdProperty.value = newTrack.id;
+              }
+            }
+          }
+
           // initFromVideo is async (loads WASM on first call); tracking begins
           // automatically once `ready` becomes true.
           this.model.tracker

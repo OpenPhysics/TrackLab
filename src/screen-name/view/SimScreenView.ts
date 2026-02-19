@@ -6,7 +6,6 @@ import {
   CONTROL_PANEL_LEFT_MARGIN,
   DATA_TABLE_TOP_SPACING,
   RESET_BUTTON_MARGIN,
-  TRACK_LIST_LEFT_SPACING,
   VIDEO_PLAYER_Y_OFFSET,
 } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";

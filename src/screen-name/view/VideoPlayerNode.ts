@@ -15,6 +15,7 @@ export class VideoPlayerNode extends Node {
   public readonly videoElement: HTMLVideoElement;
   public readonly webcamPanel: WebcamPanel;
   private readonly model: SimModel;
+  private readonly disposeVideoPlayer: () => void;
 
   public constructor(model: SimModel, listParent: Node) {
     super();
@@ -27,9 +28,10 @@ export class VideoPlayerNode extends Node {
     this.videoElement.preload = "metadata";
     this.videoElement.crossOrigin = "anonymous";
     this.videoElement.style.display = "block";
-    TrackLabColors.videoBackgroundColorProperty.link((c) => {
+    const videoBackgroundListener = (c: import("scenerystack").Color) => {
       this.videoElement.style.background = c.toCSS();
-    });
+    };
+    TrackLabColors.videoBackgroundColorProperty.link(videoBackgroundListener);
 
     const videoNode = new DOM(this.videoElement, { allowInput: false });
 
@@ -39,15 +41,18 @@ export class VideoPlayerNode extends Node {
         model.durationProperty.value = d;
       }
     };
-    this.videoElement.addEventListener("loadedmetadata", () => {
+
+    const onLoadedMetadata = () => {
       model.currentTimeProperty.value = 0;
       updateDuration();
-    });
+    };
+    this.videoElement.addEventListener("loadedmetadata", onLoadedMetadata);
     this.videoElement.addEventListener("durationchange", updateDuration);
 
-    this.videoElement.addEventListener("ended", () => {
+    const onEnded = () => {
       model.isPlayingProperty.value = false;
-    });
+    };
+    this.videoElement.addEventListener("ended", onEnded);
 
     // ── Auto-tracking overlay ──────────────────────────────────────────────
     const autoTrackingShownProperty = new DerivedProperty(
@@ -72,7 +77,7 @@ export class VideoPlayerNode extends Node {
     });
 
     // ── Play / Pause ───────────────────────────────────────────────────────
-    model.isPlayingProperty.lazyLink((isPlaying) => {
+    const isPlayingListener = (isPlaying: boolean) => {
       if (isPlaying) {
         this.videoElement.play().catch(() => {
           model.isPlayingProperty.value = false;
@@ -80,7 +85,8 @@ export class VideoPlayerNode extends Node {
       } else {
         this.videoElement.pause();
       }
-    });
+    };
+    model.isPlayingProperty.lazyLink(isPlayingListener);
 
     // ── Playback controls ─────────────────────────────────────────────────
     const playbackControlsNode = new PlaybackControlsNode(
@@ -91,11 +97,12 @@ export class VideoPlayerNode extends Node {
     );
 
     // Sync model time from video during playback (event-driven, not polled)
-    this.videoElement.addEventListener("timeupdate", () => {
+    const onTimeUpdate = () => {
       if (!playbackControlsNode.scrubbing) {
         model.currentTimeProperty.value = this.videoElement.currentTime;
       }
-    });
+    };
+    this.videoElement.addEventListener("timeupdate", onTimeUpdate);
 
     // ── Video source controls (webcam panel is added to SimScreenView for z-order) ─
     const videoSourceControlNode = new VideoSourceControlNode(
@@ -128,6 +135,25 @@ export class VideoPlayerNode extends Node {
 
     this.webcamPanel = videoSourceControlNode.webcamPanel;
     this.addChild(mainContent);
+
+    // Store cleanup function
+    this.disposeVideoPlayer = () => {
+      TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
+      model.isPlayingProperty.unlink(isPlayingListener);
+      this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
+      this.videoElement.removeEventListener("durationchange", updateDuration);
+      this.videoElement.removeEventListener("ended", onEnded);
+      this.videoElement.removeEventListener("timeupdate", onTimeUpdate);
+      autoTrackerNode.dispose();
+      playbackControlsNode.dispose();
+      videoSourceControlNode.dispose();
+      autoTrackingShownProperty.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeVideoPlayer();
+    super.dispose();
   }
 
   /** Pause playback and advance by exactly one frame. */
