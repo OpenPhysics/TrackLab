@@ -8,9 +8,11 @@ import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
 import { VideoSourceControlNode } from "./VideoSourceControlNode.js";
+import { WebcamPanel } from "./WebcamPanel.js";
 
 export class VideoPlayerNode extends Node {
   public readonly videoElement: HTMLVideoElement;
+  public readonly webcamPanel: WebcamPanel;
   private readonly model: SimModel;
 
   public constructor(model: SimModel, listParent: Node) {
@@ -94,7 +96,7 @@ export class VideoPlayerNode extends Node {
       }
     });
 
-    // ── Video source controls ─────────────────────────────────────────────
+    // ── Video source controls (webcam panel is added to SimScreenView for z-order) ─
     const videoSourceControlNode = new VideoSourceControlNode(
       model,
       listParent,
@@ -123,14 +125,8 @@ export class VideoPlayerNode extends Node {
       align: "center",
     });
 
+    this.webcamPanel = videoSourceControlNode.webcamPanel;
     this.addChild(mainContent);
-    this.addChild(videoSourceControlNode.webcamPanel);
-
-    // Center the webcam panel over the video after layout
-    mainContent.boundsProperty.lazyLink(() => {
-      videoSourceControlNode.webcamPanel.centerX = mainContent.centerX;
-      videoSourceControlNode.webcamPanel.centerY = mainContent.centerY;
-    });
   }
 
   /** Pause playback and advance by exactly one frame. */

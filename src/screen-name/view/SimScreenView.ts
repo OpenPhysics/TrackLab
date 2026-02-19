@@ -37,24 +37,6 @@ export class SimScreenView extends ScreenView {
       (loaded, visible) => loaded && visible,
     );
 
-    // ── Coordinate system overlay ─────────────────────────────────────────
-    // Reads/writes model.coordOriginProperty and model.coordAngleProperty.
-    const coordinateSystemNode = new CoordinateSystemNode(
-      axesShownProperty,
-      model,
-    );
-    this.addChild(coordinateSystemNode);
-
-    // ── Calibration tool overlay ──────────────────────────────────────────
-    // Reads/writes model.calibPoint1/2Property, model.calibDistanceProperty,
-    // and model.calibUnitProperty.
-    const calibrationToolNode = new CalibrationToolNode(
-      calibrationShownProperty,
-      this,
-      model,
-    );
-    this.addChild(calibrationToolNode);
-
     // ── Video player ──────────────────────────────────────────────────────
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
     // SimModel from the tool state properties above).
@@ -64,6 +46,24 @@ export class SimScreenView extends ScreenView {
       VIDEO_PLAYER_Y_OFFSET,
     );
     this.addChild(this.videoPlayerNode);
+
+    // ── Coordinate system overlay (above video, below camera modal) ─────────
+    // Reads/writes model.coordOriginProperty and model.coordAngleProperty.
+    const coordinateSystemNode = new CoordinateSystemNode(
+      axesShownProperty,
+      model,
+    );
+    this.addChild(coordinateSystemNode);
+
+    // ── Calibration tool overlay (above video, below camera modal) ─────────
+    // Reads/writes model.calibPoint1/2Property, model.calibDistanceProperty,
+    // and model.calibUnitProperty.
+    const calibrationToolNode = new CalibrationToolNode(
+      calibrationShownProperty,
+      this,
+      model,
+    );
+    this.addChild(calibrationToolNode);
 
     // ── Control panel (left side) ─────────────────────────────────────────
     const controlPanel = new ControlPanel(model, trackLabPreferences);
@@ -98,5 +98,13 @@ export class SimScreenView extends ScreenView {
       bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
+
+    // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
+    const webcamPanel = this.videoPlayerNode.webcamPanel;
+    this.addChild(webcamPanel);
+    this.videoPlayerNode.boundsProperty.lazyLink(() => {
+      webcamPanel.centerX = this.videoPlayerNode.centerX;
+      webcamPanel.centerY = this.videoPlayerNode.centerY;
+    });
   }
 }
