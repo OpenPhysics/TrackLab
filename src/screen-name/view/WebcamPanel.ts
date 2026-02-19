@@ -15,9 +15,26 @@ import {
 } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
+import {
+  WEBCAM_PREVIEW_HEIGHT,
+  WEBCAM_PREVIEW_WIDTH,
+} from "../../TrackLabConstants.js";
 import { fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 
 const FONT = new PhetFont(14);
+const STOP_ICON_SIZE = 14;
+const REFRESH_ICON_HEIGHT = 20;
+const CHECK_ICON_SCALE = 0.35;
+const CAMERA_ICON_SCALE = 0.4; // camera icon next to the select dropdown
+const TITLE_CAMERA_ICON_SCALE = 0.6; // larger camera icon in the panel title
+const RECORD_ICON_RADIUS = 8; // circle radius for the record button icon
+const ACTION_BUTTON_X_MARGIN = 8; // xMargin for start/stop/use-video buttons
+const ACTION_BUTTON_Y_MARGIN = 6;
+const PANEL_CORNER_RADIUS = 10;
+const PANEL_X_MARGIN = 20;
+const PANEL_Y_MARGIN = 15;
+const LAYER_SPACING = 10; // VBox spacing between elements within each layer
+const CAMERA_ROW_SPACING = 8; // HBox spacing between camera icon and select
 
 type WebcamPanelOptions = {
   onVideoReady: (blob: Blob, duration: number) => void;
@@ -57,8 +74,8 @@ export class WebcamPanel extends Node {
 
     // ── Preview video ─────────────────────────────────────────────────────
     this.previewElement = document.createElement("video");
-    this.previewElement.width = 480;
-    this.previewElement.height = 270;
+    this.previewElement.width = WEBCAM_PREVIEW_WIDTH;
+    this.previewElement.height = WEBCAM_PREVIEW_HEIGHT;
     this.previewElement.muted = true;
     this.previewElement.playsInline = true;
     this.previewElement.style.display = "block";
@@ -69,8 +86,8 @@ export class WebcamPanel extends Node {
 
     // ── Review video ──────────────────────────────────────────────────────
     this.reviewElement = document.createElement("video");
-    this.reviewElement.width = 480;
-    this.reviewElement.height = 270;
+    this.reviewElement.width = WEBCAM_PREVIEW_WIDTH;
+    this.reviewElement.height = WEBCAM_PREVIEW_HEIGHT;
     this.reviewElement.controls = true;
     this.reviewElement.playsInline = true;
     this.reviewElement.style.display = "block";
@@ -98,22 +115,21 @@ export class WebcamPanel extends Node {
       },
     });
 
-    const recordIcon = new Path(Shape.circle(0, 0, 8), {
+    const recordIcon = new Path(Shape.circle(0, 0, RECORD_ICON_RADIUS), {
       fill: TrackLabColors.textOnDarkProperty,
     });
     const startButton = new RectangularPushButton({
       content: recordIcon,
       baseColor: TrackLabColors.buttonRecordProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 8,
-      yMargin: 6,
+      xMargin: ACTION_BUTTON_X_MARGIN,
+      yMargin: ACTION_BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Start Recording",
       listener: () => this.startRecording(),
     });
 
-    const stopIconSize = 14;
-    const stopIcon = new Path(new StopIconShape(stopIconSize), {
+    const stopIcon = new Path(new StopIconShape(STOP_ICON_SIZE), {
       fill: TrackLabColors.textOnDarkProperty,
     });
     stopIcon.translation = stopIcon.bounds.center.negated();
@@ -121,8 +137,8 @@ export class WebcamPanel extends Node {
       content: stopIcon,
       baseColor: TrackLabColors.buttonStopProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 8,
-      yMargin: 6,
+      xMargin: ACTION_BUTTON_X_MARGIN,
+      yMargin: ACTION_BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Stop Recording",
       listener: () => this.stopRecording(),
@@ -132,22 +148,22 @@ export class WebcamPanel extends Node {
     const rerecordButton = new RefreshButton({
       baseColor: TrackLabColors.buttonBaseDarkerProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      iconHeight: 20,
+      iconHeight: REFRESH_ICON_HEIGHT,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Re-record",
       listener: () => this.goToPreview(),
     });
 
     const useVideoIcon = new Path(checkSolidShape, {
-      scale: 0.35,
+      scale: CHECK_ICON_SCALE,
       fill: TrackLabColors.textOnDarkProperty,
     });
     const useVideoButton = new RectangularPushButton({
       content: useVideoIcon,
       baseColor: TrackLabColors.buttonSuccessProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 8,
-      yMargin: 6,
+      xMargin: ACTION_BUTTON_X_MARGIN,
+      yMargin: ACTION_BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Use Video",
       listener: () => this.useVideo(options.onVideoReady),
@@ -155,7 +171,7 @@ export class WebcamPanel extends Node {
 
     // ── Layer: preview ────────────────────────────────────────────────────
     const cameraIcon = new Path(cameraSolidShape, {
-      scale: 0.4,
+      scale: CAMERA_ICON_SCALE,
       fill: TrackLabColors.textMutedProperty,
       accessibleName: "Camera",
     });
@@ -163,16 +179,16 @@ export class WebcamPanel extends Node {
       children: [
         new HBox({
           children: [cameraIcon, cameraSelectDOM],
-          spacing: 8,
+          spacing: CAMERA_ROW_SPACING,
           align: "center",
         }),
         previewDOM,
         new HBox({
           children: [cancelButton, startButton, stopButton],
-          spacing: 10,
+          spacing: LAYER_SPACING,
         }),
       ],
-      spacing: 10,
+      spacing: LAYER_SPACING,
       align: "center",
     });
 
@@ -185,17 +201,17 @@ export class WebcamPanel extends Node {
         reviewDOM,
         new HBox({
           children: [rerecordButton, useVideoButton],
-          spacing: 10,
+          spacing: LAYER_SPACING,
         }),
       ],
-      spacing: 10,
+      spacing: LAYER_SPACING,
       align: "center",
     });
     this.reviewLayer.visible = false;
 
     // ── Full panel ────────────────────────────────────────────────────────
     const titleIcon = new Path(cameraSolidShape, {
-      scale: 0.6,
+      scale: TITLE_CAMERA_ICON_SCALE,
       fill: TrackLabColors.textOnDarkProperty,
       accessibleName: "Record from Webcam",
     });
@@ -206,7 +222,7 @@ export class WebcamPanel extends Node {
         this.reviewLayer,
         this.statusText,
       ],
-      spacing: 10,
+      spacing: LAYER_SPACING,
       align: "center",
     });
 
@@ -214,9 +230,9 @@ export class WebcamPanel extends Node {
       new Panel(content, {
         fill: TrackLabColors.webcamPanelFillProperty,
         stroke: TrackLabColors.panelStrokeProperty,
-        cornerRadius: 10,
-        xMargin: 20,
-        yMargin: 15,
+        cornerRadius: PANEL_CORNER_RADIUS,
+        xMargin: PANEL_X_MARGIN,
+        yMargin: PANEL_Y_MARGIN,
       }),
     );
 

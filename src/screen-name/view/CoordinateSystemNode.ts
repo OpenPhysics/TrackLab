@@ -9,6 +9,21 @@ const ARROW_LENGTH = 120;
 const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont({ size: 14, weight: "bold" });
 
+const ARROW_HEAD_WIDTH = 12;
+const ARROW_HEAD_HEIGHT = 10;
+const ARROW_TAIL_WIDTH = 3;
+const LABEL_OFFSET_X = 6; // gap between arrow tip and axis label
+const LABEL_OFFSET_Y = 4; // gap between arrow tip and axis label
+const HANDLE_RADIUS = 8; // rotation handle disk radius
+const HANDLE_LINE_WIDTH = 1.5;
+const ORIGIN_RADIUS = 5; // origin marker circle radius
+const ORIGIN_LINE_WIDTH = 1;
+const TRANSLATE_DRAG_SPEED = 300; // pixels/s for normal keyboard drag
+const TRANSLATE_SHIFT_DRAG_SPEED = 50; // pixels/s for shift-key keyboard drag
+const ROTATE_DRAG_SPEED = 100; // degrees/s (converted to radians) for keyboard rotation
+const ROTATE_SHIFT_DRAG_SPEED = 20;
+const DEG_TO_RAD = Math.PI / 180;
+
 export class CoordinateSystemNode extends Node {
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
@@ -24,9 +39,9 @@ export class CoordinateSystemNode extends Node {
       new ArrowNode(0, 0, ARROW_LENGTH, 0, {
         fill: TrackLabColors.axisXColorProperty,
         stroke: null,
-        headWidth: 12,
-        headHeight: 10,
-        tailWidth: 3,
+        headWidth: ARROW_HEAD_WIDTH,
+        headHeight: ARROW_HEAD_HEIGHT,
+        tailWidth: ARROW_TAIL_WIDTH,
       }),
     );
 
@@ -35,9 +50,9 @@ export class CoordinateSystemNode extends Node {
       new ArrowNode(0, 0, 0, -ARROW_LENGTH, {
         fill: TrackLabColors.axisYColorProperty,
         stroke: null,
-        headWidth: 12,
-        headHeight: 10,
-        tailWidth: 3,
+        headWidth: ARROW_HEAD_WIDTH,
+        headHeight: ARROW_HEAD_HEIGHT,
+        tailWidth: ARROW_TAIL_WIDTH,
       }),
     );
 
@@ -45,7 +60,7 @@ export class CoordinateSystemNode extends Node {
       new Text("x", {
         font: FONT,
         fill: TrackLabColors.axisXColorProperty,
-        left: ARROW_LENGTH + 6,
+        left: ARROW_LENGTH + LABEL_OFFSET_X,
         centerY: 0,
       }),
     );
@@ -55,17 +70,17 @@ export class CoordinateSystemNode extends Node {
         font: FONT,
         fill: TrackLabColors.axisYColorProperty,
         centerX: 0,
-        bottom: -ARROW_LENGTH - 4,
+        bottom: -ARROW_LENGTH - LABEL_OFFSET_Y,
       }),
     );
 
     // Small disk at 1/3 of the way along the x-axis; dragging it rotates the system
-    const handleDisk = new Circle(8, {
+    const handleDisk = new Circle(HANDLE_RADIUS, {
       x: ARROW_LENGTH * HANDLE_FRACTION,
       y: 0,
       fill: TrackLabColors.calibrationHandleProperty,
       stroke: TrackLabColors.textOnDarkProperty,
-      lineWidth: 1.5,
+      lineWidth: HANDLE_LINE_WIDTH,
       cursor: "crosshair",
       tagName: "div",
       focusable: true,
@@ -74,10 +89,10 @@ export class CoordinateSystemNode extends Node {
     rotatingNode.addChild(handleDisk);
 
     // ── Origin marker ─────────────────────────────────────────────────────
-    const originMarker = new Circle(5, {
+    const originMarker = new Circle(ORIGIN_RADIUS, {
       fill: TrackLabColors.originFillProperty,
       stroke: TrackLabColors.originStrokeProperty,
-      lineWidth: 1,
+      lineWidth: ORIGIN_LINE_WIDTH,
     });
 
     // ── Position wrapper: translates with model.coordOriginProperty ───────
@@ -103,8 +118,8 @@ export class CoordinateSystemNode extends Node {
       new RichDragListener({
         positionProperty: model.coordOriginProperty,
         keyboardDragListenerOptions: {
-          dragSpeed: 300,
-          shiftDragSpeed: 50,
+          dragSpeed: TRANSLATE_DRAG_SPEED,
+          shiftDragSpeed: TRANSLATE_SHIFT_DRAG_SPEED,
         },
         tandem: Tandem.OPT_OUT,
       }),
@@ -123,11 +138,11 @@ export class CoordinateSystemNode extends Node {
         },
         keyboardDragListenerOptions: {
           keyboardDragDirection: "leftRight",
-          dragSpeed: 100,
-          shiftDragSpeed: 20,
+          dragSpeed: ROTATE_DRAG_SPEED,
+          shiftDragSpeed: ROTATE_SHIFT_DRAG_SPEED,
           drag: (_event, listener) => {
             model.coordAngleProperty.value +=
-              listener.modelDelta.x * (Math.PI / 180);
+              listener.modelDelta.x * DEG_TO_RAD;
           },
         },
         tandem: Tandem.OPT_OUT,

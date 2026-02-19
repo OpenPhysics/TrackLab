@@ -36,6 +36,7 @@ import {
 } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
+import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -45,6 +46,20 @@ const ROW_HEIGHT = 40; // height of each track box
 const BADGE_R = 13; // radius of colour badge circle
 const BADGE_CX = 22; // x-centre of badge inside the row
 const CHECKBOX_X = BADGE_CX + BADGE_R + 10; // left edge of checkbox
+const ROW_CORNER_RADIUS = 6; // corner radius of each track row background
+const ROW_BG_ALPHA = 0.15; // track colour fill alpha for row background
+const ROW_STROKE_ALPHA = 0.7; // track colour stroke alpha for row border
+const ROW_STROKE_WIDTH = 1.5;
+const CHECKBOX_BOX_WIDTH = 14;
+const TRASH_BUTTON_X_MARGIN = 6;
+const TRASH_BUTTON_Y_MARGIN = 6;
+const TRASH_BUTTON_RIGHT_OFFSET = 3; // inset from PANEL_WIDTH right edge
+const TRACK_LIST_SPACING = 6; // gap between track rows
+const PANEL_CONTENT_SPACING = 8; // gap between header, add button, and track list
+const PANEL_X_MARGIN = 10;
+const PANEL_Y_MARGIN = 10;
+const ADD_BUTTON_X_MARGIN = 10;
+const ADD_BUTTON_Y_MARGIN = 6;
 
 const HEADER_FONT = new PhetFont({ size: 13, weight: "bold" });
 const SYMBOL_FONT = new PhetFont({ size: 15, weight: "bold" });
@@ -98,12 +113,20 @@ class TrackRowNode extends Node {
     const ROW_CY = ROW_HEIGHT / 2;
 
     // ── Rounded background (purely visual, not pickable) ──────────────────
-    const bg = new Rectangle(0, 0, PANEL_WIDTH, ROW_HEIGHT, 6, 6, {
-      fill: trackColor.withAlpha(0.15),
-      stroke: trackColor.withAlpha(0.7),
-      lineWidth: 1.5,
-      pickable: false,
-    });
+    const bg = new Rectangle(
+      0,
+      0,
+      PANEL_WIDTH,
+      ROW_HEIGHT,
+      ROW_CORNER_RADIUS,
+      ROW_CORNER_RADIUS,
+      {
+        fill: trackColor.withAlpha(ROW_BG_ALPHA),
+        stroke: trackColor.withAlpha(ROW_STROKE_ALPHA),
+        lineWidth: ROW_STROKE_WIDTH,
+        pickable: false,
+      },
+    );
 
     // ── Colour badge with symbol letter ───────────────────────────────────
     const badge = new Circle(BADGE_R, {
@@ -143,7 +166,7 @@ class TrackRowNode extends Node {
       isDigitizingProperty,
       new Rectangle(0, 0, 0, 0),
       {
-        boxWidth: 14,
+        boxWidth: CHECKBOX_BOX_WIDTH,
         tandem: Tandem.OPT_OUT,
       },
     );
@@ -155,13 +178,13 @@ class TrackRowNode extends Node {
       content: makeTrashIcon(),
       baseColor: TrackLabColors.trashButtonBaseProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 6,
-      yMargin: 6,
+      xMargin: TRASH_BUTTON_X_MARGIN,
+      yMargin: TRASH_BUTTON_Y_MARGIN,
       listener: () => model.removeTrack(track.id),
       tandem: Tandem.OPT_OUT,
     });
     trashButton.centerY = ROW_CY;
-    trashButton.right = PANEL_WIDTH - 3;
+    trashButton.right = PANEL_WIDTH - TRASH_BUTTON_RIGHT_OFFSET;
 
     this.addChild(bg);
     this.addChild(badge);
@@ -199,8 +222,8 @@ export class TrackListPanel extends Panel {
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 10,
-      yMargin: 6,
+      xMargin: ADD_BUTTON_X_MARGIN,
+      yMargin: ADD_BUTTON_Y_MARGIN,
       enabledProperty: addButtonEnabledProperty,
       listener: () => model.addTrack(),
       tandem: Tandem.OPT_OUT,
@@ -209,7 +232,7 @@ export class TrackListPanel extends Panel {
     // ── Track list (rebuilt whenever tracks change) ───────────────────────
     const trackListVBox = new VBox({
       children: [],
-      spacing: 6,
+      spacing: TRACK_LIST_SPACING,
       align: "left",
     });
 
@@ -221,16 +244,16 @@ export class TrackListPanel extends Panel {
 
     const content = new VBox({
       children: [widthSpacer, headerLabel, addButton, trackListVBox],
-      spacing: 8,
+      spacing: PANEL_CONTENT_SPACING,
       align: "center",
     });
 
     super(content, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
-      cornerRadius: 8,
-      xMargin: 10,
-      yMargin: 10,
+      cornerRadius: PANEL_CORNER_RADIUS,
+      xMargin: PANEL_X_MARGIN,
+      yMargin: PANEL_Y_MARGIN,
       visible: false,
     });
 

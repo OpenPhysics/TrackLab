@@ -25,6 +25,8 @@ const MAG_CROSSHAIR_RADIUS = 8;
 const MAG_CROSSHAIR_GAP = 2;
 const MAG_CROSSHAIR_LINE_WIDTH = 1;
 
+const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the video
+
 /**
  * Manual digitizing overlay for placing track points on the video.
  * Renders a custom crosshair cursor and magnifier, and places dots on click.
@@ -265,7 +267,11 @@ export class DigitizingOverlayNode extends Node {
               new Vector2(point.x, point.y),
             );
             circles.push(
-              new Circle(2, { fill: track.color, x: localPt.x, y: localPt.y }),
+              new Circle(MARK_DOT_RADIUS, {
+                fill: track.color,
+                x: localPt.x,
+                y: localPt.y,
+              }),
             );
           }
         }

@@ -16,6 +16,7 @@ import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
 import TrackLabColors from "../../TrackLabColors.js";
+import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -25,6 +26,22 @@ const MAX_TABLE_HEIGHT = 200;
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
+const TABLE_FONT_SIZE = 11; // HTML table font size in px
+const EXPORT_BUTTON_FONT_SIZE = 9;
+
+// ── Precision ─────────────────────────────────────────────────────────────────
+const CSV_DECIMAL_PLACES = 4; // decimal places for CSV time and position columns
+const CELL_DECIMAL_PLACES = 3; // decimal places shown in on-screen table cells
+const MIN_EMPTY_COL_COUNT = 4; // minimum columns (Frame, Time, x, y) when no tracks exist
+
+// ── Panel layout ──────────────────────────────────────────────────────────────
+const PANEL_X_MARGIN = 10;
+const PANEL_Y_MARGIN = 10;
+const CONTENT_SPACING = 6; // gap between title row and table DOM node
+const TITLE_ROW_SPACING = 8; // gap between title label and export button
+const EXPORT_BUTTON_X_MARGIN = 5;
+const EXPORT_BUTTON_Y_MARGIN = 3;
+const EXPORT_BUTTON_ICON_SPACING = 3;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -71,11 +88,17 @@ function generateCSV(tracks: readonly Track[], unit: string): string {
 
   // Data rows
   for (const row of dataRows) {
-    const cells: string[] = [String(row.frame), row.time.toFixed(4)];
+    const cells: string[] = [
+      String(row.frame),
+      row.time.toFixed(CSV_DECIMAL_PLACES),
+    ];
     for (const track of tracks) {
       const val = row.values.get(track.id);
       if (val) {
-        cells.push(val.x.toFixed(4), val.y.toFixed(4));
+        cells.push(
+          val.x.toFixed(CSV_DECIMAL_PLACES),
+          val.y.toFixed(CSV_DECIMAL_PLACES),
+        );
       } else {
         cells.push("", "");
       }
@@ -122,7 +145,7 @@ function buildHTMLTable(
   table.style.cssText = `
     border-collapse: collapse;
     font-family: Arial, sans-serif;
-    font-size: 11px;
+    font-size: ${TABLE_FONT_SIZE}px;
     white-space: nowrap;
   `;
 
@@ -200,8 +223,8 @@ function buildHTMLTable(
   if (dataRows.length === 0) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    // Always at least 4 columns: Frame, Time, x, y
-    td.colSpan = Math.max(4, 2 + tracks.length * 2);
+    // Always at least MIN_EMPTY_COL_COUNT columns: Frame, Time, x, y
+    td.colSpan = Math.max(MIN_EMPTY_COL_COUNT, 2 + tracks.length * 2);
     td.textContent = "No digitized points";
     td.style.cssText = `
       padding: 8px 16px;
@@ -231,13 +254,13 @@ function buildHTMLTable(
       };
 
       addCell(String(row.frame));
-      addCell(row.time.toFixed(3));
+      addCell(row.time.toFixed(CELL_DECIMAL_PLACES));
 
       for (const track of tracks) {
         const val = row.values.get(track.id);
         if (val) {
-          addCell(val.x.toFixed(3));
-          addCell(val.y.toFixed(3));
+          addCell(val.x.toFixed(CELL_DECIMAL_PLACES));
+          addCell(val.y.toFixed(CELL_DECIMAL_PLACES));
         } else {
           addCell("—");
           addCell("—");
@@ -299,16 +322,16 @@ export class DataTableNode extends Panel {
         children: [
           makeDownloadIcon(),
           new Text("CSV", {
-            font: new PhetFont({ size: 9, weight: "bold" }),
+            font: new PhetFont({ size: EXPORT_BUTTON_FONT_SIZE, weight: "bold" }),
             fill: TrackLabColors.textOnDarkProperty,
           }),
         ],
-        spacing: 3,
+        spacing: EXPORT_BUTTON_ICON_SPACING,
       }),
       baseColor: TrackLabColors.exportButtonProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: 5,
-      yMargin: 3,
+      xMargin: EXPORT_BUTTON_X_MARGIN,
+      yMargin: EXPORT_BUTTON_Y_MARGIN,
       listener: () => {
         const tracks = model.tracksProperty.value;
         const unit = unitProperty.value;
@@ -337,23 +360,23 @@ export class DataTableNode extends Panel {
 
     const titleRow = new HBox({
       children: [titleLabel, exportButton],
-      spacing: 8,
+      spacing: TITLE_ROW_SPACING,
       align: "center",
     });
 
     // ── Main content ─────────────────────────────────────────────────────────
     const content = new VBox({
       children: [titleRow, tableDOMNode],
-      spacing: 6,
+      spacing: CONTENT_SPACING,
       align: "left",
     });
 
     super(content, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
-      cornerRadius: 8,
-      xMargin: 10,
-      yMargin: 10,
+      cornerRadius: PANEL_CORNER_RADIUS,
+      xMargin: PANEL_X_MARGIN,
+      yMargin: PANEL_Y_MARGIN,
       visible: false,
     });
 
