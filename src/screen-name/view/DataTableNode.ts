@@ -1,200 +1,297 @@
 /**
  * DataTableNode.ts
  *
- * Panel displayed below the TrackListPanel showing the digitized position
- * of each track at (or just before) the current video frame.
+ * Panel displaying an Excel-like spreadsheet of all digitized track data.
  *
- * Layout: Excel-style grid with three columns:
- *   colour badge | x position | y position
- * Values are shown in the unit selected in the CalibrationToolNode.
+ * Layout: Grid with columns:
+ *   Frame | Time | x(A) | y(A) | x(B) | y(B) | ...
  *
- * Performance note: row nodes are created/destroyed only when tracks are
- * added or removed. Value updates (time or unit change) mutate the existing
- * Text nodes in-place, avoiding SceneryStack node churn on every video frame.
+ * Features:
+ *   - Scrollable both horizontally and vertically using DOM-based scrolling
+ *   - Export button to download data as CSV (export1.csv, export2.csv, ...)
  */
 
 import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import {
-  Circle,
-  HBox,
-  Node,
-  Rectangle,
-  Text,
-  VBox,
-} from "scenerystack/scenery";
+import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { Panel } from "scenerystack/sun";
+import { Panel, RectangularPushButton } from "scenerystack/sun";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
-import type { Track, TrackPoint } from "../model/Track.js";
-
-const FRAME_DURATION = 1 / 30; // assumes 30 fps
+import type { Track } from "../model/Track.js";
 
 // ── Grid geometry ────────────────────────────────────────────────────────────
-const COL_BADGE_W = 36;
-const COL_X_W = 80;
-const COL_Y_W = 80;
-const ROW_H = 22;
-const TABLE_W = COL_BADGE_W + COL_X_W + COL_Y_W;
+const MAX_TABLE_WIDTH = 300;
+const MAX_TABLE_HEIGHT = 200;
 
-// ── Colours ──────────────────────────────────────────────────────────────────
-const GRID_STROKE = new Color(160, 160, 160);
-const HEADER_BG = new Color(68, 114, 196);   // Excel-blue
-const ROW_FILL_ODD = new Color(255, 255, 255);
-const ROW_FILL_EVEN = new Color(235, 241, 251);
+// ── Colours (CSS) ────────────────────────────────────────────────────────────
+const HEADER_BG_CSS = "#4472c4";
+const ROW_ODD_CSS = "#ffffff";
+const ROW_EVEN_CSS = "#ebf1fb";
+const GRID_STROKE_CSS = "#b0b0b0";
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
-const HEADER_FONT = new PhetFont({ size: 11, weight: "bold" });
-const CELL_FONT = new PhetFont(11);
-const SYM_FONT = new PhetFont({ size: 10, weight: "bold" });
-const BADGE_R = 7;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getPointAtFrame(track: Track, frame: number): TrackPoint | null {
-  const candidates = track.points.filter((p) => p.frame <= frame);
-  if (candidates.length === 0) return null;
-  return candidates.reduce((best, p) => (p.frame > best.frame ? p : best));
+type DataRow = {
+  frame: number;
+  time: number;
+  values: Map<string, { x: number; y: number }>; // track id -> position
+};
+
+/**
+ * Collect all unique frames across all tracks and build rows of data.
+ */
+function buildDataRows(tracks: readonly Track[]): DataRow[] {
+  const frameMap = new Map<number, DataRow>();
+
+  for (const track of tracks) {
+    for (const pt of track.points) {
+      let row = frameMap.get(pt.frame);
+      if (!row) {
+        row = { frame: pt.frame, time: pt.time, values: new Map() };
+        frameMap.set(pt.frame, row);
+      }
+      row.values.set(track.id, { x: pt.x, y: pt.y });
+    }
+  }
+
+  // Sort by frame number
+  return Array.from(frameMap.values()).sort((a, b) => a.frame - b.frame);
 }
 
-/** One static header cell (label never changes). */
-function makeHeaderCell(label: string, width: number): Node {
-  const bg = new Rectangle(0, 0, width, ROW_H, {
-    fill: HEADER_BG,
-    stroke: GRID_STROKE,
-    lineWidth: 0.5,
-  });
-  const text = new Text(label, { font: HEADER_FONT, fill: "white" });
-  text.centerX = width / 2;
-  text.centerY = ROW_H / 2;
-  return new Node({ children: [bg, text] });
+/**
+ * Generate CSV content from tracks.
+ */
+function generateCSV(tracks: readonly Track[], unit: string): string {
+  const dataRows = buildDataRows(tracks);
+
+  // Header row
+  const headers = ["Frame", "Time (s)"];
+  for (const track of tracks) {
+    headers.push(`x_${track.symbol} (${unit})`, `y_${track.symbol} (${unit})`);
+  }
+
+  const lines = [headers.join(",")];
+
+  // Data rows
+  for (const row of dataRows) {
+    const cells: string[] = [String(row.frame), row.time.toFixed(4)];
+    for (const track of tracks) {
+      const val = row.values.get(track.id);
+      if (val) {
+        cells.push(val.x.toFixed(4), val.y.toFixed(4));
+      } else {
+        cells.push("", "");
+      }
+    }
+    lines.push(cells.join(","));
+  }
+
+  return lines.join("\n");
 }
 
-/** One mutable header cell (label updates when unit changes). */
-function makeMutableHeaderCell(
-  initialLabel: string,
-  width: number,
-): { node: Node; text: Text } {
-  const bg = new Rectangle(0, 0, width, ROW_H, {
-    fill: HEADER_BG,
-    stroke: GRID_STROKE,
-    lineWidth: 0.5,
-  });
-  const text = new Text(initialLabel, { font: HEADER_FONT, fill: "white" });
-  text.centerX = width / 2;
-  text.centerY = ROW_H / 2;
-  return { node: new Node({ children: [bg, text] }), text };
+/**
+ * Build an HTML table element for the data.
+ */
+function buildHTMLTable(
+  tracks: readonly Track[],
+  unit: string,
+): HTMLDivElement {
+  const dataRows = buildDataRows(tracks);
+
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = `
+    overflow: auto;
+    max-width: ${MAX_TABLE_WIDTH}px;
+    max-height: ${MAX_TABLE_HEIGHT}px;
+    border: 1px solid ${GRID_STROKE_CSS};
+    border-radius: 3px;
+    background: white;
+  `;
+
+  const table = document.createElement("table");
+  table.style.cssText = `
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    white-space: nowrap;
+  `;
+
+  // ── Header row ─────────────────────────────────────────────────────────────
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+
+  const headerStyle = `
+    background: ${HEADER_BG_CSS};
+    color: white;
+    font-weight: bold;
+    padding: 4px 8px;
+    border: 1px solid ${GRID_STROKE_CSS};
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  `;
+
+  const addHeaderCell = (text: string) => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    th.style.cssText = headerStyle;
+    headerRow.appendChild(th);
+  };
+
+  addHeaderCell("Frame");
+  addHeaderCell("Time");
+
+  for (const track of tracks) {
+    addHeaderCell(`x(${track.symbol})`);
+    addHeaderCell(`y(${track.symbol})`);
+  }
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // ── Data rows ──────────────────────────────────────────────────────────────
+  const tbody = document.createElement("tbody");
+
+  if (dataRows.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 2 + tracks.length * 2;
+    td.textContent = "No digitized points";
+    td.style.cssText = `
+      padding: 8px 16px;
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    `;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      const tr = document.createElement("tr");
+      tr.style.background = i % 2 === 0 ? ROW_ODD_CSS : ROW_EVEN_CSS;
+
+      const cellStyle = `
+        padding: 3px 6px;
+        border: 1px solid ${GRID_STROKE_CSS};
+        text-align: center;
+      `;
+
+      const addCell = (text: string) => {
+        const td = document.createElement("td");
+        td.textContent = text;
+        td.style.cssText = cellStyle;
+        tr.appendChild(td);
+      };
+
+      addCell(String(row.frame));
+      addCell(row.time.toFixed(3));
+
+      for (const track of tracks) {
+        const val = row.values.get(track.id);
+        if (val) {
+          addCell(val.x.toFixed(3));
+          addCell(val.y.toFixed(3));
+        } else {
+          addCell("—");
+          addCell("—");
+        }
+      }
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  table.appendChild(tbody);
+  wrapper.appendChild(table);
+
+  return wrapper;
 }
 
-/** One data cell whose value is mutated in-place. */
-function makeDataCell(
-  width: number,
-  rowFill: Color,
-): { node: Node; text: Text } {
-  const bg = new Rectangle(0, 0, width, ROW_H, {
-    fill: rowFill,
-    stroke: GRID_STROKE,
-    lineWidth: 0.5,
+/**
+ * Download icon (simple arrow pointing down).
+ */
+function makeDownloadIcon(): Node {
+  // Simple text-based icon
+  return new Text("⬇", {
+    font: new PhetFont({ size: 11 }),
+    fill: "white",
   });
-  const text = new Text("—", { font: CELL_FONT, fill: "black" });
-  text.centerX = width / 2;
-  text.centerY = ROW_H / 2;
-  return { node: new Node({ children: [bg, text] }), text };
-}
-
-/** Badge cell: coloured circle + symbol letter (static per track). */
-function makeBadgeCell(track: Track, rowFill: Color): Node {
-  const trackColor = new Color(track.color);
-  const bg = new Rectangle(0, 0, COL_BADGE_W, ROW_H, {
-    fill: rowFill,
-    stroke: GRID_STROKE,
-    lineWidth: 0.5,
-  });
-  const badge = new Circle(BADGE_R, { fill: trackColor });
-  badge.centerX = COL_BADGE_W / 2;
-  badge.centerY = ROW_H / 2;
-  const sym = new Text(track.symbol, { font: SYM_FONT, fill: "white" });
-  sym.center = badge.center;
-  return new Node({ children: [bg, badge, sym] });
-}
-
-// ── Row types ────────────────────────────────────────────────────────────────
-
-type RowRefs = { container: Node; xText: Text; yText: Text };
-
-function buildTrackRow(track: Track, rowIndex: number): RowRefs {
-  const fill = rowIndex % 2 === 0 ? ROW_FILL_ODD : ROW_FILL_EVEN;
-
-  const badgeCell = makeBadgeCell(track, fill);
-  const xCell = makeDataCell(COL_X_W, fill);
-  const yCell = makeDataCell(COL_Y_W, fill);
-
-  const container = new HBox({
-    children: [badgeCell, xCell.node, yCell.node],
-    spacing: 0,
-    align: "center",
-  });
-
-  return { container, xText: xCell.text, yText: yCell.text };
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export class DataTableNode extends Panel {
+  private exportCounter = 1;
+  private tableWrapper: HTMLDivElement;
+  private tableDOMNode: DOM;
+
   public constructor(
     model: SimModel,
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     unitProperty: TReadOnlyProperty<string>,
   ) {
-    // ── Column headers ────────────────────────────────────────────────────
-    const xHeader = makeMutableHeaderCell("x", COL_X_W);
-    const yHeader = makeMutableHeaderCell("y", COL_Y_W);
+    // ── Create scrollable HTML table ─────────────────────────────────────────
+    const tableWrapper = buildHTMLTable([], "m");
+    const tableDOMNode = new DOM(tableWrapper, { allowInput: true });
 
-    const headerRow = new HBox({
-      children: [makeHeaderCell("Track", COL_BADGE_W), xHeader.node, yHeader.node],
-      spacing: 0,
-      align: "center",
+    // ── Export button ────────────────────────────────────────────────────────
+    const exportButton = new RectangularPushButton({
+      content: new HBox({
+        children: [
+          makeDownloadIcon(),
+          new Text("CSV", {
+            font: new PhetFont({ size: 9, weight: "bold" }),
+            fill: "white",
+          }),
+        ],
+        spacing: 3,
+      }),
+      baseColor: new Color(76, 175, 80), // green
+      xMargin: 5,
+      yMargin: 3,
+      listener: () => {
+        const tracks = model.tracksProperty.value;
+        const unit = unitProperty.value;
+        const csv = generateCSV(tracks, unit);
+
+        // Create download
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `export${this.exportCounter}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        this.exportCounter++;
+      },
     });
 
-    // ── "No data" placeholder row ─────────────────────────────────────────
-    const noDataText = new Text("No digitized points", {
-      font: CELL_FONT,
-      fill: "black",
-    });
-    const noDataBg = new Rectangle(0, 0, TABLE_W, ROW_H, {
-      fill: ROW_FILL_ODD,
-      stroke: GRID_STROKE,
-      lineWidth: 0.5,
-    });
-    noDataText.centerX = TABLE_W / 2;
-    noDataText.centerY = ROW_H / 2;
-    const noDataRow = new Node({ children: [noDataBg, noDataText] });
-
-    // ── Body rows VBox ────────────────────────────────────────────────────
-    const bodyVBox = new VBox({
-      children: [noDataRow],
-      spacing: 0,
-      align: "left",
-    });
-
-    // ── Title + grid ──────────────────────────────────────────────────────
-    const titleLabel = new Text("Position Data", {
+    // ── Title row ────────────────────────────────────────────────────────────
+    const titleLabel = new Text("Data", {
       font: TITLE_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
 
-    const tableNode = new VBox({
-      children: [headerRow, bodyVBox],
-      spacing: 0,
-      align: "left",
+    const titleRow = new HBox({
+      children: [titleLabel, exportButton],
+      spacing: 8,
+      align: "center",
     });
 
+    // ── Main content ─────────────────────────────────────────────────────────
     const content = new VBox({
-      children: [titleLabel, tableNode],
+      children: [titleRow, tableDOMNode],
       spacing: 6,
-      align: "center",
+      align: "left",
     });
 
     super(content, {
@@ -206,69 +303,28 @@ export class DataTableNode extends Panel {
       visible: false,
     });
 
-    // ── Live row refs keyed by track ID ───────────────────────────────────
-    const rowRefs = new Map<string, RowRefs>();
-    let lastVisibleIds = "";
-    let lastTrackIds = "";
+    this.tableWrapper = tableWrapper;
+    this.tableDOMNode = tableDOMNode;
 
-    const updateValues = () => {
-      const frame = Math.round(
-        model.currentTimeProperty.value / FRAME_DURATION,
-      );
+    // ── Rebuild table function ───────────────────────────────────────────────
+    const rebuildTable = () => {
+      const tracks = model.tracksProperty.value;
       const unit = unitProperty.value;
 
-      // Update column header labels to reflect current unit.
-      xHeader.text.string = `x (${unit})`;
-      yHeader.text.string = `y (${unit})`;
-      xHeader.text.centerX = COL_X_W / 2;
-      yHeader.text.centerX = COL_Y_W / 2;
+      // Build new table
+      const newWrapper = buildHTMLTable(tracks, unit);
 
-      const tracksWithData = model.tracksProperty.value.filter(
-        (t) => rowRefs.has(t.id) && t.points.some((p) => p.frame <= frame),
-      );
+      // Replace the content
+      this.tableWrapper.innerHTML = "";
+      this.tableWrapper.appendChild(newWrapper.firstChild!);
 
-      // Only reassign VBox children when the visible set changes.
-      const visibleIds = tracksWithData.map((t) => t.id).join(",");
-      if (visibleIds !== lastVisibleIds) {
-        lastVisibleIds = visibleIds;
-        bodyVBox.children =
-          tracksWithData.length === 0
-            ? [noDataRow]
-            : tracksWithData.map((t) => rowRefs.get(t.id)!.container);
-      }
-
-      // Mutate Text values in-place; no node reconstruction.
-      for (const track of tracksWithData) {
-        const refs = rowRefs.get(track.id)!;
-        const pt = getPointAtFrame(track, frame);
-        refs.xText.string = pt ? pt.x.toFixed(3) : "—";
-        refs.yText.string = pt ? pt.y.toFixed(3) : "—";
-        refs.xText.centerX = COL_X_W / 2;
-        refs.yText.centerX = COL_Y_W / 2;
-      }
+      // Copy styles
+      this.tableWrapper.style.cssText = newWrapper.style.cssText;
     };
 
-    // ── Rebuild row nodes only when track set changes ─────────────────────
-    model.tracksProperty.link((tracks) => {
-      const ids = tracks.map((t) => t.id).join(",");
-      if (ids !== lastTrackIds) {
-        lastTrackIds = ids;
-
-        for (const id of rowRefs.keys()) {
-          if (!tracks.some((t) => t.id === id)) rowRefs.delete(id);
-        }
-        tracks.forEach((track, index) => {
-          if (!rowRefs.has(track.id)) {
-            rowRefs.set(track.id, buildTrackRow(track, index));
-          }
-        });
-      }
-
-      updateValues();
-    });
-
-    model.currentTimeProperty.link(updateValues);
-    unitProperty.link(updateValues);
+    // ── Reactive updates ─────────────────────────────────────────────────────
+    model.tracksProperty.link(rebuildTable);
+    unitProperty.link(rebuildTable);
 
     videoLoadedProperty.link((loaded) => {
       this.visible = loaded;
