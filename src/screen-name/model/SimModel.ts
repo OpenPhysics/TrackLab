@@ -161,7 +161,7 @@ export class SimModel {
     const color =
       TRACK_COLORS[
         (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length
-      ];
+      ].toCSS();
     this.nextSymbolCode++;
     this.canAddTrackProperty.value = this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
 

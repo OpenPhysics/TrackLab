@@ -124,6 +124,11 @@ export class VideoSourceControlNode extends HBox {
       selectedVideoProperty,
       comboItems,
       listParent,
+      {
+        buttonFill: TrackLabColors.comboBoxButtonFillProperty,
+        listFill: TrackLabColors.comboBoxListFillProperty,
+        highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
+      },
     );
 
     selectedVideoProperty.lazyLink((filename) => {
