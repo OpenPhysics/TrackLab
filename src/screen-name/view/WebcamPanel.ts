@@ -14,6 +14,7 @@ import {
   RectangularPushButton,
 } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import {
   WEBCAM_PREVIEW_HEIGHT,
@@ -239,22 +240,24 @@ export class WebcamPanel extends Node {
     // keep button refs for toggling
     this._startButton = startButton;
     this._stopButton = stopButton;
+    this.webcamStrings = StringManager.getInstance().getWebcam();
   }
 
   private readonly _startButton: RectangularPushButton;
   private readonly _stopButton: RectangularPushButton;
+  private readonly webcamStrings: ReturnType<StringManager["getWebcam"]>;
 
   // ── Public ───────────────────────────────────────────────────────────────
 
   public async open(): Promise<void> {
     // Reset UI to preview state without starting the camera yet (no permission yet).
     this.resetPreviewUI();
-    this.setStatus("Requesting camera access…");
+    this.setStatus(this.webcamStrings.requestingAccessStringProperty.value);
     this._startButton.enabled = false;
 
     const granted = await this.recorder.requestPermission();
     if (!granted) {
-      this.setStatus("Camera access denied.");
+      this.setStatus(this.webcamStrings.accessDeniedStringProperty.value);
       return;
     }
 
@@ -321,7 +324,7 @@ export class WebcamPanel extends Node {
   private async stopRecording(): Promise<void> {
     this.stopTimer();
     this._stopButton.visible = false;
-    this.setStatus("Processing…");
+    this.setStatus(this.webcamStrings.processingStringProperty.value);
 
     this.recordedBlob = await this.recorder.stopRecording();
     this.recorder.stopPreview();
@@ -346,7 +349,7 @@ export class WebcamPanel extends Node {
     cb: (blob: Blob, duration: number) => void,
   ): Promise<void> {
     if (!this.recordedBlob) return;
-    this.setStatus("Fixing video metadata…");
+    this.setStatus(this.webcamStrings.fixingMetadataStringProperty.value);
 
     let blob = this.recordedBlob;
     let duration = 0;
@@ -368,7 +371,12 @@ export class WebcamPanel extends Node {
         .toString()
         .padStart(2, "0");
       const s = (secs % 60).toString().padStart(2, "0");
-      this.setStatus(`● Recording ${m}:${s}`);
+      this.setStatus(
+        this.webcamStrings.recordingStringProperty.value.replace(
+          "{{time}}",
+          `${m}:${s}`,
+        ),
+      );
     }, 1000);
   }
 

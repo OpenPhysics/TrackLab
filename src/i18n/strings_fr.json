@@ -52,5 +52,45 @@
     "simulation": "Simulation",
     "enableAutoTracking": "Activer le suivi automatique",
     "enableAutoTrackingDescription": "Lorsque activé, affiche la case à cocher du suivi automatique dans le panneau de contrôle, permettant le suivi automatique d'objets basé sur OpenCV. Lorsque désactivé, la case est cachée et seule la numérisation manuelle est disponible."
+  },
+  "autoTracker": {
+    "dragToSelect": "Faire glisser sur la vidéo pour sélectionner l'objet à suivre"
+  },
+  "dataTable": {
+    "title": "Données",
+    "csv": "CSV",
+    "noData": "Aucun point numérisé",
+    "frame": "Image",
+    "timeSeconds": "Temps (s)"
+  },
+  "trackList": {
+    "addTrack": "+ Ajouter une piste",
+    "tracks": "Pistes"
+  },
+  "ui": {
+    "fps": "ips :",
+    "selectVideo": "— sélectionner une vidéo —"
+  },
+  "coordSystem": {
+    "xAxisLabel": "x",
+    "yAxisLabel": "y"
+  },
+  "webcam": {
+    "requestingAccess": "Demande d'accès à la caméra\u2026",
+    "accessDenied": "Accès à la caméra refusé.",
+    "processing": "Traitement\u2026",
+    "fixingMetadata": "Correction des métadonnées vidéo\u2026",
+    "recording": "\u25CF Enregistrement {{time}}"
+  },
+  "videoFiles": {
+    "ballOil": "Balle dans l'huile",
+    "bouncingCart": "Chariot rebondissant",
+    "cartPendulum": "Chariot pendule",
+    "cupsClips": "Coupes et agrafes",
+    "parachuteMonkey": "Singe parachute",
+    "pendulum": "Pendule",
+    "pendulumDrag": "Pendule avec frottement",
+    "pucksCollide": "Rondelles en collision",
+    "springWars": "Guerres de ressorts"
   }
 }

@@ -12,6 +12,7 @@ import {
 } from "scenerystack/scenery-phet";
 import { ButtonNode, NumberSpinner, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -43,6 +44,8 @@ export class PlaybackControlsNode extends HBox {
     onStepForward: () => void,
   ) {
     super({ spacing: CONTROLS_SPACING, align: "center" });
+
+    const uiStrings = StringManager.getInstance().getUI();
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
@@ -129,13 +132,15 @@ export class PlaybackControlsNode extends HBox {
 
     const totalTimeLabel = new Text(totalTimeTextProperty, {
       font: LABEL_FONT,
+      fill: TrackLabColors.textOnDarkProperty,
     });
     const frameCountLabel = new Text(frameCountTextProperty, {
       font: LABEL_FONT,
+      fill: TrackLabColors.textOnDarkProperty,
     });
 
     // ── Frame rate control ─────────────────────────────────────────────────
-    const fpsLabel = new Text("fps:", {
+    const fpsLabel = new Text(uiStrings.fpsStringProperty, {
       font: SMALL_FONT,
       fill: TrackLabColors.textMutedProperty,
     });

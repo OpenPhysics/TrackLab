@@ -35,6 +35,7 @@ import {
   RectangularPushButton,
 } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -201,6 +202,8 @@ export class TrackListPanel extends Panel {
     model: SimModel,
     videoLoadedProperty: TReadOnlyProperty<boolean>,
   ) {
+    const trackListStrings = StringManager.getInstance().getTrackList();
+
     // Width enforcer: invisible rectangle keeps the panel wide even when the
     // track list is empty.
     const widthSpacer = new Rectangle(0, 0, PANEL_WIDTH, 1, {
@@ -216,7 +219,7 @@ export class TrackListPanel extends Panel {
     );
 
     const addButton = new RectangularPushButton({
-      content: new Text("+ Add Track", {
+      content: new Text(trackListStrings.addTrackStringProperty, {
         font: LABEL_FONT,
         fill: TrackLabColors.textOnDarkProperty,
       }),
@@ -237,7 +240,7 @@ export class TrackListPanel extends Panel {
     });
 
     // ── Panel content ─────────────────────────────────────────────────────
-    const headerLabel = new Text("Tracks", {
+    const headerLabel = new Text(trackListStrings.tracksStringProperty, {
       font: HEADER_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });

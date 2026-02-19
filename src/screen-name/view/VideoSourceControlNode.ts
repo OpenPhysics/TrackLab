@@ -1,8 +1,10 @@
+import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
 import { HBox, Node, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { DEFAULT_FRAME_RATE, type SimModel } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
@@ -10,18 +12,13 @@ import { WebcamPanel } from "./WebcamPanel.js";
 const LABEL_FONT = new PhetFont(14);
 const CONTROLS_SPACING = 12; // gap between video combo box and webcam button
 
-// Bundled video files with known frame rates
-const VIDEO_FILES = [
-  { label: "Ball in Oil", filename: "ball_oil.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "ballOilItem" },
-  { label: "Bouncing Cart", filename: "bouncing_cart.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "bouncingCartItem" },
-  { label: "Cart Pendulum", filename: "cart_pendulum.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "cartPendulumItem" },
-  { label: "Cups Clips", filename: "CupsClips.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "cupsClipsItem" },
-  { label: "Parachute Monkey", filename: "parachute_monkey.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "parachuteMonkeyItem" },
-  { label: "Pendulum", filename: "Pendulum.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "pendulumItem" },
-  { label: "Pendulum Drag", filename: "pendulum_drag.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "pendulumDragItem" },
-  { label: "Pucks Collide", filename: "PucksCollide.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "pucksCollideItem" },
-  { label: "Spring Wars", filename: "spring_wars.mp4", fps: DEFAULT_FRAME_RATE, tandemName: "springWarsItem" },
-] as const;
+// Bundled video files with known frame rates (labels resolved from StringManager)
+type VideoFile = {
+  labelProperty: TReadOnlyProperty<string>;
+  filename: string;
+  fps: number;
+  tandemName: string;
+};
 
 export type VideoSelectedCallback = (url: string, fps: number) => void;
 export type WebcamReadyCallback = (blob: Blob, duration: number) => void;
@@ -40,17 +37,85 @@ export class VideoSourceControlNode extends HBox {
   ) {
     super({ spacing: CONTROLS_SPACING });
 
+    const uiStrings = StringManager.getInstance().getUI();
+    const videoFileStrings = StringManager.getInstance().getVideoFiles();
+
+    const VIDEO_FILES: VideoFile[] = [
+      {
+        labelProperty: videoFileStrings.ballOilStringProperty,
+        filename: "ball_oil.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "ballOilItem",
+      },
+      {
+        labelProperty: videoFileStrings.bouncingCartStringProperty,
+        filename: "bouncing_cart.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "bouncingCartItem",
+      },
+      {
+        labelProperty: videoFileStrings.cartPendulumStringProperty,
+        filename: "cart_pendulum.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "cartPendulumItem",
+      },
+      {
+        labelProperty: videoFileStrings.cupsClipsStringProperty,
+        filename: "CupsClips.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "cupsClipsItem",
+      },
+      {
+        labelProperty: videoFileStrings.parachuteMonkeyStringProperty,
+        filename: "parachute_monkey.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "parachuteMonkeyItem",
+      },
+      {
+        labelProperty: videoFileStrings.pendulumStringProperty,
+        filename: "Pendulum.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "pendulumItem",
+      },
+      {
+        labelProperty: videoFileStrings.pendulumDragStringProperty,
+        filename: "pendulum_drag.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "pendulumDragItem",
+      },
+      {
+        labelProperty: videoFileStrings.pucksCollideStringProperty,
+        filename: "PucksCollide.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "pucksCollideItem",
+      },
+      {
+        labelProperty: videoFileStrings.springWarsStringProperty,
+        filename: "spring_wars.mp4",
+        fps: DEFAULT_FRAME_RATE,
+        tandemName: "springWarsItem",
+      },
+    ];
+
     const selectedVideoProperty = new Property<string | null>(null);
 
     const comboItems: ComboBoxItem<string | null>[] = [
       {
         value: null,
-        createNode: () => new Text("— select a video —", { font: LABEL_FONT }),
+        createNode: () =>
+          new Text(uiStrings.selectVideoStringProperty, {
+            font: LABEL_FONT,
+            fill: TrackLabColors.textOnDarkProperty,
+          }),
         tandemName: "selectVideoItem",
       },
       ...VIDEO_FILES.map((v) => ({
         value: v.filename,
-        createNode: () => new Text(v.label, { font: LABEL_FONT }),
+        createNode: () =>
+          new Text(v.labelProperty, {
+            font: LABEL_FONT,
+            fill: TrackLabColors.textOnDarkProperty,
+          }),
         tandemName: v.tandemName,
       })),
     ];

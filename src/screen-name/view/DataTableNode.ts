@@ -15,6 +15,7 @@ import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -75,11 +76,15 @@ function buildDataRows(tracks: readonly Track[]): DataRow[] {
 /**
  * Generate CSV content from tracks.
  */
-function generateCSV(tracks: readonly Track[], unit: string): string {
+function generateCSV(
+  tracks: readonly Track[],
+  unit: string,
+  labels: TableLabels,
+): string {
   const dataRows = buildDataRows(tracks);
 
   // Header row
-  const headers = ["Frame", "Time (s)"];
+  const headers = [labels.frame, labels.timeSeconds];
   for (const track of tracks) {
     headers.push(`${track.symbol}_x (${unit})`, `${track.symbol}_y (${unit})`);
   }
@@ -109,6 +114,13 @@ function generateCSV(tracks: readonly Track[], unit: string): string {
   return lines.join("\n");
 }
 
+// Localized label strings for the HTML table
+type TableLabels = {
+  frame: string;
+  timeSeconds: string;
+  noData: string;
+};
+
 // Color values for HTML table (cached CSS strings)
 type TableColors = {
   headerBg: string;
@@ -128,6 +140,7 @@ function buildHTMLTable(
   tracks: readonly Track[],
   unit: string,
   colors: TableColors,
+  labels: TableLabels,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -200,8 +213,8 @@ function buildHTMLTable(
     return span;
   };
 
-  addHeaderCell("Frame");
-  addHeaderCell("Time (s)");
+  addHeaderCell(labels.frame);
+  addHeaderCell(labels.timeSeconds);
 
   if (tracks.length === 0) {
     // Placeholder columns when no tracks exist
@@ -225,7 +238,7 @@ function buildHTMLTable(
     const td = document.createElement("td");
     // Always at least MIN_EMPTY_COL_COUNT columns: Frame, Time, x, y
     td.colSpan = Math.max(MIN_EMPTY_COL_COUNT, 2 + tracks.length * 2);
-    td.textContent = "No digitized points";
+    td.textContent = labels.noData;
     td.style.cssText = `
       padding: 8px 16px;
       text-align: center;
@@ -300,6 +313,14 @@ export class DataTableNode extends Panel {
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     unitProperty: TReadOnlyProperty<string>,
   ) {
+    const dataTableStrings = StringManager.getInstance().getDataTable();
+
+    const getLabels = (): TableLabels => ({
+      frame: dataTableStrings.frameStringProperty.value,
+      timeSeconds: dataTableStrings.timeSecondsStringProperty.value,
+      noData: dataTableStrings.noDataStringProperty.value,
+    });
+
     // Helper to get current table colors from properties
     const getTableColors = (): TableColors => ({
       headerBg: TrackLabColors.tableHeaderBackgroundProperty.value.toCSS(),
@@ -313,7 +334,7 @@ export class DataTableNode extends Panel {
     });
 
     // ── Create scrollable HTML table ─────────────────────────────────────────
-    const tableWrapper = buildHTMLTable([], "m", getTableColors());
+    const tableWrapper = buildHTMLTable([], "m", getTableColors(), getLabels());
     const tableDOMNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
@@ -321,7 +342,7 @@ export class DataTableNode extends Panel {
       content: new HBox({
         children: [
           makeDownloadIcon(),
-          new Text("CSV", {
+          new Text(dataTableStrings.csvStringProperty, {
             font: new PhetFont({ size: EXPORT_BUTTON_FONT_SIZE, weight: "bold" }),
             fill: TrackLabColors.textOnDarkProperty,
           }),
@@ -335,7 +356,7 @@ export class DataTableNode extends Panel {
       listener: () => {
         const tracks = model.tracksProperty.value;
         const unit = unitProperty.value;
-        const csv = generateCSV(tracks, unit);
+        const csv = generateCSV(tracks, unit, getLabels());
 
         // Create download
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -353,7 +374,7 @@ export class DataTableNode extends Panel {
     });
 
     // ── Title row ────────────────────────────────────────────────────────────
-    const titleLabel = new Text("Data", {
+    const titleLabel = new Text(dataTableStrings.titleStringProperty, {
       font: TITLE_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
@@ -388,8 +409,13 @@ export class DataTableNode extends Panel {
       const tracks = model.tracksProperty.value;
       const unit = unitProperty.value;
 
-      // Build new table with current colors
-      const newWrapper = buildHTMLTable(tracks, unit, getTableColors());
+      // Build new table with current colors and labels
+      const newWrapper = buildHTMLTable(
+        tracks,
+        unit,
+        getTableColors(),
+        getLabels(),
+      );
 
       // Replace the content
       this.tableWrapper.innerHTML = "";
@@ -403,8 +429,9 @@ export class DataTableNode extends Panel {
     model.tracksProperty.link(rebuildTable);
     unitProperty.link(rebuildTable);
 
-    // Rebuild table when color profile changes
+    // Rebuild table when color profile or locale changes
     TrackLabColors.tableHeaderBackgroundProperty.lazyLink(rebuildTable);
+    dataTableStrings.frameStringProperty.lazyLink(rebuildTable);
 
     videoLoadedProperty.link((loaded) => {
       this.visible = loaded;

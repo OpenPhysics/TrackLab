@@ -114,7 +114,8 @@ export class CalibrationToolNode extends Node {
     const unitItems: ComboBoxItem<(typeof CALIBRATION_UNITS)[number]>[] =
       CALIBRATION_UNITS.map((unit) => ({
         value: unit,
-        createNode: () => new Text(unit, { font: FONT }),
+        createNode: () =>
+          new Text(unit, { font: FONT, fill: TrackLabColors.textOnDarkProperty }),
         tandemName: `${unit}Item`,
       }));
     const unitComboBox = new ComboBox(

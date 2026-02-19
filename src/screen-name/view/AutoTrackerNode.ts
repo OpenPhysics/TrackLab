@@ -11,6 +11,7 @@ import {
 } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
@@ -68,6 +69,8 @@ export class AutoTrackerNode extends Node {
 
     this.model = model;
 
+    const autoTrackerStrings = StringManager.getInstance().getAutoTracker();
+
     // ── Transparent hit area (receives drag events) ───────────────────────
     const hitArea = new Rectangle(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT, {
       fill: "transparent",
@@ -78,7 +81,7 @@ export class AutoTrackerNode extends Node {
     this.addChild(hitArea);
 
     // ── Hint text ────────────────────────────────────────────────────────
-    this.hintText = new Text("Drag on video to select object to track", {
+    this.hintText = new Text(autoTrackerStrings.dragToSelectStringProperty, {
       font: new PhetFont({ size: HINT_FONT_SIZE, weight: "bold" }),
       fill: TrackLabColors.trackerHintFillProperty,
     });

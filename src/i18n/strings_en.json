@@ -52,5 +52,45 @@
     "simulation": "Simulation",
     "enableAutoTracking": "Enable Auto-Tracking",
     "enableAutoTrackingDescription": "When enabled, shows the auto-tracking checkbox in the control panel, allowing OpenCV-based automatic object tracking. When disabled, the checkbox is hidden and only manual digitizing is available."
+  },
+  "autoTracker": {
+    "dragToSelect": "Drag on video to select object to track"
+  },
+  "dataTable": {
+    "title": "Data",
+    "csv": "CSV",
+    "noData": "No digitized points",
+    "frame": "Frame",
+    "timeSeconds": "Time (s)"
+  },
+  "trackList": {
+    "addTrack": "+ Add Track",
+    "tracks": "Tracks"
+  },
+  "ui": {
+    "fps": "fps:",
+    "selectVideo": "— select a video —"
+  },
+  "coordSystem": {
+    "xAxisLabel": "x",
+    "yAxisLabel": "y"
+  },
+  "webcam": {
+    "requestingAccess": "Requesting camera access\u2026",
+    "accessDenied": "Camera access denied.",
+    "processing": "Processing\u2026",
+    "fixingMetadata": "Fixing video metadata\u2026",
+    "recording": "\u25CF Recording {{time}}"
+  },
+  "videoFiles": {
+    "ballOil": "Ball in Oil",
+    "bouncingCart": "Bouncing Cart",
+    "cartPendulum": "Cart Pendulum",
+    "cupsClips": "Cups Clips",
+    "parachuteMonkey": "Parachute Monkey",
+    "pendulum": "Pendulum",
+    "pendulumDrag": "Pendulum Drag",
+    "pucksCollide": "Pucks Collide",
+    "springWars": "Spring Wars"
   }
 }

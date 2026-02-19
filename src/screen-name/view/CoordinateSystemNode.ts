@@ -2,6 +2,7 @@ import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
 
@@ -31,6 +32,8 @@ export class CoordinateSystemNode extends Node {
   ) {
     super();
 
+    const coordStrings = StringManager.getInstance().getCoordSystem();
+
     // ── Rotating node: axes + rotation handle ─────────────────────────────
     const rotatingNode = new Node();
 
@@ -57,7 +60,7 @@ export class CoordinateSystemNode extends Node {
     );
 
     rotatingNode.addChild(
-      new Text("x", {
+      new Text(coordStrings.xAxisLabelStringProperty, {
         font: FONT,
         fill: TrackLabColors.axisXColorProperty,
         left: ARROW_LENGTH + LABEL_OFFSET_X,
@@ -66,7 +69,7 @@ export class CoordinateSystemNode extends Node {
     );
 
     rotatingNode.addChild(
-      new Text("y", {
+      new Text(coordStrings.yAxisLabelStringProperty, {
         font: FONT,
         fill: TrackLabColors.axisYColorProperty,
         centerX: 0,

@@ -213,4 +213,141 @@ export class StringManager {
           .enableAutoTrackingDescriptionStringProperty,
     };
   }
+
+  /**
+   * Get auto-tracker string properties
+   */
+  public getAutoTracker(): {
+    dragToSelectStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      dragToSelectStringProperty:
+        this.stringProperties.autoTracker.dragToSelectStringProperty,
+    };
+  }
+
+  /**
+   * Get data table string properties
+   */
+  public getDataTable(): {
+    titleStringProperty: ReadOnlyProperty<string>;
+    csvStringProperty: ReadOnlyProperty<string>;
+    noDataStringProperty: ReadOnlyProperty<string>;
+    frameStringProperty: ReadOnlyProperty<string>;
+    timeSecondsStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      titleStringProperty: this.stringProperties.dataTable.titleStringProperty,
+      csvStringProperty: this.stringProperties.dataTable.csvStringProperty,
+      noDataStringProperty:
+        this.stringProperties.dataTable.noDataStringProperty,
+      frameStringProperty: this.stringProperties.dataTable.frameStringProperty,
+      timeSecondsStringProperty:
+        this.stringProperties.dataTable.timeSecondsStringProperty,
+    };
+  }
+
+  /**
+   * Get track list string properties
+   */
+  public getTrackList(): {
+    addTrackStringProperty: ReadOnlyProperty<string>;
+    tracksStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      addTrackStringProperty:
+        this.stringProperties.trackList.addTrackStringProperty,
+      tracksStringProperty:
+        this.stringProperties.trackList.tracksStringProperty,
+    };
+  }
+
+  /**
+   * Get general UI string properties
+   */
+  public getUI(): {
+    fpsStringProperty: ReadOnlyProperty<string>;
+    selectVideoStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      fpsStringProperty: this.stringProperties.ui.fpsStringProperty,
+      selectVideoStringProperty:
+        this.stringProperties.ui.selectVideoStringProperty,
+    };
+  }
+
+  /**
+   * Get coordinate system string properties
+   */
+  public getCoordSystem(): {
+    xAxisLabelStringProperty: ReadOnlyProperty<string>;
+    yAxisLabelStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      xAxisLabelStringProperty:
+        this.stringProperties.coordSystem.xAxisLabelStringProperty,
+      yAxisLabelStringProperty:
+        this.stringProperties.coordSystem.yAxisLabelStringProperty,
+    };
+  }
+
+  /**
+   * Get webcam string properties
+   */
+  public getWebcam(): {
+    requestingAccessStringProperty: ReadOnlyProperty<string>;
+    accessDeniedStringProperty: ReadOnlyProperty<string>;
+    processingStringProperty: ReadOnlyProperty<string>;
+    fixingMetadataStringProperty: ReadOnlyProperty<string>;
+    recordingStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      requestingAccessStringProperty:
+        this.stringProperties.webcam.requestingAccessStringProperty,
+      accessDeniedStringProperty:
+        this.stringProperties.webcam.accessDeniedStringProperty,
+      processingStringProperty:
+        this.stringProperties.webcam.processingStringProperty,
+      fixingMetadataStringProperty:
+        this.stringProperties.webcam.fixingMetadataStringProperty,
+      recordingStringProperty:
+        this.stringProperties.webcam.recordingStringProperty,
+    };
+  }
+
+  /**
+   * Get video file label string properties
+   */
+  public getVideoFiles(): {
+    ballOilStringProperty: ReadOnlyProperty<string>;
+    bouncingCartStringProperty: ReadOnlyProperty<string>;
+    cartPendulumStringProperty: ReadOnlyProperty<string>;
+    cupsClipsStringProperty: ReadOnlyProperty<string>;
+    parachuteMonkeyStringProperty: ReadOnlyProperty<string>;
+    pendulumStringProperty: ReadOnlyProperty<string>;
+    pendulumDragStringProperty: ReadOnlyProperty<string>;
+    pucksCollideStringProperty: ReadOnlyProperty<string>;
+    springWarsStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      ballOilStringProperty:
+        this.stringProperties.videoFiles.ballOilStringProperty,
+      bouncingCartStringProperty:
+        this.stringProperties.videoFiles.bouncingCartStringProperty,
+      cartPendulumStringProperty:
+        this.stringProperties.videoFiles.cartPendulumStringProperty,
+      cupsClipsStringProperty:
+        this.stringProperties.videoFiles.cupsClipsStringProperty,
+      parachuteMonkeyStringProperty:
+        this.stringProperties.videoFiles.parachuteMonkeyStringProperty,
+      pendulumStringProperty:
+        this.stringProperties.videoFiles.pendulumStringProperty,
+      pendulumDragStringProperty:
+        this.stringProperties.videoFiles.pendulumDragStringProperty,
+      pucksCollideStringProperty:
+        this.stringProperties.videoFiles.pucksCollideStringProperty,
+      springWarsStringProperty:
+        this.stringProperties.videoFiles.springWarsStringProperty,
+    };
+  }
 }
