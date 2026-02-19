@@ -12,10 +12,10 @@ import {
   type TReadOnlyProperty,
 } from "scenerystack/axon";
 import type { PlottableProperty } from "./PlottableProperty.js";
-import ResonanceColors from "../../ResonanceColors.js";
+import TrackLabColors from "../../TrackLabColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
-import resonance from "../../ResonanceNamespace.js";
-import { ResonanceStrings } from "../../../i18n/ResonanceStrings.js";
+import trackLab from "../../TrackLabNamespace.js";
+import { StringManager } from "../../i18n/StringManager.js";
 
 // Font sizes
 const COMBO_BOX_FONT = new PhetFont({ size: 12 });
@@ -74,7 +74,7 @@ export default class GraphControlsPanel {
       createNode: () =>
         new Text(prop.name, {
           font: COMBO_BOX_FONT,
-          fill: ResonanceColors.textProperty,
+          fill: TrackLabColors.textProperty,
         }),
       tandemName: this.sanitizeTandemName(prop.name) + "Item",
     }));
@@ -83,11 +83,11 @@ export default class GraphControlsPanel {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
-      buttonFill: ResonanceColors.controlPanelFillProperty,
-      buttonStroke: ResonanceColors.controlPanelStrokeProperty,
-      listFill: ResonanceColors.controlPanelFillProperty,
-      listStroke: ResonanceColors.controlPanelStrokeProperty,
-      highlightFill: ResonanceColors.controlPanelStrokeProperty,
+      buttonFill: TrackLabColors.controlPanelFillProperty,
+      buttonStroke: TrackLabColors.controlPanelStrokeProperty,
+      listFill: TrackLabColors.controlPanelFillProperty,
+      listStroke: TrackLabColors.controlPanelStrokeProperty,
+      highlightFill: TrackLabColors.controlPanelStrokeProperty,
     });
 
     const yItems = this.availableProperties.map((prop) => ({
@@ -95,7 +95,7 @@ export default class GraphControlsPanel {
       createNode: () =>
         new Text(prop.name, {
           font: COMBO_BOX_FONT,
-          fill: ResonanceColors.textProperty,
+          fill: TrackLabColors.textProperty,
         }),
       tandemName: this.sanitizeTandemName(prop.name) + "Item",
     }));
@@ -104,33 +104,33 @@ export default class GraphControlsPanel {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
-      buttonFill: ResonanceColors.controlPanelFillProperty,
-      buttonStroke: ResonanceColors.controlPanelStrokeProperty,
-      listFill: ResonanceColors.controlPanelFillProperty,
-      listStroke: ResonanceColors.controlPanelStrokeProperty,
-      highlightFill: ResonanceColors.controlPanelStrokeProperty,
+      buttonFill: TrackLabColors.controlPanelFillProperty,
+      buttonStroke: TrackLabColors.controlPanelStrokeProperty,
+      listFill: TrackLabColors.controlPanelFillProperty,
+      listStroke: TrackLabColors.controlPanelStrokeProperty,
+      highlightFill: TrackLabColors.controlPanelStrokeProperty,
     });
 
     // Create title in format "(Y vs X)"
     const leftParen = new Text("(", {
       font: TITLE_FONT,
-      fill: ResonanceColors.textProperty,
+      fill: TrackLabColors.textProperty,
     });
 
     const vsText = new Text(
       new DerivedProperty(
-        [ResonanceStrings.controls.graphVsStringProperty],
+        [StringManager.getInstance().getControls().graphVsStringProperty],
         (vs: string) => ` ${vs} `,
       ),
       {
         font: TITLE_FONT,
-        fill: ResonanceColors.textProperty,
+        fill: TrackLabColors.textProperty,
       },
     );
 
     const rightParen = new Text(")", {
       font: TITLE_FONT,
-      fill: ResonanceColors.textProperty,
+      fill: TrackLabColors.textProperty,
     });
 
     // Arrange in horizontal layout: (Y vs X)
@@ -147,7 +147,7 @@ export default class GraphControlsPanel {
   public createHeaderBar(): Rectangle {
     // Create header bar with dynamic fill that darkens the control panel background
     const headerFillProperty = new DerivedProperty(
-      [ResonanceColors.controlPanelFillProperty],
+      [TrackLabColors.controlPanelFillProperty],
       (backgroundColor) => backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
     );
     const headerBar = new Rectangle(
@@ -159,7 +159,7 @@ export default class GraphControlsPanel {
       HEADER_CORNER_RADIUS,
       {
         fill: headerFillProperty,
-        stroke: ResonanceColors.controlPanelStrokeProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
         lineWidth: HEADER_LINE_WIDTH,
         cursor: "grab",
       },
@@ -180,4 +180,4 @@ export default class GraphControlsPanel {
 }
 
 // Register with namespace for debugging accessibility
-resonance.register("GraphControlsPanel", GraphControlsPanel);
+trackLab.register("GraphControlsPanel", GraphControlsPanel);

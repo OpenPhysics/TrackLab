@@ -109,6 +109,7 @@ export class StringManager {
     speedStringProperty: ReadOnlyProperty<string>;
     recordStringProperty: ReadOnlyProperty<string>;
     stopStringProperty: ReadOnlyProperty<string>;
+    graphVsStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       playStringProperty: this.stringProperties.controls.playStringProperty,
@@ -118,6 +119,7 @@ export class StringManager {
       speedStringProperty: this.stringProperties.controls.speedStringProperty,
       recordStringProperty: this.stringProperties.controls.recordStringProperty,
       stopStringProperty: this.stringProperties.controls.stopStringProperty,
+      graphVsStringProperty: this.stringProperties.controls.graphVsStringProperty,
     };
   }
 

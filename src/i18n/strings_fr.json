@@ -10,7 +10,8 @@
     "step": "Pas",
     "speed": "Vitesse",
     "record": "Enregistrer",
-    "stop": "Arrêter"
+    "stop": "Arrêter",
+    "graphVs": "vs"
   },
   "tracking": {
     "track": "Suivre",

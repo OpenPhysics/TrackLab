@@ -13,8 +13,8 @@ import type {
   TickMarkSet,
   TickLabelSet,
 } from "scenerystack/bamboo";
-import ResonanceColors from "../../ResonanceColors.js";
-import resonance from "../../ResonanceNamespace.js";
+import TrackLabColors from "../../TrackLabColors.js";
+import trackLab from "../../TrackLabNamespace.js";
 
 /**
  * Configuration for grid lines, tick marks, and tick labels
@@ -280,7 +280,7 @@ export default class GraphDataManager {
 
       // Create circle for this trail point
       const circle = new Circle(radius, {
-        fill: ResonanceColors.plot1Property,
+        fill: TrackLabColors.plot1Property,
         opacity: opacity,
         center: viewPosition,
       });
@@ -312,4 +312,4 @@ export default class GraphDataManager {
 }
 
 // Register with namespace for debugging accessibility
-resonance.register("GraphDataManager", GraphDataManager);
+trackLab.register("GraphDataManager", GraphDataManager);

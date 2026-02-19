@@ -10,7 +10,8 @@
     "step": "Step",
     "speed": "Speed",
     "record": "Record",
-    "stop": "Stop"
+    "stop": "Stop",
+    "graphVs": "vs"
   },
   "tracking": {
     "track": "Track",

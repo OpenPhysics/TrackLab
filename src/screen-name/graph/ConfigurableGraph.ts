@@ -28,13 +28,13 @@ import { Orientation } from "scenerystack/phet-core";
 import { Shape } from "scenerystack/kite";
 import type { PlottableProperty } from "./PlottableProperty.js";
 import type { SubStepDataPoint } from "../../model/BaseModel.js";
-import ResonanceColors from "../../ResonanceColors.js";
-import ResonanceConstants from "../../ResonanceConstants.js";
+import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabConstants from "../../TrackLabConstants.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
 import GraphControlsPanel from "./GraphControlsPanel.js";
-import resonance from "../../ResonanceNamespace.js";
+import trackLab from "../../TrackLabNamespace.js";
 
 // Grid line styling
 const GRID_LINE_WIDTH = 0.5;
@@ -170,8 +170,8 @@ export default class ConfigurableGraph extends Node {
 
     // Create chart background
     this.chartRectangle = new ChartRectangle(this.chartTransform, {
-      fill: ResonanceColors.graphBackgroundProperty,
-      stroke: ResonanceColors.controlPanelStrokeProperty,
+      fill: TrackLabColors.graphBackgroundProperty,
+      stroke: TrackLabColors.controlPanelStrokeProperty,
     });
     this.graphContentNode.addChild(this.chartRectangle);
 
@@ -185,7 +185,7 @@ export default class ConfigurableGraph extends Node {
       Orientation.VERTICAL,
       initialSpacing,
       {
-        stroke: ResonanceColors.gridLinesProperty,
+        stroke: TrackLabColors.gridLinesProperty,
         lineWidth: GRID_LINE_WIDTH,
       },
     );
@@ -196,7 +196,7 @@ export default class ConfigurableGraph extends Node {
       Orientation.HORIZONTAL,
       initialSpacing,
       {
-        stroke: ResonanceColors.gridLinesProperty,
+        stroke: TrackLabColors.gridLinesProperty,
         lineWidth: GRID_LINE_WIDTH,
       },
     );
@@ -209,7 +209,7 @@ export default class ConfigurableGraph extends Node {
       {
         edge: "min",
         extent: TICK_EXTENT,
-        stroke: ResonanceColors.controlPanelStrokeProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
       },
     );
     this.graphContentNode.addChild(this.xTickMarkSet);
@@ -221,7 +221,7 @@ export default class ConfigurableGraph extends Node {
       {
         edge: "min",
         extent: TICK_EXTENT,
-        stroke: ResonanceColors.controlPanelStrokeProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
       },
     );
     this.graphContentNode.addChild(this.yTickMarkSet);
@@ -235,7 +235,7 @@ export default class ConfigurableGraph extends Node {
         createLabel: (value: number) =>
           new Text(value.toFixed(TICK_LABEL_DECIMALS), {
             font: TICK_LABEL_FONT,
-            fill: ResonanceColors.textProperty,
+            fill: TrackLabColors.textProperty,
           }),
       },
     );
@@ -250,7 +250,7 @@ export default class ConfigurableGraph extends Node {
         createLabel: (value: number) =>
           new Text(value.toFixed(TICK_LABEL_DECIMALS), {
             font: TICK_LABEL_FONT,
-            fill: ResonanceColors.textProperty,
+            fill: TrackLabColors.textProperty,
           }),
       },
     );
@@ -290,7 +290,7 @@ export default class ConfigurableGraph extends Node {
 
     // Create line plot
     this.linePlot = new LinePlot(this.chartTransform, [], {
-      stroke: ResonanceColors.plot1Property,
+      stroke: TrackLabColors.plot1Property,
       lineWidth: PLOT_LINE_WIDTH,
     });
 
@@ -307,7 +307,7 @@ export default class ConfigurableGraph extends Node {
     // Create axis labels
     this.xAxisLabelNode = new Text(this.formatAxisLabel(initialXProperty), {
       font: AXIS_LABEL_FONT,
-      fill: ResonanceColors.textProperty,
+      fill: TrackLabColors.textProperty,
       centerX: this.graphWidth / 2,
       top: this.graphHeight + AXIS_LABEL_OFFSET,
     });
@@ -315,7 +315,7 @@ export default class ConfigurableGraph extends Node {
 
     this.yAxisLabelNode = new Text(this.formatAxisLabel(initialYProperty), {
       font: AXIS_LABEL_FONT,
-      fill: ResonanceColors.textProperty,
+      fill: TrackLabColors.textProperty,
       rotation: -Math.PI / 2,
       centerY: this.graphHeight / 2,
       right: -AXIS_LABEL_OFFSET,
@@ -361,7 +361,7 @@ export default class ConfigurableGraph extends Node {
     const createButton = (label: string, onClick: () => void): Node => {
       const buttonText = new Text(label, {
         font: BUTTON_FONT,
-        fill: ResonanceColors.controlPanelStrokeProperty,
+        fill: TrackLabColors.controlPanelStrokeProperty,
       });
 
       const buttonBackground = new Rectangle(
@@ -372,8 +372,8 @@ export default class ConfigurableGraph extends Node {
         BUTTON_CORNER_RADIUS,
         BUTTON_CORNER_RADIUS,
         {
-          fill: ResonanceColors.controlPanelFillProperty,
-          stroke: ResonanceColors.controlPanelStrokeProperty,
+          fill: TrackLabColors.controlPanelFillProperty,
+          stroke: TrackLabColors.controlPanelStrokeProperty,
           cursor: "pointer",
         },
       );
@@ -635,7 +635,7 @@ export default class ConfigurableGraph extends Node {
 
     // Map sub-step data to x/y values with decimation
     const mappedPoints: Array<{ x: number; y: number }> = [];
-    const decimation = ResonanceConstants.SUB_STEP_DECIMATION;
+    const decimation = TrackLabConstants.SUB_STEP_DECIMATION;
 
     for (const point of subStepData) {
       this.decimationCounter++;
@@ -719,4 +719,4 @@ export default class ConfigurableGraph extends Node {
 }
 
 // Register with namespace for debugging accessibility
-resonance.register("ConfigurableGraph", ConfigurableGraph);
+trackLab.register("ConfigurableGraph", ConfigurableGraph);

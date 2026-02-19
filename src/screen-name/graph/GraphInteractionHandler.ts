@@ -21,9 +21,9 @@ import type {
   TickLabelSet,
 } from "scenerystack/bamboo";
 import { BooleanProperty } from "scenerystack/axon";
-import ResonanceColors from "../../ResonanceColors.js";
+import TrackLabColors from "../../TrackLabColors.js";
 import type GraphDataManager from "./GraphDataManager.js";
-import resonance from "../../ResonanceNamespace.js";
+import trackLab from "../../TrackLabNamespace.js";
 
 /**
  * Configuration for the chart and its data management
@@ -866,8 +866,8 @@ export default class GraphInteractionHandler {
         2,
         2,
         {
-          fill: ResonanceColors.controlPanelFillProperty,
-          stroke: ResonanceColors.controlPanelStrokeProperty,
+          fill: TrackLabColors.controlPanelFillProperty,
+          stroke: TrackLabColors.controlPanelStrokeProperty,
           lineWidth: 2,
           cursor: corner.cursor,
         },
@@ -1141,4 +1141,4 @@ export default class GraphInteractionHandler {
 }
 
 // Register with namespace for debugging accessibility
-resonance.register("GraphInteractionHandler", GraphInteractionHandler);
+trackLab.register("GraphInteractionHandler", GraphInteractionHandler);

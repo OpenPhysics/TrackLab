@@ -280,6 +280,34 @@ const TrackLabColors = {
     new Color(60, 150, 65),
   ),
 
+  // Graph (ConfigurableGraph, GraphDataManager, GraphControlsPanel)
+  graphBackgroundProperty: profileColor(
+    "graphBackground",
+    new Color(25, 25, 45, 0.95),
+    new Color(245, 245, 250, 0.98),
+  ),
+  controlPanelFillProperty: profileColor(
+    "controlPanelFill",
+    new Color(35, 35, 55, 0.95),
+    new Color(235, 235, 245, 0.98),
+  ),
+  controlPanelStrokeProperty: profileColor(
+    "controlPanelStroke",
+    new Color(120, 120, 140),
+    new Color(180, 180, 200),
+  ),
+  gridLinesProperty: profileColor(
+    "gridLines",
+    new Color(80, 80, 100),
+    new Color(200, 200, 220),
+  ),
+  textProperty: profileColor("text", WHITE, BLACK),
+  plot1Property: profileColor(
+    "plot1",
+    new Color(0, 188, 212), // Cyan – visible on dark background
+    new Color(0, 150, 180),
+  ),
+
   // Track list panel
   trashIconProperty: profileColor(
     "trashIcon",
