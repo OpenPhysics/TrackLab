@@ -53,30 +53,35 @@ const LABEL_FONT = new PhetFont(12);
 // ── Trash-can icon ──────────────────────────────────────────────────────────
 
 function makeTrashIcon(): Node {
-  const s = "#ff6666";
   const lw = 1.5;
   const bw = 10;
   const bh = 11;
 
   const body = new Rectangle(0, 0, bw, bh, 1, 1, {
-    stroke: s,
+    stroke: TrackLabColors.trashIconProperty,
     lineWidth: lw,
     fill: null,
   });
   const lid = new Rectangle(-1.5, -3.5, bw + 3, 3, 0, 0, {
-    stroke: s,
+    stroke: TrackLabColors.trashIconProperty,
     lineWidth: lw,
     fill: null,
   });
   const handle = new Rectangle(2.5, -7, 5, 3.5, 1, 1, {
-    stroke: s,
+    stroke: TrackLabColors.trashIconProperty,
     lineWidth: lw,
     fill: null,
   });
-  const l1 = new Line(bw / 4, 2, bw / 4, bh - 2, { stroke: s, lineWidth: 1 });
-  const l2 = new Line(bw / 2, 2, bw / 2, bh - 2, { stroke: s, lineWidth: 1 });
+  const l1 = new Line(bw / 4, 2, bw / 4, bh - 2, {
+    stroke: TrackLabColors.trashIconProperty,
+    lineWidth: 1,
+  });
+  const l2 = new Line(bw / 2, 2, bw / 2, bh - 2, {
+    stroke: TrackLabColors.trashIconProperty,
+    lineWidth: 1,
+  });
   const l3 = new Line((bw * 3) / 4, 2, (bw * 3) / 4, bh - 2, {
-    stroke: s,
+    stroke: TrackLabColors.trashIconProperty,
     lineWidth: 1,
   });
 
@@ -109,7 +114,7 @@ class TrackRowNode extends Node {
 
     const symbolLabel = new Text(track.symbol, {
       font: SYMBOL_FONT,
-      fill: "white",
+      fill: TrackLabColors.trackSymbolTextProperty,
     });
     symbolLabel.centerX = BADGE_CX;
     symbolLabel.centerY = ROW_CY;
@@ -148,7 +153,7 @@ class TrackRowNode extends Node {
     // ── Trash button (right side) ─────────────────────────────────────────
     const trashButton = new RectangularPushButton({
       content: makeTrashIcon(),
-      baseColor: new Color(60, 20, 20, 0.5),
+      baseColor: TrackLabColors.trashButtonBaseProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 6,
       yMargin: 6,

@@ -11,7 +11,6 @@
  *   - Export button to download data as CSV (export1.csv, export2.csv, ...)
  */
 
-import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -23,12 +22,6 @@ import type { Track } from "../model/Track.js";
 // ── Grid geometry ────────────────────────────────────────────────────────────
 const MAX_TABLE_WIDTH = 300;
 const MAX_TABLE_HEIGHT = 200;
-
-// ── Colours (CSS) ────────────────────────────────────────────────────────────
-const HEADER_BG_CSS = "#4472c4";
-const ROW_ODD_CSS = "#ffffff";
-const ROW_EVEN_CSS = "#ebf1fb";
-const GRID_STROKE_CSS = "#b0b0b0";
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
@@ -93,12 +86,25 @@ function generateCSV(tracks: readonly Track[], unit: string): string {
   return lines.join("\n");
 }
 
+// Color values for HTML table (cached CSS strings)
+type TableColors = {
+  headerBg: string;
+  headerText: string;
+  rowOdd: string;
+  rowEven: string;
+  gridStroke: string;
+  emptyText: string;
+  symbolShadow: string;
+  background: string;
+};
+
 /**
  * Build an HTML table element for the data.
  */
 function buildHTMLTable(
   tracks: readonly Track[],
   unit: string,
+  colors: TableColors,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -107,9 +113,9 @@ function buildHTMLTable(
     overflow: auto;
     max-width: ${MAX_TABLE_WIDTH}px;
     max-height: ${MAX_TABLE_HEIGHT}px;
-    border: 1px solid ${GRID_STROKE_CSS};
+    border: 1px solid ${colors.gridStroke};
     border-radius: 3px;
-    background: white;
+    background: ${colors.background};
   `;
 
   const table = document.createElement("table");
@@ -125,11 +131,11 @@ function buildHTMLTable(
   const headerRow = document.createElement("tr");
 
   const headerStyle = `
-    background: ${HEADER_BG_CSS};
-    color: white;
+    background: ${colors.headerBg};
+    color: ${colors.headerText};
     font-weight: bold;
     padding: 4px 8px;
-    border: 1px solid ${GRID_STROKE_CSS};
+    border: 1px solid ${colors.gridStroke};
     text-align: center;
     position: sticky;
     top: 0;
@@ -160,7 +166,7 @@ function buildHTMLTable(
     symbolSpan.style.cssText = `
       color: ${track.color};
       font-weight: bold;
-      text-shadow: 0 0 2px rgba(0,0,0,0.5);
+      text-shadow: 0 0 2px ${colors.symbolShadow};
     `;
     span.appendChild(symbolSpan);
 
@@ -200,7 +206,7 @@ function buildHTMLTable(
     td.style.cssText = `
       padding: 8px 16px;
       text-align: center;
-      color: #888;
+      color: ${colors.emptyText};
       font-style: italic;
     `;
     tr.appendChild(td);
@@ -209,11 +215,11 @@ function buildHTMLTable(
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
       const tr = document.createElement("tr");
-      tr.style.background = i % 2 === 0 ? ROW_ODD_CSS : ROW_EVEN_CSS;
+      tr.style.background = i % 2 === 0 ? colors.rowOdd : colors.rowEven;
 
       const cellStyle = `
         padding: 3px 6px;
-        border: 1px solid ${GRID_STROKE_CSS};
+        border: 1px solid ${colors.gridStroke};
         text-align: center;
       `;
 
@@ -255,7 +261,7 @@ function makeDownloadIcon(): Node {
   // Simple text-based icon
   return new Text("⬇", {
     font: new PhetFont({ size: 11 }),
-    fill: "white",
+    fill: TrackLabColors.textOnDarkProperty,
   });
 }
 
@@ -271,8 +277,20 @@ export class DataTableNode extends Panel {
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     unitProperty: TReadOnlyProperty<string>,
   ) {
+    // Helper to get current table colors from properties
+    const getTableColors = (): TableColors => ({
+      headerBg: TrackLabColors.tableHeaderBackgroundProperty.value.toCSS(),
+      headerText: TrackLabColors.tableHeaderTextProperty.value.toCSS(),
+      rowOdd: TrackLabColors.tableRowOddProperty.value.toCSS(),
+      rowEven: TrackLabColors.tableRowEvenProperty.value.toCSS(),
+      gridStroke: TrackLabColors.tableGridStrokeProperty.value.toCSS(),
+      emptyText: TrackLabColors.tableEmptyTextProperty.value.toCSS(),
+      symbolShadow: TrackLabColors.tableSymbolShadowProperty.value.toCSS(),
+      background: TrackLabColors.tableBackgroundProperty.value.toCSS(),
+    });
+
     // ── Create scrollable HTML table ─────────────────────────────────────────
-    const tableWrapper = buildHTMLTable([], "m");
+    const tableWrapper = buildHTMLTable([], "m", getTableColors());
     const tableDOMNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
@@ -282,12 +300,12 @@ export class DataTableNode extends Panel {
           makeDownloadIcon(),
           new Text("CSV", {
             font: new PhetFont({ size: 9, weight: "bold" }),
-            fill: "white",
+            fill: TrackLabColors.textOnDarkProperty,
           }),
         ],
         spacing: 3,
       }),
-      baseColor: new Color(76, 175, 80), // green
+      baseColor: TrackLabColors.exportButtonProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 5,
       yMargin: 3,
@@ -347,8 +365,8 @@ export class DataTableNode extends Panel {
       const tracks = model.tracksProperty.value;
       const unit = unitProperty.value;
 
-      // Build new table
-      const newWrapper = buildHTMLTable(tracks, unit);
+      // Build new table with current colors
+      const newWrapper = buildHTMLTable(tracks, unit, getTableColors());
 
       // Replace the content
       this.tableWrapper.innerHTML = "";
@@ -361,6 +379,9 @@ export class DataTableNode extends Panel {
     // ── Reactive updates ─────────────────────────────────────────────────────
     model.tracksProperty.link(rebuildTable);
     unitProperty.link(rebuildTable);
+
+    // Rebuild table when color profile changes
+    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(rebuildTable);
 
     videoLoadedProperty.link((loaded) => {
       this.visible = loaded;

@@ -11,12 +11,12 @@ import {
   Rectangle,
 } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
+import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH, type SimModel } from "../model/SimModel.js";
 
 const OUTER_R = 12;
 const INNER_R = 2;
 const CUR_LW = 1.5;
-const CUR_CLR = "white";
 
 const MAG_SIZE = 100;
 const MAG_ZOOM = 4;
@@ -24,7 +24,6 @@ const MAG_BORDER_WIDTH = 2;
 const MAG_CROSSHAIR_RADIUS = 8;
 const MAG_CROSSHAIR_GAP = 2;
 const MAG_CROSSHAIR_LINE_WIDTH = 1;
-const MAG_CROSSHAIR_COLOR = "rgba(255,255,255,0.8)";
 
 /**
  * Manual digitizing overlay for placing track points on the video.
@@ -38,31 +37,42 @@ export class DigitizingOverlayNode extends Node {
   ) {
     super();
 
+    // Cached CSS color strings for canvas drawing (updated via property links)
+    let magBorderColor = TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
+    let magCrosshairColor = TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
+    let magShadowColor = TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
+
     // Custom cursor: large circle + 4 segments that stop at the empty centre
+    const cursorCircle = new Path(Shape.circle(0, 0, OUTER_R), {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CUR_LW,
+    });
+    const cursorLineLeft = new Line(-OUTER_R, 0, -INNER_R, 0, {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CUR_LW,
+    });
+    const cursorLineRight = new Line(INNER_R, 0, OUTER_R, 0, {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CUR_LW,
+    });
+    const cursorLineTop = new Line(0, -OUTER_R, 0, -INNER_R, {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CUR_LW,
+    });
+    const cursorLineBottom = new Line(0, INNER_R, 0, OUTER_R, {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CUR_LW,
+    });
+
     const cursorNode = new Node({
       visible: false,
       pickable: false,
       children: [
-        new Path(Shape.circle(0, 0, OUTER_R), {
-          stroke: CUR_CLR,
-          lineWidth: CUR_LW,
-        }),
-        new Line(-OUTER_R, 0, -INNER_R, 0, {
-          stroke: CUR_CLR,
-          lineWidth: CUR_LW,
-        }),
-        new Line(INNER_R, 0, OUTER_R, 0, {
-          stroke: CUR_CLR,
-          lineWidth: CUR_LW,
-        }),
-        new Line(0, -OUTER_R, 0, -INNER_R, {
-          stroke: CUR_CLR,
-          lineWidth: CUR_LW,
-        }),
-        new Line(0, INNER_R, 0, OUTER_R, {
-          stroke: CUR_CLR,
-          lineWidth: CUR_LW,
-        }),
+        cursorCircle,
+        cursorLineLeft,
+        cursorLineRight,
+        cursorLineTop,
+        cursorLineBottom,
       ],
     });
 
@@ -72,8 +82,25 @@ export class DigitizingOverlayNode extends Node {
     magCanvas.height = MAG_SIZE;
     Object.assign(magCanvas.style, {
       borderRadius: "50%",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
     });
+
+    // Update shadow style when color property changes
+    const updateShadowStyle = () => {
+      magCanvas.style.boxShadow = `0 2px 8px ${magShadowColor}`;
+    };
+    updateShadowStyle();
+
+    TrackLabColors.digitizingMagnifierBorderProperty.link((color) => {
+      magBorderColor = color.toCSS();
+    });
+    TrackLabColors.digitizingMagnifierCrosshairProperty.link((color) => {
+      magCrosshairColor = color.toCSS();
+    });
+    TrackLabColors.digitizingMagnifierShadowProperty.link((color) => {
+      magShadowColor = color.toCSS();
+      updateShadowStyle();
+    });
+
     const magCtx = magCanvas.getContext("2d");
     if (!magCtx)
       throw new Error("Could not get 2D context from magnifier canvas");
@@ -153,7 +180,7 @@ export class DigitizingOverlayNode extends Node {
 
       magCtx.restore();
 
-      magCtx.strokeStyle = "white";
+      magCtx.strokeStyle = magBorderColor;
       magCtx.lineWidth = MAG_BORDER_WIDTH;
       magCtx.beginPath();
       magCtx.arc(
@@ -165,7 +192,7 @@ export class DigitizingOverlayNode extends Node {
       );
       magCtx.stroke();
 
-      magCtx.strokeStyle = MAG_CROSSHAIR_COLOR;
+      magCtx.strokeStyle = magCrosshairColor;
       magCtx.lineWidth = MAG_CROSSHAIR_LINE_WIDTH;
       magCtx.beginPath();
       magCtx.moveTo(crosshairX - MAG_CROSSHAIR_RADIUS, crosshairY);

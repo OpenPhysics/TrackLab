@@ -144,6 +144,92 @@ const TrackLabColors = {
     WHITE,
     new Color(250, 250, 250),
   ),
+
+  // Digitizing overlay (manual point placement)
+  digitizingCursorStrokeProperty: profileColor(
+    "digitizingCursorStroke",
+    WHITE,
+    new Color(40, 40, 40),
+  ),
+  digitizingMagnifierBorderProperty: profileColor(
+    "digitizingMagnifierBorder",
+    WHITE,
+    new Color(40, 40, 40),
+  ),
+  digitizingMagnifierCrosshairProperty: profileColor(
+    "digitizingMagnifierCrosshair",
+    new Color(255, 255, 255, 0.8),
+    new Color(40, 40, 40, 0.9),
+  ),
+  digitizingMagnifierShadowProperty: profileColor(
+    "digitizingMagnifierShadow",
+    new Color(0, 0, 0, 0.5),
+    new Color(0, 0, 0, 0.3),
+  ),
+
+  // Data table
+  tableHeaderBackgroundProperty: profileColor(
+    "tableHeaderBackground",
+    new Color(68, 114, 196),
+    new Color(55, 90, 160),
+  ),
+  tableHeaderTextProperty: profileColor(
+    "tableHeaderText",
+    WHITE,
+    WHITE,
+  ),
+  tableRowOddProperty: profileColor(
+    "tableRowOdd",
+    WHITE,
+    new Color(250, 250, 250),
+  ),
+  tableRowEvenProperty: profileColor(
+    "tableRowEven",
+    new Color(235, 241, 251),
+    new Color(230, 238, 250),
+  ),
+  tableGridStrokeProperty: profileColor(
+    "tableGridStroke",
+    new Color(176, 176, 176),
+    new Color(160, 160, 160),
+  ),
+  tableEmptyTextProperty: profileColor(
+    "tableEmptyText",
+    new Color(136, 136, 136),
+    new Color(120, 120, 120),
+  ),
+  tableSymbolShadowProperty: profileColor(
+    "tableSymbolShadow",
+    new Color(0, 0, 0, 0.5),
+    new Color(0, 0, 0, 0.3),
+  ),
+  tableBackgroundProperty: profileColor(
+    "tableBackground",
+    WHITE,
+    new Color(250, 250, 250),
+  ),
+  exportButtonProperty: profileColor(
+    "exportButton",
+    new Color(76, 175, 80),
+    new Color(60, 150, 65),
+  ),
+
+  // Track list panel
+  trashIconProperty: profileColor(
+    "trashIcon",
+    new Color(255, 102, 102),
+    new Color(220, 80, 80),
+  ),
+  trashButtonBaseProperty: profileColor(
+    "trashButtonBase",
+    new Color(60, 20, 20, 0.5),
+    new Color(80, 30, 30, 0.6),
+  ),
+  trackSymbolTextProperty: profileColor(
+    "trackSymbolText",
+    WHITE,
+    WHITE,
+  ),
 };
 
 // Register the namespace
