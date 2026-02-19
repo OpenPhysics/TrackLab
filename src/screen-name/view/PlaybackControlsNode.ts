@@ -73,6 +73,11 @@ export class PlaybackControlsNode extends HBox {
           listener: onStepForward,
         },
       },
+      speedRadioButtonGroupOptions: {
+        labelOptions: {
+          fill: TrackLabColors.textOnDarkProperty,
+        },
+      },
     });
 
     // ── Scrubber ───────────────────────────────────────────────────────────

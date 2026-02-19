@@ -142,7 +142,7 @@ const TrackLabColors = {
   textOnDarkProperty: profileColor(
     "textOnDark",
     WHITE,
-    new Color(250, 250, 250),
+    BLACK,
   ),
 
   // Digitizing overlay (manual point placement)
