@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import pngToIco from "png-to-ico";
 import sharp from "sharp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,10 +22,16 @@ for (const { name, size } of pngIcons) {
   console.log(`Generated ${name} (${size}x${size})`);
 }
 
-// Generate multi-size favicon.ico (16x16, 32x32, 48x48)
+// Generate multi-size favicon.ico (16, 32, 48, 64)
+const faviconSizes = [16, 32, 48, 64];
+const faviconPngs: Buffer[] = [];
+
+for (const size of faviconSizes) {
+  const pngBuffer = await sharp(svgBuffer).resize(size, size).png().toBuffer();
+  faviconPngs.push(pngBuffer);
+}
+
+const icoBuffer = await pngToIco(faviconPngs);
 const faviconDest = resolve(root, "public", "favicon.ico");
-await sharp(svgBuffer)
-  .resize(32, 32)
-  .toFormat("png")
-  .toFile(faviconDest);
-console.log("Generated favicon.ico (32x32)");
+writeFileSync(faviconDest, icoBuffer);
+console.log(`Generated favicon.ico (16x16, 32x32, 48x48, 64x64)`);
