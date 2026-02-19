@@ -163,7 +163,7 @@ const TrackLabColors = {
   buttonBaseDarkProperty: profileColor(
     "buttonBaseDark",
     new Color(51, 51, 102),
-    new Color(68, 68, 136),
+    new Color(220, 220, 235), // Much lighter for projector mode
   ),
   buttonBaseDarkerProperty: profileColor(
     "buttonBaseDarker",
