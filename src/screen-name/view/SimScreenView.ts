@@ -8,6 +8,7 @@ import {
   TRACK_LIST_LEFT_SPACING,
   VIDEO_PLAYER_Y_OFFSET,
 } from "../../TrackLabConstants.js";
+import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
@@ -19,7 +20,11 @@ import { VideoPlayerNode } from "./VideoPlayerNode.js";
 export class SimScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
 
-  public constructor(model: SimModel, options?: ScreenViewOptions) {
+  public constructor(
+    model: SimModel,
+    trackLabPreferences: TrackLabPreferencesModel,
+    options?: ScreenViewOptions,
+  ) {
     super(options);
 
     // Combined visibility: video loaded AND user-toggled model flag.
@@ -61,7 +66,7 @@ export class SimScreenView extends ScreenView {
     this.addChild(this.videoPlayerNode);
 
     // ── Control panel (left side) ─────────────────────────────────────────
-    const controlPanel = new ControlPanel(model);
+    const controlPanel = new ControlPanel(model, trackLabPreferences);
     controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
     controlPanel.centerY = this.layoutBounds.centerY;
     this.addChild(controlPanel);

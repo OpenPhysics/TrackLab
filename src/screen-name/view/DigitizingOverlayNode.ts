@@ -40,9 +40,12 @@ export class DigitizingOverlayNode extends Node {
     super();
 
     // Cached CSS color strings for canvas drawing (updated via property links)
-    let magBorderColor = TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
-    let magCrosshairColor = TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
-    let magShadowColor = TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
+    let magBorderColor =
+      TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
+    let magCrosshairColor =
+      TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
+    let magShadowColor =
+      TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
 
     // Custom cursor: large circle + 4 segments that stop at the empty centre
     const cursorCircle = new Path(Shape.circle(0, 0, OUTER_R), {

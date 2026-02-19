@@ -3,6 +3,7 @@ import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
 import TrackLabColors from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ICON_SIZE = 20; // bounding box each icon targets
@@ -139,13 +140,25 @@ function makeRow(
 // ── ControlPanel class ────────────────────────────────────────────────────
 
 export class ControlPanel extends Panel {
-  public constructor(model: SimModel) {
+  public constructor(
+    model: SimModel,
+    trackLabPreferences: TrackLabPreferencesModel,
+  ) {
+    const autoTrackingCheckbox = makeRow(
+      trackingIcon(),
+      model.autoTrackingProperty,
+    );
+    // The auto-tracking checkbox is only visible if the preference allows it.
+    // When the preference is disabled, the checkbox is completely hidden from the panel.
+    autoTrackingCheckbox.visibleProperty =
+      trackLabPreferences.enableAutoTrackingProperty;
+
     const rows = new VBox({
       children: [
         makeRow(axesIcon(), model.axesVisibleProperty),
         makeRow(calibrationIcon(), model.calibrationVisibleProperty),
         makeRow(magnifyIcon(), model.magnifyVideoProperty),
-        makeRow(trackingIcon(), model.autoTrackingProperty),
+        autoTrackingCheckbox,
       ],
       spacing: PANEL_ROWS_SPACING,
       align: "left",

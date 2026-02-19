@@ -47,5 +47,10 @@
     "resetZoom": "Reset Zoom",
     "zoomInOut": "Zoom In/Out",
     "panView": "Pan View"
+  },
+  "preferences": {
+    "simulation": "Simulation",
+    "enableAutoTracking": "Enable Auto-Tracking",
+    "enableAutoTrackingDescription": "When enabled, shows the auto-tracking checkbox in the control panel, allowing OpenCV-based automatic object tracking. When disabled, the checkbox is hidden and only manual digitizing is available."
   }
 }

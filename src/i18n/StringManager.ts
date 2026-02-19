@@ -194,4 +194,23 @@ export class StringManager {
         this.stringProperties.measurement.gravityStringProperty,
     };
   }
+
+  /**
+   * Get preference string properties
+   */
+  public getPreferences(): {
+    simulationStringProperty: ReadOnlyProperty<string>;
+    enableAutoTrackingStringProperty: ReadOnlyProperty<string>;
+    enableAutoTrackingDescriptionStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      simulationStringProperty:
+        this.stringProperties.preferences.simulationStringProperty,
+      enableAutoTrackingStringProperty:
+        this.stringProperties.preferences.enableAutoTrackingStringProperty,
+      enableAutoTrackingDescriptionStringProperty:
+        this.stringProperties.preferences
+          .enableAutoTrackingDescriptionStringProperty,
+    };
+  }
 }

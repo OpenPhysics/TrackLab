@@ -5,7 +5,11 @@ import {
 } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
-import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
+import {
+  PhetFont,
+  TimeControlNode,
+  TimeSpeed,
+} from "scenerystack/scenery-phet";
 import { ButtonNode, NumberSpinner, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
@@ -110,7 +114,11 @@ export class PlaybackControlsNode extends HBox {
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [model.currentTimeProperty, model.durationProperty, model.frameDurationProperty],
+      [
+        model.currentTimeProperty,
+        model.durationProperty,
+        model.frameDurationProperty,
+      ],
       (time: number, duration: number, frameDuration: number) => {
         if (duration <= 0) return "0/0";
         const current = Math.round(time / frameDuration);

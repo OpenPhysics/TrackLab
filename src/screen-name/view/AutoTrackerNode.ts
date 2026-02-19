@@ -168,10 +168,15 @@ export class AutoTrackerNode extends Node {
         if (region.w > MIN_REGION_SIZE && region.h > MIN_REGION_SIZE) {
           // initFromVideo is async (loads WASM on first call); tracking begins
           // automatically once `ready` becomes true.
-          this.model.tracker.initFromVideo(videoElement, region).catch((err) => {
-            console.error("[AutoTracker] Tracking initialisation failed:", err);
-            this.hintText.visible = true;
-          });
+          this.model.tracker
+            .initFromVideo(videoElement, region)
+            .catch((err) => {
+              console.error(
+                "[AutoTracker] Tracking initialisation failed:",
+                err,
+              );
+              this.hintText.visible = true;
+            });
         } else {
           this.hintText.visible = true;
         }

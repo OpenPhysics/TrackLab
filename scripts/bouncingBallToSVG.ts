@@ -1,26 +1,26 @@
 import * as fs from "fs";
 
 // ── Magic numbers ─────────────────────────────────────────────────
-const SVG_WIDTH = 60;           // px
-const SVG_HEIGHT = 60;          // px
+const SVG_WIDTH = 60; // px
+const SVG_HEIGHT = 60; // px
 
-const FLOOR_Y = 57;             // px from top where the floor sits
+const FLOOR_Y = 57; // px from top where the floor sits
 
-const INITIAL_HEIGHT = 48;      // px — height of first bounce above floor
-const RESTITUTION = 0.6;        // energy retention per bounce (0–1)
-const NUM_BOUNCES = 4;          // number of parabolic arcs
+const INITIAL_HEIGHT = 48; // px — height of first bounce above floor
+const RESTITUTION = 0.6; // energy retention per bounce (0–1)
+const NUM_BOUNCES = 4; // number of parabolic arcs
 
-const TOTAL_SNAPSHOTS = 60;     // total number of ball positions (equal Δt)
+const TOTAL_SNAPSHOTS = 60; // total number of ball positions (equal Δt)
 
-const X_START = 2;              // px — x of first floor contact
-const X_END = 58;               // px — x of last floor contact
+const X_START = 2; // px — x of first floor contact
+const X_END = 58; // px — x of last floor contact
 
-const BALL_RADIUS = 1;          // px
+const BALL_RADIUS = 1; // px
 const BALL_COLOR = "#1a4fcc";
 const BALL_OPACITY = 0.85;
 
 const FLOOR_COLOR = "#444";
-const FLOOR_WIDTH = 0.8;        // stroke-width
+const FLOOR_WIDTH = 0.8; // stroke-width
 // ─────────────────────────────────────────────────────────────────
 
 /** Build the time axis for each bounce.
@@ -29,8 +29,9 @@ const FLOOR_WIDTH = 0.8;        // stroke-width
  *  T_n ∝ sqrt(h_n).  We normalise so the total "time" = 1.
  */
 function buildBounces(): Array<{ tStart: number; tEnd: number; h: number }> {
-  const heights = Array.from({ length: NUM_BOUNCES }, (_, n) =>
-    INITIAL_HEIGHT * Math.pow(RESTITUTION, n)
+  const heights = Array.from(
+    { length: NUM_BOUNCES },
+    (_, n) => INITIAL_HEIGHT * Math.pow(RESTITUTION, n),
   );
 
   // flight time ∝ sqrt(h)
@@ -58,8 +59,8 @@ function computeSnapshots(): Point[] {
 
   // x positions of bounce endpoints (floor contacts) spaced proportionally
   // to flight time (= proportional to normalised duration)
-  const xContacts: number[] = bounces.map((b) =>
-    X_START + b.tStart * (X_END - X_START)
+  const xContacts: number[] = bounces.map(
+    (b) => X_START + b.tStart * (X_END - X_START),
   );
   xContacts.push(X_END); // final landing
 
@@ -68,15 +69,12 @@ function computeSnapshots(): Point[] {
     const tGlobal = i / TOTAL_SNAPSHOTS;
 
     // find which bounce this snapshot falls in
-    const bounce = bounces.find(
-      (b) => tGlobal >= b.tStart && tGlobal < b.tEnd
-    );
+    const bounce = bounces.find((b) => tGlobal >= b.tStart && tGlobal < b.tEnd);
     if (!bounce) continue; // shouldn't happen
 
     const bounceIdx = bounces.indexOf(bounce);
     // local time within this bounce, in [0, 1]
-    const tLocal =
-      (tGlobal - bounce.tStart) / (bounce.tEnd - bounce.tStart);
+    const tLocal = (tGlobal - bounce.tStart) / (bounce.tEnd - bounce.tStart);
 
     // parabolic height above floor: h*(1-(2t-1)^2)
     const heightAboveFloor = bounce.h * (1 - Math.pow(2 * tLocal - 1, 2));
@@ -100,7 +98,7 @@ function buildSVG(points: Point[]): string {
     .map(
       (p) =>
         `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" ` +
-        `fill="${BALL_COLOR}" opacity="${BALL_OPACITY}"/>`
+        `fill="${BALL_COLOR}" opacity="${BALL_OPACITY}"/>`,
     )
     .join("\n");
 
@@ -121,4 +119,6 @@ const svg = buildSVG(points);
 const outputPath = "public/icons/icon.svg";
 fs.mkdirSync("public/icons", { recursive: true });
 fs.writeFileSync(outputPath, svg, "utf8");
-console.log(`✓ Generated ${outputPath} with ${points.length} bouncing ball snapshots`);
+console.log(
+  `✓ Generated ${outputPath} with ${points.length} bouncing ball snapshots`,
+);

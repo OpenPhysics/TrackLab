@@ -173,11 +173,7 @@ const TrackLabColors = {
     new Color(68, 114, 196),
     new Color(55, 90, 160),
   ),
-  tableHeaderTextProperty: profileColor(
-    "tableHeaderText",
-    WHITE,
-    WHITE,
-  ),
+  tableHeaderTextProperty: profileColor("tableHeaderText", WHITE, WHITE),
   tableRowOddProperty: profileColor(
     "tableRowOdd",
     WHITE,
@@ -225,10 +221,14 @@ const TrackLabColors = {
     new Color(60, 20, 20, 0.5),
     new Color(80, 30, 30, 0.6),
   ),
-  trackSymbolTextProperty: profileColor(
-    "trackSymbolText",
-    WHITE,
-    WHITE,
+  trackSymbolTextProperty: profileColor("trackSymbolText", WHITE, WHITE),
+
+  // Preferences dialog
+  preferencesTextProperty: profileColor("preferencesText", BLACK, BLACK),
+  preferencesTextSecondaryProperty: profileColor(
+    "preferencesTextSecondary",
+    new Color(102, 102, 102),
+    new Color(80, 80, 80),
   ),
 };
 

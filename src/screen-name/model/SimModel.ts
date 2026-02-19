@@ -96,10 +96,7 @@ export class SimModel {
 
   // Derived frame duration for convenience
   public readonly frameDurationProperty: TReadOnlyProperty<number> =
-    new DerivedProperty(
-      [this.frameRateProperty],
-      (fps) => 1 / fps,
-    );
+    new DerivedProperty([this.frameRateProperty], (fps) => 1 / fps);
 
   // ── OpenCV Tracker (computational service) ────────────────────────────
   public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
