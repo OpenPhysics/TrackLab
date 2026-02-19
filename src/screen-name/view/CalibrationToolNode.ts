@@ -11,6 +11,7 @@ import {
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
 import {
+  ButtonNode,
   ComboBox,
   type ComboBoxItem,
   Panel,
@@ -82,6 +83,7 @@ export class CalibrationToolNode extends Node {
     const distanceButton = new TextPushButton(buttonLabelProperty, {
       font: FONT,
       baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       textFill: TrackLabColors.textOnDarkProperty,
       listener: () => {
         keypadDialog.beginEdit(

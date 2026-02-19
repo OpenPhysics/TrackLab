@@ -28,7 +28,12 @@ import {
   VBox,
 } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { Checkbox, Panel, RectangularPushButton } from "scenerystack/sun";
+import {
+  ButtonNode,
+  Checkbox,
+  Panel,
+  RectangularPushButton,
+} from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -144,6 +149,7 @@ class TrackRowNode extends Node {
     const trashButton = new RectangularPushButton({
       content: makeTrashIcon(),
       baseColor: new Color(60, 20, 20, 0.5),
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 6,
       yMargin: 6,
       listener: () => model.removeTrack(track.id),
@@ -187,6 +193,7 @@ export class TrackListPanel extends Panel {
         fill: TrackLabColors.textOnDarkProperty,
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 10,
       yMargin: 6,
       enabledProperty: addButtonEnabledProperty,

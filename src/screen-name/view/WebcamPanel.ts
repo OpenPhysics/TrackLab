@@ -7,6 +7,7 @@ import {
   StopIconShape,
 } from "scenerystack/scenery-phet";
 import {
+  ButtonNode,
   cameraSolidShape,
   checkSolidShape,
   Panel,
@@ -87,6 +88,7 @@ export class WebcamPanel extends Node {
     // ── Buttons: preview phase ────────────────────────────────────────────
     const cancelButton = new CloseButton({
       baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       pathOptions: { stroke: TrackLabColors.textOnDarkProperty },
       tandem: Tandem.OPT_OUT,
       accessibleName: "Cancel",
@@ -102,6 +104,7 @@ export class WebcamPanel extends Node {
     const startButton = new RectangularPushButton({
       content: recordIcon,
       baseColor: TrackLabColors.buttonRecordProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 8,
       yMargin: 6,
       tandem: Tandem.OPT_OUT,
@@ -117,6 +120,7 @@ export class WebcamPanel extends Node {
     const stopButton = new RectangularPushButton({
       content: stopIcon,
       baseColor: TrackLabColors.buttonStopProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 8,
       yMargin: 6,
       tandem: Tandem.OPT_OUT,
@@ -127,6 +131,7 @@ export class WebcamPanel extends Node {
     // ── Buttons: review phase ─────────────────────────────────────────────
     const rerecordButton = new RefreshButton({
       baseColor: TrackLabColors.buttonBaseDarkerProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       iconHeight: 20,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Re-record",
@@ -140,6 +145,7 @@ export class WebcamPanel extends Node {
     const useVideoButton = new RectangularPushButton({
       content: useVideoIcon,
       baseColor: TrackLabColors.buttonSuccessProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 8,
       yMargin: 6,
       tandem: Tandem.OPT_OUT,

@@ -15,7 +15,7 @@ import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { Panel, RectangularPushButton } from "scenerystack/sun";
+import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
@@ -292,6 +292,7 @@ export class DataTableNode extends Panel {
         spacing: 3,
       }),
       baseColor: new Color(76, 175, 80), // green
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: 5,
       yMargin: 3,
       listener: () => {
