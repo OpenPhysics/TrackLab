@@ -13,25 +13,32 @@ src/screen-name/model/     ← application state
 src/screen-name/view/      ← all UI components
 ```
 
-**Model** (`src/screen-name/model/SimModel.ts`) holds every piece of reactive state as Axon `Property` objects (playback position, duration, overlay visibility, model-view transform). If you need a new piece of shared state, add it here.
+**Model** (`src/screen-name/model/SimModel.ts`) holds every piece of reactive state as Axon `Property` objects (playback position, duration, overlay visibility, frame rate, model-view transform, tracks). `Track.ts` defines the track model (points, label, color). If you need a new piece of shared state, add it to `SimModel.ts`.
 
 **View** (`src/screen-name/view/`) contains all SceneryStack nodes. Key files:
 
 | File | Responsibility |
 |------|----------------|
-| `VideoPlayerNode.ts` | Video element, playback controls, scrubber, time/frame display |
 | `SimScreenView.ts` | Root layout, model-view transform computation |
+| `VideoPlayerNode.ts` | Video element, hosts overlays (auto-tracker, digitizing) |
+| `VideoSourceControlNode.ts` | Video dropdown, Record button |
+| `PlaybackControlsNode.ts` | Play, scrubber, frame step, frame rate selector |
 | `CoordinateSystemNode.ts` | Draggable/rotatable axes overlay |
 | `CalibrationToolNode.ts` | Reference distance calibration tool |
-| `AutoTrackerNode.ts` | Tracking selection box and trail rendering |
+| `AutoTrackerNode.ts` | Auto-tracking selection box and trail rendering |
+| `DigitizingOverlayNode.ts` | Manual digitizing crosshair and magnifier |
+| `DataTableNode.ts` | Spreadsheet of track data, CSV export |
+| `TrackListPanel.ts` | Add/remove tracks for manual digitizing |
 | `ControlPanel.ts` | Left-side toggle panel |
 | `WebcamPanel.ts` | Webcam recording dialog |
+| `KeyboardShortcutsNode.ts` | Keyboard shortcuts |
 
 The other source directories are less frequently modified:
 
+- `src/preferences/` — User preferences (color profile, etc.)
 - `src/tracking/` — OpenCV template-matching pipeline (touch only for tracking algorithm changes)
 - `src/i18n/` — Localization strings (English and French)
-- `src/` root files (`main.ts`, `init.ts`, `TrackLabColors.ts`, etc.) — bootstrapping and global config
+- `src/` root files (`main.ts`, `init.ts`, `TrackLabColors.ts`, `TrackLabConstants.ts`, etc.) — bootstrapping and global config
 
 ## Development commands
 
@@ -48,5 +55,5 @@ npm run fix        # fix lint + format issues together
 
 - **Reactive state**: all model values are Axon `Property` / `BooleanProperty` / `DerivedProperty`. Views observe properties and update automatically — avoid manual imperative sync.
 - **Model-view transform**: `SimScreenView` computes a `modelViewTransformProperty` from the coordinate system pose and calibration data. Use it to convert between real-world units and video-pixel coordinates.
-- **Frame rate**: the codebase assumes 30 fps (`FRAME_DURATION = 1/30` in `VideoPlayerNode.ts`). Frame stepping and the frame counter both rely on this constant.
+- **Frame rate**: `SimModel.frameRateProperty` (default 30 fps) drives `frameDurationProperty`. The user can change frame rate via `PlaybackControlsNode`; frame stepping and time display use this value.
 - **SceneryStack layout**: use `HBox` / `VBox` for rows and columns. Prefer `align: 'center'` and explicit `spacing` values. Do not set absolute pixel positions unless absolutely necessary.

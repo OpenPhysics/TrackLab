@@ -8,7 +8,10 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 - **Coordinate system** — Place and rotate a draggable axes overlay anywhere on the video
 - **Calibration tool** — Define a known reference distance to convert pixel measurements to real-world units (mm, cm, m, km, in, ft)
 - **Auto-tracking** — Select any object and track it across frames using OpenCV template matching
+- **Manual digitizing** — Add multiple tracks (A, B, C…) and place points frame-by-frame with a crosshair cursor and magnifier
+- **Data table** — Spreadsheet view of all track data with CSV export
 - **Webcam recording** — Capture live video directly in the browser and use it as the analysis source
+- **Configurable frame rate** — Set video frame rate (15–60 fps) for accurate time calculations
 - **Bilingual UI** — English and French interface support
 - **Color profiles** — Default and projector modes for classroom presentation
 - **PWA support** — Installable as a desktop/mobile app
@@ -97,9 +100,13 @@ Enable the **Calibration** toggle. Drag the two endpoints of the calibration bar
 
 ### 4. Track an object
 
-Enable **Auto Tracking** in the control panel. On the video frame, click and drag to draw a box around the object you want to track. The tracker will follow it across subsequent frames, drawing a trail of past positions.
+**Auto-tracking:** Enable **Auto Tracking** in the control panel. On the video frame, click and drag to draw a box around the object you want to track. The tracker will follow it across subsequent frames, drawing a trail of past positions.
 
-Use the playback controls to step through or scrub the video while tracking is active.
+**Manual digitizing:** Enable **Digitize** and click **+ Add Track** in the track list panel. Select a track, then click on the video at each frame to record positions. Use the playback controls to step through or scrub the video.
+
+### 5. View and export data
+
+The data table shows all track positions in real-world units. Use **Export CSV** to download the data for analysis in spreadsheets or other tools.
 
 ## Architecture
 
@@ -108,25 +115,37 @@ src/
 ├── main.ts                  # App entry point
 ├── init.ts                  # Simulation metadata (name, version, locales)
 ├── splash.ts                # Splash screen
+├── brand.ts                 # Branding metadata
+├── assert.ts                # Assertion utilities
 ├── TrackLabColors.ts        # Centralized color properties (default + projector)
+├── TrackLabConstants.ts     # Layout and validation constants
 ├── TrackLabNamespace.ts     # SceneryStack namespace registration
 ├── webcam.ts                # WebcamRecorder (getUserMedia, MediaRecorder)
 ├── i18n/
 │   ├── StringManager.ts     # Localization singleton
 │   ├── strings_en.json      # English strings
 │   └── strings_fr.json      # French strings
+├── preferences/
+│   ├── TrackLabPreferencesModel.ts  # User preferences (color profile, etc.)
+│   └── TrackLabPreferencesNode.ts   # Preferences UI
 ├── screen-name/
 │   ├── SimScreen.ts         # Screen wiring (model + view)
 │   ├── model/
-│   │   └── SimModel.ts      # Application state (Axon Properties)
+│   │   ├── SimModel.ts      # Application state (Axon Properties)
+│   │   └── Track.ts         # Track model (points, label, color)
 │   └── view/
 │       ├── SimScreenView.ts        # Root view, layout, MVT computation
-│       ├── VideoPlayerNode.ts      # Video element + playback controls
-│       ├── CoordinateSystemNode.ts # Draggable/rotatable axes overlay
-│       ├── CalibrationToolNode.ts  # Reference distance tool
-│       ├── ControlPanel.ts         # Left-side toggle panel
-│       ├── AutoTrackerNode.ts      # Tracking overlay and trail rendering
-│       ├── WebcamPanel.ts          # Webcam recording dialog
+│       ├── VideoPlayerNode.ts      # Video element, hosts overlays
+│       ├── VideoSourceControlNode.ts  # Video dropdown + Record button
+│       ├── PlaybackControlsNode.ts    # Play, scrubber, frame step, frame rate
+│       ├── CoordinateSystemNode.ts   # Draggable/rotatable axes overlay
+│       ├── CalibrationToolNode.ts    # Reference distance tool
+│       ├── ControlPanel.ts          # Left-side toggle panel
+│       ├── AutoTrackerNode.ts       # Auto-tracking overlay and trail
+│       ├── DigitizingOverlayNode.ts # Manual digitizing crosshair + magnifier
+│       ├── DataTableNode.ts         # Spreadsheet of track data, CSV export
+│       ├── TrackListPanel.ts        # Add/remove tracks for digitizing
+│       ├── WebcamPanel.ts           # Webcam recording dialog
 │       └── KeyboardShortcutsNode.ts
 └── tracking/
     └── OpenCVTracker.ts     # OpenCV template matching (TM_CCOEFF_NORMED)
@@ -134,7 +153,7 @@ src/
 
 ### State management
 
-State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon). The central `SimModel` holds playback state, overlay visibility flags, and the computed model-view transform. Views observe properties and update themselves automatically.
+State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon). The central `SimModel` holds playback state, overlay visibility flags, frame rate, the computed model-view transform, and the list of tracks (each with digitized points). Views observe properties and update themselves automatically.
 
 ### Model-view transform
 
@@ -142,10 +161,13 @@ State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon)
 
 ### Tracking pipeline
 
+**Auto-tracking:**
 1. User drags a selection box over the target object (`AutoTrackerNode`)
 2. `OpenCVTracker.initFromVideo()` captures the template image from the current video frame
 3. On each frame advance, `OpenCVTracker.track()` runs OpenCV `matchTemplate` (TM_CCOEFF_NORMED) to find the best match location
 4. The result center point is appended to the trail and the crosshair is moved
+
+**Manual digitizing:** User adds tracks in `TrackListPanel`, selects one, then clicks on the video at each frame. `DigitizingOverlayNode` provides a crosshair cursor and magnifier; positions are stored in the track model and converted to real-world units via the model-view transform.
 
 ## Browser Requirements
 
@@ -161,7 +183,7 @@ State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon)
 The repository includes GitHub Actions workflows:
 
 - **`ci.yml`** — Runs on every push: type-check, lint, and build
-- **`deploy.yml`** — Builds and deploys to GitHub Pages on push to `master`
+- **`deploy.yml`** — Builds and deploys to GitHub Pages on push to `main`
 
 For other hosting targets, upload the contents of `dist/` to any static file server that supports custom HTTP headers (needed for `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`).
 
