@@ -14,7 +14,7 @@ export const PANEL_CORNER_RADIUS = 8;
 // SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
 export const VIDEO_PLAYER_Y_OFFSET = -20; // video center offset below layout center
 export const CONTROL_PANEL_LEFT_MARGIN = 10; // control panel inset from layout left edge
-export const TRACK_LIST_LEFT_SPACING = 12; // gap between video right edge and track list
+export const TRACK_LIST_LEFT_SPACING = -100; // offset from video right edge (negative moves panels left)
 export const DATA_TABLE_TOP_SPACING = 8; // gap between track list bottom and data table
 export const RESET_BUTTON_MARGIN = 10; // reset button inset from layout right/bottom edges
 

@@ -19,7 +19,8 @@ export type PlottableProperty = {
   property: TReadOnlyProperty<number>;
 
   // Optional unit string for axis label (e.g., "m", "m/s", "J")
-  unit?: string;
+  // Can be a static string or a dynamic property for units that depend on calibration
+  unit?: string | TReadOnlyProperty<string>;
 
   // Optional accessor for extracting this property's value from sub-step data.
   // When provided, high-resolution sub-step data is used for smooth phase-space plots.

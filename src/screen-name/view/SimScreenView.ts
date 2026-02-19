@@ -14,6 +14,7 @@ import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { DataTableNode } from "./DataTableNode.js";
+import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
@@ -88,6 +89,12 @@ export class SimScreenView extends ScreenView {
     trackListPanel.boundsProperty.link(() => {
       dataTableNode.top = trackListPanel.bottom + DATA_TABLE_TOP_SPACING;
     });
+
+    // ── Kinematics graph (below the video, left side) ───────────────────
+    const kinematicsGraph = new KinematicsGraphNode(model, this);
+    this.addChild(kinematicsGraph);
+    kinematicsGraph.left = this.videoPlayerNode.left;
+    kinematicsGraph.top = this.videoPlayerNode.bottom + 10;
 
     // ── Reset all ─────────────────────────────────────────────────────────
     const resetAllButton = new ResetAllButton({

@@ -543,12 +543,23 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
+   * Get the string value from a unit (which can be string or TReadOnlyProperty<string>)
+   */
+  private getUnitValue(
+    unit: string | TReadOnlyProperty<string> | undefined,
+  ): string | undefined {
+    if (unit === undefined) return undefined;
+    return typeof unit === "string" ? unit : unit.value;
+  }
+
+  /**
    * Format an axis label with the property name and unit
    */
   private formatAxisLabel(property: PlottableProperty): string {
     const nameValue = this.getNameValue(property.name);
-    if (property.unit) {
-      return `${nameValue} (${property.unit})`;
+    const unitValue = this.getUnitValue(property.unit);
+    if (unitValue) {
+      return `${nameValue} (${unitValue})`;
     }
     return nameValue;
   }
@@ -680,8 +691,15 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
+   * Update the axis labels (call when units change)
+   */
+  public updateAxisLabels(): void {
+    this.xAxisLabelNode.string = this.formatAxisLabel(this.xPropertyProperty.value);
+    this.yAxisLabelNode.string = this.formatAxisLabel(this.yPropertyProperty.value);
+  }
+
+  /**
    * Get the current x-axis property
-   * @unused Not called from outside this class.
    */
   public getXProperty(): PlottableProperty {
     return this.xPropertyProperty.value;
@@ -689,10 +707,23 @@ export default class ConfigurableGraph extends Node {
 
   /**
    * Get the current y-axis property
-   * @unused Not called from outside this class.
    */
   public getYProperty(): PlottableProperty {
     return this.yPropertyProperty.value;
+  }
+
+  /**
+   * Get the x-axis property Property (for listening to changes)
+   */
+  public getXPropertyProperty(): Property<PlottableProperty> {
+    return this.xPropertyProperty;
+  }
+
+  /**
+   * Get the y-axis property Property (for listening to changes)
+   */
+  public getYPropertyProperty(): Property<PlottableProperty> {
+    return this.yPropertyProperty;
   }
 
   /**

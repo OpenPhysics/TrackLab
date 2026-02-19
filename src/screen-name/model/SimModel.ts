@@ -289,6 +289,16 @@ export class SimModel {
   });
   public readonly calibUnitProperty = new Property<CalibrationUnit>("m");
 
+  // ── Derived unit strings (for display in graphs and tables) ────────────
+  public readonly distanceUnitProperty: TReadOnlyProperty<string> =
+    new DerivedProperty([this.calibUnitProperty], (unit) => unit);
+
+  public readonly velocityUnitProperty: TReadOnlyProperty<string> =
+    new DerivedProperty([this.calibUnitProperty], (unit) => `${unit}/s`);
+
+  public readonly accelerationUnitProperty: TReadOnlyProperty<string> =
+    new DerivedProperty([this.calibUnitProperty], (unit) => `${unit}/s²`);
+
   // ── Model-view transform (derived; the view never writes to this) ─────
   public readonly modelViewTransformProperty: TReadOnlyProperty<Transform3> =
     new DerivedProperty(
