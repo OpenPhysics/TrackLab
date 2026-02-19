@@ -110,118 +110,152 @@ function computeTrackKinematics(track: Track): TrackKinematics {
     return { ...track, points: [] };
   }
 
-  // First pass: compute velocities
-  const velocities: Array<{ vx: number | null; vy: number | null }> = [];
+  // Helper to safely get a point (returns undefined if out of bounds)
+  const getPoint = (idx: number): TrackPoint | undefined => points[idx];
 
-  for (let i = 0; i < n; i++) {
+  // Compute velocity at index i using finite differences
+  const computeVelocity = (
+    i: number,
+  ): { vx: number | null; vy: number | null } => {
     if (n < 2) {
-      velocities.push({ vx: null, vy: null });
-    } else if (i === 0) {
+      return { vx: null, vy: null };
+    }
+
+    const curr = getPoint(i);
+    if (!curr) return { vx: null, vy: null };
+
+    if (i === 0) {
       // Forward difference for first point
-      const dt = points[1].time - points[0].time;
-      if (dt > 0) {
-        velocities.push({
-          vx: (points[1].x - points[0].x) / dt,
-          vy: (points[1].y - points[0].y) / dt,
-        });
-      } else {
-        velocities.push({ vx: null, vy: null });
-      }
-    } else if (i === n - 1) {
+      const next = getPoint(1);
+      if (!next) return { vx: null, vy: null };
+      const dt = next.time - curr.time;
+      if (dt <= 0) return { vx: null, vy: null };
+      return {
+        vx: (next.x - curr.x) / dt,
+        vy: (next.y - curr.y) / dt,
+      };
+    }
+
+    if (i === n - 1) {
       // Backward difference for last point
-      const dt = points[n - 1].time - points[n - 2].time;
-      if (dt > 0) {
-        velocities.push({
-          vx: (points[n - 1].x - points[n - 2].x) / dt,
-          vy: (points[n - 1].y - points[n - 2].y) / dt,
-        });
-      } else {
-        velocities.push({ vx: null, vy: null });
-      }
-    } else {
-      // Central difference for interior points
-      const dt = points[i + 1].time - points[i - 1].time;
-      if (dt > 0) {
-        velocities.push({
-          vx: (points[i + 1].x - points[i - 1].x) / dt,
-          vy: (points[i + 1].y - points[i - 1].y) / dt,
-        });
-      } else {
-        velocities.push({ vx: null, vy: null });
-      }
+      const prev = getPoint(n - 2);
+      if (!prev) return { vx: null, vy: null };
+      const dt = curr.time - prev.time;
+      if (dt <= 0) return { vx: null, vy: null };
+      return {
+        vx: (curr.x - prev.x) / dt,
+        vy: (curr.y - prev.y) / dt,
+      };
     }
-  }
 
-  // Second pass: compute accelerations from velocities
-  const accelerations: Array<{ ax: number | null; ay: number | null }> = [];
+    // Central difference for interior points
+    const prev = getPoint(i - 1);
+    const next = getPoint(i + 1);
+    if (!prev || !next) return { vx: null, vy: null };
+    const dt = next.time - prev.time;
+    if (dt <= 0) return { vx: null, vy: null };
+    return {
+      vx: (next.x - prev.x) / dt,
+      vy: (next.y - prev.y) / dt,
+    };
+  };
 
-  for (let i = 0; i < n; i++) {
+  // First pass: compute velocities
+  const velocities = points.map((_, i) => computeVelocity(i));
+
+  // Helper to safely get velocity
+  const getVelocity = (
+    idx: number,
+  ): { vx: number | null; vy: number | null } | undefined => velocities[idx];
+
+  // Compute acceleration at index i using finite differences on velocities
+  const computeAcceleration = (
+    i: number,
+  ): { ax: number | null; ay: number | null } => {
     if (n < 2) {
-      accelerations.push({ ax: null, ay: null });
-    } else if (i === 0) {
-      // Forward difference
-      const v0 = velocities[0];
-      const v1 = velocities[1];
-      const dt = points[1].time - points[0].time;
-      if (
-        v0.vx !== null &&
-        v1.vx !== null &&
-        v0.vy !== null &&
-        v1.vy !== null &&
-        dt > 0
-      ) {
-        accelerations.push({
-          ax: (v1.vx - v0.vx) / dt,
-          ay: (v1.vy - v0.vy) / dt,
-        });
-      } else {
-        accelerations.push({ ax: null, ay: null });
-      }
-    } else if (i === n - 1) {
-      // Backward difference
-      const vPrev = velocities[n - 2];
-      const vCurr = velocities[n - 1];
-      const dt = points[n - 1].time - points[n - 2].time;
-      if (
-        vPrev.vx !== null &&
-        vCurr.vx !== null &&
-        vPrev.vy !== null &&
-        vCurr.vy !== null &&
-        dt > 0
-      ) {
-        accelerations.push({
-          ax: (vCurr.vx - vPrev.vx) / dt,
-          ay: (vCurr.vy - vPrev.vy) / dt,
-        });
-      } else {
-        accelerations.push({ ax: null, ay: null });
-      }
-    } else {
-      // Central difference
-      const vPrev = velocities[i - 1];
-      const vNext = velocities[i + 1];
-      const dt = points[i + 1].time - points[i - 1].time;
-      if (
-        vPrev.vx !== null &&
-        vNext.vx !== null &&
-        vPrev.vy !== null &&
-        vNext.vy !== null &&
-        dt > 0
-      ) {
-        accelerations.push({
-          ax: (vNext.vx - vPrev.vx) / dt,
-          ay: (vNext.vy - vPrev.vy) / dt,
-        });
-      } else {
-        accelerations.push({ ax: null, ay: null });
-      }
+      return { ax: null, ay: null };
     }
-  }
+
+    const curr = getPoint(i);
+    if (!curr) return { ax: null, ay: null };
+
+    if (i === 0) {
+      // Forward difference
+      const v0 = getVelocity(0);
+      const v1 = getVelocity(1);
+      const next = getPoint(1);
+      if (!v0 || !v1 || !next) return { ax: null, ay: null };
+      if (
+        v0.vx === null ||
+        v1.vx === null ||
+        v0.vy === null ||
+        v1.vy === null
+      ) {
+        return { ax: null, ay: null };
+      }
+      const dt = next.time - curr.time;
+      if (dt <= 0) return { ax: null, ay: null };
+      return {
+        ax: (v1.vx - v0.vx) / dt,
+        ay: (v1.vy - v0.vy) / dt,
+      };
+    }
+
+    if (i === n - 1) {
+      // Backward difference
+      const vPrev = getVelocity(n - 2);
+      const vCurr = getVelocity(n - 1);
+      const prev = getPoint(n - 2);
+      if (!vPrev || !vCurr || !prev) return { ax: null, ay: null };
+      if (
+        vPrev.vx === null ||
+        vCurr.vx === null ||
+        vPrev.vy === null ||
+        vCurr.vy === null
+      ) {
+        return { ax: null, ay: null };
+      }
+      const dt = curr.time - prev.time;
+      if (dt <= 0) return { ax: null, ay: null };
+      return {
+        ax: (vCurr.vx - vPrev.vx) / dt,
+        ay: (vCurr.vy - vPrev.vy) / dt,
+      };
+    }
+
+    // Central difference
+    const vPrev = getVelocity(i - 1);
+    const vNext = getVelocity(i + 1);
+    const prev = getPoint(i - 1);
+    const next = getPoint(i + 1);
+    if (!vPrev || !vNext || !prev || !next) return { ax: null, ay: null };
+    if (
+      vPrev.vx === null ||
+      vNext.vx === null ||
+      vPrev.vy === null ||
+      vNext.vy === null
+    ) {
+      return { ax: null, ay: null };
+    }
+    const dt = next.time - prev.time;
+    if (dt <= 0) return { ax: null, ay: null };
+    return {
+      ax: (vNext.vx - vPrev.vx) / dt,
+      ay: (vNext.vy - vPrev.vy) / dt,
+    };
+  };
+
+  // Second pass: compute accelerations
+  const accelerations = points.map((_, i) => computeAcceleration(i));
 
   // Combine all data into KinematicPoints
   const kinematicPoints: KinematicPoint[] = points.map((pt, i) => {
-    const { vx, vy } = velocities[i];
-    const { ax, ay } = accelerations[i];
+    const vel = velocities[i];
+    const acc = accelerations[i];
+    const vx = vel?.vx ?? null;
+    const vy = vel?.vy ?? null;
+    const ax = acc?.ax ?? null;
+    const ay = acc?.ay ?? null;
 
     return {
       frame: pt.frame,
@@ -367,10 +401,10 @@ export class SimModel {
   public addTrack(): void {
     if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) return; // 'Z' is the last allowed symbol
     const symbol = String.fromCharCode(this.nextSymbolCode);
-    const color =
-      TRACK_COLORS[
-        (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length
-      ].toCSS();
+    const colorIndex =
+      (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length;
+    const trackColor = TRACK_COLORS[colorIndex];
+    const color = trackColor ? trackColor.toCSS() : "#000000";
     this.nextSymbolCode++;
     this.canAddTrackProperty.value =
       this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;

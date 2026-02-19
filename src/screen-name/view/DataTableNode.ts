@@ -250,6 +250,7 @@ function buildHTMLTable(
   } else {
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
+      if (!row) continue;
       const tr = document.createElement("tr");
       tr.style.background = i % 2 === 0 ? colors.rowOdd : colors.rowEven;
 

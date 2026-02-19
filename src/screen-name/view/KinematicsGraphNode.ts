@@ -68,31 +68,36 @@ export class KinematicsGraphNode extends VBox {
     this.selectedTrackProperty = new Property<string | null>(null);
 
     // Create plottable properties using unit properties from the model
+    // Accessor functions return 0 for undefined values (filtered out later by NaN check)
     const plottableProperties: PlottableProperty[] = [
-      createPlottableProperty("t", "s", this.tProperty, (pt) => pt.t),
-      createPlottableProperty("x", model.distanceUnitProperty, this.xProperty, (pt) => pt.x),
-      createPlottableProperty("y", model.distanceUnitProperty, this.yProperty, (pt) => pt.y),
-      createPlottableProperty("vx", model.velocityUnitProperty, this.vxProperty, (pt) => pt.vx),
-      createPlottableProperty("vy", model.velocityUnitProperty, this.vyProperty, (pt) => pt.vy),
+      createPlottableProperty("t", "s", this.tProperty, (pt) => pt.t ?? 0),
+      createPlottableProperty("x", model.distanceUnitProperty, this.xProperty, (pt) => pt.x ?? 0),
+      createPlottableProperty("y", model.distanceUnitProperty, this.yProperty, (pt) => pt.y ?? 0),
+      createPlottableProperty("vx", model.velocityUnitProperty, this.vxProperty, (pt) => pt.vx ?? 0),
+      createPlottableProperty("vy", model.velocityUnitProperty, this.vyProperty, (pt) => pt.vy ?? 0),
       createPlottableProperty(
         "speed",
         model.velocityUnitProperty,
         this.speedProperty,
-        (pt) => pt.speed,
+        (pt) => pt.speed ?? 0,
       ),
-      createPlottableProperty("ax", model.accelerationUnitProperty, this.axProperty, (pt) => pt.ax),
-      createPlottableProperty("ay", model.accelerationUnitProperty, this.ayProperty, (pt) => pt.ay),
+      createPlottableProperty("ax", model.accelerationUnitProperty, this.axProperty, (pt) => pt.ax ?? 0),
+      createPlottableProperty("ay", model.accelerationUnitProperty, this.ayProperty, (pt) => pt.ay ?? 0),
       createPlottableProperty(
         "|a|",
         model.accelerationUnitProperty,
         this.aMagProperty,
-        (pt) => pt.aMag,
+        (pt) => pt.aMag ?? 0,
       ),
     ];
 
     // Default: plot y vs x (trajectory)
-    const initialXProperty = plottableProperties[1]; // x
-    const initialYProperty = plottableProperties[2]; // y
+    const initialXProperty = plottableProperties[1];
+    const initialYProperty = plottableProperties[2];
+
+    if (!initialXProperty || !initialYProperty) {
+      throw new Error("Failed to initialize plottable properties");
+    }
 
     // Create the configurable graph
     this.graph = new ConfigurableGraph(
@@ -122,10 +127,11 @@ export class KinematicsGraphNode extends VBox {
 
       // Now update selection to match new tracks
       const currentId = this.selectedTrackProperty.value;
-      if (tracks.length === 0) {
+      const firstTrack = tracks[0];
+      if (tracks.length === 0 || !firstTrack) {
         this.selectedTrackProperty.value = null;
       } else if (currentId === null || !tracks.some((t) => t.id === currentId)) {
-        this.selectedTrackProperty.value = tracks[0].id;
+        this.selectedTrackProperty.value = firstTrack.id;
       }
 
       // Build new combo box with updated items
