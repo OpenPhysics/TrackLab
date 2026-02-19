@@ -704,8 +704,12 @@ export default class ConfigurableGraph extends Node {
    * Update the axis labels (call when units change)
    */
   public updateAxisLabels(): void {
-    this.xAxisLabelNode.string = this.formatAxisLabel(this.xPropertyProperty.value);
-    this.yAxisLabelNode.string = this.formatAxisLabel(this.yPropertyProperty.value);
+    this.xAxisLabelNode.string = this.formatAxisLabel(
+      this.xPropertyProperty.value,
+    );
+    this.yAxisLabelNode.string = this.formatAxisLabel(
+      this.yPropertyProperty.value,
+    );
   }
 
   /**

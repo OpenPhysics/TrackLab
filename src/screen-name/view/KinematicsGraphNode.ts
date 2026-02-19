@@ -5,7 +5,11 @@
  * Users can select which variables to plot on each axis (t, x, y, vx, vy, speed, ax, ay, |a|).
  */
 
-import { NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import {
+  NumberProperty,
+  Property,
+  type TReadOnlyProperty,
+} from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -71,18 +75,48 @@ export class KinematicsGraphNode extends VBox {
     // Accessor functions return 0 for undefined values (filtered out later by NaN check)
     const plottableProperties: PlottableProperty[] = [
       createPlottableProperty("t", "s", this.tProperty, (pt) => pt.t ?? 0),
-      createPlottableProperty("x", model.distanceUnitProperty, this.xProperty, (pt) => pt.x ?? 0),
-      createPlottableProperty("y", model.distanceUnitProperty, this.yProperty, (pt) => pt.y ?? 0),
-      createPlottableProperty("vx", model.velocityUnitProperty, this.vxProperty, (pt) => pt.vx ?? 0),
-      createPlottableProperty("vy", model.velocityUnitProperty, this.vyProperty, (pt) => pt.vy ?? 0),
+      createPlottableProperty(
+        "x",
+        model.distanceUnitProperty,
+        this.xProperty,
+        (pt) => pt.x ?? 0,
+      ),
+      createPlottableProperty(
+        "y",
+        model.distanceUnitProperty,
+        this.yProperty,
+        (pt) => pt.y ?? 0,
+      ),
+      createPlottableProperty(
+        "vx",
+        model.velocityUnitProperty,
+        this.vxProperty,
+        (pt) => pt.vx ?? 0,
+      ),
+      createPlottableProperty(
+        "vy",
+        model.velocityUnitProperty,
+        this.vyProperty,
+        (pt) => pt.vy ?? 0,
+      ),
       createPlottableProperty(
         "speed",
         model.velocityUnitProperty,
         this.speedProperty,
         (pt) => pt.speed ?? 0,
       ),
-      createPlottableProperty("ax", model.accelerationUnitProperty, this.axProperty, (pt) => pt.ax ?? 0),
-      createPlottableProperty("ay", model.accelerationUnitProperty, this.ayProperty, (pt) => pt.ay ?? 0),
+      createPlottableProperty(
+        "ax",
+        model.accelerationUnitProperty,
+        this.axProperty,
+        (pt) => pt.ax ?? 0,
+      ),
+      createPlottableProperty(
+        "ay",
+        model.accelerationUnitProperty,
+        this.ayProperty,
+        (pt) => pt.ay ?? 0,
+      ),
       createPlottableProperty(
         "|a|",
         model.accelerationUnitProperty,
@@ -132,7 +166,10 @@ export class KinematicsGraphNode extends VBox {
       const firstTrack = tracks[0];
       if (tracks.length === 0 || !firstTrack) {
         this.selectedTrackProperty.value = null;
-      } else if (currentId === null || !tracks.some((t) => t.id === currentId)) {
+      } else if (
+        currentId === null ||
+        !tracks.some((t) => t.id === currentId)
+      ) {
         this.selectedTrackProperty.value = firstTrack.id;
       }
 
