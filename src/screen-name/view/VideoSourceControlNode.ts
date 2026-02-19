@@ -1,6 +1,6 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
-import { HBox, Node, Text } from "scenerystack/scenery";
+import { HBox, type Node, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";

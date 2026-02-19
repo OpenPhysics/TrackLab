@@ -12,7 +12,7 @@
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { DOM, HBox, Node, Text, VBox } from "scenerystack/scenery";
+import { DOM, HBox, type Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -306,7 +306,6 @@ function makeDownloadIcon(): Node {
 export class DataTableNode extends Panel {
   private exportCounter = 1;
   private tableWrapper: HTMLDivElement;
-  private tableDOMNode: DOM;
 
   public constructor(
     model: SimModel,
@@ -343,7 +342,10 @@ export class DataTableNode extends Panel {
         children: [
           makeDownloadIcon(),
           new Text(dataTableStrings.csvStringProperty, {
-            font: new PhetFont({ size: EXPORT_BUTTON_FONT_SIZE, weight: "bold" }),
+            font: new PhetFont({
+              size: EXPORT_BUTTON_FONT_SIZE,
+              weight: "bold",
+            }),
             fill: TrackLabColors.textOnDarkProperty,
           }),
         ],
@@ -419,7 +421,9 @@ export class DataTableNode extends Panel {
 
       // Replace the content
       this.tableWrapper.innerHTML = "";
-      this.tableWrapper.appendChild(newWrapper.firstChild!);
+      if (newWrapper.firstChild) {
+        this.tableWrapper.appendChild(newWrapper.firstChild);
+      }
 
       // Copy styles
       this.tableWrapper.style.cssText = newWrapper.style.cssText;

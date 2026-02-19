@@ -39,7 +39,8 @@ export function getFrameRateCapabilitiesFromStream(
   if (!track) return null;
   const caps = track.getCapabilities();
   const fr = caps.frameRate;
-  if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") return null;
+  if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number")
+    return null;
   return { min: fr.min, max: fr.max };
 }
 
@@ -285,7 +286,8 @@ export class WebcamRecorder {
     if (!track) return null;
     const caps = track.getCapabilities();
     const fr = caps.frameRate;
-    if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") return null;
+    if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number")
+      return null;
     return { min: fr.min, max: fr.max };
   }
 

@@ -116,11 +116,14 @@ export class AutoTrackerNode extends Node {
       lineWidth: CROSSHAIR_LINE_WIDTH,
       visible: false,
     });
-    this.crosshairCircle = new Path(Shape.circle(0, 0, CROSSHAIR_CIRCLE_RADIUS), {
-      stroke: crosshairStroke,
-      lineWidth: CROSSHAIR_LINE_WIDTH,
-      visible: false,
-    });
+    this.crosshairCircle = new Path(
+      Shape.circle(0, 0, CROSSHAIR_CIRCLE_RADIUS),
+      {
+        stroke: crosshairStroke,
+        lineWidth: CROSSHAIR_LINE_WIDTH,
+        visible: false,
+      },
+    );
     this.addChild(this.trailPath);
     this.addChild(this.crosshairCircle);
     this.addChild(this.crosshairH);

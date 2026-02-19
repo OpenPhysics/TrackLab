@@ -1,4 +1,3 @@
-import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import {
@@ -12,7 +11,7 @@ import {
 } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
-import { VIDEO_HEIGHT, VIDEO_WIDTH, type SimModel } from "../model/SimModel.js";
+import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const OUTER_R = 12;
 const INNER_R = 2;

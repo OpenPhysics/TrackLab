@@ -4,18 +4,18 @@
  * - Header bar
  */
 
-import { Node, HBox, Text, Rectangle } from "scenerystack/scenery";
-import { ComboBox } from "scenerystack/sun";
 import {
-  Property,
   DerivedProperty,
+  type Property,
   type TReadOnlyProperty,
 } from "scenerystack/axon";
-import type { PlottableProperty } from "./PlottableProperty.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import { HBox, type Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import trackLab from "../../TrackLabNamespace.js";
+import { ComboBox } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
+import TrackLabColors from "../../TrackLabColors.js";
+import trackLab from "../../TrackLabNamespace.js";
+import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Font sizes
 const COMBO_BOX_FONT = new PhetFont({ size: 12 });
@@ -76,7 +76,7 @@ export default class GraphControlsPanel {
           font: COMBO_BOX_FONT,
           fill: TrackLabColors.textProperty,
         }),
-      tandemName: this.sanitizeTandemName(prop.name) + "Item",
+      tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
     const xComboBox = new ComboBox(this.xPropertyProperty, xItems, listParent, {
@@ -97,7 +97,7 @@ export default class GraphControlsPanel {
           font: COMBO_BOX_FONT,
           fill: TrackLabColors.textProperty,
         }),
-      tandemName: this.sanitizeTandemName(prop.name) + "Item",
+      tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
     const yComboBox = new ComboBox(this.yPropertyProperty, yItems, listParent, {
@@ -148,7 +148,8 @@ export default class GraphControlsPanel {
     // Create header bar with dynamic fill that darkens the control panel background
     const headerFillProperty = new DerivedProperty(
       [TrackLabColors.controlPanelFillProperty],
-      (backgroundColor) => backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
+      (backgroundColor) =>
+        backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
     );
     const headerBar = new Rectangle(
       0,

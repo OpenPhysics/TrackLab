@@ -1,6 +1,7 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
+import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import {
   CONTROL_PANEL_LEFT_MARGIN,
   DATA_TABLE_TOP_SPACING,
@@ -8,7 +9,6 @@ import {
   TRACK_LIST_LEFT_SPACING,
   VIDEO_PLAYER_Y_OFFSET,
 } from "../../TrackLabConstants.js";
-import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";

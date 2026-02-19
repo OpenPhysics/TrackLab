@@ -7,23 +7,22 @@
  * - Resize handles
  */
 
-import { Vector2 } from "scenerystack/dot";
-import { Range } from "scenerystack/dot";
-import {
-  Rectangle,
-  DragListener,
-  type Pointer,
-  type Node,
-} from "scenerystack/scenery";
+import type { BooleanProperty } from "scenerystack/axon";
 import type {
   ChartRectangle,
   ChartTransform,
   TickLabelSet,
 } from "scenerystack/bamboo";
-import { BooleanProperty } from "scenerystack/axon";
+import { Range, Vector2 } from "scenerystack/dot";
+import {
+  DragListener,
+  type Node,
+  type Pointer,
+  Rectangle,
+} from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
-import type GraphDataManager from "./GraphDataManager.js";
 import trackLab from "../../TrackLabNamespace.js";
+import type GraphDataManager from "./GraphDataManager.js";
 
 /**
  * Configuration for the chart and its data management
@@ -125,7 +124,7 @@ export default class GraphInteractionHandler {
     this.chartRectangle.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent!.deltaY;
+        const delta = event.domEvent?.deltaY;
 
         // Get mouse position relative to chart
         const pointerPoint = this.chartRectangle.globalToLocalPoint(
@@ -547,7 +546,7 @@ export default class GraphInteractionHandler {
     this.yAxisInteractionRegion.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent!.deltaY;
+        const delta = event.domEvent?.deltaY;
 
         // Get mouse position on Y-axis
         const mouseY = event.pointer.point.y;
@@ -774,7 +773,7 @@ export default class GraphInteractionHandler {
     this.xAxisInteractionRegion.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent!.deltaY;
+        const delta = event.domEvent?.deltaY;
 
         // Get mouse position on X-axis
         const mouseX = event.pointer.point.x;

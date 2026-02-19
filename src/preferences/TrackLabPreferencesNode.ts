@@ -5,12 +5,12 @@
  * Currently includes a checkbox to enable/disable the auto-tracking feature.
  */
 
-import { VBox, Text, HStrut } from "scenerystack/scenery";
-import { Checkbox } from "scenerystack/sun";
+import { HStrut, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import type { TrackLabPreferencesModel } from "./TrackLabPreferencesModel.js";
+import { Checkbox } from "scenerystack/sun";
 import { StringManager } from "../i18n/StringManager.js";
 import TrackLabColors from "../TrackLabColors.js";
+import type { TrackLabPreferencesModel } from "./TrackLabPreferencesModel.js";
 
 export class TrackLabPreferencesNode extends VBox {
   public constructor(preferencesModel: TrackLabPreferencesModel) {

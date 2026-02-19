@@ -1,9 +1,9 @@
 import { Circle, Line, Node, VBox } from "scenerystack/scenery";
 import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
+import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
-import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ICON_SIZE = 20; // bounding box each icon targets

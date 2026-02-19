@@ -3,7 +3,7 @@
  * This allows the graph to be configured with any numeric property from the model.
  */
 
-import { type TReadOnlyProperty } from "scenerystack/axon";
+import type { TReadOnlyProperty } from "scenerystack/axon";
 import type { SubStepDataPoint } from "../../model/BaseModel.js";
 
 export type PlottableProperty = {

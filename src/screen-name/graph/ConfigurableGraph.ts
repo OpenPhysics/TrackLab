@@ -4,37 +4,37 @@
  */
 
 import {
-  Node,
-  HBox,
-  Text,
-  Rectangle,
-  FireListener,
-} from "scenerystack/scenery";
+  BooleanProperty,
+  Property,
+  type TReadOnlyProperty,
+} from "scenerystack/axon";
 import {
   ChartRectangle,
   ChartTransform,
-  LinePlot,
   GridLineSet,
-  TickMarkSet,
+  LinePlot,
   TickLabelSet,
+  TickMarkSet,
 } from "scenerystack/bamboo";
 import { Range } from "scenerystack/dot";
-import {
-  Property,
-  BooleanProperty,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
-import { Orientation } from "scenerystack/phet-core";
 import { Shape } from "scenerystack/kite";
-import type { PlottableProperty } from "./PlottableProperty.js";
+import { Orientation } from "scenerystack/phet-core";
+import {
+  FireListener,
+  HBox,
+  Node,
+  Rectangle,
+  Text,
+} from "scenerystack/scenery";
+import { PhetFont } from "scenerystack/scenery-phet";
 import type { SubStepDataPoint } from "../../model/BaseModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import TrackLabConstants from "../../TrackLabConstants.js";
-import { PhetFont } from "scenerystack/scenery-phet";
+import trackLab from "../../TrackLabNamespace.js";
+import GraphControlsPanel from "./GraphControlsPanel.js";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
-import GraphControlsPanel from "./GraphControlsPanel.js";
-import trackLab from "../../TrackLabNamespace.js";
+import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Grid line styling
 const GRID_LINE_WIDTH = 0.5;
@@ -509,7 +509,9 @@ export default class ConfigurableGraph extends Node {
 
     // Create and add resize handles
     const resizeHandles = this.interactionHandler.createResizeHandles();
-    resizeHandles.forEach((handle) => this.addChild(handle));
+    for (const handle of resizeHandles) {
+      this.addChild(handle);
+    }
 
     // Link visibility property to the content node, header bar, and resize handles
     this.graphVisibleProperty.link((visible) => {

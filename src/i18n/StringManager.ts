@@ -119,7 +119,8 @@ export class StringManager {
       speedStringProperty: this.stringProperties.controls.speedStringProperty,
       recordStringProperty: this.stringProperties.controls.recordStringProperty,
       stopStringProperty: this.stringProperties.controls.stopStringProperty,
-      graphVsStringProperty: this.stringProperties.controls.graphVsStringProperty,
+      graphVsStringProperty:
+        this.stringProperties.controls.graphVsStringProperty,
     };
   }
 

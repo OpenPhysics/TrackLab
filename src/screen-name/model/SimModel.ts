@@ -163,7 +163,13 @@ function computeTrackKinematics(track: Track): TrackKinematics {
       const v0 = velocities[0];
       const v1 = velocities[1];
       const dt = points[1].time - points[0].time;
-      if (v0.vx !== null && v1.vx !== null && v0.vy !== null && v1.vy !== null && dt > 0) {
+      if (
+        v0.vx !== null &&
+        v1.vx !== null &&
+        v0.vy !== null &&
+        v1.vy !== null &&
+        dt > 0
+      ) {
         accelerations.push({
           ax: (v1.vx - v0.vx) / dt,
           ay: (v1.vy - v0.vy) / dt,
@@ -176,7 +182,13 @@ function computeTrackKinematics(track: Track): TrackKinematics {
       const vPrev = velocities[n - 2];
       const vCurr = velocities[n - 1];
       const dt = points[n - 1].time - points[n - 2].time;
-      if (vPrev.vx !== null && vCurr.vx !== null && vPrev.vy !== null && vCurr.vy !== null && dt > 0) {
+      if (
+        vPrev.vx !== null &&
+        vCurr.vx !== null &&
+        vPrev.vy !== null &&
+        vCurr.vy !== null &&
+        dt > 0
+      ) {
         accelerations.push({
           ax: (vCurr.vx - vPrev.vx) / dt,
           ay: (vCurr.vy - vPrev.vy) / dt,
@@ -189,7 +201,13 @@ function computeTrackKinematics(track: Track): TrackKinematics {
       const vPrev = velocities[i - 1];
       const vNext = velocities[i + 1];
       const dt = points[i + 1].time - points[i - 1].time;
-      if (vPrev.vx !== null && vNext.vx !== null && vPrev.vy !== null && vNext.vy !== null && dt > 0) {
+      if (
+        vPrev.vx !== null &&
+        vNext.vx !== null &&
+        vPrev.vy !== null &&
+        vNext.vy !== null &&
+        dt > 0
+      ) {
         accelerations.push({
           ax: (vNext.vx - vPrev.vx) / dt,
           ay: (vNext.vy - vPrev.vy) / dt,
@@ -215,7 +233,8 @@ function computeTrackKinematics(track: Track): TrackKinematics {
       speed: vx !== null && vy !== null ? Math.sqrt(vx * vx + vy * vy) : null,
       ax,
       ay,
-      accelerationMagnitude: ax !== null && ay !== null ? Math.sqrt(ax * ax + ay * ay) : null,
+      accelerationMagnitude:
+        ax !== null && ay !== null ? Math.sqrt(ax * ax + ay * ay) : null,
     };
   });
 
@@ -343,7 +362,8 @@ export class SimModel {
         (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length
       ].toCSS();
     this.nextSymbolCode++;
-    this.canAddTrackProperty.value = this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
+    this.canAddTrackProperty.value =
+      this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
 
     const track: Track = {
       id: `track-${symbol}`,

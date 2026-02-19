@@ -1,5 +1,6 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty } from "scenerystack/axon";
+import { Shape } from "scenerystack/kite";
 import {
   Circle,
   HBox,
@@ -8,7 +9,6 @@ import {
   RichDragListener,
   Text,
 } from "scenerystack/scenery";
-import { Shape } from "scenerystack/kite";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
 import {
@@ -126,7 +126,10 @@ export class CalibrationToolNode extends Node {
       CALIBRATION_UNITS.map((unit) => ({
         value: unit,
         createNode: () =>
-          new Text(unit, { font: FONT, fill: TrackLabColors.textOnDarkProperty }),
+          new Text(unit, {
+            font: FONT,
+            fill: TrackLabColors.textOnDarkProperty,
+          }),
         tandemName: `${unit}Item`,
       }));
     const unitComboBox = new ComboBox(

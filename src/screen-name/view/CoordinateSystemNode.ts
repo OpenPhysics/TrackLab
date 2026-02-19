@@ -1,6 +1,6 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
+import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";

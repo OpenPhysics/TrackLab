@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 // ── Magic numbers ─────────────────────────────────────────────────
 const SVG_WIDTH = 60; // px
@@ -31,7 +31,7 @@ const FLOOR_WIDTH = 0.8; // stroke-width
 function buildBounces(): Array<{ tStart: number; tEnd: number; h: number }> {
   const heights = Array.from(
     { length: NUM_BOUNCES },
-    (_, n) => INITIAL_HEIGHT * Math.pow(RESTITUTION, n),
+    (_, n) => INITIAL_HEIGHT * RESTITUTION ** n,
   );
 
   // flight time ∝ sqrt(h)
@@ -77,7 +77,7 @@ function computeSnapshots(): Point[] {
     const tLocal = (tGlobal - bounce.tStart) / (bounce.tEnd - bounce.tStart);
 
     // parabolic height above floor: h*(1-(2t-1)^2)
-    const heightAboveFloor = bounce.h * (1 - Math.pow(2 * tLocal - 1, 2));
+    const heightAboveFloor = bounce.h * (1 - (2 * tLocal - 1) ** 2);
 
     // x: linearly interpolated between the two floor contacts of this bounce
     const xLeft = xContacts[bounceIdx];

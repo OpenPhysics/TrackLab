@@ -3,16 +3,15 @@
  * Handles auto-scaling, tick spacing calculations, and trail point rendering.
  */
 
-import { Vector2 } from "scenerystack/dot";
-import { Range } from "scenerystack/dot";
-import { Node, Circle } from "scenerystack/scenery";
 import type {
   ChartTransform,
-  LinePlot,
   GridLineSet,
-  TickMarkSet,
+  LinePlot,
   TickLabelSet,
+  TickMarkSet,
 } from "scenerystack/bamboo";
+import { Range, Vector2 } from "scenerystack/dot";
+import { Circle, type Node } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
 
@@ -69,7 +68,7 @@ export default class GraphDataManager {
    */
   public addDataPoint(xValue: number, yValue: number): void {
     // Skip invalid values
-    if (!isFinite(xValue) || !isFinite(yValue)) {
+    if (!Number.isFinite(xValue) || !Number.isFinite(yValue)) {
       return;
     }
 
@@ -103,7 +102,7 @@ export default class GraphDataManager {
 
     // Add all valid points
     for (const { x, y } of points) {
-      if (isFinite(x) && isFinite(y)) {
+      if (Number.isFinite(x) && Number.isFinite(y)) {
         this.dataPoints.push(new Vector2(x, y));
       }
     }
@@ -208,7 +207,7 @@ export default class GraphDataManager {
    */
   public static calculateTickSpacing(rangeLength: number): number {
     // Handle edge cases
-    if (!isFinite(rangeLength) || rangeLength <= 0) {
+    if (!Number.isFinite(rangeLength) || rangeLength <= 0) {
       return 1;
     }
 
@@ -222,7 +221,7 @@ export default class GraphDataManager {
     }
 
     // Round to a nice number (1, 2, 5, 10, 20, 50, etc.)
-    const magnitude = Math.pow(10, Math.floor(Math.log10(roughSpacing)));
+    const magnitude = 10 ** Math.floor(Math.log10(roughSpacing));
     const residual = roughSpacing / magnitude;
 
     let spacing: number;

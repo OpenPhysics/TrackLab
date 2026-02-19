@@ -209,11 +209,7 @@ const TrackLabColors = {
     new Color(221, 221, 221),
     new Color(100, 100, 100),
   ),
-  textOnDarkProperty: profileColor(
-    "textOnDark",
-    WHITE,
-    BLACK,
-  ),
+  textOnDarkProperty: profileColor("textOnDark", WHITE, BLACK),
 
   // Digitizing overlay (manual point placement)
   digitizingCursorStrokeProperty: profileColor(

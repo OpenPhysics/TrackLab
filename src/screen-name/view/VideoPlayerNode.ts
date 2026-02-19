@@ -1,14 +1,15 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { DOM, Node, VBox } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
-import { VIDEO_HEIGHT, VIDEO_WIDTH, type SimModel } from "../model/SimModel.js";
+import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
+
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
 import { VideoSourceControlNode } from "./VideoSourceControlNode.js";
-import { WebcamPanel } from "./WebcamPanel.js";
+import type { WebcamPanel } from "./WebcamPanel.js";
 
 export class VideoPlayerNode extends Node {
   public readonly videoElement: HTMLVideoElement;
