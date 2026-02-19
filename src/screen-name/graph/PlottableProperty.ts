@@ -4,7 +4,12 @@
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import type { SubStepDataPoint } from "../../model/BaseModel.js";
+
+/**
+ * A data point from sub-step simulation data.
+ * This is a flexible type that can hold any numeric data keyed by string names.
+ */
+export type SubStepDataPoint = Record<string, number>;
 
 export type PlottableProperty = {
   // The name to display in the selector (can be a string or a localized string property)

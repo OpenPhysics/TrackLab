@@ -27,14 +27,16 @@ import {
   Text,
 } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import type { SubStepDataPoint } from "../../model/BaseModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import TrackLabConstants from "../../TrackLabConstants.js";
+import { SUB_STEP_DECIMATION } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import GraphControlsPanel from "./GraphControlsPanel.js";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
-import type { PlottableProperty } from "./PlottableProperty.js";
+import type {
+  PlottableProperty,
+  SubStepDataPoint,
+} from "./PlottableProperty.js";
 
 // Grid line styling
 const GRID_LINE_WIDTH = 0.5;
@@ -637,7 +639,7 @@ export default class ConfigurableGraph extends Node {
 
     // Map sub-step data to x/y values with decimation
     const mappedPoints: Array<{ x: number; y: number }> = [];
-    const decimation = TrackLabConstants.SUB_STEP_DECIMATION;
+    const decimation = SUB_STEP_DECIMATION;
 
     for (const point of subStepData) {
       this.decimationCounter++;

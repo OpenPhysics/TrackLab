@@ -33,3 +33,8 @@ export const MIN_CALIB_DISTANCE = 1e-9; // minimum real-world calibration distan
 // ── Webcam panel ──────────────────────────────────────────────────────────────
 export const WEBCAM_PREVIEW_WIDTH = 480; // width of the preview and review video elements
 export const WEBCAM_PREVIEW_HEIGHT = 270; // height of the preview and review video elements
+
+// ── Graph decimation ─────────────────────────────────────────────────────────
+// Controls how many sub-step data points are skipped when plotting to reduce
+// rendering overhead while maintaining visual fidelity.
+export const SUB_STEP_DECIMATION = 1; // keep every Nth point (1 = no decimation)

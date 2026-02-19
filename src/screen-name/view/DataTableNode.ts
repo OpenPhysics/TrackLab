@@ -404,7 +404,6 @@ export class DataTableNode extends Panel {
     });
 
     this.tableWrapper = tableWrapper;
-    this.tableDOMNode = tableDOMNode;
 
     // ── Rebuild table function ───────────────────────────────────────────────
     const rebuildTable = () => {

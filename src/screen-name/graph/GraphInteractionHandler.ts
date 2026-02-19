@@ -124,7 +124,7 @@ export default class GraphInteractionHandler {
     this.chartRectangle.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent?.deltaY;
+        const delta = event.domEvent?.deltaY ?? 0;
 
         // Get mouse position relative to chart
         const pointerPoint = this.chartRectangle.globalToLocalPoint(
@@ -546,7 +546,7 @@ export default class GraphInteractionHandler {
     this.yAxisInteractionRegion.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent?.deltaY;
+        const delta = event.domEvent?.deltaY ?? 0;
 
         // Get mouse position on Y-axis
         const mouseY = event.pointer.point.y;
@@ -773,7 +773,7 @@ export default class GraphInteractionHandler {
     this.xAxisInteractionRegion.addInputListener({
       wheel: (event) => {
         event.handle();
-        const delta = event.domEvent?.deltaY;
+        const delta = event.domEvent?.deltaY ?? 0;
 
         // Get mouse position on X-axis
         const mouseX = event.pointer.point.x;
