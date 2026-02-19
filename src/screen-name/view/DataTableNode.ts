@@ -71,7 +71,7 @@ function generateCSV(tracks: readonly Track[], unit: string): string {
   // Header row
   const headers = ["Frame", "Time (s)"];
   for (const track of tracks) {
-    headers.push(`x_${track.symbol} (${unit})`, `y_${track.symbol} (${unit})`);
+    headers.push(`${track.symbol}_x (${unit})`, `${track.symbol}_y (${unit})`);
   }
 
   const lines = [headers.join(",")];
@@ -149,16 +149,12 @@ function buildHTMLTable(
 
   /**
    * Create a header cell with colored track symbol.
-   * Format: "x A (m)" where A is colored with the track color
+   * Format: "A x(m)" where A is colored with the track color
    */
-  const makeTrackHeader = (prefix: string, track: Track): HTMLElement => {
+  const makeTrackHeader = (varName: string, track: Track): HTMLElement => {
     const span = document.createElement("span");
 
-    // Prefix (x or y)
-    const prefixText = document.createTextNode(`${prefix} `);
-    span.appendChild(prefixText);
-
-    // Colored symbol
+    // Colored symbol first
     const symbolSpan = document.createElement("span");
     symbolSpan.textContent = track.symbol;
     symbolSpan.style.cssText = `
@@ -168,9 +164,9 @@ function buildHTMLTable(
     `;
     span.appendChild(symbolSpan);
 
-    // Unit
-    const unitText = document.createTextNode(` (${unit})`);
-    span.appendChild(unitText);
+    // Variable name and unit
+    const varText = document.createTextNode(` ${varName}(${unit})`);
+    span.appendChild(varText);
 
     return span;
   };
