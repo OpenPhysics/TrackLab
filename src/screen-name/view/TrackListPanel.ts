@@ -42,36 +42,36 @@ import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
 // ── Layout constants ────────────────────────────────────────────────────────
-const PANEL_WIDTH = 165; // inner content width
-const ROW_HEIGHT = 40; // height of each track box
-const BADGE_R = 13; // radius of colour badge circle
-const BADGE_CX = 22; // x-centre of badge inside the row
-const CHECKBOX_X = BADGE_CX + BADGE_R + 10; // left edge of checkbox
-const ROW_CORNER_RADIUS = 6; // corner radius of each track row background
+const PANEL_WIDTH = 110; // inner content width (reduced from 165)
+const ROW_HEIGHT = 30; // height of each track box (reduced from 40)
+const BADGE_R = 10; // radius of colour badge circle (reduced from 13)
+const BADGE_CX = 16; // x-centre of badge inside the row (reduced from 22)
+const CHECKBOX_X = BADGE_CX + BADGE_R + 6; // left edge of checkbox (reduced gap from 10)
+const ROW_CORNER_RADIUS = 4; // corner radius of each track row background (reduced from 6)
 const ROW_BG_ALPHA = 0.15; // track colour fill alpha for row background
 const ROW_STROKE_ALPHA = 0.7; // track colour stroke alpha for row border
 const ROW_STROKE_WIDTH = 1.5;
-const CHECKBOX_BOX_WIDTH = 14;
-const TRASH_BUTTON_X_MARGIN = 6;
-const TRASH_BUTTON_Y_MARGIN = 6;
-const TRASH_BUTTON_RIGHT_OFFSET = 3; // inset from PANEL_WIDTH right edge
-const TRACK_LIST_SPACING = 6; // gap between track rows
-const PANEL_CONTENT_SPACING = 8; // gap between header, add button, and track list
-const PANEL_X_MARGIN = 10;
-const PANEL_Y_MARGIN = 10;
-const ADD_BUTTON_X_MARGIN = 10;
-const ADD_BUTTON_Y_MARGIN = 6;
+const CHECKBOX_BOX_WIDTH = 12; // reduced from 14
+const TRASH_BUTTON_X_MARGIN = 4; // reduced from 6
+const TRASH_BUTTON_Y_MARGIN = 4; // reduced from 6
+const TRASH_BUTTON_RIGHT_OFFSET = 2; // inset from PANEL_WIDTH right edge (reduced from 3)
+const TRACK_LIST_SPACING = 4; // gap between track rows (reduced from 6)
+const PANEL_CONTENT_SPACING = 6; // gap between header, add button, and track list (reduced from 8)
+const PANEL_X_MARGIN = 8; // reduced from 10
+const PANEL_Y_MARGIN = 8; // reduced from 10
+const ADD_BUTTON_X_MARGIN = 8; // reduced from 10
+const ADD_BUTTON_Y_MARGIN = 4; // reduced from 6
 
-const HEADER_FONT = new PhetFont({ size: 13, weight: "bold" });
-const SYMBOL_FONT = new PhetFont({ size: 15, weight: "bold" });
-const LABEL_FONT = new PhetFont(12);
+const HEADER_FONT = new PhetFont({ size: 11, weight: "bold" }); // reduced from 13
+const SYMBOL_FONT = new PhetFont({ size: 12, weight: "bold" }); // reduced from 15
+const LABEL_FONT = new PhetFont(10); // reduced from 12
 
 // ── Trash-can icon ──────────────────────────────────────────────────────────
 
 function makeTrashIcon(): Node {
-  const lw = 1.5;
-  const bw = 10;
-  const bh = 11;
+  const lw = 1.2; // reduced from 1.5
+  const bw = 8; // reduced from 10
+  const bh = 9; // reduced from 11
 
   const body = new Rectangle(0, 0, bw, bh, 1, 1, {
     stroke: TrackLabColors.trashIconProperty,

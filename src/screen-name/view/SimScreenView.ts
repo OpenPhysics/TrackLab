@@ -38,14 +38,25 @@ export class SimScreenView extends ScreenView {
       (loaded, visible) => loaded && visible,
     );
 
-    // ── Video player ──────────────────────────────────────────────────────
+    // ── Control panel / tool checkboxes (upper left) ───────────────────────
+    const controlPanel = new ControlPanel(model, trackLabPreferences);
+    controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
+    controlPanel.top = this.layoutBounds.top + 10;
+    this.addChild(controlPanel);
+
+    // ── Track list panel (beneath control panel) ─────────────────────────
+    const trackListPanel = new TrackListPanel(model, model.videoLoadedProperty);
+    this.addChild(trackListPanel);
+    trackListPanel.left = controlPanel.left;
+    trackListPanel.top = controlPanel.bottom + DATA_TABLE_TOP_SPACING;
+
+    // ── Video player (shifted left) ──────────────────────────────────────
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
-    this.videoPlayerNode.center = this.layoutBounds.center.plusXY(
-      0,
-      VIDEO_PLAYER_Y_OFFSET,
-    );
+    this.videoPlayerNode.left = controlPanel.right + 20;
+    this.videoPlayerNode.centerY =
+      this.layoutBounds.centerY + VIDEO_PLAYER_Y_OFFSET;
     this.addChild(this.videoPlayerNode);
 
     // ── Coordinate system overlay (above video, below camera modal) ─────────
@@ -66,37 +77,17 @@ export class SimScreenView extends ScreenView {
     );
     this.addChild(calibrationToolNode);
 
-    // ── Control panel (left side) ─────────────────────────────────────────
-    const controlPanel = new ControlPanel(model, trackLabPreferences);
-    controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
-    controlPanel.centerY = this.layoutBounds.centerY;
-    this.addChild(controlPanel);
-
-    // ── Track list panel (right of the video) ────────────────────────────
-    const trackListPanel = new TrackListPanel(model, model.videoLoadedProperty);
-    this.addChild(trackListPanel);
-    trackListPanel.left = this.videoPlayerNode.right + TRACK_LIST_LEFT_SPACING;
-    trackListPanel.top = this.videoPlayerNode.top;
-
-    // ── Data table (beneath the track list panel, same column) ───────────
+    // ── Data table (top, a bit to the left) ──────────────────────────────
     const dataTableNode = new DataTableNode(
       model,
       model.videoLoadedProperty,
       model.calibUnitProperty,
     );
     this.addChild(dataTableNode);
-    dataTableNode.left = trackListPanel.left;
-    trackListPanel.boundsProperty.link(() => {
-      dataTableNode.top = trackListPanel.bottom + DATA_TABLE_TOP_SPACING;
-    });
+    dataTableNode.left = this.videoPlayerNode.right + 20;
+    dataTableNode.top = this.layoutBounds.top + 10;
 
-    // ── Kinematics graph (below the video, left side) ───────────────────
-    const kinematicsGraph = new KinematicsGraphNode(model, this);
-    this.addChild(kinematicsGraph);
-    kinematicsGraph.left = this.videoPlayerNode.left;
-    kinematicsGraph.top = this.videoPlayerNode.bottom + 10;
-
-    // ── Reset all ─────────────────────────────────────────────────────────
+    // ── Reset all (bottom right) ─────────────────────────────────────────
     const resetAllButton = new ResetAllButton({
       listener: () => {
         model.reset(); // resets all model state including tool positions
@@ -105,6 +96,12 @@ export class SimScreenView extends ScreenView {
       bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
+
+    // ── Kinematics graph (bottom right, above reset all) ─────────────────
+    const kinematicsGraph = new KinematicsGraphNode(model, this);
+    this.addChild(kinematicsGraph);
+    kinematicsGraph.right = this.layoutBounds.maxX + 45;
+    kinematicsGraph.bottom = resetAllButton.top - 150;
 
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
