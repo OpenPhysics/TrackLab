@@ -13,6 +13,18 @@ import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
 const SMALL_FONT = new PhetFont(12);
+const CONTROLS_SPACING = 16; // gap between info display, time control, and scrubber
+const SPEED_FAST = 2.0; // playback rate multiplier for TimeSpeed.FAST
+const SPEED_NORMAL = 1.0; // playback rate multiplier for TimeSpeed.NORMAL
+const SPEED_SLOW = 0.5; // playback rate multiplier for TimeSpeed.SLOW
+const SCRUBBER_TRACK_WIDTH = 480;
+const SCRUBBER_TRACK_HEIGHT = 4;
+const SCRUBBER_THUMB_WIDTH = 12;
+const SCRUBBER_THUMB_HEIGHT = 24;
+const FPS_CONTROL_SPACING = 4; // gap between "fps:" label and spinner
+const INFO_DISPLAY_SPACING = 2; // gap between time label, frame counter, and fps control
+const FPS_SPINNER_SCALE = 0.6;
+const FPS_SPINNER_MIN_WIDTH = 35;
 
 /**
  * Playback controls including time control, scrubber, and time/frame display.
@@ -26,17 +38,17 @@ export class PlaybackControlsNode extends HBox {
     onStepBackward: () => void,
     onStepForward: () => void,
   ) {
-    super({ spacing: 16, align: "center" });
+    super({ spacing: CONTROLS_SPACING, align: "center" });
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
     const speedMap = new Map([
-      [TimeSpeed.FAST, 2.0],
-      [TimeSpeed.NORMAL, 1.0],
-      [TimeSpeed.SLOW, 0.5],
+      [TimeSpeed.FAST, SPEED_FAST],
+      [TimeSpeed.NORMAL, SPEED_NORMAL],
+      [TimeSpeed.SLOW, SPEED_SLOW],
     ]);
     timeSpeedProperty.link((speed) => {
-      videoElement.playbackRate = speedMap.get(speed) ?? 1.0;
+      videoElement.playbackRate = speedMap.get(speed) ?? SPEED_NORMAL;
     });
 
     // ── TimeControlNode: play/pause + step back + step forward + speed ─────
@@ -66,8 +78,8 @@ export class PlaybackControlsNode extends HBox {
       model.currentTimeProperty as unknown as Property<number>,
       rangeProperty,
       {
-        trackSize: new Dimension2(480, 4),
-        thumbSize: new Dimension2(12, 24),
+        trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
+        thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
         startDrag: () => {
           this.isScrubbing = true;
         },
@@ -128,11 +140,11 @@ export class PlaybackControlsNode extends HBox {
         numberDisplayOptions: {
           decimalPlaces: 0,
           textOptions: { font: SMALL_FONT },
-          minBackgroundWidth: 35,
+          minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
         },
         arrowsPosition: "leftRight",
         arrowButtonOptions: {
-          scale: 0.6,
+          scale: FPS_SPINNER_SCALE,
           buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
         },
         tandem: Tandem.OPT_OUT,
@@ -141,13 +153,13 @@ export class PlaybackControlsNode extends HBox {
 
     const fpsControl = new HBox({
       children: [fpsLabel, fpsSpinner],
-      spacing: 4,
+      spacing: FPS_CONTROL_SPACING,
       align: "center",
     });
 
     const infoDisplay = new VBox({
       children: [totalTimeLabel, frameCountLabel, fpsControl],
-      spacing: 2,
+      spacing: INFO_DISPLAY_SPACING,
       align: "left",
     });
 

@@ -24,6 +24,18 @@ import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
 const ENDPOINT_RADIUS = 8;
+const LINE_WIDTH = 2;
+const LINE_DASH: number[] = [8, 4];
+const ENDPOINT_LINE_WIDTH = 1.5;
+const MAX_KEYPAD_DECIMALS = 4;
+const MIDPOINT_PANEL_SCALE = 0.5;
+const MIDPOINT_PANEL_CORNER_RADIUS = 6;
+const MIDPOINT_PANEL_X_MARGIN = 8;
+const MIDPOINT_PANEL_Y_MARGIN = 6;
+const MIDPOINT_PANEL_SPACING = 8;
+const MIDPOINT_Y_OFFSET = 12; // pixels above midpoint where the panel sits
+const ENDPOINT_DRAG_SPEED = 200; // pixels/s for normal keyboard drag
+const ENDPOINT_SHIFT_DRAG_SPEED = 40; // pixels/s for shift-key keyboard drag
 
 export class CalibrationToolNode extends Node {
   public constructor(
@@ -36,8 +48,8 @@ export class CalibrationToolNode extends Node {
     // ── Connecting line ────────────────────────────────────────────────────
     const calibrationLine = new Line(0, 0, 0, 0, {
       stroke: TrackLabColors.calibrationStrokeProperty,
-      lineWidth: 2,
-      lineDash: [8, 4],
+      lineWidth: LINE_WIDTH,
+      lineDash: LINE_DASH,
     });
     this.addChild(calibrationLine);
 
@@ -46,7 +58,7 @@ export class CalibrationToolNode extends Node {
       new Circle(ENDPOINT_RADIUS, {
         fill: TrackLabColors.calibrationFillProperty,
         stroke: TrackLabColors.textOnDarkProperty,
-        lineWidth: 1.5,
+        lineWidth: ENDPOINT_LINE_WIDTH,
         cursor: "crosshair",
         tagName: "div",
         focusable: true,
@@ -62,7 +74,7 @@ export class CalibrationToolNode extends Node {
       keypadLayout: Keypad.PositiveDecimalLayout,
       keypadOptions: {
         accumulatorOptions: {
-          maxDigitsRightOfMantissa: 4,
+          maxDigitsRightOfMantissa: MAX_KEYPAD_DECIMALS,
         },
       },
       tandem: Tandem.OPT_OUT,
@@ -117,18 +129,18 @@ export class CalibrationToolNode extends Node {
     const midpointPanel = new Panel(
       new HBox({
         children: [distanceButton, unitComboBox],
-        spacing: 8,
+        spacing: MIDPOINT_PANEL_SPACING,
         align: "center",
       }),
       {
         fill: TrackLabColors.panelFillProperty,
         stroke: TrackLabColors.panelStrokeLightProperty,
-        cornerRadius: 6,
-        xMargin: 8,
-        yMargin: 6,
+        cornerRadius: MIDPOINT_PANEL_CORNER_RADIUS,
+        xMargin: MIDPOINT_PANEL_X_MARGIN,
+        yMargin: MIDPOINT_PANEL_Y_MARGIN,
       },
     );
-    midpointPanel.setScaleMagnitude(0.5);
+    midpointPanel.setScaleMagnitude(MIDPOINT_PANEL_SCALE);
     this.addChild(midpointPanel);
 
     // ── Update geometry when endpoints move ───────────────────────────────
@@ -140,7 +152,7 @@ export class CalibrationToolNode extends Node {
       endpoint2.translation = p2;
       const mid = p1.blend(p2, 0.5);
       midpointPanel.centerX = mid.x;
-      midpointPanel.bottom = mid.y - 12;
+      midpointPanel.bottom = mid.y - MIDPOINT_Y_OFFSET;
     };
     model.calibPoint1Property.link(updateGeometry);
     model.calibPoint2Property.link(updateGeometry);
@@ -149,14 +161,20 @@ export class CalibrationToolNode extends Node {
     endpoint1.addInputListener(
       new RichDragListener({
         positionProperty: model.calibPoint1Property,
-        keyboardDragListenerOptions: { dragSpeed: 200, shiftDragSpeed: 40 },
+        keyboardDragListenerOptions: {
+          dragSpeed: ENDPOINT_DRAG_SPEED,
+          shiftDragSpeed: ENDPOINT_SHIFT_DRAG_SPEED,
+        },
         tandem: Tandem.OPT_OUT,
       }),
     );
     endpoint2.addInputListener(
       new RichDragListener({
         positionProperty: model.calibPoint2Property,
-        keyboardDragListenerOptions: { dragSpeed: 200, shiftDragSpeed: 40 },
+        keyboardDragListenerOptions: {
+          dragSpeed: ENDPOINT_DRAG_SPEED,
+          shiftDragSpeed: ENDPOINT_SHIFT_DRAG_SPEED,
+        },
         tandem: Tandem.OPT_OUT,
       }),
     );

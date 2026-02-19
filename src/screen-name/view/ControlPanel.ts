@@ -2,9 +2,21 @@ import { Circle, Line, Node, VBox } from "scenerystack/scenery";
 import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
 import TrackLabColors from "../../TrackLabColors.js";
+import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ICON_SIZE = 20; // bounding box each icon targets
+const ICON_ARROW_HEAD_SIZE = 5; // headWidth and headHeight for icon arrows
+const ICON_ARROW_TAIL_WIDTH = 1.5;
+const ICON_LINE_WIDTH_THICK = 1.5;
+const ICON_LINE_WIDTH_THIN = 1;
+const ICON_LINE_WIDTH_MAGNIFIER = 2; // handle line in magnifier icon
+const ICON_DOT_RADIUS = 3; // calibration endpoint dots
+const ICON_CENTER_DOT_RADIUS = 2; // centre dot in tracking icon
+const ICON_LINE_DASH: number[] = [3, 2];
+const PANEL_ROWS_SPACING = 12;
+const PANEL_X_MARGIN = 12;
+const PANEL_Y_MARGIN = 12;
 
 // ── Icons ─────────────────────────────────────────────────────────────────
 
@@ -18,17 +30,17 @@ function axesIcon(): Node {
     {
       fill: TrackLabColors.axisXColorProperty,
       stroke: null,
-      headWidth: 5,
-      headHeight: 5,
-      tailWidth: 1.5,
+      headWidth: ICON_ARROW_HEAD_SIZE,
+      headHeight: ICON_ARROW_HEAD_SIZE,
+      tailWidth: ICON_ARROW_TAIL_WIDTH,
     },
   );
   const yArrow = new ArrowNode(0, ICON_SIZE * 0.7, 0, ICON_SIZE * 0.05, {
     fill: TrackLabColors.axisYColorProperty,
     stroke: null,
-    headWidth: 5,
-    headHeight: 5,
-    tailWidth: 1.5,
+    headWidth: ICON_ARROW_HEAD_SIZE,
+    headHeight: ICON_ARROW_HEAD_SIZE,
+    tailWidth: ICON_ARROW_TAIL_WIDTH,
   });
   return new Node({ children: [xArrow, yArrow] });
 }
@@ -43,11 +55,11 @@ function calibrationIcon(): Node {
     children: [
       new Line(cx - half, cy, cx + half, cy, {
         stroke: calColor,
-        lineWidth: 1.5,
-        lineDash: [3, 2],
+        lineWidth: ICON_LINE_WIDTH_THICK,
+        lineDash: ICON_LINE_DASH,
       }),
-      new Circle(3, { fill: calColor, x: cx - half, y: cy }),
-      new Circle(3, { fill: calColor, x: cx + half, y: cy }),
+      new Circle(ICON_DOT_RADIUS, { fill: calColor, x: cx - half, y: cy }),
+      new Circle(ICON_DOT_RADIUS, { fill: calColor, x: cx + half, y: cy }),
     ],
   });
 }
@@ -60,10 +72,16 @@ function magnifyIcon(): Node {
   const gray = TrackLabColors.iconGrayProperty;
   return new Node({
     children: [
-      new Circle(r, { stroke: gray, lineWidth: 1.5, fill: null, x: cx, y: cy }),
+      new Circle(r, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THICK,
+        fill: null,
+        x: cx,
+        y: cy,
+      }),
       new Line(cx + r * 0.7, cy + r * 0.7, ICON_SIZE - 1, ICON_SIZE - 1, {
         stroke: gray,
-        lineWidth: 2,
+        lineWidth: ICON_LINE_WIDTH_MAGNIFIER,
       }),
     ],
   });
@@ -78,12 +96,30 @@ function trackingIcon(): Node {
   const gray = TrackLabColors.iconGrayProperty;
   return new Node({
     children: [
-      new Circle(r, { stroke: gray, lineWidth: 1.5, fill: null, x: cx, y: cy }),
-      new Circle(2, { fill: gray, x: cx, y: cy }),
-      new Line(cx, cy - r - gap, cx, cy - gap, { stroke: gray, lineWidth: 1 }),
-      new Line(cx, cy + gap, cx, cy + r + gap, { stroke: gray, lineWidth: 1 }),
-      new Line(cx - r - gap, cy, cx - gap, cy, { stroke: gray, lineWidth: 1 }),
-      new Line(cx + gap, cy, cx + r + gap, cy, { stroke: gray, lineWidth: 1 }),
+      new Circle(r, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THICK,
+        fill: null,
+        x: cx,
+        y: cy,
+      }),
+      new Circle(ICON_CENTER_DOT_RADIUS, { fill: gray, x: cx, y: cy }),
+      new Line(cx, cy - r - gap, cx, cy - gap, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THIN,
+      }),
+      new Line(cx, cy + gap, cx, cy + r + gap, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THIN,
+      }),
+      new Line(cx - r - gap, cy, cx - gap, cy, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THIN,
+      }),
+      new Line(cx + gap, cy, cx + r + gap, cy, {
+        stroke: gray,
+        lineWidth: ICON_LINE_WIDTH_THIN,
+      }),
     ],
   });
 }
@@ -111,16 +147,16 @@ export class ControlPanel extends Panel {
         makeRow(magnifyIcon(), model.magnifyVideoProperty),
         makeRow(trackingIcon(), model.autoTrackingProperty),
       ],
-      spacing: 12,
+      spacing: PANEL_ROWS_SPACING,
       align: "left",
     });
 
     super(rows, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
-      cornerRadius: 8,
-      xMargin: 12,
-      yMargin: 12,
+      cornerRadius: PANEL_CORNER_RADIUS,
+      xMargin: PANEL_X_MARGIN,
+      yMargin: PANEL_Y_MARGIN,
     });
   }
 }

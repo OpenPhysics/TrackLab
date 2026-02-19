@@ -16,6 +16,13 @@ import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const MAX_TRAIL = 150;
 const CROSSHAIR_SIZE = 16;
+const HINT_FONT_SIZE = 15;
+const SELECTION_LINE_WIDTH = 2;
+const SELECTION_LINE_DASH: number[] = [6, 3];
+const CROSSHAIR_LINE_WIDTH = 2;
+const CROSSHAIR_CIRCLE_RADIUS = 6; // small filled circle at crosshair centre
+const MIN_REGION_SIZE = 4; // minimum pixel width/height to begin tracking
+const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
 
 /**
  * Transparent SceneryStack overlay that sits directly on top of the video element.
@@ -72,7 +79,7 @@ export class AutoTrackerNode extends Node {
 
     // ── Hint text ────────────────────────────────────────────────────────
     this.hintText = new Text("Drag on video to select object to track", {
-      font: new PhetFont({ size: 15, weight: "bold" }),
+      font: new PhetFont({ size: HINT_FONT_SIZE, weight: "bold" }),
       fill: TrackLabColors.trackerHintFillProperty,
     });
     this.hintText.center = new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2);
@@ -81,8 +88,8 @@ export class AutoTrackerNode extends Node {
     // ── Selection rectangle ───────────────────────────────────────────────
     this.selectionRect = new Rectangle(0, 0, 0, 0, {
       stroke: TrackLabColors.trackerSelectionStrokeProperty,
-      lineWidth: 2,
-      lineDash: [6, 3],
+      lineWidth: SELECTION_LINE_WIDTH,
+      lineDash: SELECTION_LINE_DASH,
       fill: TrackLabColors.trackerSelectionFillProperty,
       visible: false,
     });
@@ -98,17 +105,17 @@ export class AutoTrackerNode extends Node {
     const crosshairStroke = TrackLabColors.trackerCrosshairStrokeProperty;
     this.crosshairH = new Line(-CROSSHAIR_SIZE, 0, CROSSHAIR_SIZE, 0, {
       stroke: crosshairStroke,
-      lineWidth: 2,
+      lineWidth: CROSSHAIR_LINE_WIDTH,
       visible: false,
     });
     this.crosshairV = new Line(0, -CROSSHAIR_SIZE, 0, CROSSHAIR_SIZE, {
       stroke: crosshairStroke,
-      lineWidth: 2,
+      lineWidth: CROSSHAIR_LINE_WIDTH,
       visible: false,
     });
-    this.crosshairCircle = new Path(Shape.circle(0, 0, 6), {
+    this.crosshairCircle = new Path(Shape.circle(0, 0, CROSSHAIR_CIRCLE_RADIUS), {
       stroke: crosshairStroke,
-      lineWidth: 2,
+      lineWidth: CROSSHAIR_LINE_WIDTH,
       visible: false,
     });
     this.addChild(this.trailPath);
@@ -158,7 +165,7 @@ export class AutoTrackerNode extends Node {
           h: Math.abs(p.y - this.selStart.y),
         };
 
-        if (region.w > 4 && region.h > 4) {
+        if (region.w > MIN_REGION_SIZE && region.h > MIN_REGION_SIZE) {
           // initFromVideo is async (loads WASM on first call); tracking begins
           // automatically once `ready` becomes true.
           this.model.tracker.initFromVideo(videoElement, region).catch((err) => {
@@ -231,7 +238,7 @@ export class AutoTrackerNode extends Node {
   private updateTrackerVisuals(pt: { x: number; y: number }): void {
     const shape = new Shape();
     for (const p of this.trail) {
-      shape.circle(p.x, p.y, 3);
+      shape.circle(p.x, p.y, TRAIL_DOT_RADIUS);
     }
     this.trailPath.shape = shape;
     this.trailPath.visible = true;

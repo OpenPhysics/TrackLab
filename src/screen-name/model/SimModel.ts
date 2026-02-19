@@ -7,6 +7,12 @@ import {
 } from "scenerystack/axon";
 import { Matrix3, Range, Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
+import {
+  MIN_CALIB_DISTANCE,
+  MIN_PIXEL_DISTANCE,
+  TRACK_SYMBOL_FIRST_CODE,
+  TRACK_SYMBOL_LAST_CODE,
+} from "../../TrackLabConstants.js";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
 import type { Track, TrackPoint } from "./Track.js";
 
@@ -66,7 +72,7 @@ function buildModelViewTransform(
   dist: number,
 ): Transform3 {
   const pixelDist = p1.distance(p2);
-  if (pixelDist < 1e-6 || dist < 1e-9) {
+  if (pixelDist < MIN_PIXEL_DISTANCE || dist < MIN_CALIB_DISTANCE) {
     return new Transform3(Matrix3.IDENTITY);
   }
   const s = pixelDist / dist; // pixels per model unit
@@ -150,15 +156,17 @@ export class SimModel {
   // after a track is removed.  Stable, unique symbols matter for data export
   // and user recognition: re-issuing "A" to a new track after the original "A"
   // is deleted would be confusing.  The practical limit is 26 tracks per session.
-  private nextSymbolCode = 65; // ASCII code for 'A'
+  private nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
 
   public addTrack(): void {
-    if (this.nextSymbolCode > 90) return; // 'Z' is the last allowed symbol
+    if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) return; // 'Z' is the last allowed symbol
     const symbol = String.fromCharCode(this.nextSymbolCode);
     const color =
-      TRACK_COLORS[(this.nextSymbolCode - 65) % TRACK_COLORS.length];
+      TRACK_COLORS[
+        (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length
+      ];
     this.nextSymbolCode++;
-    this.canAddTrackProperty.value = this.nextSymbolCode <= 90;
+    this.canAddTrackProperty.value = this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
 
     const track: Track = {
       id: `track-${symbol}`,
@@ -216,7 +224,7 @@ export class SimModel {
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
     this.canAddTrackProperty.value = true;
-    this.nextSymbolCode = 65;
+    this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
     this.tracker.dispose();
   }
 

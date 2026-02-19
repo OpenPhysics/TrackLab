@@ -1,6 +1,13 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
+import {
+  CONTROL_PANEL_LEFT_MARGIN,
+  DATA_TABLE_TOP_SPACING,
+  RESET_BUTTON_MARGIN,
+  TRACK_LIST_LEFT_SPACING,
+  VIDEO_PLAYER_Y_OFFSET,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
@@ -47,19 +54,22 @@ export class SimScreenView extends ScreenView {
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
-    this.videoPlayerNode.center = this.layoutBounds.center.plusXY(0, -20);
+    this.videoPlayerNode.center = this.layoutBounds.center.plusXY(
+      0,
+      VIDEO_PLAYER_Y_OFFSET,
+    );
     this.addChild(this.videoPlayerNode);
 
     // ── Control panel (left side) ─────────────────────────────────────────
     const controlPanel = new ControlPanel(model);
-    controlPanel.left = this.layoutBounds.left + 10;
+    controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
     controlPanel.centerY = this.layoutBounds.centerY;
     this.addChild(controlPanel);
 
     // ── Track list panel (right of the video) ────────────────────────────
     const trackListPanel = new TrackListPanel(model, model.videoLoadedProperty);
     this.addChild(trackListPanel);
-    trackListPanel.left = this.videoPlayerNode.right + 12;
+    trackListPanel.left = this.videoPlayerNode.right + TRACK_LIST_LEFT_SPACING;
     trackListPanel.top = this.videoPlayerNode.top;
 
     // ── Data table (beneath the track list panel, same column) ───────────
@@ -71,7 +81,7 @@ export class SimScreenView extends ScreenView {
     this.addChild(dataTableNode);
     dataTableNode.left = trackListPanel.left;
     trackListPanel.boundsProperty.link(() => {
-      dataTableNode.top = trackListPanel.bottom + 8;
+      dataTableNode.top = trackListPanel.bottom + DATA_TABLE_TOP_SPACING;
     });
 
     // ── Reset all ─────────────────────────────────────────────────────────
@@ -79,8 +89,8 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         model.reset(); // resets all model state including tool positions
       },
-      right: this.layoutBounds.maxX - 10,
-      bottom: this.layoutBounds.maxY - 10,
+      right: this.layoutBounds.maxX - RESET_BUTTON_MARGIN,
+      bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
   }

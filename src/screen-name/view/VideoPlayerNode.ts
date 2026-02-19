@@ -2,6 +2,8 @@ import { DerivedProperty } from "scenerystack/axon";
 import { DOM, Node, VBox } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH, type SimModel } from "../model/SimModel.js";
+
+const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
@@ -117,7 +119,7 @@ export class VideoPlayerNode extends Node {
     // ── Layout ─────────────────────────────────────────────────────────────
     const mainContent = new VBox({
       children: [videoSourceControlNode, videoLayer, playbackControlsNode],
-      spacing: 10,
+      spacing: MAIN_CONTENT_SPACING,
       align: "center",
     });
 
