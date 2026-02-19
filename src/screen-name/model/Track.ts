@@ -19,3 +19,32 @@ export type Track = {
   color: string; // CSS hex color
   points: readonly TrackPoint[];
 };
+
+/**
+ * Computed kinematic data for a single point.
+ * Velocity values are computed from position differences between adjacent points.
+ * Acceleration values are computed from velocity differences.
+ * Values are null when they cannot be computed (e.g., first point has no velocity).
+ */
+export type KinematicPoint = {
+  frame: number;
+  time: number;
+  x: number;
+  y: number;
+  vx: number | null; // x-velocity (model units per second)
+  vy: number | null; // y-velocity (model units per second)
+  speed: number | null; // magnitude of velocity vector
+  ax: number | null; // x-acceleration (model units per second²)
+  ay: number | null; // y-acceleration (model units per second²)
+  accelerationMagnitude: number | null; // magnitude of acceleration vector
+};
+
+/**
+ * Complete kinematic data for a track, including computed velocities and accelerations.
+ */
+export type TrackKinematics = {
+  id: string;
+  symbol: string;
+  color: string;
+  points: readonly KinematicPoint[];
+};
