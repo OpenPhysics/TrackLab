@@ -258,7 +258,7 @@ export class AutoTrackerNode extends Node {
   public override dispose(): void {
     this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
     this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
-    this.tracker.dispose();
+    this.model.tracker.dispose();
     super.dispose();
   }
 }
