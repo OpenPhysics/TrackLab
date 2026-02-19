@@ -19,6 +19,11 @@ export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
 export type CalibrationUnit = (typeof CALIBRATION_UNITS)[number];
 export const CALIBRATION_DISTANCE_RANGE = new Range(0.001, 100000);
 
+// ── Frame rate options ─────────────────────────────────────────────────────
+export const FRAME_RATE_OPTIONS = [15, 24, 25, 29.97, 30, 50, 60] as const;
+export const DEFAULT_FRAME_RATE = 30;
+export const FRAME_RATE_RANGE = new Range(1, 120);
+
 // ── Layout constants ───────────────────────────────────────────────────────
 // SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
 // The VideoPlayerNode is centered at layoutBounds.center + (0, -20).
@@ -77,6 +82,18 @@ export class SimModel {
   public readonly isPlayingProperty = new BooleanProperty(false);
   public readonly currentTimeProperty = new Property<number>(0);
   public readonly durationProperty = new Property<number>(0);
+
+  // ── Frame rate (user-settable, default 30 fps) ─────────────────────────
+  public readonly frameRateProperty = new NumberProperty(DEFAULT_FRAME_RATE, {
+    range: FRAME_RATE_RANGE,
+  });
+
+  // Derived frame duration for convenience
+  public readonly frameDurationProperty: TReadOnlyProperty<number> =
+    new DerivedProperty(
+      [this.frameRateProperty],
+      (fps) => 1 / fps,
+    );
 
   // ── OpenCV Tracker (computational service) ────────────────────────────
   public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
@@ -185,6 +202,7 @@ export class SimModel {
     this.isPlayingProperty.reset();
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
+    this.frameRateProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();
     this.magnifyVideoProperty.reset();

@@ -16,7 +16,6 @@ import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const MAX_TRAIL = 150;
 const CROSSHAIR_SIZE = 16;
-const FRAME_DURATION = 1 / 30; // assumes 30 fps
 
 /**
  * Transparent SceneryStack overlay that sits directly on top of the video element.
@@ -188,7 +187,8 @@ export class AutoTrackerNode extends Node {
       const activeId = model.activeTrackIdProperty.value;
       if (activeId) {
         const time = videoElement.currentTime;
-        const frame = Math.round(time / FRAME_DURATION);
+        const frameDuration = model.frameDurationProperty.value;
+        const frame = Math.round(time / frameDuration);
 
         // Avoid duplicate points for the same frame.
         const activeTrack = model.tracksProperty.value.find(

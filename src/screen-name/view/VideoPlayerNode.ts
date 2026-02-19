@@ -23,10 +23,18 @@ import {
   TimeControlNode,
   TimeSpeed,
 } from "scenerystack/scenery-phet";
-import { ComboBox, type ComboBoxItem, Slider } from "scenerystack/sun";
+import {
+  ButtonNode,
+  ComboBox,
+  type ComboBoxItem,
+  NumberSpinner,
+  Slider,
+} from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import {
+  DEFAULT_FRAME_RATE,
+  FRAME_RATE_RANGE,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
   type SimModel,
@@ -35,46 +43,19 @@ import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
 const LABEL_FONT = new PhetFont(14);
-const FRAME_DURATION = 1 / 30; // assumes 30 fps
+const SMALL_FONT = new PhetFont(12);
 
+// Bundled video files with known frame rates
 const VIDEO_FILES = [
-  { label: "Ball in Oil", filename: "ball_oil.mp4", tandemName: "ballOilItem" },
-  {
-    label: "Bouncing Cart",
-    filename: "bouncing_cart.mp4",
-    tandemName: "bouncingCartItem",
-  },
-  {
-    label: "Cart Pendulum",
-    filename: "cart_pendulum.mp4",
-    tandemName: "cartPendulumItem",
-  },
-  {
-    label: "Cups Clips",
-    filename: "CupsClips.mp4",
-    tandemName: "cupsClipsItem",
-  },
-  {
-    label: "Parachute Monkey",
-    filename: "parachute_monkey.mp4",
-    tandemName: "parachuteMonkeyItem",
-  },
-  { label: "Pendulum", filename: "Pendulum.mp4", tandemName: "pendulumItem" },
-  {
-    label: "Pendulum Drag",
-    filename: "pendulum_drag.mp4",
-    tandemName: "pendulumDragItem",
-  },
-  {
-    label: "Pucks Collide",
-    filename: "PucksCollide.mp4",
-    tandemName: "pucksCollideItem",
-  },
-  {
-    label: "Spring Wars",
-    filename: "spring_wars.mp4",
-    tandemName: "springWarsItem",
-  },
+  { label: "Ball in Oil", filename: "ball_oil.mp4", fps: 30, tandemName: "ballOilItem" },
+  { label: "Bouncing Cart", filename: "bouncing_cart.mp4", fps: 30, tandemName: "bouncingCartItem" },
+  { label: "Cart Pendulum", filename: "cart_pendulum.mp4", fps: 30, tandemName: "cartPendulumItem" },
+  { label: "Cups Clips", filename: "CupsClips.mp4", fps: 30, tandemName: "cupsClipsItem" },
+  { label: "Parachute Monkey", filename: "parachute_monkey.mp4", fps: 30, tandemName: "parachuteMonkeyItem" },
+  { label: "Pendulum", filename: "Pendulum.mp4", fps: 30, tandemName: "pendulumItem" },
+  { label: "Pendulum Drag", filename: "pendulum_drag.mp4", fps: 30, tandemName: "pendulumDragItem" },
+  { label: "Pucks Collide", filename: "PucksCollide.mp4", fps: 30, tandemName: "pucksCollideItem" },
+  { label: "Spring Wars", filename: "spring_wars.mp4", fps: 30, tandemName: "springWarsItem" },
 ] as const;
 
 export class VideoPlayerNode extends Node {
@@ -372,8 +353,9 @@ export class VideoPlayerNode extends Node {
     const marksLayer = new Node({ pickable: false });
 
     const rebuildMarks = () => {
+      const frameDuration = model.frameDurationProperty.value;
       const currentFrame = Math.round(
-        model.currentTimeProperty.value / FRAME_DURATION,
+        model.currentTimeProperty.value / frameDuration,
       );
       const mvt = model.modelViewTransformProperty.value;
       const circles: Circle[] = [];
@@ -395,6 +377,7 @@ export class VideoPlayerNode extends Node {
     model.currentTimeProperty.link(() => rebuildMarks());
     model.tracksProperty.link(() => rebuildMarks());
     model.modelViewTransformProperty.link(() => rebuildMarks());
+    model.frameRateProperty.link(() => rebuildMarks());
 
     model.activeTrackIdProperty.link((activeId) => {
       digitizingOverlay.visible = activeId !== null;
@@ -422,7 +405,8 @@ export class VideoPlayerNode extends Node {
           );
 
           const time = model.currentTimeProperty.value;
-          const frame = Math.round(time / FRAME_DURATION);
+          const frameDuration = model.frameDurationProperty.value;
+          const frame = Math.round(time / frameDuration);
 
           const mvt = model.modelViewTransformProperty.value;
           const modelPt = mvt.inversePosition2(localPt);
@@ -460,10 +444,11 @@ export class VideoPlayerNode extends Node {
       }
     });
 
-    // ── Step one frame (assumed 30 fps) ────────────────────────────────────
+    // ── Step one frame ───────────────────────────────────────────────────────
     const seekByFrames = (direction: number) => {
       model.isPlayingProperty.value = false;
-      const raw = this.videoElement.currentTime + direction * FRAME_DURATION;
+      const frameDuration = model.frameDurationProperty.value;
+      const raw = this.videoElement.currentTime + direction * frameDuration;
       const clamped = Math.max(0, Math.min(raw, this.videoElement.duration));
       this.videoElement.currentTime = clamped;
       model.currentTimeProperty.value = clamped;
@@ -529,11 +514,11 @@ export class VideoPlayerNode extends Node {
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [model.currentTimeProperty, model.durationProperty],
-      (time: number, duration: number) => {
+      [model.currentTimeProperty, model.durationProperty, model.frameDurationProperty],
+      (time: number, duration: number, frameDuration: number) => {
         if (duration <= 0) return "0/0";
-        const current = Math.round(time / FRAME_DURATION);
-        const total = Math.round(duration / FRAME_DURATION);
+        const current = Math.round(time / frameDuration);
+        const total = Math.round(duration / frameDuration);
         return `${current}/${total}`;
       },
     );
@@ -545,8 +530,39 @@ export class VideoPlayerNode extends Node {
       font: LABEL_FONT,
     });
 
+    // ── Frame rate control ─────────────────────────────────────────────────
+    const fpsLabel = new Text("fps:", {
+      font: SMALL_FONT,
+      fill: TrackLabColors.textMutedProperty,
+    });
+
+    const fpsSpinner = new NumberSpinner(
+      model.frameRateProperty,
+      new Property(FRAME_RATE_RANGE),
+      {
+        deltaValue: 1,
+        numberDisplayOptions: {
+          decimalPlaces: 0,
+          textOptions: { font: SMALL_FONT },
+          minBackgroundWidth: 35,
+        },
+        arrowsPosition: "leftRight",
+        arrowButtonOptions: {
+          scale: 0.6,
+          buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+        },
+        tandem: Tandem.OPT_OUT,
+      },
+    );
+
+    const fpsControl = new HBox({
+      children: [fpsLabel, fpsSpinner],
+      spacing: 4,
+      align: "center",
+    });
+
     const infoDisplay = new VBox({
-      children: [totalTimeLabel, frameCountLabel],
+      children: [totalTimeLabel, frameCountLabel, fpsControl],
       spacing: 2,
       align: "left",
     });
@@ -577,6 +593,11 @@ export class VideoPlayerNode extends Node {
       if (filename) {
         model.isPlayingProperty.value = false;
         autoTrackerNode.reset();
+        // Set the known frame rate for bundled videos
+        const videoInfo = VIDEO_FILES.find((v) => v.filename === filename);
+        if (videoInfo) {
+          model.frameRateProperty.value = videoInfo.fps;
+        }
         this.loadUrl(`./videos/${filename}`);
       }
     });
@@ -640,10 +661,11 @@ export class VideoPlayerNode extends Node {
     });
   }
 
-  /** Pause playback and advance by exactly one frame (1/30 s). */
+  /** Pause playback and advance by exactly one frame. */
   public stepForward(): void {
     this.model.isPlayingProperty.value = false;
-    const raw = this.videoElement.currentTime + 1 / 30;
+    const frameDuration = this.model.frameDurationProperty.value;
+    const raw = this.videoElement.currentTime + frameDuration;
     const clamped = Math.max(0, Math.min(raw, this.videoElement.duration));
     this.videoElement.currentTime = clamped;
     this.model.currentTimeProperty.value = clamped;
