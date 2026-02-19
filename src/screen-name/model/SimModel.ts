@@ -141,6 +141,10 @@ export class SimModel {
         buildModelViewTransform(origin, angle, p1, p2, dist),
     );
 
+  // When coord system or calibration changes, recompute track points so they
+  // stay at the same pixel positions on the video (invariant under MVT changes).
+  private prevModelViewTransform: Transform3 | null = null;
+
   // ── Video loaded (true once a finite-duration video is loaded) ───────────
   public readonly videoLoadedProperty: TReadOnlyProperty<boolean> =
     new DerivedProperty([this.durationProperty], (d) => d > 0);
@@ -154,6 +158,31 @@ export class SimModel {
   // and user recognition: re-issuing "A" to a new track after the original "A"
   // is deleted would be confusing.  The practical limit is 26 tracks per session.
   private nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
+
+  public constructor() {
+    this.modelViewTransformProperty.lazyLink((newMVT) => {
+      if (this.prevModelViewTransform === null) {
+        this.prevModelViewTransform = newMVT;
+        return;
+      }
+      const prevMVT = this.prevModelViewTransform;
+      const tracks = this.tracksProperty.value;
+      if (tracks.length === 0) {
+        this.prevModelViewTransform = newMVT;
+        return;
+      }
+      const updatedTracks = tracks.map((track) => {
+        const updatedPoints = track.points.map((pt) => {
+          const pixelPos = prevMVT.transformPosition2(new Vector2(pt.x, pt.y));
+          const newModelPt = newMVT.inversePosition2(pixelPos);
+          return { ...pt, x: newModelPt.x, y: newModelPt.y };
+        });
+        return { ...track, points: updatedPoints };
+      });
+      this.tracksProperty.value = updatedTracks;
+      this.prevModelViewTransform = newMVT;
+    });
+  }
 
   public addTrack(): void {
     if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) return; // 'Z' is the last allowed symbol
@@ -204,6 +233,7 @@ export class SimModel {
   }
 
   public reset(): void {
+    this.prevModelViewTransform = null;
     this.isPlayingProperty.reset();
     this.currentTimeProperty.reset();
     this.durationProperty.reset();

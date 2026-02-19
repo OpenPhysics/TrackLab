@@ -134,6 +134,9 @@ export class CalibrationToolNode extends Node {
       unitItems,
       listParent,
       {
+        buttonFill: TrackLabColors.comboBoxButtonFillProperty,
+        listFill: TrackLabColors.comboBoxListFillProperty,
+        highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
         tandem: Tandem.OPT_OUT,
       },
     );
