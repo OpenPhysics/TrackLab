@@ -15,7 +15,8 @@
     "serve": "serve -s dist",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
-    "icons": "tsx scripts/generate-icons.ts"
+    "generate-svg-icon": "tsx scripts/bouncingBallToSVG.ts",
+    "icons": "npm run generate-svg-icon && tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

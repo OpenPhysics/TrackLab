@@ -116,5 +116,9 @@ ${circles}
 
 const points = computeSnapshots();
 const svg = buildSVG(points);
-fs.writeFileSync("bouncing_ball.svg", svg, "utf8");
-console.log(`SVG written with ${points.length} snapshots.`);
+
+// Write to public/icons/icon.svg (source for PNG icon generation)
+const outputPath = "public/icons/icon.svg";
+fs.mkdirSync("public/icons", { recursive: true });
+fs.writeFileSync(outputPath, svg, "utf8");
+console.log(`✓ Generated ${outputPath} with ${points.length} bouncing ball snapshots`);
