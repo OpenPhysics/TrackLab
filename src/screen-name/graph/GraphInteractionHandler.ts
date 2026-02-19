@@ -47,6 +47,8 @@ export interface GraphUIState {
 export interface GraphUIElements {
   headerBar: Rectangle;
   graphNode: Node;
+  /** Optional node to move when dragging. If not provided, graphNode is moved. */
+  dragTargetNode?: Node;
   xTickLabelSet: TickLabelSet;
   yTickLabelSet: TickLabelSet;
   xAxisInteractionRegion: Rectangle;
@@ -70,6 +72,7 @@ export default class GraphInteractionHandler {
   // For header drag
   private readonly headerBar: Rectangle;
   private readonly graphNode: Node;
+  private readonly dragTargetNode: Node;
   private readonly isDraggingProperty: BooleanProperty;
 
   // For resize
@@ -95,6 +98,7 @@ export default class GraphInteractionHandler {
     this.dataManager = chartConfig.dataManager;
     this.headerBar = uiElements.headerBar;
     this.graphNode = uiElements.graphNode;
+    this.dragTargetNode = uiElements.dragTargetNode ?? uiElements.graphNode;
     this.isDraggingProperty = uiState.isDraggingProperty;
     this.isResizingProperty = uiState.isResizingProperty;
     this.xAxisInteractionRegion = uiElements.xAxisInteractionRegion;
@@ -816,18 +820,21 @@ export default class GraphInteractionHandler {
 
     const dragListener = new DragListener({
       start: (event) => {
-        // Record the starting position of the graph and pointer
-        dragStartPosition = new Vector2(this.graphNode.x, this.graphNode.y);
+        // Record the starting position of the drag target and pointer
+        dragStartPosition = new Vector2(
+          this.dragTargetNode.x,
+          this.dragTargetNode.y,
+        );
         dragStartPointerPoint = event.pointer.point.copy();
         this.isDraggingProperty.value = true;
       },
 
       drag: (event) => {
         if (dragStartPosition && dragStartPointerPoint) {
-          // Move the entire graph node
+          // Move the drag target node
           const delta = event.pointer.point.minus(dragStartPointerPoint);
-          this.graphNode.x = dragStartPosition.x + delta.x;
-          this.graphNode.y = dragStartPosition.y + delta.y;
+          this.dragTargetNode.x = dragStartPosition.x + delta.x;
+          this.dragTargetNode.y = dragStartPosition.y + delta.y;
         }
       },
 

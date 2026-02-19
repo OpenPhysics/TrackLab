@@ -118,6 +118,12 @@ export default class ConfigurableGraph extends Node {
   private readonly rescaleButton: Node;
   private readonly controlButtonsPanel: Node;
 
+  // Title panel with combo boxes (needs to be on top of header bar)
+  private readonly titlePanel: Node;
+
+  // Optional drag target (the node to move when dragging the header bar)
+  private readonly dragTargetNode: Node | undefined;
+
   // Sub-step decimation counter for high-resolution data
   private decimationCounter: number = 0;
 
@@ -129,6 +135,7 @@ export default class ConfigurableGraph extends Node {
    * @param height - Graph height in pixels
    * @param maxDataPoints - Maximum number of points to store
    * @param listParent - Parent node for combo box lists
+   * @param dragTargetNode - Optional node to move when dragging (defaults to this graph)
    */
   public constructor(
     availableProperties: PlottableProperty[],
@@ -138,6 +145,7 @@ export default class ConfigurableGraph extends Node {
     height: number,
     maxDataPoints: number = 2000,
     listParent: Node,
+    dragTargetNode?: Node,
   ) {
     super();
 
@@ -146,6 +154,7 @@ export default class ConfigurableGraph extends Node {
     this.graphHeight = height;
     this.initialWidth = width;
     this.initialHeight = height;
+    this.dragTargetNode = dragTargetNode;
 
     // Properties to track current axis selections
     this.xPropertyProperty = new Property(initialXProperty);
@@ -349,10 +358,11 @@ export default class ConfigurableGraph extends Node {
     );
 
     // Create title panel with combo boxes for axis selection
-    const titlePanel = controlsPanel.createTitlePanel(listParent);
-    titlePanel.centerX = this.graphWidth / 2;
-    titlePanel.bottom = TITLE_BOTTOM_OFFSET;
-    this.graphContentNode.addChild(titlePanel);
+    // Note: titlePanel is added to 'this' (not graphContentNode) after headerBar
+    // so combo boxes remain accessible while header bar can be dragged
+    this.titlePanel = controlsPanel.createTitlePanel(listParent);
+    this.titlePanel.centerX = this.graphWidth / 2;
+    this.titlePanel.bottom = TITLE_BOTTOM_OFFSET;
 
     // Create control buttons panel with rescale, zoom, and pan buttons
     const buttonSize = BUTTON_SIZE;
@@ -474,11 +484,14 @@ export default class ConfigurableGraph extends Node {
     // Create header bar (checkbox is now in ToolsControlPanel)
     this.headerBar = controlsPanel.createHeaderBar();
 
-    // Add header bar first (so it's behind the combo boxes in z-order)
+    // Add the graph content container first
+    this.addChild(this.graphContentNode);
+
+    // Add header bar after graphContentNode so it's on top and can receive drag events
     this.addChild(this.headerBar);
 
-    // Add the graph content container (so combo boxes appear in front of header bar)
-    this.addChild(this.graphContentNode);
+    // Add title panel after header bar so combo boxes remain accessible
+    this.addChild(this.titlePanel);
 
     // Initialize interaction handler
     this.interactionHandler = new GraphInteractionHandler(
@@ -494,6 +507,7 @@ export default class ConfigurableGraph extends Node {
       {
         headerBar: this.headerBar,
         graphNode: this,
+        ...(this.dragTargetNode && { dragTargetNode: this.dragTargetNode }),
         xTickLabelSet: this.xTickLabelSet,
         yTickLabelSet: this.yTickLabelSet,
         xAxisInteractionRegion: this.xAxisInteractionRegion,
@@ -515,10 +529,11 @@ export default class ConfigurableGraph extends Node {
       this.addChild(handle);
     }
 
-    // Link visibility property to the content node, header bar, and resize handles
+    // Link visibility property to the content node, header bar, title panel, and resize handles
     this.graphVisibleProperty.link((visible) => {
       this.graphContentNode.visible = visible;
       this.headerBar.visible = visible;
+      this.titlePanel.visible = visible;
       resizeHandles.forEach((handle) => {
         handle.visible = visible;
       });
@@ -603,12 +618,7 @@ export default class ConfigurableGraph extends Node {
     this.yAxisLabelNode.centerY = newHeight / 2;
 
     // Update title panel position
-    const titlePanel = this.graphContentNode.children.find(
-      (child) => child instanceof HBox,
-    );
-    if (titlePanel) {
-      titlePanel.centerX = newWidth / 2;
-    }
+    this.titlePanel.centerX = newWidth / 2;
 
     // Update interaction handler dimensions
     this.interactionHandler.updateDimensions(newWidth, newHeight);

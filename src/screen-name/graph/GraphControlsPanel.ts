@@ -163,6 +163,7 @@ export default class GraphControlsPanel {
         stroke: TrackLabColors.controlPanelStrokeProperty,
         lineWidth: HEADER_LINE_WIDTH,
         cursor: "grab",
+        pickable: true,
       },
     );
 

@@ -100,6 +100,7 @@ export class KinematicsGraphNode extends VBox {
     }
 
     // Create the configurable graph
+    // Pass 'this' (KinematicsGraphNode) as dragTargetNode so dragging moves the whole container
     this.graph = new ConfigurableGraph(
       plottableProperties,
       initialXProperty,
@@ -108,6 +109,7 @@ export class KinematicsGraphNode extends VBox {
       GRAPH_HEIGHT,
       MAX_DATA_POINTS,
       listParent,
+      this, // dragTargetNode - move this VBox when dragging
     );
 
     // Make the graph visible by default
