@@ -8,6 +8,7 @@ import {
   RichDragListener,
   Text,
 } from "scenerystack/scenery";
+import { Shape } from "scenerystack/kite";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
 import {
@@ -23,7 +24,8 @@ import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
-const ENDPOINT_RADIUS = 8;
+const ENDPOINT_RADIUS = 4;
+const ENDPOINT_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const LINE_WIDTH = 2;
 const LINE_DASH: number[] = [8, 4];
 const ENDPOINT_LINE_WIDTH = 1.5;
@@ -66,6 +68,15 @@ export class CalibrationToolNode extends Node {
       });
     const endpoint1 = makeEndpoint("Calibration Point 1");
     const endpoint2 = makeEndpoint("Calibration Point 2");
+    const endpointTouchArea = Shape.circle(
+      0,
+      0,
+      ENDPOINT_RADIUS + ENDPOINT_TOUCH_DILATION,
+    );
+    endpoint1.mouseArea = endpointTouchArea;
+    endpoint1.touchArea = endpointTouchArea;
+    endpoint2.mouseArea = endpointTouchArea;
+    endpoint2.touchArea = endpointTouchArea;
     this.addChild(endpoint1);
     this.addChild(endpoint2);
 

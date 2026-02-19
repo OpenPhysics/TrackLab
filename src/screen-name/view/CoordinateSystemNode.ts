@@ -1,5 +1,6 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
+import { Shape } from "scenerystack/kite";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -16,8 +17,10 @@ const ARROW_TAIL_WIDTH = 3;
 const LABEL_OFFSET_X = 6; // gap between arrow tip and axis label
 const LABEL_OFFSET_Y = 4; // gap between arrow tip and axis label
 const HANDLE_RADIUS = 8; // rotation handle disk radius
+const HANDLE_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const HANDLE_LINE_WIDTH = 1.5;
 const ORIGIN_RADIUS = 5; // origin marker circle radius
+const ORIGIN_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const ORIGIN_LINE_WIDTH = 1;
 const TRANSLATE_DRAG_SPEED = 300; // pixels/s for normal keyboard drag
 const TRANSLATE_SHIFT_DRAG_SPEED = 50; // pixels/s for shift-key keyboard drag
@@ -89,6 +92,13 @@ export class CoordinateSystemNode extends Node {
       focusable: true,
       accessibleName: "Rotation Handle",
     });
+    const handleTouchArea = Shape.circle(
+      0,
+      0,
+      HANDLE_RADIUS + HANDLE_TOUCH_DILATION,
+    );
+    handleDisk.mouseArea = handleTouchArea;
+    handleDisk.touchArea = handleTouchArea;
     rotatingNode.addChild(handleDisk);
 
     // ── Origin marker ─────────────────────────────────────────────────────
@@ -105,6 +115,15 @@ export class CoordinateSystemNode extends Node {
       tagName: "div",
       focusable: true,
       accessibleName: "Coordinate System",
+    });
+    // Expand touch/mouse area for easier pickup (origin + axes region)
+    positionNode.boundsProperty.lazyLink(() => {
+      const dilated = positionNode.localBounds.dilatedXY(
+        ORIGIN_TOUCH_DILATION,
+        ORIGIN_TOUCH_DILATION,
+      );
+      positionNode.mouseArea = dilated;
+      positionNode.touchArea = dilated;
     });
     this.addChild(positionNode);
 
