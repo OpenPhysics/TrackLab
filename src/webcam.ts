@@ -3,6 +3,46 @@
  * Handles MediaStream, MediaRecorder, and device enumeration.
  */
 
+/** Frame rate constraints for getUserMedia. */
+export interface FrameRateConstraints {
+  ideal?: number;
+  min?: number;
+  max?: number;
+}
+
+/** Hardware capabilities for frame rate (min/max supported). */
+export interface FrameRateCapabilities {
+  min: number;
+  max: number;
+}
+
+/**
+ * Get the configured frame rate from a MediaStream's video track.
+ * Returns null if no video track or frameRate is not available.
+ */
+export function getFrameRateFromStream(stream: MediaStream): number | null {
+  const track = stream.getVideoTracks()[0];
+  if (!track) return null;
+  const settings = track.getSettings();
+  const rate = settings.frameRate;
+  return typeof rate === "number" && Number.isFinite(rate) ? rate : null;
+}
+
+/**
+ * Get frame rate capabilities from a MediaStream's video track.
+ * Returns null if no video track or capabilities are not available.
+ */
+export function getFrameRateCapabilitiesFromStream(
+  stream: MediaStream,
+): FrameRateCapabilities | null {
+  const track = stream.getVideoTracks()[0];
+  if (!track) return null;
+  const caps = track.getCapabilities();
+  const fr = caps.frameRate;
+  if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") return null;
+  return { min: fr.min, max: fr.max };
+}
+
 /**
  * Get a supported MIME type for MediaRecorder.
  * Prioritizes WebM formats for best browser support, falls back to MP4.
@@ -111,16 +151,25 @@ export class WebcamRecorder {
    * Start the camera preview on the specified video element.
    * @param previewEl - The video element to display the preview
    * @param deviceId - Optional device ID to use a specific camera
+   * @param frameRate - Optional frame rate constraints (e.g. { ideal: 60, max: 60 })
    */
   async startPreview(
     previewEl: HTMLVideoElement,
     deviceId?: string,
+    frameRate?: FrameRateConstraints,
   ): Promise<void> {
     // Stop any existing stream first
     this.stopPreview();
 
+    const videoConstraints: MediaTrackConstraints = deviceId
+      ? { deviceId: { exact: deviceId } }
+      : {};
+    if (frameRate) {
+      videoConstraints.frameRate = frameRate;
+    }
+
     const constraints: MediaStreamConstraints = {
-      video: deviceId ? { deviceId: { exact: deviceId } } : true,
+      video: Object.keys(videoConstraints).length > 0 ? videoConstraints : true,
       audio: false,
     };
 
@@ -215,6 +264,32 @@ export class WebcamRecorder {
   }
 
   /**
+   * Get the actual/configured frame rate from the active video track.
+   * Uses track.getSettings() which returns the negotiated hardware settings.
+   * Returns null if no stream or no video track.
+   */
+  getFrameRate(): number | null {
+    const track = this.stream?.getVideoTracks()[0];
+    if (!track) return null;
+    const settings = track.getSettings();
+    const rate = settings.frameRate;
+    return typeof rate === "number" && Number.isFinite(rate) ? rate : null;
+  }
+
+  /**
+   * Get the frame rate capabilities supported by the hardware.
+   * Returns { min, max } or null if no stream or no video track.
+   */
+  getFrameRateCapabilities(): FrameRateCapabilities | null {
+    const track = this.stream?.getVideoTracks()[0];
+    if (!track) return null;
+    const caps = track.getCapabilities();
+    const fr = caps.frameRate;
+    if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") return null;
+    return { min: fr.min, max: fr.max };
+  }
+
+  /**
    * Get the current device ID being used.
    */
   getCurrentDeviceId(): string | null {
@@ -232,4 +307,41 @@ export class WebcamRecorder {
     this.mediaRecorder = null;
     this.recordedChunks = [];
   }
+}
+
+/**
+ * Measure the empirical frame rate by counting frames rendered to a video element.
+ * Uses requestAnimationFrame to count frames over the given duration.
+ * Note: This measures what's actually rendered, which can be limited by display refresh rate (e.g. 60 Hz).
+ *
+ * @param video - The video element playing the stream
+ * @param durationMs - Duration to measure in ms (default 1000)
+ * @returns Promise resolving to the measured FPS
+ */
+export function measureEmpiricalFrameRate(
+  video: HTMLVideoElement,
+  durationMs: number = 1000,
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    if (video.readyState < 2) {
+      reject(new Error("Video must be playing and have enough data"));
+      return;
+    }
+
+    let frameCount = 0;
+    const startTime = performance.now();
+
+    function countFrames(): void {
+      frameCount++;
+      const elapsed = performance.now() - startTime;
+      if (elapsed >= durationMs) {
+        const fps = (frameCount / elapsed) * 1000;
+        resolve(fps);
+        return;
+      }
+      requestAnimationFrame(countFrames);
+    }
+
+    requestAnimationFrame(countFrames);
+  });
 }
