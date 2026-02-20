@@ -1,103 +1,151 @@
-1. View Writing to Model (Separation of Concern Violation)
-File: SimScreenView.ts:91–104
+# TrackLab — Architectural Recommendations
 
-The view's Multilink reads positions from two view nodes (CoordinateSystemNode, CalibrationToolNode) and writes the result into model.modelViewTransformProperty. This inverts the data flow: the view is mutating the model.
+**Date:** 2026-02-20
 
-There are two clean fixes:
+The following issues were identified during architectural review. They are ordered by severity.
 
-Option A — keep transform in the model: Move the origin/angle/points/distance into the model as properties, have the tool nodes read from and write to those model properties, and compute the transform as a DerivedProperty inside SimModel. The view never touches modelViewTransformProperty directly.
+---
 
-Option B — keep transform in the view: Remove modelViewTransformProperty from SimModel entirely. Compute it locally in SimScreenView and pass it to any child node that needs it via constructor argument. VideoPlayerNode already receives model and uses model.modelViewTransformProperty — it would instead receive a TReadOnlyProperty<Transform3>.
+## 1. View Writing to Model (Separation of Concern Violation)
+
+**File:** `SimScreenView.ts:91–104` | **Severity:** High
+
+The view's `Multilink` reads positions from two view nodes (`CoordinateSystemNode`, `CalibrationToolNode`) and writes the result into `model.modelViewTransformProperty`. This inverts the data flow: the view is mutating the model.
+
+**Option A — keep transform in the model:** Move the origin/angle/points/distance into the model as properties, have the tool nodes read from and write to those model properties, and compute the transform as a `DerivedProperty` inside `SimModel`. The view never touches `modelViewTransformProperty` directly.
+
+**Option B — keep transform in the view:** Remove `modelViewTransformProperty` from `SimModel` entirely. Compute it locally in `SimScreenView` and pass it to any child node that needs it via constructor argument. `VideoPlayerNode` already receives `model` and uses `model.modelViewTransformProperty` — it would instead receive a `TReadOnlyProperty<Transform3>`.
 
 Option A is more consistent with the Axon pattern; Option B keeps the model cleaner. Either is better than the current arrangement.
 
-2. Critical State in View Closure — markData[]
-File: VideoPlayerNode.ts:202–210
+---
 
+## 2. Critical State in View Closure — `markData[]`
+
+**File:** `VideoPlayerNode.ts:202–210` | **Severity:** High
+
+```typescript
 type MarkData = { frame: number; localX: number; localY: number; color: string };
 const markData: MarkData[] = [];   // plain array in closure
+```
 
 This array is the visual ground-truth for digitized positions but lives only in the view closure. Consequences:
 
-Deleting a track does not remove its dots. model.removeTrack() clears the model's TrackPoint[] but markData is never filtered. Dots persist after deletion.
-model.reset() does not clear dots. SimScreenView.reset() calls model.reset() and resets tools, but markData survives.
-No other view can read them. A DataTableNode or export function can only read model.tracksProperty, not markData.
-Fix: Derive the marks from model.tracksProperty. TrackPoint already stores frame, and the view already has the model-view transform to convert model coords back to pixel coords. The view should recompute pixel dots from the model rather than maintaining a parallel array.
+- **Deleting a track does not remove its dots.** `model.removeTrack()` clears the model's `TrackPoint[]` but `markData` is never filtered. Dots persist after deletion.
+- **`model.reset()` does not clear dots.** `SimScreenView.reset()` calls `model.reset()` and resets tools, but `markData` survives.
+- **No other view can read them.** A `DataTableNode` or export function can only read `model.tracksProperty`, not `markData`.
 
-3. VideoPlayerNode is Doing Too Much
+**Fix:** Derive the marks from `model.tracksProperty`. `TrackPoint` already stores `frame`, and the view already has the model-view transform to convert model coords back to pixel coords. The view should recompute pixel dots from the model rather than maintaining a parallel array.
+
+---
+
+## 3. `VideoPlayerNode` is Doing Too Much
+
+**File:** `VideoPlayerNode.ts` | **Severity:** Medium
+
 At 464 lines it contains at least five distinct responsibilities:
 
-Responsibility	Lines (approx)
-HTML video element + event wiring	40–70
-Manual digitizing overlay (cursor, magnifier, click-to-mark)	85–245
-Playback rate, play/pause, frame stepping	252–297
-Scrubber + time/frame display	300–355
-Video source selector + webcam panel	357–440
-Suggested decomposition:
+| Responsibility | Lines (approx) |
+|----------------|----------------|
+| HTML video element + event wiring | 40–70 |
+| Manual digitizing overlay (cursor, magnifier, click-to-mark) | 85–245 |
+| Playback rate, play/pause, frame stepping | 252–297 |
+| Scrubber + time/frame display | 300–355 |
+| Video source selector + webcam panel | 357–440 |
 
-DigitizingOverlayNode — cursor, magnifier, click handler (depends on activeTrackIdProperty, modelViewTransformProperty, model mutation)
-VideoSourceControlNode — combo box + webcam button + loadUrl logic
-PlaybackControlsNode — TimeControlNode + scrubber + info labels
-VideoPlayerNode — composes the video element + the three above
-4. Hardcoded 30 fps
-File: VideoPlayerNode.ts:15
+**Suggested decomposition:**
 
+- `DigitizingOverlayNode` — cursor, magnifier, click handler (depends on `activeTrackIdProperty`, `modelViewTransformProperty`, model mutation)
+- `VideoSourceControlNode` — combo box + webcam button + `loadUrl` logic
+- `PlaybackControlsNode` — `TimeControlNode` + scrubber + info labels
+- `VideoPlayerNode` — composes the video element + the three above
+
+---
+
+## 4. Hardcoded 30 fps
+
+**File:** `VideoPlayerNode.ts:15` | **Severity:** Medium
+
+```typescript
 const FRAME_DURATION = 1 / 30; // assumes 30 fps
+```
 
 This constant drives frame counting, frame stepping, and mark filtering. All of the bundled sample videos may be 30 fps, but user-uploaded or webcam recordings may not be. The HTML video element exposes no standard API for frame rate, but a reasonable mitigation is:
 
-Expose a user-settable frameRateProperty on the model (default 30).
-Add a "Frame Rate" control in ControlPanel or VideoPlayerNode.
-Document clearly that the value is assumed, not detected.
-5. videoLoadedProperty Computed Twice
-File: SimScreenView.ts:58 and VideoPlayerNode.ts:69–70
+1. Expose a user-settable `frameRateProperty` on the model (default 30).
+2. Add a "Frame Rate" control in `ControlPanel` or `VideoPlayerNode`.
+3. Document clearly that the value is assumed, not detected.
 
-Both files independently derive a videoLoadedProperty from model.durationProperty. This is harmless but redundant. Moving it to the model as a DerivedProperty (or a simple BooleanProperty maintained by VideoPlayerNode) would give a single source of truth that TrackListPanel and SimScreenView could both consume.
+---
 
-6. Auto-tracker Data Never Enters the Model
-File: AutoTrackerNode.ts:166–174
+## 5. `videoLoadedProperty` Computed Twice
 
-The OpenCV tracking loop updates this.trail[] and the crosshair visuals, but never calls model.addPointToTrack(). Auto-tracked positions are purely visual and ephemeral — they cannot be exported, analyzed, or compared with manual tracks. For a tool called "auto-tracking," this is a major gap. The tracked positions should be written to the model in the same way manual digitizing does (with frame, time, x, y in model coordinates).
+**File:** `SimScreenView.ts:58` and `VideoPlayerNode.ts:69–70` | **Severity:** Low
 
-This also requires converting video-pixel coordinates to model coordinates using the transform, which means AutoTrackerNode needs access to modelViewTransformProperty.
+Both files independently derive a `videoLoadedProperty` from `model.durationProperty`. This is harmless but redundant. Moving it to the model as a `DerivedProperty` (or a simple `BooleanProperty` maintained by `VideoPlayerNode`) would give a single source of truth that `TrackListPanel` and `SimScreenView` could both consume.
 
-7. TrackListPanel Rebuilds All Rows on Every Change
-File: TrackListPanel.ts:198–200
+---
 
+## 6. Auto-tracker Data Never Enters the Model
+
+**File:** `AutoTrackerNode.ts:166–174` | **Severity:** High
+
+The OpenCV tracking loop updates `this.trail[]` and the crosshair visuals, but never calls `model.addPointToTrack()`. Auto-tracked positions are purely visual and ephemeral — they cannot be exported, analyzed, or compared with manual tracks. For a tool called "auto-tracking," this is a major gap. The tracked positions should be written to the model in the same way manual digitizing does (with `frame`, `time`, `x`, `y` in model coordinates).
+
+This also requires converting video-pixel coordinates to model coordinates using the transform, which means `AutoTrackerNode` needs access to `modelViewTransformProperty`.
+
+---
+
+## 7. `TrackListPanel` Rebuilds All Rows on Every Change
+
+**File:** `TrackListPanel.ts:198–200` | **Severity:** Low
+
+```typescript
 model.tracksProperty.link( tracks => {
   trackListVBox.children = tracks.map( track => new TrackRowNode( track, model ) );
+```
 
-Every mutation to tracksProperty (add, remove, point added to a track) destroys and recreates all TrackRowNode instances. Each row registers observers on model.activeTrackIdProperty. At 26 tracks this means 26 listeners added and removed repeatedly.
+Every mutation to `tracksProperty` (add, remove, point added to a track) destroys and recreates all `TrackRowNode` instances. Each row registers observers on `model.activeTrackIdProperty`. At 26 tracks this means 26 listeners added and removed repeatedly.
 
-Fix: model.addPointToTrack() replaces the entire tracks array, which triggers this rebuild even though no rows changed. Either:
+**Fix:** `model.addPointToTrack()` replaces the entire tracks array, which triggers this rebuild even though no rows changed. Either:
 
-Store points separately (e.g., Property<TrackPoint[]> per track), so adding a point doesn't trigger a tracks-level notification, or
-Use a key-based diffing approach (only create rows for new track ids).
-8. TRACK_COLORS in the Model
-File: SimModel.ts:6–15
+- Store points separately (e.g., `Property<TrackPoint[]>` per track), so adding a point doesn't trigger a tracks-level notification, or
+- Use a key-based diffing approach (only create rows for new track ids).
 
-The palette is an array of CSS hex strings — purely a presentational concern. The model shouldn't own view aesthetics. Move it to TrackLabColors.ts or to a shared constants file imported by both the model and any view that needs it.
+---
 
-9. Minor Issues
-Webcam panel positioning (VideoPlayerNode.ts:436–439): WebcamPanel is a child of VideoPlayerNode but is centered over mainContent using a boundsProperty listener. As a modal dialog it logically belongs at the screen-view level (added to SimScreenView, centered over the full view), not buried inside VideoPlayerNode.
+## 8. `TRACK_COLORS` in the Model
 
-canAddTrack() is imperative, not reactive (SimModel.ts:81–83): called from two places in TrackListPanel. It should be a DerivedProperty<boolean> that views can observe, so the enabled state of the "Add Track" button stays in sync automatically.
+**File:** `SimModel.ts:6–15` | **Severity:** Low
 
-No disposal pattern: View nodes register Property observers (via link/lazyLink) but don't implement dispose(). In a single-screen app this is acceptable, but if screens are ever added or components become reusable, leaked observers will cause bugs.
+The palette is an array of CSS hex strings — purely a presentational concern. The model shouldn't own view aesthetics. Move it to `TrackLabColors.ts` or to a shared constants file imported by both the model and any view that needs it.
 
-Coordinate space bug risk (VideoPlayerNode.ts:235–237): The digitizing click handler calls mvt.inversePosition2(globalPt) using the global (screen) point, then separately stores localPt in markData. If the video node is ever not at the screen origin, the model point and the visual dot will be in different positions. The inverse transform should be applied to the local video-pixel point, not the global point.
+---
 
-Summary Table
-Issue	Severity	Files
-Missing DataTableNode file	Critical	SimScreenView.ts
-markData[] not cleared on reset/delete	High	VideoPlayerNode.ts
-View writing to model (transform)	High	SimScreenView.ts, SimModel.ts
-Auto-tracked data never enters model	High	AutoTrackerNode.ts
-VideoPlayerNode god-object	Medium	VideoPlayerNode.ts
-Hardcoded 30 fps	Medium	VideoPlayerNode.ts
-videoLoadedProperty duplicated	Low	SimScreenView.ts, VideoPlayerNode.ts
-Track rows rebuilt on every point add	Low	TrackListPanel.ts
-TRACK_COLORS in model	Low	SimModel.ts
-canAddTrack() not reactive	Low	SimModel.ts, TrackListPanel.ts
-Webcam panel at wrong layer	Low	VideoPlayerNode.ts
-Global vs local point for inverse transform	Low	VideoPlayerNode.ts:236
+## 9. Minor Issues
+
+- **Webcam panel positioning** (`VideoPlayerNode.ts:436–439`): `WebcamPanel` is a child of `VideoPlayerNode` but is centered over `mainContent` using a `boundsProperty` listener. As a modal dialog it logically belongs at the screen-view level (added to `SimScreenView`, centered over the full view), not buried inside `VideoPlayerNode`.
+
+- **`canAddTrack()` is imperative, not reactive** (`SimModel.ts:81–83`): called from two places in `TrackListPanel`. It should be a `DerivedProperty<boolean>` that views can observe, so the enabled state of the "Add Track" button stays in sync automatically.
+
+- **No disposal pattern**: View nodes register `Property` observers (via `link`/`lazyLink`) but don't implement `dispose()`. In a single-screen app this is acceptable, but if screens are ever added or components become reusable, leaked observers will cause bugs.
+
+- **Coordinate space bug risk** (`VideoPlayerNode.ts:235–237`): The digitizing click handler calls `mvt.inversePosition2(globalPt)` using the global (screen) point, then separately stores `localPt` in `markData`. If the video node is ever not at the screen origin, the model point and the visual dot will be in different positions. The inverse transform should be applied to the local video-pixel point, not the global point.
+
+---
+
+## Summary Table
+
+| Issue | Severity | Files |
+|-------|----------|-------|
+| `markData[]` not cleared on reset/delete | High | `VideoPlayerNode.ts` |
+| View writing to model (transform) | High | `SimScreenView.ts`, `SimModel.ts` |
+| Auto-tracked data never enters model | High | `AutoTrackerNode.ts` |
+| `VideoPlayerNode` god-object | Medium | `VideoPlayerNode.ts` |
+| Hardcoded 30 fps | Medium | `VideoPlayerNode.ts` |
+| `videoLoadedProperty` duplicated | Low | `SimScreenView.ts`, `VideoPlayerNode.ts` |
+| Track rows rebuilt on every point add | Low | `TrackListPanel.ts` |
+| `TRACK_COLORS` in model | Low | `SimModel.ts` |
+| `canAddTrack()` not reactive | Low | `SimModel.ts`, `TrackListPanel.ts` |
+| Webcam panel at wrong layer | Low | `VideoPlayerNode.ts` |
+| Global vs local point for inverse transform | Low | `VideoPlayerNode.ts:236` |
