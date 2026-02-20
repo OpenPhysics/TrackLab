@@ -532,9 +532,9 @@ export class DataTableNode extends Panel {
       }
 
       for (const row of dataRows) {
-        if (this.frameRowMap.has(row.frame)) {
+        const tr = this.frameRowMap.get(row.frame);
+        if (tr !== undefined) {
           // Update cells in an existing row (a second track filled in this frame).
-          const tr = this.frameRowMap.get(row.frame)!;
           const cells = tr.querySelectorAll("td");
           let cellIdx = 2; // skip Frame and Time columns
           for (const track of tracks) {

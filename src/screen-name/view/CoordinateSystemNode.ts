@@ -154,7 +154,7 @@ export class CoordinateSystemNode extends Node {
       const clampedY = Math.max(VIDEO_BOUNDS.minY, Math.min(VIDEO_BOUNDS.maxY, pos.y));
       if (clampedX !== pos.x || clampedY !== pos.y) {
         isClamping = true;
-        model.coordOriginProperty.value = model.coordOriginProperty.value.withXY(clampedX, clampedY);
+        model.coordOriginProperty.value = model.coordOriginProperty.value.copy().setXY(clampedX, clampedY);
         isClamping = false;
       }
     });

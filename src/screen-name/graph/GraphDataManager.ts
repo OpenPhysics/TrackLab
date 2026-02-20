@@ -268,8 +268,7 @@ export default class GraphDataManager {
     }
 
     // Update each pool circle (visible ones first, then hide extras).
-    for (let i = 0; i < this.trailCirclePool.length; i++) {
-      const circle = this.trailCirclePool[i]!;
+    for (const [i, circle] of this.trailCirclePool.entries()) {
       if (i < numTrailPoints) {
         const point = this.dataPoints[startIndex + i];
         if (!point) { circle.visible = false; continue; }

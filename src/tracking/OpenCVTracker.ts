@@ -83,10 +83,10 @@ export class OpenCVTracker {
     try {
       return this.ctx.getImageData(0, 0, this.offscreen.width, this.offscreen.height);
     } catch (e) {
-      throw new Error(
+      const err = new Error(
         "Cannot read video pixels: the video source may be cross-origin without CORS headers.",
-        { cause: e },
       );
+      throw Object.assign(err, { cause: e });
     }
   }
 
