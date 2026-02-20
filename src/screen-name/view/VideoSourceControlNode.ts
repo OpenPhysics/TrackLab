@@ -135,13 +135,18 @@ export class VideoSourceControlNode extends HBox {
       if (filename) {
         const videoInfo = VIDEO_FILES.find((v) => v.filename === filename);
         const fps = videoInfo?.fps ?? DEFAULT_FRAME_RATE;
+        // Mark as pre-recorded video (not webcam)
+        model.isWebcamVideoProperty.value = false;
         onVideoSelected(`./videos/${filename}`, fps);
       }
     });
 
     this.webcamPanel = new WebcamPanel({
+      model: model,
       onVideoReady: (blob, duration) => {
         this.webcamPanel.visible = false;
+        // Mark as webcam video
+        model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
       },
       onCancel: () => {

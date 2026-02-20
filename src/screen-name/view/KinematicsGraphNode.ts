@@ -5,19 +5,16 @@
  * Users can select which variables to plot on each axis (t, x, y, vx, vy, speed, ax, ay, |a|).
  */
 
-import {
-  Property,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
+import { Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
-import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
-import type { SimModel } from "../model/SimModel.js";
+import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import type {
   PlottableProperty,
   SubStepDataPoint,
 } from "../graph/PlottableProperty.js";
+import type { SimModel } from "../model/SimModel.js";
 
 // Graph dimensions
 const GRAPH_WIDTH = 300;
@@ -62,16 +59,58 @@ export class KinematicsGraphNode extends VBox {
 
     // Create plottable properties using unit properties from the model.
     // Accessor functions return 0 for undefined values (filtered out later by NaN check).
+    // NOTE: Using bracket notation required by TypeScript's noUncheckedIndexedAccess
     const plottableProperties: PlottableProperty[] = [
-      createPlottableProperty("t", "s", (pt) => pt.t ?? 0),
-      createPlottableProperty("x", model.distanceUnitProperty, (pt) => pt.x ?? 0),
-      createPlottableProperty("y", model.distanceUnitProperty, (pt) => pt.y ?? 0),
-      createPlottableProperty("vx", model.velocityUnitProperty, (pt) => pt.vx ?? 0),
-      createPlottableProperty("vy", model.velocityUnitProperty, (pt) => pt.vy ?? 0),
-      createPlottableProperty("speed", model.velocityUnitProperty, (pt) => pt.speed ?? 0),
-      createPlottableProperty("ax", model.accelerationUnitProperty, (pt) => pt.ax ?? 0),
-      createPlottableProperty("ay", model.accelerationUnitProperty, (pt) => pt.ay ?? 0),
-      createPlottableProperty("|a|", model.accelerationUnitProperty, (pt) => pt.aMag ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("t", "s", (pt) => pt["t"] ?? 0),
+      createPlottableProperty(
+        "x",
+        model.distanceUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["x"] ?? 0,
+      ),
+      createPlottableProperty(
+        "y",
+        model.distanceUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["y"] ?? 0,
+      ),
+      createPlottableProperty(
+        "vx",
+        model.velocityUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["vx"] ?? 0,
+      ),
+      createPlottableProperty(
+        "vy",
+        model.velocityUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["vy"] ?? 0,
+      ),
+      createPlottableProperty(
+        "speed",
+        model.velocityUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["speed"] ?? 0,
+      ),
+      createPlottableProperty(
+        "ax",
+        model.accelerationUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["ax"] ?? 0,
+      ),
+      createPlottableProperty(
+        "ay",
+        model.accelerationUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["ay"] ?? 0,
+      ),
+      createPlottableProperty(
+        "|a|",
+        model.accelerationUnitProperty,
+        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+        (pt) => pt["aMag"] ?? 0,
+      ),
     ];
 
     // Default: plot y vs x (trajectory)
@@ -102,7 +141,9 @@ export class KinematicsGraphNode extends VBox {
     this.trackSelectorContainer = new Node();
 
     // Update combo box when tracks change (link fires immediately, building initial selector)
-    const tracksListener = (tracks: readonly import("../model/Track.js").Track[]) => {
+    const tracksListener = (
+      tracks: readonly import("../model/Track.js").Track[],
+    ) => {
       // Dispose old combo box FIRST to disconnect it from the property
       // (prevents assertion error when property value changes)
       if (this.currentComboBox) {

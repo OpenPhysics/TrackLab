@@ -292,12 +292,18 @@ export class SimModel {
     range: FRAME_RATE_RANGE,
   });
 
+  // Track whether the current video is from webcam (allows FPS editing)
+  public readonly isWebcamVideoProperty = new BooleanProperty(false);
+
   // ── Playback speed multiplier (1 = normal, 0.5 = slow, 2 = fast) ────────
   // The view maps its TimeSpeed enum to this value; the model stays free of
   // any scenery-phet dependency.
-  public readonly playbackRateProperty = new NumberProperty(DEFAULT_PLAYBACK_RATE, {
-    range: PLAYBACK_RATE_RANGE,
-  });
+  public readonly playbackRateProperty = new NumberProperty(
+    DEFAULT_PLAYBACK_RATE,
+    {
+      range: PLAYBACK_RATE_RANGE,
+    },
+  );
 
   // Derived frame duration for convenience
   public readonly frameDurationProperty: TReadOnlyProperty<number> =
@@ -467,6 +473,7 @@ export class SimModel {
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
     this.frameRateProperty.reset();
+    this.isWebcamVideoProperty.reset();
     this.playbackRateProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();

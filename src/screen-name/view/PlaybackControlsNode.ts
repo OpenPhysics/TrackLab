@@ -6,14 +6,12 @@ import {
   TimeControlNode,
   TimeSpeed,
 } from "scenerystack/scenery-phet";
-import { ButtonNode, NumberSpinner, Slider } from "scenerystack/sun";
+import { Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
-import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
-const SMALL_FONT = new PhetFont(12);
 const CONTROLS_SPACING = 16; // gap between info display, time control, and scrubber
 const SPEED_FAST = 2.0; // playback rate multiplier for TimeSpeed.FAST
 const SPEED_NORMAL = 1.0; // playback rate multiplier for TimeSpeed.NORMAL
@@ -22,10 +20,7 @@ const SCRUBBER_TRACK_WIDTH = 320;
 const SCRUBBER_TRACK_HEIGHT = 4;
 const SCRUBBER_THUMB_WIDTH = 12;
 const SCRUBBER_THUMB_HEIGHT = 24;
-const FPS_CONTROL_SPACING = 4; // gap between "fps:" label and spinner
-const INFO_DISPLAY_SPACING = 2; // gap between time label, frame counter, and fps control
-const FPS_SPINNER_SCALE = 0.6;
-const FPS_SPINNER_MIN_WIDTH = 35;
+const INFO_DISPLAY_SPACING = 4; // gap between time label and frame counter
 
 /**
  * Playback controls including time control, scrubber, and time/frame display.
@@ -40,8 +35,6 @@ export class PlaybackControlsNode extends HBox {
     onStepForward: () => void,
   ) {
     super({ spacing: CONTROLS_SPACING, align: "center" });
-
-    const uiStrings = StringManager.getInstance().getUI();
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     // timeSpeedProperty is view-local (the TimeSpeed enum is a scenery-phet type
@@ -95,21 +88,17 @@ export class PlaybackControlsNode extends HBox {
       (duration: number) => new Range(0, Math.max(duration, 1)),
     );
 
-    const scrubber = new Slider(
-      model.currentTimeProperty,
-      rangeProperty,
-      {
-        trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
-        thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
-        startDrag: () => {
-          this.isScrubbing = true;
-        },
-        endDrag: () => {
-          this.isScrubbing = false;
-        },
-        enabledProperty: model.videoLoadedProperty,
+    const scrubber = new Slider(model.currentTimeProperty, rangeProperty, {
+      trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
+      thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
+      startDrag: () => {
+        this.isScrubbing = true;
       },
-    );
+      endDrag: () => {
+        this.isScrubbing = false;
+      },
+      enabledProperty: model.videoLoadedProperty,
+    });
 
     model.currentTimeProperty.lazyLink((time) => {
       if (this.isScrubbing) {
@@ -153,39 +142,8 @@ export class PlaybackControlsNode extends HBox {
       fill: TrackLabColors.textOnDarkProperty,
     });
 
-    // ── Frame rate control ─────────────────────────────────────────────────
-    const fpsLabel = new Text(uiStrings.fpsStringProperty, {
-      font: SMALL_FONT,
-      fill: TrackLabColors.textMutedProperty,
-    });
-
-    const fpsSpinner = new NumberSpinner(
-      model.frameRateProperty,
-      new Property(FRAME_RATE_RANGE),
-      {
-        deltaValue: 1,
-        numberDisplayOptions: {
-          decimalPlaces: 0,
-          textOptions: { font: SMALL_FONT },
-          minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
-        },
-        arrowsPosition: "leftRight",
-        arrowButtonOptions: {
-          scale: FPS_SPINNER_SCALE,
-          buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-        },
-        tandem: Tandem.OPT_OUT,
-      },
-    );
-
-    const fpsControl = new HBox({
-      children: [fpsLabel, fpsSpinner],
-      spacing: FPS_CONTROL_SPACING,
-      align: "center",
-    });
-
     const infoDisplay = new VBox({
-      children: [totalTimeLabel, frameCountLabel, fpsControl],
+      children: [totalTimeLabel, frameCountLabel],
       spacing: INFO_DISPLAY_SPACING,
       align: "left",
     });

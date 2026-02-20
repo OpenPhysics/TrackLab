@@ -1,3 +1,4 @@
+import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
 import {
@@ -10,6 +11,7 @@ import {
   ButtonNode,
   cameraSolidShape,
   checkSolidShape,
+  NumberSpinner,
   Panel,
   RectangularPushButton,
 } from "scenerystack/sun";
@@ -21,8 +23,10 @@ import {
   WEBCAM_PREVIEW_WIDTH,
 } from "../../TrackLabConstants.js";
 import { fixWebmDuration, WebcamRecorder } from "../../webcam.js";
+import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
+const SMALL_FONT = new PhetFont(12);
 const STOP_ICON_SIZE = 14;
 const REFRESH_ICON_HEIGHT = 20;
 const CHECK_ICON_SCALE = 0.35;
@@ -36,8 +40,12 @@ const PANEL_X_MARGIN = 20;
 const PANEL_Y_MARGIN = 15;
 const LAYER_SPACING = 10; // VBox spacing between elements within each layer
 const CAMERA_ROW_SPACING = 8; // HBox spacing between camera icon and select
+const FPS_CONTROL_SPACING = 6; // gap between "fps:" label and spinner
+const FPS_SPINNER_SCALE = 0.7;
+const FPS_SPINNER_MIN_WIDTH = 50;
 
 type WebcamPanelOptions = {
+  model: SimModel;
   onVideoReady: (blob: Blob, duration: number) => void;
   onCancel: () => void;
 };
@@ -50,6 +58,7 @@ export class WebcamPanel extends Node {
   private readonly statusText: Text;
   private readonly previewLayer: Node;
   private readonly reviewLayer: Node;
+  private readonly model: SimModel;
 
   private recordedBlob: Blob | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -57,6 +66,7 @@ export class WebcamPanel extends Node {
 
   public constructor(options: WebcamPanelOptions) {
     super();
+    this.model = options.model;
 
     // ── Camera select ─────────────────────────────────────────────────────
     this.cameraSelect = document.createElement("select");
@@ -170,6 +180,38 @@ export class WebcamPanel extends Node {
       listener: () => this.useVideo(options.onVideoReady),
     });
 
+    // ── Frame rate control (only for webcam videos) ───────────────────────
+    const uiStrings = StringManager.getInstance().getUI();
+    const fpsLabel = new Text(uiStrings.fpsStringProperty, {
+      font: SMALL_FONT,
+      fill: TrackLabColors.textMutedProperty,
+    });
+
+    const fpsSpinner = new NumberSpinner(
+      this.model.frameRateProperty,
+      new Property(FRAME_RATE_RANGE),
+      {
+        deltaValue: 1,
+        numberDisplayOptions: {
+          decimalPlaces: 0,
+          textOptions: { font: SMALL_FONT },
+          minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
+        },
+        arrowsPosition: "leftRight",
+        arrowButtonOptions: {
+          scale: FPS_SPINNER_SCALE,
+          buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+        },
+        tandem: Tandem.OPT_OUT,
+      },
+    );
+
+    const fpsControl = new HBox({
+      children: [fpsLabel, fpsSpinner],
+      spacing: FPS_CONTROL_SPACING,
+      align: "center",
+    });
+
     // ── Layer: preview ────────────────────────────────────────────────────
     const cameraIcon = new Path(cameraSolidShape, {
       scale: CAMERA_ICON_SCALE,
@@ -200,6 +242,7 @@ export class WebcamPanel extends Node {
     this.reviewLayer = new VBox({
       children: [
         reviewDOM,
+        fpsControl,
         new HBox({
           children: [rerecordButton, useVideoButton],
           spacing: LAYER_SPACING,
