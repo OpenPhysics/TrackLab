@@ -28,9 +28,11 @@ const FONT = new PhetFont(14);
 const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
 const ENDPOINT_RADIUS = 4;
 const ENDPOINT_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
-const LINE_WIDTH = 2;
+const LINE_WIDTH = 3; // Increased for better visibility
 const LINE_DASH: number[] = [8, 4];
-const ENDPOINT_LINE_WIDTH = 1.5;
+const SHADOW_LINE_WIDTH = 6; // Wider shadow stroke for contrast
+const ENDPOINT_LINE_WIDTH = 2; // Increased for better visibility
+const ENDPOINT_SHADOW_LINE_WIDTH = 4; // Dark outline for contrast
 const MAX_KEYPAD_DECIMALS = 4;
 const MIDPOINT_PANEL_SCALE = 0.5;
 const MIDPOINT_PANEL_CORNER_RADIUS = 6;
@@ -52,7 +54,16 @@ export class CalibrationToolNode extends Node {
   ) {
     super();
 
-    // ── Connecting line ────────────────────────────────────────────────────
+    // ── Connecting line with shadow for visibility on all backgrounds ────
+    // Shadow layer (rendered first, underneath)
+    const calibrationLineShadow = new Line(0, 0, 0, 0, {
+      stroke: TrackLabColors.calibrationShadowStrokeProperty,
+      lineWidth: SHADOW_LINE_WIDTH,
+      lineDash: LINE_DASH,
+    });
+    this.addChild(calibrationLineShadow);
+
+    // Main bright line (rendered on top)
     const calibrationLine = new Line(0, 0, 0, 0, {
       stroke: TrackLabColors.calibrationStrokeProperty,
       lineWidth: LINE_WIDTH,
@@ -60,11 +71,26 @@ export class CalibrationToolNode extends Node {
     });
     this.addChild(calibrationLine);
 
-    // ── Endpoint circles ──────────────────────────────────────────────────
+    // ── Endpoint circles with shadow outlines for maximum visibility ──────
+    // Shadow circles (rendered first, underneath)
+    const endpoint1Shadow = new Circle(ENDPOINT_RADIUS, {
+      stroke: TrackLabColors.calibrationShadowStrokeProperty,
+      lineWidth: ENDPOINT_SHADOW_LINE_WIDTH,
+      fill: "transparent",
+    });
+    const endpoint2Shadow = new Circle(ENDPOINT_RADIUS, {
+      stroke: TrackLabColors.calibrationShadowStrokeProperty,
+      lineWidth: ENDPOINT_SHADOW_LINE_WIDTH,
+      fill: "transparent",
+    });
+    this.addChild(endpoint1Shadow);
+    this.addChild(endpoint2Shadow);
+
+    // Main bright circles (rendered on top with interaction)
     const makeEndpoint = (accessibleName: string) =>
       new Circle(ENDPOINT_RADIUS, {
         fill: TrackLabColors.calibrationFillProperty,
-        stroke: TrackLabColors.textOnDarkProperty,
+        stroke: TrackLabColors.calibrationStrokeProperty,
         lineWidth: ENDPOINT_LINE_WIDTH,
         cursor: "crosshair",
         tagName: "div",
@@ -182,9 +208,19 @@ export class CalibrationToolNode extends Node {
     const updateGeometry = () => {
       const p1 = model.calibPoint1Property.value;
       const p2 = model.calibPoint2Property.value;
+
+      // Update both shadow and main lines
+      calibrationLineShadow.setLine(p1.x, p1.y, p2.x, p2.y);
       calibrationLine.setLine(p1.x, p1.y, p2.x, p2.y);
+
+      // Update shadow circles
+      endpoint1Shadow.translation = p1;
+      endpoint2Shadow.translation = p2;
+
+      // Update main circles
       endpoint1.translation = p1;
       endpoint2.translation = p2;
+
       const mid = p1.blend(p2, 0.5);
       midpointPanel.centerX = mid.x;
       midpointPanel.bottom = mid.y - MIDPOINT_Y_OFFSET;

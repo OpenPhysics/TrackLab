@@ -167,6 +167,7 @@ export class OpenCVTracker {
     // Capture into a local const so TypeScript can narrow CV through the
     // subsequent captureFrame() call (class fields can't be narrowed across
     // method calls).
+    // biome-ignore lint/suspicious/noAssignInExpressions: Assignment + local const needed for TypeScript narrowing
     const cv = (this.cv = await loadCV());
 
     const imageData = this.captureFrame(video);

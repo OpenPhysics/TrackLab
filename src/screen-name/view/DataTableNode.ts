@@ -22,8 +22,9 @@ import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
 // ── Grid geometry ────────────────────────────────────────────────────────────
-const MAX_TABLE_WIDTH = 300;
-const MAX_TABLE_HEIGHT = 200;
+const MAX_TABLE_WIDTH = 600; // Allow table to grow wider for more tracks
+const MIN_TABLE_HEIGHT = 100; // Minimum height when little data
+const MAX_TABLE_HEIGHT = 400; // Maximum height before scrolling (increased from 200)
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
@@ -136,6 +137,7 @@ type TableColors = {
 
 /**
  * Build an HTML table element for the data.
+ * Height adjusts based on row count, with min/max constraints.
  */
 function buildHTMLTable(
   tracks: readonly Track[],
@@ -149,6 +151,7 @@ function buildHTMLTable(
   wrapper.style.cssText = `
     overflow: auto;
     max-width: ${MAX_TABLE_WIDTH}px;
+    min-height: ${MIN_TABLE_HEIGHT}px;
     max-height: ${MAX_TABLE_HEIGHT}px;
     border: 1px solid ${colors.gridStroke};
     border-radius: 3px;
@@ -461,6 +464,7 @@ export class DataTableNode extends Panel {
       if (newWrapper.firstChild) {
         this.tableWrapper.appendChild(newWrapper.firstChild);
       }
+      // Copy all styles including the dynamic height
       this.tableWrapper.style.cssText = newWrapper.style.cssText;
 
       // Cache <tbody> reference and rebuild the frame→row map.

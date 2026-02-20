@@ -409,7 +409,10 @@ export class WebcamPanel extends Node {
         };
       } else {
         // Fallback to empirical measurement from the recorded video
-        this.fpsEstimate = await estimateVideoFrameRate(this.reviewElement, null);
+        this.fpsEstimate = await estimateVideoFrameRate(
+          this.reviewElement,
+          null,
+        );
       }
       this.updateFPSEstimateDisplay();
       // Set the estimated FPS as the initial value

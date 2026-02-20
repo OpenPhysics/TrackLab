@@ -93,33 +93,39 @@ const TrackLabColors = {
     new Color(160, 160, 180), // Darker stroke for light panel
   ),
 
-  // Axes (X red, Y green)
+  // Axes (X red, Y green) - semi-transparent for better video visibility
   axisXColorProperty: profileColor(
     "axisX",
-    new Color(255, 68, 68),
-    new Color(238, 51, 51),
+    new Color(255, 68, 68, 0.5), // 50% opacity
+    new Color(238, 51, 51, 0.5),
   ),
   axisYColorProperty: profileColor(
     "axisY",
-    new Color(68, 204, 68),
-    new Color(51, 187, 51),
+    new Color(68, 204, 68, 0.5), // 50% opacity
+    new Color(51, 187, 51, 0.5),
   ),
 
-  // Calibration tool
+  // Calibration tool (bright colors with shadows for visibility on all backgrounds)
   calibrationFillProperty: profileColor(
     "calibrationFill",
-    new Color(255, 255, 100, 0.85),
-    new Color(255, 255, 120, 0.9),
+    new Color(0, 255, 255, 0.3), // Bright cyan - semi-transparent for positioning
+    new Color(255, 0, 255, 0.3), // Bright magenta - semi-transparent for positioning
   ),
   calibrationStrokeProperty: profileColor(
     "calibrationStroke",
-    new Color(255, 255, 100, 0.8),
-    new Color(255, 255, 120, 0.9),
+    new Color(0, 255, 255), // Bright cyan
+    new Color(255, 0, 255), // Bright magenta
+  ),
+  // Shadow stroke for maximum contrast on all backgrounds
+  calibrationShadowStrokeProperty: profileColor(
+    "calibrationShadowStroke",
+    new Color(0, 0, 0, 0.9), // Dark shadow
+    new Color(0, 0, 0, 0.9), // Dark shadow
   ),
   calibrationHandleProperty: profileColor(
     "calibrationHandle",
-    new Color(255, 220, 50, 0.9),
-    new Color(255, 230, 80, 0.95),
+    new Color(0, 255, 255, 0.4), // Bright cyan - semi-transparent
+    new Color(255, 0, 255, 0.4), // Bright magenta - semi-transparent
   ),
 
   // Auto-tracker overlay
@@ -166,16 +172,16 @@ const TrackLabColors = {
     new Color(255, 255, 255, 0.15),
   ),
 
-  // Coordinate system
+  // Coordinate system - semi-transparent origin for better positioning
   originFillProperty: profileColor(
     "originFill",
-    WHITE,
-    new Color(240, 240, 240),
+    new Color(255, 255, 255, 0.4), // 40% opacity white
+    new Color(240, 240, 240, 0.4),
   ),
   originStrokeProperty: profileColor(
     "originStroke",
-    new Color(119, 119, 119),
-    new Color(70, 70, 70),
+    new Color(119, 119, 119, 0.8), // 80% opacity stroke for visibility
+    new Color(70, 70, 70, 0.8),
   ),
 
   // Buttons
