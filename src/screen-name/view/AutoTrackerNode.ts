@@ -241,8 +241,11 @@ export class AutoTrackerNode extends Node {
       const activeId = model.activeTrackIdProperty.value;
       if (activeId) {
         const time = videoElement.currentTime;
-        const frameDuration = model.frameDurationProperty.value;
-        const frame = Math.round(time / frameDuration);
+        // Multiply by frame rate directly rather than dividing by frameDuration
+        // (1/fps) to avoid cascading floating-point error at non-integer fps values
+        // like 29.97, which could cause two adjacent timestamps to map to the same
+        // frame or skip a frame entirely.
+        const frame = Math.round(time * model.frameRateProperty.value);
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {

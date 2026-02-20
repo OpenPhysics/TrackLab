@@ -31,8 +31,9 @@ const TABLE_FONT_SIZE = 11; // HTML table font size in px
 const EXPORT_BUTTON_FONT_SIZE = 9;
 
 // ── Precision ─────────────────────────────────────────────────────────────────
+// Both values are kept equal so exported CSV data matches what users see on screen.
 const CSV_DECIMAL_PLACES = 4; // decimal places for CSV time and position columns
-const CELL_DECIMAL_PLACES = 3; // decimal places shown in on-screen table cells
+const CELL_DECIMAL_PLACES = 4; // decimal places shown in on-screen table cells
 const MIN_EMPTY_COL_COUNT = 4; // minimum columns (Frame, Time, x, y) when no tracks exist
 
 // ── Panel layout ──────────────────────────────────────────────────────────────
@@ -407,15 +408,13 @@ export class DataTableNode extends Panel {
         const unit = unitProperty.value;
         const csv = generateCSV(tracks, unit, getLabels());
 
-        // Create download
+        // Create download — no DOM insertion needed in modern browsers.
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
         link.download = `export${this.exportCounter}.csv`;
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
         this.exportCounter++;

@@ -417,7 +417,7 @@ export class SimModel {
     };
 
     const tracks = [...this.tracksProperty.value, track];
-    tracks.sort((a, b) => a.symbol.localeCompare(b.symbol));
+    tracks.sort((a, b) => a.symbol.charCodeAt(0) - b.symbol.charCodeAt(0));
     this.tracksProperty.value = tracks;
   }
 
