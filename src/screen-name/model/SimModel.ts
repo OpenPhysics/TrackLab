@@ -36,6 +36,13 @@ export const FRAME_RATE_OPTIONS = [15, 24, 25, 29.97, 30, 50, 60] as const;
 export const DEFAULT_FRAME_RATE = 30;
 export const FRAME_RATE_RANGE = new Range(1, 120);
 
+// ── Playback speed multiplier ──────────────────────────────────────────────
+// Stores the actual rate multiplier (1 = normal, 0.5 = slow, 2 = fast).
+// The view maps a TimeSpeed enum to one of these values; the model never
+// imports scenery-phet, so it only sees the numeric rate.
+export const DEFAULT_PLAYBACK_RATE = 1;
+export const PLAYBACK_RATE_RANGE = new Range(0.1, 4);
+
 // ── Initial tool positions (view / pixel space) ───────────────────────────
 // These default positions are computed from the shared video layout constants.
 const COORD_ORIGIN_INITIAL = new Vector2(
@@ -285,6 +292,13 @@ export class SimModel {
     range: FRAME_RATE_RANGE,
   });
 
+  // ── Playback speed multiplier (1 = normal, 0.5 = slow, 2 = fast) ────────
+  // The view maps its TimeSpeed enum to this value; the model stays free of
+  // any scenery-phet dependency.
+  public readonly playbackRateProperty = new NumberProperty(DEFAULT_PLAYBACK_RATE, {
+    range: PLAYBACK_RATE_RANGE,
+  });
+
   // Derived frame duration for convenience
   public readonly frameDurationProperty: TReadOnlyProperty<number> =
     new DerivedProperty([this.frameRateProperty], (fps) => 1 / fps);
@@ -453,6 +467,7 @@ export class SimModel {
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
     this.frameRateProperty.reset();
+    this.playbackRateProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();
     this.magnifyVideoProperty.reset();

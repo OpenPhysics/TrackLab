@@ -91,6 +91,12 @@ export class VideoPlayerNode extends Node {
     };
     model.isPlayingProperty.lazyLink(isPlayingListener);
 
+    // ── Playback rate (applies model rate to the video element) ──────────
+    const playbackRateListener = (rate: number) => {
+      this.videoElement.playbackRate = rate;
+    };
+    model.playbackRateProperty.link(playbackRateListener);
+
     // ── Playback controls ─────────────────────────────────────────────────
     const playbackControlsNode = new PlaybackControlsNode(
       model,
@@ -148,6 +154,7 @@ export class VideoPlayerNode extends Node {
     this.disposeVideoPlayer = () => {
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       model.isPlayingProperty.unlink(isPlayingListener);
+      model.playbackRateProperty.unlink(playbackRateListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
       this.videoElement.removeEventListener("durationchange", updateDuration);
       this.videoElement.removeEventListener("ended", onEnded);

@@ -44,14 +44,27 @@ export class PlaybackControlsNode extends HBox {
     const uiStrings = StringManager.getInstance().getUI();
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
-    const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
+    // timeSpeedProperty is view-local (the TimeSpeed enum is a scenery-phet type
+    // that cannot live in the model).  It syncs bidirectionally with the numeric
+    // model.playbackRateProperty so that model.reset() resets the radio buttons.
     const speedMap = new Map([
       [TimeSpeed.FAST, SPEED_FAST],
       [TimeSpeed.NORMAL, SPEED_NORMAL],
       [TimeSpeed.SLOW, SPEED_SLOW],
     ]);
+    const rateToSpeed = new Map(
+      Array.from(speedMap.entries()).map(([k, v]) => [v, k]),
+    );
+    const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
+
+    // view → model
     timeSpeedProperty.link((speed) => {
-      videoElement.playbackRate = speedMap.get(speed) ?? SPEED_NORMAL;
+      model.playbackRateProperty.value = speedMap.get(speed) ?? SPEED_NORMAL;
+    });
+
+    // model → view  (handles reset and any future programmatic rate changes)
+    model.playbackRateProperty.lazyLink((rate: number) => {
+      timeSpeedProperty.value = rateToSpeed.get(rate) ?? TimeSpeed.NORMAL;
     });
 
     // ── TimeControlNode: play/pause + step back + step forward + speed ─────
