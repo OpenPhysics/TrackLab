@@ -1,151 +1,397 @@
-# TrackLab — Architectural Recommendations
+# TrackLab — Architecture & Documentation Recommendations
 
 **Date:** 2026-02-20
-
-The following issues were identified during architectural review. They are ordered by severity.
-
----
-
-## 1. View Writing to Model (Separation of Concern Violation)
-
-**File:** `SimScreenView.ts:91–104` | **Severity:** High
-
-The view's `Multilink` reads positions from two view nodes (`CoordinateSystemNode`, `CalibrationToolNode`) and writes the result into `model.modelViewTransformProperty`. This inverts the data flow: the view is mutating the model.
-
-**Option A — keep transform in the model:** Move the origin/angle/points/distance into the model as properties, have the tool nodes read from and write to those model properties, and compute the transform as a `DerivedProperty` inside `SimModel`. The view never touches `modelViewTransformProperty` directly.
-
-**Option B — keep transform in the view:** Remove `modelViewTransformProperty` from `SimModel` entirely. Compute it locally in `SimScreenView` and pass it to any child node that needs it via constructor argument. `VideoPlayerNode` already receives `model` and uses `model.modelViewTransformProperty` — it would instead receive a `TReadOnlyProperty<Transform3>`.
-
-Option A is more consistent with the Axon pattern; Option B keeps the model cleaner. Either is better than the current arrangement.
+**Codebase:** ~8,585 lines of TypeScript across 35 source files
+**Framework:** SceneryStack + OpenCV.js (WASM) + FFmpeg (WASM)
 
 ---
 
-## 2. Critical State in View Closure — `markData[]`
+## Part 1: Architecture Recommendations
 
-**File:** `VideoPlayerNode.ts:202–210` | **Severity:** High
+### Priority 1 — Data Integrity (High Severity)
 
+#### 1.1 Auto-tracker data never enters the model
+
+**Files:** `AutoTrackerNode.ts:166–174`
+
+The OpenCV tracking loop updates `this.trail[]` and the crosshair visuals but never calls `model.addPointToTrack()`. Auto-tracked positions are purely visual and ephemeral — they cannot be exported, analyzed, or graphed. For a tool whose primary purpose is automated data collection, this is the most consequential gap.
+
+**Recommended fix:** After each successful `tracker.track()` call, convert the video-pixel position to model coordinates via `modelViewTransformProperty` and call `model.addPointToTrack()`. This unifies auto-tracking and manual digitizing around the same data path, so the data table, CSV export, and kinematics graph all work seamlessly with auto-tracked data.
+
+#### 1.2 Critical state in view closure — `markData[]`
+
+**Files:** `VideoPlayerNode.ts:202–210`
+
+The `markData` array stores the visual ground-truth for digitized dot positions but lives in a view closure. This causes three problems:
+
+- Deleting a track does not remove its dots (model clears `TrackPoint[]`, but `markData` survives).
+- `model.reset()` does not clear dots.
+- No other view (data table, export) can read them.
+
+**Recommended fix:** Derive the visual dots from `model.tracksProperty`. `TrackPoint` already stores the frame number and model coordinates; the view can convert back to pixel positions using the model-view transform. Eliminate the parallel `markData` array entirely.
+
+#### 1.3 NaN values leak through graph data filtering
+
+**Files:** `ConfigurableGraph.ts:675, 691–701`
+
+`KinematicsGraphNode` maps missing kinematics to `Number.NaN`. The graph's filter checks `x !== null && y !== null`, which passes for NaN. NaN data points corrupt rendering and axis range calculations.
+
+**Recommended fix (one-line):**
 ```typescript
-type MarkData = { frame: number; localX: number; localY: number; color: string };
-const markData: MarkData[] = [];   // plain array in closure
+if (x !== null && y !== null && Number.isFinite(x) && Number.isFinite(y)) {
 ```
 
-This array is the visual ground-truth for digitized positions but lives only in the view closure. Consequences:
+#### 1.4 Y-axis pan direction is inverted
 
-- **Deleting a track does not remove its dots.** `model.removeTrack()` clears the model's `TrackPoint[]` but `markData` is never filtered. Dots persist after deletion.
-- **`model.reset()` does not clear dots.** `SimScreenView.reset()` calls `model.reset()` and resets tools, but `markData` survives.
-- **No other view can read them.** A `DataTableNode` or export function can only read `model.tracksProperty`, not `markData`.
+**Files:** `GraphInteractionHandler.ts:417`
 
-**Fix:** Derive the marks from `model.tracksProperty`. `TrackPoint` already stores `frame`, and the view already has the model-view transform to convert model coords back to pixel coords. The view should recompute pixel dots from the model rather than maintaining a parallel array.
+Missing negative sign causes dragging down on the Y-axis to pan values upward. The X-axis correctly negates delta at line 644.
 
----
-
-## 3. `VideoPlayerNode` is Doing Too Much
-
-**File:** `VideoPlayerNode.ts` | **Severity:** Medium
-
-At 464 lines it contains at least five distinct responsibilities:
-
-| Responsibility | Lines (approx) |
-|----------------|----------------|
-| HTML video element + event wiring | 40–70 |
-| Manual digitizing overlay (cursor, magnifier, click-to-mark) | 85–245 |
-| Playback rate, play/pause, frame stepping | 252–297 |
-| Scrubber + time/frame display | 300–355 |
-| Video source selector + webcam panel | 357–440 |
-
-**Suggested decomposition:**
-
-- `DigitizingOverlayNode` — cursor, magnifier, click handler (depends on `activeTrackIdProperty`, `modelViewTransformProperty`, model mutation)
-- `VideoSourceControlNode` — combo box + webcam button + `loadUrl` logic
-- `PlaybackControlsNode` — `TimeControlNode` + scrubber + info labels
-- `VideoPlayerNode` — composes the video element + the three above
-
----
-
-## 4. Hardcoded 30 fps
-
-**File:** `VideoPlayerNode.ts:15` | **Severity:** Medium
-
+**Recommended fix:**
 ```typescript
-const FRAME_DURATION = 1 / 30; // assumes 30 fps
+const modelDeltaY = -deltaY * (initialYRange.getLength() / this.graphHeight);
 ```
 
-This constant drives frame counting, frame stepping, and mark filtering. All of the bundled sample videos may be 30 fps, but user-uploaded or webcam recordings may not be. The HTML video element exposes no standard API for frame rate, but a reasonable mitigation is:
+---
 
-1. Expose a user-settable `frameRateProperty` on the model (default 30).
-2. Add a "Frame Rate" control in `ControlPanel` or `VideoPlayerNode`.
-3. Document clearly that the value is assumed, not detected.
+### Priority 2 — Separation of Concerns (Medium Severity)
+
+#### 2.1 View writing to model (transform computation)
+
+**Files:** `SimScreenView.ts:91–104`
+
+`SimScreenView` uses a `Multilink` to read from view nodes (`CoordinateSystemNode`, `CalibrationToolNode`) and writes the computed transform into `model.modelViewTransformProperty`. This inverts the intended data flow.
+
+**Two options:**
+
+| Approach | Trade-off |
+|----------|-----------|
+| **A. Model owns the transform** — Move origin/angle/calibration endpoints into model properties. Tool nodes read from and write to model. Transform becomes a `DerivedProperty` inside `SimModel`. | Consistent with Axon pattern; model becomes the single source of truth. |
+| **B. View owns the transform** — Remove `modelViewTransformProperty` from `SimModel`. Compute it in `SimScreenView` and pass it to children as a constructor argument. | Model stays smaller; but consumers that currently access `model.modelViewTransformProperty` need a new parameter. |
+
+Option A is recommended — it keeps the model as the canonical state container and makes the transform testable independently.
+
+#### 2.2 `GraphInteractionHandler.ts` is too large (1,172 lines)
+
+**Files:** `src/screen-name/graph/GraphInteractionHandler.ts`
+
+This single file handles mouse wheel zoom, pinch-zoom, touch pan, axis drag, header drag, and resize. Each gesture has its own state variables and edge cases. It's the largest file by 400+ lines.
+
+**Recommended decomposition:**
+
+| New file | Responsibility |
+|----------|----------------|
+| `PanZoomHandler.ts` | Mouse wheel zoom, two-finger pinch, scroll pan |
+| `AxisDragHandler.ts` | Single-axis touch/mouse drag |
+| `ResizeHandler.ts` | Graph resize via edge/corner handles |
+| `HeaderDragHandler.ts` | Repositioning the graph by dragging the header |
+| `GraphInteractionHandler.ts` | Coordinator — delegates to the above, owns shared state (`graphWidth`, `graphHeight`, manual-zoom flag) |
+
+Each handler would be ~200–300 lines — manageable and independently testable.
+
+#### 2.3 `TRACK_COLORS` palette in the model
+
+**Files:** `SimModel.ts:6–15`
+
+The color palette is an array of CSS hex strings — a presentational concern. Move it to `TrackLabColors.ts` alongside all other color definitions. The model should reference colors by import, not own them.
+
+#### 2.4 `canAddTrack()` is imperative, not reactive
+
+**Files:** `SimModel.ts:81–83`, `TrackListPanel.ts`
+
+Called imperatively from two places. Convert to a `DerivedProperty<boolean>` so the "Add Track" button's enabled state stays in sync automatically.
 
 ---
 
-## 5. `videoLoadedProperty` Computed Twice
+### Priority 3 — Performance (Medium Severity)
 
-**File:** `SimScreenView.ts:58` and `VideoPlayerNode.ts:69–70` | **Severity:** Low
+#### 3.1 Trail rendering destroys/recreates all nodes
 
-Both files independently derive a `videoLoadedProperty` from `model.durationProperty`. This is harmless but redundant. Moving it to the model as a `DerivedProperty` (or a simple `BooleanProperty` maintained by `VideoPlayerNode`) would give a single source of truth that `TrackListPanel` and `SimScreenView` could both consume.
+**Files:** `GraphDataManager.ts:245–289`
+
+`updateTrail()` removes and recreates all `Circle` nodes on every call, triggered by 11+ code paths (pan, zoom, resize, data add). Maintain a node pool and update positions only.
+
+#### 3.2 Per-frame WASM Mat allocation
+
+**Files:** `OpenCVTracker.ts:track()`
+
+Three new OpenCV `Mat` objects are allocated per frame. They are freed correctly, but per-frame allocation through WASM is expensive. Reuse buffers across frames (allocate once in `initFromVideo`, resize only if video dimensions change).
+
+#### 3.3 Track point reprojection on every drag
+
+**Files:** `SimModel.ts:377–398`
+
+When the coordinate system is dragged, ALL track points are reprojected (O(n) per track). The drag fires continuously. Consider debouncing or deferring reprojection until drag ends.
+
+#### 3.4 `TrackListPanel` rebuilds all rows on every point add
+
+**Files:** `TrackListPanel.ts:198–200`
+
+`model.addPointToTrack()` replaces the entire tracks array, triggering a full rebuild of `TrackRowNode` instances. Either store points separately (per-track `Property<TrackPoint[]>`) or use key-based diffing to only create/destroy changed rows.
 
 ---
 
-## 6. Auto-tracker Data Never Enters the Model
+### Priority 4 — Robustness (Low–Medium Severity)
 
-**File:** `AutoTrackerNode.ts:166–174` | **Severity:** High
+#### 4.1 Coordinate system can be dragged off-screen
 
-The OpenCV tracking loop updates `this.trail[]` and the crosshair visuals, but never calls `model.addPointToTrack()`. Auto-tracked positions are purely visual and ephemeral — they cannot be exported, analyzed, or compared with manual tracks. For a tool called "auto-tracking," this is a major gap. The tracked positions should be written to the model in the same way manual digitizing does (with `frame`, `time`, `x`, `y` in model coordinates).
+**Files:** `CoordinateSystemNode.ts:131–136`
 
-This also requires converting video-pixel coordinates to model coordinates using the transform, which means `AutoTrackerNode` needs access to `modelViewTransformProperty`.
+No bounds checking on the origin position. Users can drag the coordinate system entirely off the video, making it unrecoverable without reset. Clamp origin to video bounds.
+
+#### 4.2 AutoTracker race condition on re-initialization
+
+**Files:** `AutoTrackerNode.ts:194–202`
+
+`initFromVideo()` is async. If the user selects a new tracking region while the previous initialization is running, both instances run simultaneously, producing conflicting results. Cancel or abort the previous initialization before starting a new one.
+
+#### 4.3 Calibration endpoints can overlap with no feedback
+
+**Files:** `CalibrationToolNode.ts`
+
+Two endpoints at the same pixel position yield `pixelDist ~= 0`. The identity transform fallback silently breaks the coordinate system. Add visual feedback (warning text or highlight) when the distance is below threshold.
+
+#### 4.4 Zoom buttons don't persist manual zoom flag
+
+**Files:** `GraphInteractionHandler.ts:1079–1093`
+
+Zoom-in/out buttons pass `false` for `setManualFlag`, so auto-rescaling overrides the user's zoom as soon as new data arrives. Mouse wheel correctly sets the flag. Pass `true` on explicit user action.
+
+#### 4.5 Error handling gaps — silent failures
+
+Several places log errors to console but give no user-facing feedback:
+
+| File | Issue |
+|------|-------|
+| `VideoPlayerNode.ts:85` | `play().catch()` silently sets `isPlaying = false` |
+| `AutoTrackerNode.ts:214` | Tracking init failure only logged to console |
+| `WebcamPanel.ts:421` | FPS estimation failure only logged |
+
+Consider a lightweight status/toast notification system so users know when operations fail.
 
 ---
 
-## 7. `TrackListPanel` Rebuilds All Rows on Every Change
+### Priority 5 — Minor Improvements
 
-**File:** `TrackListPanel.ts:198–200` | **Severity:** Low
+| Issue | File | Fix |
+|-------|------|-----|
+| Dead keyboard shortcuts file | `KeyboardShorcutsNode.ts` (typo) | Rename to `KeyboardShortcutsNode.ts`, update import in `main.ts` |
+| CSV precision mismatch | `DataTableNode.ts:34–35` | Align `CSV_DECIMALS` and `DISPLAY_DECIMALS` (both 4 or both 3) |
+| Track colors only cover 8 of 26 | `TrackLabColors.ts` | Extend `TRACK_COLORS` to 26 entries with distinct hues |
+| `videoLoadedProperty` duplicated | `SimScreenView.ts:58`, `VideoPlayerNode.ts:69` | Consolidate into model as a single `DerivedProperty` |
+| Webcam panel at wrong layer | `VideoPlayerNode.ts:436` | Move `WebcamPanel` to `SimScreenView` level as a modal overlay |
+| Frame rounding at boundaries | `AutoTrackerNode.ts:226` | Use `Math.floor` instead of `Math.round` to avoid frame duplication at 29.97 fps |
+| `localeCompare` for ASCII sort | `SimModel.ts:420` | Use `charCodeAt()` for deterministic single-character ordering |
+| Magic numbers not in constants | `GraphInteractionHandler.ts:600–601` | Replace hardcoded `60`/`30` with `Y_AXIS_INTERACTION_WIDTH`/`X_AXIS_INTERACTION_HEIGHT` |
+| Global vs local point in digitizing | `VideoPlayerNode.ts:235–237` | Apply inverse transform to local video-pixel point, not global |
 
-```typescript
-model.tracksProperty.link( tracks => {
-  trackListVBox.children = tracks.map( track => new TrackRowNode( track, model ) );
+---
+
+## Part 2: Documentation Recommendations
+
+### Current State Assessment
+
+| Document | Status | Quality |
+|----------|--------|---------|
+| `CLAUDE.md` | Exists (76 lines) | Good — clear project overview, file map, dev commands, architecture notes |
+| `README.md` | Exists (193 lines) | Good — features, tech stack, install, usage guide, deployment |
+| `CODE_REVIEW.md` | Exists (270 lines) | Thorough — bugs, performance, security, maintainability |
+| Inline comments | Partial | Good in model; sparse in graph subsystem |
+| JSDoc / API docs | Missing | No public method documentation |
+
+### Recommendation 2.1 — Expand CLAUDE.md with data flow documentation
+
+The current CLAUDE.md explains *what* each file does but not *how data flows* between them. Add a section that traces the two main data paths:
+
+**Suggested addition:**
+
+```markdown
+## Data flow
+
+### Manual digitizing pipeline
+1. User clicks on video (`DigitizingOverlayNode`)
+2. Click handler converts pixel position to model coords via `modelViewTransformProperty`
+3. `model.addPointToTrack(trackId, frame, time, x, y)` stores the point
+4. `tracksProperty` notifies observers → `DataTableNode` and `KinematicsGraphNode` update
+5. `computeTrackKinematics()` derives velocity/acceleration via finite differences
+
+### Auto-tracking pipeline
+1. User drags selection box (`AutoTrackerNode`)
+2. `OpenCVTracker.initFromVideo()` captures template from current frame
+3. On frame advance, `OpenCVTracker.track()` runs TM_CCOEFF_NORMED matching
+4. Result position is added to trail visualization
+5. (TODO) Position should be written to model via `addPointToTrack()`
+
+### Model-view transform
+1. User drags coordinate system origin → `coordOriginProperty` updates
+2. User rotates axis handle → `coordAngleProperty` updates
+3. User adjusts calibration endpoints → `calibPoint1/2Property` update
+4. `modelViewTransformProperty` (DerivedProperty) recomputes: T(origin) · R(θ) · S(s, -s)
+5. All track points are reprojected to maintain pixel-position invariance
 ```
 
-Every mutation to `tracksProperty` (add, remove, point added to a track) destroys and recreates all `TrackRowNode` instances. Each row registers observers on `model.activeTrackIdProperty`. At 26 tracks this means 26 listeners added and removed repeatedly.
+### Recommendation 2.2 — Add inline documentation to the graph subsystem
 
-**Fix:** `model.addPointToTrack()` replaces the entire tracks array, which triggers this rebuild even though no rows changed. Either:
+The graph subsystem is 2,479 lines (29% of the codebase) with sparse comments. Key functions that need explanation:
 
-- Store points separately (e.g., `Property<TrackPoint[]>` per track), so adding a point doesn't trigger a tracks-level notification, or
-- Use a key-based diffing approach (only create rows for new track ids).
+| File | Function/Section | What to document |
+|------|------------------|------------------|
+| `GraphInteractionHandler.ts` | `zoom()` | Why pinch center is preserved; what "manual zoom" flag does |
+| `GraphInteractionHandler.ts` | `rescaleAxes()` | When auto-scale applies vs respects manual zoom |
+| `GraphInteractionHandler.ts` | Axis touch handlers | How single-axis pan/zoom differs from two-axis gestures |
+| `ConfigurableGraph.ts` | `updateChart()` | Rendering pipeline: data filtering → scaling → path construction → clipping |
+| `GraphDataManager.ts` | `computeTickSpacing()` | Algorithm for choosing nice tick intervals |
+
+### Recommendation 2.3 — Document the coordinate system math
+
+`buildModelViewTransform()` (`SimModel.ts:72–90`) is the most critical function in the codebase. It composes a 2D affine transform from three user inputs. A block comment explaining the math would prevent future bugs:
+
+```typescript
+/**
+ * Build a Transform3 that maps real-world coordinates to video-pixel coordinates.
+ *
+ * The transform is composed as: T(origin) · R(θ) · S(s, -s)
+ *   where:
+ *   - T(origin) = translation to the coordinate system origin in pixel space
+ *   - R(θ) = rotation by the user-set axis angle
+ *   - S(s, -s) = scaling by (pixelDistance / realDistance), with Y negated
+ *     because pixel Y increases downward but model Y increases upward
+ *
+ * If either calibration distance is near zero, returns identity (no mapping).
+ */
+```
+
+### Recommendation 2.4 — Add a CONTRIBUTING section to CLAUDE.md
+
+The current guide tells developers *where* to work but not *how* to add common things. A brief patterns section would reduce onboarding friction:
+
+```markdown
+## Common patterns
+
+### Adding a new piece of shared state
+1. Add a `Property` to `SimModel.ts` (e.g., `myFeatureProperty`)
+2. Reset it in `SimModel.reset()`
+3. Observe it in the relevant view via `.link()` or `.lazyLink()`
+
+### Adding a new overlay on the video
+1. Create a new `Node` subclass in `src/screen-name/view/`
+2. Accept `model: SimModel` in the constructor
+3. Add it as a child of `VideoPlayerNode` (after the video DOM element)
+4. Add a visibility toggle to `ControlPanel` if needed
+
+### Adding a new plottable property to the graph
+1. Define a new `PlottableProperty` in `KinematicsGraphNode.ts`
+2. Provide a `subStepAccessor` that extracts the value from `SubStepDataPoint`
+3. Add it to the `xProperties` or `yProperties` array passed to `ConfigurableGraph`
+
+### Adding a new localized string
+1. Add the key to both `strings_en.json` and `strings_fr.json`
+2. Add an accessor method to `StringManager.ts`
+3. Use `StringManager.getInstance().getXxx()` in your view
+```
+
+### Recommendation 2.5 — Document known limitations in README.md
+
+Users and contributors should know about inherent platform limitations:
+
+```markdown
+## Known Limitations
+
+- **Frame rate is user-set, not detected.** The HTML video element provides no
+  standard API for reading native frame rate. TrackLab defaults to 30 fps;
+  users must manually adjust for videos at other rates.
+- **Cross-origin videos.** Auto-tracking requires pixel access to the video
+  canvas. Videos served without CORS headers will fail silently.
+- **WebM seek support.** Firefox-recorded WebM files may have limited seek
+  support; the app applies a duration fix but seeking may still be imprecise.
+- **SharedArrayBuffer.** FFmpeg-based features require `COOP`/`COEP` headers.
+  The dev server configures these automatically, but custom deployments must
+  set them manually.
+```
+
+### Recommendation 2.6 — Consolidate review documents
+
+There are currently three overlapping documents:
+
+| Document | Scope |
+|----------|-------|
+| `CODE_REVIEW.md` | Bugs, performance, security, maintainability |
+| `Recommendations` | Architectural separation-of-concern issues |
+| `CLAUDE.md` | Developer guide |
+
+The `CODE_REVIEW.md` and `Recommendations` files have significant overlap (both cover the NaN bug, dead keyboard file, model-view separation, etc.). Consider merging them into a single `ARCHITECTURE.md` that serves as the living architectural decision record, separate from `CLAUDE.md` (which stays as the quick-start developer guide) and `CODE_REVIEW.md` (which captures the point-in-time snapshot of bugs).
 
 ---
 
-## 8. `TRACK_COLORS` in the Model
+## Part 3: Prioritized Roadmap
 
-**File:** `SimModel.ts:6–15` | **Severity:** Low
+The items above are organized into a suggested execution order — highest value, lowest effort first:
 
-The palette is an array of CSS hex strings — purely a presentational concern. The model shouldn't own view aesthetics. Move it to `TrackLabColors.ts` or to a shared constants file imported by both the model and any view that needs it.
+### Sprint 1 — Quick Wins (1–2 days)
 
----
+These are small, focused changes with high impact:
 
-## 9. Minor Issues
+- [ ] Fix NaN graph filtering (1 line) — *Section 1.3*
+- [ ] Fix Y-axis pan direction (1 line) — *Section 1.4*
+- [ ] Rename `KeyboardShorcutsNode.ts` and update import — *Section P5*
+- [ ] Expand CLAUDE.md with data flow documentation — *Section 2.1*
+- [ ] Add JSDoc to `buildModelViewTransform()` — *Section 2.3*
 
-- **Webcam panel positioning** (`VideoPlayerNode.ts:436–439`): `WebcamPanel` is a child of `VideoPlayerNode` but is centered over `mainContent` using a `boundsProperty` listener. As a modal dialog it logically belongs at the screen-view level (added to `SimScreenView`, centered over the full view), not buried inside `VideoPlayerNode`.
+### Sprint 2 — Data Integrity (3–5 days)
 
-- **`canAddTrack()` is imperative, not reactive** (`SimModel.ts:81–83`): called from two places in `TrackListPanel`. It should be a `DerivedProperty<boolean>` that views can observe, so the enabled state of the "Add Track" button stays in sync automatically.
+These fix fundamental correctness problems:
 
-- **No disposal pattern**: View nodes register `Property` observers (via `link`/`lazyLink`) but don't implement `dispose()`. In a single-screen app this is acceptable, but if screens are ever added or components become reusable, leaked observers will cause bugs.
+- [ ] Wire auto-tracker output to `model.addPointToTrack()` — *Section 1.1*
+- [ ] Replace `markData[]` closure with model-derived dots — *Section 1.2*
+- [ ] Consolidate `videoLoadedProperty` into model — *Section P5*
+- [ ] Move `TRACK_COLORS` out of model — *Section 2.3*
+- [ ] Convert `canAddTrack()` to `DerivedProperty` — *Section 2.4*
 
-- **Coordinate space bug risk** (`VideoPlayerNode.ts:235–237`): The digitizing click handler calls `mvt.inversePosition2(globalPt)` using the global (screen) point, then separately stores `localPt` in `markData`. If the video node is ever not at the screen origin, the model point and the visual dot will be in different positions. The inverse transform should be applied to the local video-pixel point, not the global point.
+### Sprint 3 — Separation of Concerns (1–2 weeks)
+
+These are structural refactors that improve maintainability:
+
+- [ ] Move coordinate/calibration properties to model (Option A) — *Section 2.1*
+- [ ] Decompose `GraphInteractionHandler.ts` into focused handlers — *Section 2.2*
+- [ ] Move `WebcamPanel` to `SimScreenView` level — *Section P5*
+- [ ] Add inline documentation to graph subsystem — *Section 2.2*
+- [ ] Add CONTRIBUTING patterns section to CLAUDE.md — *Section 2.4*
+
+### Sprint 4 — Performance & Polish (1 week)
+
+- [ ] Pool trail `Circle` nodes in `GraphDataManager` — *Section 3.1*
+- [ ] Reuse OpenCV `Mat` buffers across frames — *Section 3.2*
+- [ ] Debounce track point reprojection during drag — *Section 3.3*
+- [ ] Add bounds checking to coordinate system drag — *Section 4.1*
+- [ ] Fix AutoTracker race condition — *Section 4.2*
+- [ ] Document known limitations in README.md — *Section 2.5*
 
 ---
 
 ## Summary Table
 
-| Issue | Severity | Files |
-|-------|----------|-------|
-| `markData[]` not cleared on reset/delete | High | `VideoPlayerNode.ts` |
-| View writing to model (transform) | High | `SimScreenView.ts`, `SimModel.ts` |
-| Auto-tracked data never enters model | High | `AutoTrackerNode.ts` |
-| `VideoPlayerNode` god-object | Medium | `VideoPlayerNode.ts` |
-| Hardcoded 30 fps | Medium | `VideoPlayerNode.ts` |
-| `videoLoadedProperty` duplicated | Low | `SimScreenView.ts`, `VideoPlayerNode.ts` |
-| Track rows rebuilt on every point add | Low | `TrackListPanel.ts` |
-| `TRACK_COLORS` in model | Low | `SimModel.ts` |
-| `canAddTrack()` not reactive | Low | `SimModel.ts`, `TrackListPanel.ts` |
-| Webcam panel at wrong layer | Low | `VideoPlayerNode.ts` |
-| Global vs local point for inverse transform | Low | `VideoPlayerNode.ts:236` |
+| # | Issue | Severity | Effort | Sprint |
+|---|-------|----------|--------|--------|
+| 1.1 | Auto-tracker data never enters model | High | Medium | 2 |
+| 1.2 | `markData[]` in view closure | High | Medium | 2 |
+| 1.3 | NaN leaks through graph filter | High | Trivial | 1 |
+| 1.4 | Y-axis pan inverted | High | Trivial | 1 |
+| 2.1 | View writing to model (transform) | Medium | Large | 3 |
+| 2.2 | `GraphInteractionHandler` too large | Medium | Large | 3 |
+| 2.3 | `TRACK_COLORS` in model | Low | Trivial | 2 |
+| 2.4 | `canAddTrack()` not reactive | Low | Small | 2 |
+| 3.1 | Trail node destruction/recreation | Medium | Small | 4 |
+| 3.2 | Per-frame WASM Mat allocation | Medium | Small | 4 |
+| 3.3 | Reprojection on every drag | Low | Small | 4 |
+| 3.4 | TrackListPanel full rebuild | Low | Medium | 4 |
+| 4.1 | Coordinate system off-screen | Medium | Trivial | 4 |
+| 4.2 | AutoTracker race condition | Medium | Small | 4 |
+| 4.3 | Calibration overlap feedback | Low | Small | 4 |
+| 4.4 | Zoom buttons don't persist flag | Low | Trivial | 4 |
+| 4.5 | Silent error handling | Low | Medium | 4 |
+| D.1 | Data flow docs in CLAUDE.md | — | Small | 1 |
+| D.2 | Graph subsystem inline docs | — | Medium | 3 |
+| D.3 | JSDoc on `buildModelViewTransform` | — | Trivial | 1 |
+| D.4 | CONTRIBUTING patterns in CLAUDE.md | — | Small | 3 |
+| D.5 | Known limitations in README.md | — | Small | 4 |
+| D.6 | Consolidate review documents | — | Small | 3 |
