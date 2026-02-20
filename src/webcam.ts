@@ -72,12 +72,25 @@ export function fixWebmDuration(
     const blobUrl = URL.createObjectURL(blob);
     video.src = blobUrl;
 
+    // Shared cleanup: cancel the timeout and revoke the blob URL.
+    // Called exactly once from whichever path settles the promise first.
+    const cleanup = (timeoutId: ReturnType<typeof setTimeout>) => {
+      clearTimeout(timeoutId);
+      URL.revokeObjectURL(blobUrl);
+    };
+
+    // Start the timeout *before* assigning event handlers so the ID is
+    // available inside the handlers through the closure.
+    const timeoutId = setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+      reject(new Error("Timeout while fixing video duration"));
+    }, 10000);
+
     video.onloadedmetadata = () => {
       // If duration is already valid, return immediately
       if (Number.isFinite(video.duration) && video.duration > 0) {
-        const duration = video.duration;
-        URL.revokeObjectURL(blobUrl);
-        resolve({ blob, duration });
+        cleanup(timeoutId);
+        resolve({ blob, duration: video.duration });
         return;
       }
 
@@ -89,7 +102,7 @@ export function fixWebmDuration(
       // Now duration should be available
       const duration = video.duration;
       video.currentTime = 0; // Reset to beginning
-      URL.revokeObjectURL(blobUrl);
+      cleanup(timeoutId);
 
       if (Number.isFinite(duration) && duration > 0) {
         resolve({ blob, duration });
@@ -99,15 +112,9 @@ export function fixWebmDuration(
     };
 
     video.onerror = () => {
-      URL.revokeObjectURL(blobUrl);
+      cleanup(timeoutId);
       reject(new Error("Failed to load video for duration fix"));
     };
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl);
-      reject(new Error("Timeout while fixing video duration"));
-    }, 10000);
   });
 }
 
