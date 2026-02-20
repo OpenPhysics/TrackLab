@@ -475,7 +475,6 @@ export class SimModel {
     this.tracker.dispose();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public step(_dt: number): void {
     // video playback is driven by the HTML video element; no model stepping needed
   }
