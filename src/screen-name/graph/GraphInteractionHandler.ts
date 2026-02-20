@@ -412,9 +412,9 @@ export default class GraphInteractionHandler {
             // Single touch - vertical pan
             const deltaY = globalPoint.y - singleTouchStartY;
 
-            // Convert delta to model coordinates
+            // Convert delta to model coordinates (negate: dragging down pans values down)
             const modelDeltaY =
-              deltaY * (initialYRange.getLength() / this.graphHeight);
+              -deltaY * (initialYRange.getLength() / this.graphHeight);
 
             const newYRange = new Range(
               initialYRange.min + modelDeltaY,
@@ -1077,19 +1077,18 @@ export default class GraphInteractionHandler {
    * Note: Does not disable auto-rescaling, allowing the graph to continue adjusting to new data
    */
   public zoomIn(): void {
-    // Zoom centered on the middle of the chart
+    // Zoom centered on the middle of the chart; set manual flag so auto-rescale won't override.
     const centerPoint = new Vector2(this.graphWidth / 2, this.graphHeight / 2);
-    this.zoom(this.zoomFactor, centerPoint, false);
+    this.zoom(this.zoomFactor, centerPoint, true);
   }
 
   /**
    * Zoom out centered on the graph
-   * Note: Does not disable auto-rescaling, allowing the graph to continue adjusting to new data
    */
   public zoomOut(): void {
-    // Zoom out centered on the middle of the chart
+    // Zoom out centered on the middle of the chart; set manual flag so auto-rescale won't override.
     const centerPoint = new Vector2(this.graphWidth / 2, this.graphHeight / 2);
-    this.zoom(1 / this.zoomFactor, centerPoint, false);
+    this.zoom(1 / this.zoomFactor, centerPoint, true);
   }
 
   /**
