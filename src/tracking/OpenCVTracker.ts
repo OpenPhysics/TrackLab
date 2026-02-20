@@ -73,6 +73,24 @@ export class OpenCVTracker {
   }
 
   /**
+   * Draw a video frame onto the offscreen canvas and read back the pixels.
+   * Throws a descriptive Error (wrapping the original SecurityError) if the
+   * video is cross-origin and has no CORS headers, instead of letting the
+   * SecurityError propagate uncaught.
+   */
+  private captureFrame(video: HTMLVideoElement): ImageData {
+    this.ctx.drawImage(video, 0, 0);
+    try {
+      return this.ctx.getImageData(0, 0, this.offscreen.width, this.offscreen.height);
+    } catch (e) {
+      throw new Error(
+        "Cannot read video pixels: the video source may be cross-origin without CORS headers.",
+        { cause: e },
+      );
+    }
+  }
+
+  /**
    * Capture the template from the currently visible video frame inside `region`,
    * loading OpenCV (WASM) on first call.
    */
@@ -82,13 +100,7 @@ export class OpenCVTracker {
   ): Promise<void> {
     this.cv = await loadCV();
 
-    this.ctx.drawImage(video, 0, 0);
-    const imageData = this.ctx.getImageData(
-      0,
-      0,
-      this.offscreen.width,
-      this.offscreen.height,
-    );
+    const imageData = this.captureFrame(video);
     const frame = this.cv.matFromImageData(imageData);
     const gray = new this.cv.Mat();
     try {
@@ -122,13 +134,13 @@ export class OpenCVTracker {
   public track(video: HTMLVideoElement): { x: number; y: number } | null {
     if (!this.ready) return null;
 
-    this.ctx.drawImage(video, 0, 0);
-    const imageData = this.ctx.getImageData(
-      0,
-      0,
-      this.offscreen.width,
-      this.offscreen.height,
-    );
+    let imageData: ImageData;
+    try {
+      imageData = this.captureFrame(video);
+    } catch {
+      // Cross-origin video — silently skip this frame rather than crashing.
+      return null;
+    }
     const frame = this.cv.matFromImageData(imageData);
     const gray = new this.cv.Mat();
     const result = new this.cv.Mat();

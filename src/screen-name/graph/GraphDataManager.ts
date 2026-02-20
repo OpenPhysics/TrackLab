@@ -36,6 +36,10 @@ export default class GraphDataManager {
   private readonly trailLength: number = 5;
   private isManuallyZoomed: boolean = false;
 
+  // Pool of Circle nodes reused by updateTrail() to avoid allocating and
+  // discarding SceneryStack nodes on every update (pan, zoom, new data, etc.).
+  private readonly trailCirclePool: Circle[] = [];
+
   // Grid and tick components
   private readonly verticalGridLineSet: GridLineSet;
   private readonly horizontalGridLineSet: GridLineSet;
@@ -240,51 +244,44 @@ export default class GraphDataManager {
   }
 
   /**
-   * Update the trail visualization showing the most recent points
+   * Update the trail visualization showing the most recent points.
+   * Reuses a pool of Circle nodes (updating radius, opacity, position) instead
+   * of destroying and recreating nodes on every call.
    */
   public updateTrail(): void {
-    // Clear existing trail circles
-    this.trailNode.removeAllChildren();
-
-    // Get the last N points (up to trailLength)
     const numTrailPoints = Math.min(this.trailLength, this.dataPoints.length);
-    if (numTrailPoints === 0) {
-      return;
-    }
-
-    // Start from the most recent points
     const startIndex = this.dataPoints.length - numTrailPoints;
 
-    for (let i = 0; i < numTrailPoints; i++) {
-      const point = this.dataPoints[startIndex + i];
-      if (!point) continue;
+    const minRadius = 3;
+    const maxRadius = 5;
+    const minOpacity = 0.2;
+    const maxOpacity = 0.8;
 
-      // Calculate the age of this point (0 = oldest in trail, numTrailPoints-1 = newest)
-      const age = i;
-      const fraction = age / (numTrailPoints - 1 || 1); // 0 to 1, where 1 is newest
-
-      // Size and opacity increase with recency
-      // Oldest point: small and transparent
-      // Newest point: large and opaque
-      const minRadius = 3;
-      const maxRadius = 5;
-      const radius = minRadius + (maxRadius - minRadius) * fraction;
-
-      const minOpacity = 0.2;
-      const maxOpacity = 0.8;
-      const opacity = minOpacity + (maxOpacity - minOpacity) * fraction;
-
-      // Transform model coordinates to view coordinates
-      const viewPosition = this.chartTransform.modelToViewPosition(point);
-
-      // Create circle for this trail point
-      const circle = new Circle(radius, {
+    // Grow the pool if needed.
+    while (this.trailCirclePool.length < numTrailPoints) {
+      const circle = new Circle(minRadius, {
         fill: TrackLabColors.plot1Property,
-        opacity: opacity,
-        center: viewPosition,
+        opacity: minOpacity,
       });
-
+      this.trailCirclePool.push(circle);
       this.trailNode.addChild(circle);
+    }
+
+    // Update each pool circle (visible ones first, then hide extras).
+    for (let i = 0; i < this.trailCirclePool.length; i++) {
+      const circle = this.trailCirclePool[i]!;
+      if (i < numTrailPoints) {
+        const point = this.dataPoints[startIndex + i];
+        if (!point) { circle.visible = false; continue; }
+
+        const fraction = i / (numTrailPoints - 1 || 1); // 0 = oldest, 1 = newest
+        circle.radius = minRadius + (maxRadius - minRadius) * fraction;
+        circle.opacity = minOpacity + (maxOpacity - minOpacity) * fraction;
+        circle.center = this.chartTransform.modelToViewPosition(point);
+        circle.visible = true;
+      } else {
+        circle.visible = false;
+      }
     }
   }
 

@@ -122,8 +122,16 @@ export class DigitizingOverlayNode extends Node {
     /**
      * Computes the rendered video bounds within the display element,
      * accounting for letterboxing/pillarboxing when aspect ratios differ.
+     * Cached and only recomputed when the video's intrinsic dimensions change.
      */
-    const getRenderedVideoBounds = () => {
+    type VideoBoundsCache = {
+      renderedW: number; renderedH: number;
+      offsetX: number; offsetY: number;
+      videoW: number; videoH: number;
+    };
+    let cachedVideoBounds: VideoBoundsCache | null = null;
+
+    const computeRenderedVideoBounds = (): VideoBoundsCache => {
       const displayW = videoElement.width;
       const displayH = videoElement.height;
       const videoW = videoElement.videoWidth || displayW;
@@ -150,6 +158,17 @@ export class DigitizingOverlayNode extends Node {
       }
 
       return { renderedW, renderedH, offsetX, offsetY, videoW, videoH };
+    };
+
+    // Invalidate the cache whenever the video's intrinsic dimensions become available.
+    const onMetadata = () => { cachedVideoBounds = null; };
+    videoElement.addEventListener("loadedmetadata", onMetadata);
+
+    const getRenderedVideoBounds = (): VideoBoundsCache => {
+      if (!cachedVideoBounds) {
+        cachedVideoBounds = computeRenderedVideoBounds();
+      }
+      return cachedVideoBounds;
     };
 
     const updateMagnifier = (
@@ -344,8 +363,7 @@ export class DigitizingOverlayNode extends Node {
           );
 
           const time = model.currentTimeProperty.value;
-          const frameDuration = model.frameDurationProperty.value;
-          const frame = Math.round(time / frameDuration);
+          const frame = Math.round(time * model.frameRateProperty.value);
 
           const mvt = model.modelViewTransformProperty.value;
           const modelPt = mvt.inversePosition2(localPt);
@@ -362,6 +380,7 @@ export class DigitizingOverlayNode extends Node {
 
     // Store cleanup function
     this.disposeDigitizingOverlay = () => {
+      videoElement.removeEventListener("loadedmetadata", onMetadata);
       TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
       TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
       TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
