@@ -6,7 +6,6 @@
  */
 
 import {
-  NumberProperty,
   Property,
   type TReadOnlyProperty,
 } from "scenerystack/axon";
@@ -26,17 +25,17 @@ const GRAPH_HEIGHT = 200;
 const MAX_DATA_POINTS = 5000;
 
 /**
- * Creates a PlottableProperty for a kinematic variable with a subStepAccessor.
+ * Creates a PlottableProperty for a kinematic variable driven entirely by
+ * subStepAccessor.  No backing Property is needed because KinematicsGraphNode
+ * always feeds data via addDataPointsFromSubSteps rather than addDataPoint.
  */
 function createPlottableProperty(
   name: string,
   unit: string | TReadOnlyProperty<string>,
-  dummyProperty: NumberProperty,
   accessor: (point: SubStepDataPoint) => number,
 ): PlottableProperty {
   return {
     name,
-    property: dummyProperty,
     unit,
     subStepAccessor: accessor,
   };
@@ -51,17 +50,6 @@ export class KinematicsGraphNode extends VBox {
   private currentComboBox: ComboBox<string | null> | null = null;
   private readonly disposeKinematicsGraph: () => void;
 
-  // Dummy properties for the graph (values aren't used directly, we push data manually)
-  private readonly tProperty = new NumberProperty(0);
-  private readonly xProperty = new NumberProperty(0);
-  private readonly yProperty = new NumberProperty(0);
-  private readonly vxProperty = new NumberProperty(0);
-  private readonly vyProperty = new NumberProperty(0);
-  private readonly speedProperty = new NumberProperty(0);
-  private readonly axProperty = new NumberProperty(0);
-  private readonly ayProperty = new NumberProperty(0);
-  private readonly aMagProperty = new NumberProperty(0);
-
   public constructor(model: SimModel, listParent: Node) {
     super({
       spacing: 8,
@@ -72,58 +60,18 @@ export class KinematicsGraphNode extends VBox {
     this.listParent = listParent;
     this.selectedTrackProperty = new Property<string | null>(null);
 
-    // Create plottable properties using unit properties from the model
-    // Accessor functions return 0 for undefined values (filtered out later by NaN check)
+    // Create plottable properties using unit properties from the model.
+    // Accessor functions return 0 for undefined values (filtered out later by NaN check).
     const plottableProperties: PlottableProperty[] = [
-      createPlottableProperty("t", "s", this.tProperty, (pt) => pt.t ?? 0),
-      createPlottableProperty(
-        "x",
-        model.distanceUnitProperty,
-        this.xProperty,
-        (pt) => pt.x ?? 0,
-      ),
-      createPlottableProperty(
-        "y",
-        model.distanceUnitProperty,
-        this.yProperty,
-        (pt) => pt.y ?? 0,
-      ),
-      createPlottableProperty(
-        "vx",
-        model.velocityUnitProperty,
-        this.vxProperty,
-        (pt) => pt.vx ?? 0,
-      ),
-      createPlottableProperty(
-        "vy",
-        model.velocityUnitProperty,
-        this.vyProperty,
-        (pt) => pt.vy ?? 0,
-      ),
-      createPlottableProperty(
-        "speed",
-        model.velocityUnitProperty,
-        this.speedProperty,
-        (pt) => pt.speed ?? 0,
-      ),
-      createPlottableProperty(
-        "ax",
-        model.accelerationUnitProperty,
-        this.axProperty,
-        (pt) => pt.ax ?? 0,
-      ),
-      createPlottableProperty(
-        "ay",
-        model.accelerationUnitProperty,
-        this.ayProperty,
-        (pt) => pt.ay ?? 0,
-      ),
-      createPlottableProperty(
-        "|a|",
-        model.accelerationUnitProperty,
-        this.aMagProperty,
-        (pt) => pt.aMag ?? 0,
-      ),
+      createPlottableProperty("t", "s", (pt) => pt.t ?? 0),
+      createPlottableProperty("x", model.distanceUnitProperty, (pt) => pt.x ?? 0),
+      createPlottableProperty("y", model.distanceUnitProperty, (pt) => pt.y ?? 0),
+      createPlottableProperty("vx", model.velocityUnitProperty, (pt) => pt.vx ?? 0),
+      createPlottableProperty("vy", model.velocityUnitProperty, (pt) => pt.vy ?? 0),
+      createPlottableProperty("speed", model.velocityUnitProperty, (pt) => pt.speed ?? 0),
+      createPlottableProperty("ax", model.accelerationUnitProperty, (pt) => pt.ax ?? 0),
+      createPlottableProperty("ay", model.accelerationUnitProperty, (pt) => pt.ay ?? 0),
+      createPlottableProperty("|a|", model.accelerationUnitProperty, (pt) => pt.aMag ?? 0),
     ];
 
     // Default: plot y vs x (trajectory)
@@ -216,15 +164,6 @@ export class KinematicsGraphNode extends VBox {
       }
       this.selectedTrackProperty.dispose();
       this.graph.dispose();
-      this.tProperty.dispose();
-      this.xProperty.dispose();
-      this.yProperty.dispose();
-      this.vxProperty.dispose();
-      this.vyProperty.dispose();
-      this.speedProperty.dispose();
-      this.axProperty.dispose();
-      this.ayProperty.dispose();
-      this.aMagProperty.dispose();
     };
   }
 

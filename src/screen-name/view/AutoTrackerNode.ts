@@ -13,7 +13,8 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
+import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const MAX_TRAIL = 150;
 const CROSSHAIR_SIZE = 16;

@@ -8,10 +8,15 @@ import {
 import { Matrix3, Range, Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
+  CALIB_HALF_LENGTH,
   MIN_CALIB_DISTANCE,
   MIN_PIXEL_DISTANCE,
   TRACK_SYMBOL_FIRST_CODE,
   TRACK_SYMBOL_LAST_CODE,
+  VIDEO_CENTER_X,
+  VIDEO_CENTER_Y,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
 import type {
@@ -20,10 +25,6 @@ import type {
   TrackKinematics,
   TrackPoint,
 } from "./Track.js";
-
-// Video display dimensions (used by tracker and views)
-export const VIDEO_WIDTH = 640;
-export const VIDEO_HEIGHT = 360;
 
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
@@ -35,16 +36,8 @@ export const FRAME_RATE_OPTIONS = [15, 24, 25, 29.97, 30, 50, 60] as const;
 export const DEFAULT_FRAME_RATE = 30;
 export const FRAME_RATE_RANGE = new Range(1, 120);
 
-// ── Layout constants ───────────────────────────────────────────────────────
-// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
-// The VideoPlayerNode is centered at layoutBounds.center + (0, -20).
-const LAYOUT_CENTER_X = 512; // 1024 / 2
-const LAYOUT_CENTER_Y = 309; // 618 / 2
-export const VIDEO_CENTER_X = LAYOUT_CENTER_X; // 512
-export const VIDEO_CENTER_Y = LAYOUT_CENTER_Y - 20; // 289
-const CALIB_HALF_LEN = 100; // pixels from center to each calibration endpoint
-
-// Initial tool positions (view / pixel space)
+// ── Initial tool positions (view / pixel space) ───────────────────────────
+// These default positions are computed from the shared video layout constants.
 const COORD_ORIGIN_INITIAL = new Vector2(
   VIDEO_CENTER_X - VIDEO_WIDTH / 4,
   VIDEO_CENTER_Y,
@@ -53,8 +46,8 @@ const CALIB_CENTER_INITIAL = new Vector2(
   VIDEO_CENTER_X,
   VIDEO_CENTER_Y + VIDEO_HEIGHT / 4,
 );
-const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LEN, 0);
-const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LEN, 0);
+const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
+const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
 // ── Model-view transform builder ───────────────────────────────────────────
 /**

@@ -6,8 +6,8 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import { VIDEO_CENTER_X, VIDEO_CENTER_Y, VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
-import { VIDEO_CENTER_X, VIDEO_CENTER_Y, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
 

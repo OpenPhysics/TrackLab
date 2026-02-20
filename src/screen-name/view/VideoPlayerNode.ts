@@ -1,7 +1,8 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { DOM, Node, VBox } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
-import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
+import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
 

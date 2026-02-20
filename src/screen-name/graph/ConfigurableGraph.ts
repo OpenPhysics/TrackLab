@@ -632,8 +632,9 @@ export default class ConfigurableGraph extends Node {
    * Add a new data point based on current property values
    */
   public addDataPoint(): void {
-    const xValue = this.xPropertyProperty.value.property.value;
-    const yValue = this.yPropertyProperty.value.property.value;
+    const xValue = this.xPropertyProperty.value.property?.value;
+    const yValue = this.yPropertyProperty.value.property?.value;
+    if (xValue === undefined || yValue === undefined) return;
 
     this.dataManager.addDataPoint(xValue, yValue);
   }
@@ -697,7 +698,7 @@ export default class ConfigurableGraph extends Node {
     }
     // For properties without sub-step data, fall back to current property value.
     // This handles derived properties like energy, RMS values, etc.
-    return axisProperty.property.value;
+    return axisProperty.property?.value ?? null;
   }
 
   /**

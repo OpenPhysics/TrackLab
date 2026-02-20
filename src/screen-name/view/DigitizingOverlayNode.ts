@@ -10,7 +10,8 @@ import {
 } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
-import { type SimModel, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
+import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const OUTER_R = 12;
 const INNER_R = 2;
