@@ -1,8 +1,4 @@
-import {
-  DerivedProperty,
-  EnumerationProperty,
-  Property,
-} from "scenerystack/axon";
+import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import {
@@ -87,7 +83,7 @@ export class PlaybackControlsNode extends HBox {
     );
 
     const scrubber = new Slider(
-      model.currentTimeProperty as unknown as Property<number>,
+      model.currentTimeProperty,
       rangeProperty,
       {
         trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),

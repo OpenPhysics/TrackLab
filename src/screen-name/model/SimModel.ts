@@ -282,7 +282,9 @@ function computeTrackKinematics(track: Track): TrackKinematics {
 
 export class SimModel {
   public readonly isPlayingProperty = new BooleanProperty(false);
-  public readonly currentTimeProperty = new Property<number>(0);
+  public readonly currentTimeProperty = new NumberProperty(0, {
+    range: new Range(0, Number.MAX_VALUE),
+  });
   public readonly durationProperty = new Property<number>(0);
 
   // ── Frame rate (user-settable, default 30 fps) ─────────────────────────
