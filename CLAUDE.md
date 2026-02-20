@@ -33,6 +33,18 @@ src/screen-name/view/      ← all UI components
 | `WebcamPanel.ts` | Webcam recording dialog |
 | `KeyboardShortcutsNode.ts` | Keyboard shortcuts |
 
+**Graph** (`src/screen-name/graph/`) powers the configurable X-Y plot panel. Key files:
+
+| File | Responsibility |
+|------|----------------|
+| `ConfigurableGraph.ts` | Top-level graph node; owns axis selectors, chart layout, and zoom/reset buttons |
+| `GraphDataManager.ts` | Accumulates data points, owns auto-scaling, tick spacing, and trail circle rendering |
+| `GraphInteractionHandler.ts` | All pointer/touch/keyboard gestures — pan, pinch-zoom, axis drag, resize, header drag |
+| `GraphControlsPanel.ts` | Axis property selector dropdowns (what to plot on each axis) |
+| `PlottableProperty.ts` | `PlottableProperty` type — interface any quantity must satisfy to appear in the selector |
+
+> **Note:** `GraphInteractionHandler.ts` is the largest file in the codebase (~1,150 lines). When modifying gesture logic, read the existing `zoom()` / `pan()` / `rescaleAxes()` helpers before adding new code — many edge cases (pinch center preservation, manual-zoom locking, axis-specific gestures) are already handled.
+
 The other source directories are less frequently modified:
 
 - `src/preferences/` — User preferences (color profile, etc.)
@@ -57,3 +69,7 @@ npm run fix        # fix lint + format issues together
 - **Model-view transform**: `SimScreenView` computes a `modelViewTransformProperty` from the coordinate system pose and calibration data. Use it to convert between real-world units and video-pixel coordinates.
 - **Frame rate**: `SimModel.frameRateProperty` (default 30 fps) drives `frameDurationProperty`. The user can change frame rate via `PlaybackControlsNode`; frame stepping and time display use this value.
 - **SceneryStack layout**: use `HBox` / `VBox` for rows and columns. Prefer `align: 'center'` and explicit `spacing` values. Do not set absolute pixel positions unless absolutely necessary.
+
+## Testing
+
+There is currently **no test suite**, and none should be added at this stage. The codebase is evolving rapidly — APIs, model structure, and UI components change frequently enough that maintaining tests would cost more than they save right now. Do not install a test framework or create test files.

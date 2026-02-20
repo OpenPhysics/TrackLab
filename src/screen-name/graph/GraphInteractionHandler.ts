@@ -63,6 +63,22 @@ export interface GraphDimensions {
   height: number;
 }
 
+/**
+ * Handles all pointer, touch, and keyboard interactions for a ConfigurableGraph.
+ *
+ * Responsibilities:
+ * - Mouse-wheel and pinch-to-zoom (preserving the zoom center point)
+ * - Two-finger and single-axis touch pan
+ * - Independent X-axis and Y-axis touch controls (tap the axis label to pan/scale that axis only)
+ * - Header-bar drag to reposition the graph panel
+ * - Corner resize handles
+ * - `zoomIn()` / `zoomOut()` / `pan()` methods called by keyboard shortcuts and toolbar buttons
+ *
+ * Manual zoom is tracked via `GraphDataManager.setManuallyZoomed()`. When set, auto-rescaling
+ * is suppressed so the user's zoom is preserved as new data arrives.
+ *
+ * Call `initialize()` once after construction to attach all input listeners.
+ */
 export default class GraphInteractionHandler {
   private readonly chartTransform: ChartTransform;
   private readonly chartRectangle: ChartRectangle;
@@ -86,6 +102,13 @@ export default class GraphInteractionHandler {
   private graphWidth: number;
   private graphHeight: number;
 
+  /**
+   * @param chartConfig - Chart transform, chart rectangle, and data manager
+   * @param uiState - Observable flags for drag/resize in-progress state
+   * @param uiElements - The visual nodes that receive input listeners
+   * @param dimensions - Initial graph width/height in view coordinates
+   * @param onResize - Callback invoked with the new (width, height) after a resize drag
+   */
   public constructor(
     chartConfig: ChartConfig,
     uiState: GraphUIState,
