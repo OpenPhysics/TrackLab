@@ -1,5 +1,6 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty } from "scenerystack/axon";
+import { Color } from "scenerystack";
 import { Shape } from "scenerystack/kite";
 import {
   Circle,
@@ -24,6 +25,7 @@ import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
+const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
 const ENDPOINT_RADIUS = 4;
 const ENDPOINT_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const LINE_WIDTH = 2;
@@ -38,6 +40,9 @@ const MIDPOINT_PANEL_SPACING = 8;
 const MIDPOINT_Y_OFFSET = 12; // pixels above midpoint where the panel sits
 const ENDPOINT_DRAG_SPEED = 200; // pixels/s for normal keyboard drag
 const ENDPOINT_SHIFT_DRAG_SPEED = 40; // pixels/s for shift-key keyboard drag
+// Pixel distance below which endpoints are considered overlapping and a warning is shown.
+const OVERLAP_WARNING_DISTANCE = 10;
+const ENDPOINT_WARNING_COLOR = new Color(255, 60, 60);
 
 export class CalibrationToolNode extends Node {
   public constructor(
@@ -161,6 +166,15 @@ export class CalibrationToolNode extends Node {
     midpointPanel.setScaleMagnitude(MIDPOINT_PANEL_SCALE);
     this.addChild(midpointPanel);
 
+    // ── Overlap warning text ──────────────────────────────────────────────
+    // Shown when endpoints are too close together to produce a valid calibration.
+    const overlapWarning = new Text("Points too close — move apart to calibrate", {
+      font: WARNING_FONT,
+      fill: ENDPOINT_WARNING_COLOR,
+      visible: false,
+    });
+    this.addChild(overlapWarning);
+
     // ── Update geometry when endpoints move ───────────────────────────────
     const updateGeometry = () => {
       const p1 = model.calibPoint1Property.value;
@@ -171,6 +185,17 @@ export class CalibrationToolNode extends Node {
       const mid = p1.blend(p2, 0.5);
       midpointPanel.centerX = mid.x;
       midpointPanel.bottom = mid.y - MIDPOINT_Y_OFFSET;
+
+      // Show warning and highlight endpoints when too close to be useful.
+      const tooClose = p1.distance(p2) < OVERLAP_WARNING_DISTANCE;
+      const endpointFill = tooClose ? ENDPOINT_WARNING_COLOR : TrackLabColors.calibrationFillProperty.value;
+      endpoint1.fill = endpointFill;
+      endpoint2.fill = endpointFill;
+      overlapWarning.visible = tooClose;
+      if (tooClose) {
+        overlapWarning.centerX = mid.x;
+        overlapWarning.top = mid.y + MIDPOINT_Y_OFFSET;
+      }
     };
     model.calibPoint1Property.link(updateGeometry);
     model.calibPoint2Property.link(updateGeometry);
