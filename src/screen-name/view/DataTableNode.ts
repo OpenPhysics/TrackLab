@@ -292,6 +292,43 @@ function buildHTMLTable(
 }
 
 /**
+ * Build a single `<tr>` for a data row.
+ * Used by the incremental-update path to avoid rebuilding the whole table.
+ */
+function buildSingleDataRow(
+  row: DataRow,
+  tracks: readonly Track[],
+  cellStyle: string,
+  isEven: boolean,
+  colors: TableColors,
+): HTMLTableRowElement {
+  const tr = document.createElement("tr");
+  tr.style.background = isEven ? colors.rowEven : colors.rowOdd;
+
+  const addCell = (text: string) => {
+    const td = document.createElement("td");
+    td.textContent = text;
+    td.style.cssText = cellStyle;
+    tr.appendChild(td);
+  };
+
+  addCell(String(row.frame));
+  addCell(row.time.toFixed(CELL_DECIMAL_PLACES));
+  for (const track of tracks) {
+    const val = row.values.get(track.id);
+    if (val) {
+      addCell(val.x.toFixed(CELL_DECIMAL_PLACES));
+      addCell(val.y.toFixed(CELL_DECIMAL_PLACES));
+    } else {
+      addCell("—");
+      addCell("—");
+    }
+  }
+
+  return tr;
+}
+
+/**
  * Download icon (simple arrow pointing down).
  */
 function makeDownloadIcon(): Node {
@@ -308,6 +345,14 @@ export class DataTableNode extends Panel {
   private exportCounter = 1;
   private tableWrapper: HTMLDivElement;
   private readonly disposeDataTable: () => void;
+
+  // ── Incremental-update state ─────────────────────────────────────────────
+  // Tracks whether the table needs a full structural rebuild or just new rows.
+  private lastTrackIds: string[] = [];
+  private lastUnit: string = "";
+  private tableBodyRef: HTMLTableSectionElement | null = null;
+  private readonly frameRowMap: Map<number, HTMLTableRowElement> = new Map();
+  private maxRenderedFrame: number = -Infinity;
 
   public constructor(
     model: SimModel,
@@ -407,27 +452,123 @@ export class DataTableNode extends Panel {
 
     this.tableWrapper = tableWrapper;
 
-    // ── Rebuild table function ───────────────────────────────────────────────
-    const rebuildTable = () => {
-      const tracks = model.tracksProperty.value;
-      const unit = unitProperty.value;
+    // ── Full rebuild helper ──────────────────────────────────────────────────
+    // Replaces the entire table DOM and refreshes cached references.
+    const doFullRebuild = (tracks: readonly Track[], unit: string) => {
+      const colors = getTableColors();
+      const newWrapper = buildHTMLTable(tracks, unit, colors, getLabels());
 
-      // Build new table with current colors and labels
-      const newWrapper = buildHTMLTable(
-        tracks,
-        unit,
-        getTableColors(),
-        getLabels(),
-      );
-
-      // Replace the content
       this.tableWrapper.innerHTML = "";
       if (newWrapper.firstChild) {
         this.tableWrapper.appendChild(newWrapper.firstChild);
       }
-
-      // Copy styles
       this.tableWrapper.style.cssText = newWrapper.style.cssText;
+
+      // Cache <tbody> reference and rebuild the frame→row map.
+      const tbody = this.tableWrapper.querySelector("tbody");
+      this.tableBodyRef = tbody instanceof HTMLTableSectionElement ? tbody : null;
+      this.frameRowMap.clear();
+      this.maxRenderedFrame = -Infinity;
+
+      if (this.tableBodyRef) {
+        const dataRows = buildDataRows(tracks);
+        const trs = Array.from(this.tableBodyRef.querySelectorAll("tr"));
+        dataRows.forEach((row, i) => {
+          const tr = trs[i];
+          if (tr instanceof HTMLTableRowElement) {
+            this.frameRowMap.set(row.frame, tr);
+            if (row.frame > this.maxRenderedFrame) {
+              this.maxRenderedFrame = row.frame;
+            }
+          }
+        });
+      }
+
+      this.lastTrackIds = tracks.map((t) => t.id);
+      this.lastUnit = unit;
+    };
+
+    // ── Rebuild table function ───────────────────────────────────────────────
+    // Performs a full rebuild on structural changes (track added/removed, unit
+    // or colour change) and an incremental row-append on data-only changes
+    // (new points added to existing tracks).  During auto-tracking this fires
+    // ~30 times/s, so avoiding unnecessary full DOM rebuilds is critical.
+    const rebuildTable = () => {
+      const tracks = model.tracksProperty.value;
+      const unit = unitProperty.value;
+      const trackIds = tracks.map((t) => t.id);
+
+      const isStructural =
+        unit !== this.lastUnit ||
+        trackIds.length !== this.lastTrackIds.length ||
+        trackIds.some((id, i) => id !== this.lastTrackIds[i]);
+
+      if (isStructural || !this.tableBodyRef) {
+        doFullRebuild(tracks, unit);
+        return;
+      }
+
+      // ── Incremental path: same track structure, only new points ────────────
+      const dataRows = buildDataRows(tracks);
+
+      // If any new row would be inserted before an already-rendered row the
+      // sort order of the table would break; fall back to full rebuild in that
+      // rare case (out-of-order manual digitizing on an earlier frame).
+      const hasOutOfOrder = dataRows.some(
+        (row) =>
+          !this.frameRowMap.has(row.frame) &&
+          row.frame < this.maxRenderedFrame,
+      );
+      if (hasOutOfOrder) {
+        doFullRebuild(tracks, unit);
+        return;
+      }
+
+      const colors = getTableColors();
+      const cellStyle = `padding: 3px 6px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
+
+      // Remove the "no data" placeholder row when the first real rows arrive.
+      if (this.frameRowMap.size === 0 && dataRows.length > 0) {
+        this.tableBodyRef.innerHTML = "";
+      }
+
+      for (const row of dataRows) {
+        if (this.frameRowMap.has(row.frame)) {
+          // Update cells in an existing row (a second track filled in this frame).
+          const tr = this.frameRowMap.get(row.frame)!;
+          const cells = tr.querySelectorAll("td");
+          let cellIdx = 2; // skip Frame and Time columns
+          for (const track of tracks) {
+            const val = row.values.get(track.id);
+            const xCell = cells[cellIdx];
+            const yCell = cells[cellIdx + 1];
+            if (xCell)
+              xCell.textContent = val
+                ? val.x.toFixed(CELL_DECIMAL_PLACES)
+                : "—";
+            if (yCell)
+              yCell.textContent = val
+                ? val.y.toFixed(CELL_DECIMAL_PLACES)
+                : "—";
+            cellIdx += 2;
+          }
+        } else {
+          // Append a brand-new row at the bottom.
+          const rowIndex = this.frameRowMap.size; // 0-based index of this row
+          const tr = buildSingleDataRow(
+            row,
+            tracks,
+            cellStyle,
+            rowIndex % 2 !== 0, // isEven flag: index 0 → rowOdd, index 1 → rowEven, …
+            colors,
+          );
+          this.tableBodyRef.appendChild(tr);
+          this.frameRowMap.set(row.frame, tr);
+          if (row.frame > this.maxRenderedFrame) {
+            this.maxRenderedFrame = row.frame;
+          }
+        }
+      }
     };
 
     // ── Reactive updates ─────────────────────────────────────────────────────
@@ -437,11 +578,16 @@ export class DataTableNode extends Panel {
     const unitListener = () => rebuildTable();
     unitProperty.link(unitListener);
 
-    // Rebuild table when color profile or locale changes
-    const tableHeaderBgListener = () => rebuildTable();
+    // Colour profile and locale changes require a full rebuild because cell
+    // colours and label strings are baked into the DOM; they are not captured
+    // by the track-ID / unit structural-change check above.
+    const fullRebuild = () =>
+      doFullRebuild(model.tracksProperty.value, unitProperty.value);
+
+    const tableHeaderBgListener = () => fullRebuild();
     TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
 
-    const frameStringListener = () => rebuildTable();
+    const frameStringListener = () => fullRebuild();
     dataTableStrings.frameStringProperty.lazyLink(frameStringListener);
 
     const videoLoadedListener = (loaded: boolean) => {

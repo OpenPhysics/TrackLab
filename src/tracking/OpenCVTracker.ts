@@ -96,11 +96,17 @@ export class OpenCVTracker {
 
       if (this.templateMat) this.templateMat.delete();
 
+      // Clamp the origin first, then use the clamped values when bounding the
+      // width and height.  Without this, a negative region.x / region.y makes
+      // `offscreen.width - region.x` larger than the canvas, causing OpenCV to
+      // read outside the source image and crash.
+      const clampedX = Math.round(Math.max(0, region.x));
+      const clampedY = Math.round(Math.max(0, region.y));
       const roi = new this.cv.Rect(
-        Math.round(Math.max(0, region.x)),
-        Math.round(Math.max(0, region.y)),
-        Math.round(Math.min(region.w, this.offscreen.width - region.x)),
-        Math.round(Math.min(region.h, this.offscreen.height - region.y)),
+        clampedX,
+        clampedY,
+        Math.round(Math.min(region.w, this.offscreen.width - clampedX)),
+        Math.round(Math.min(region.h, this.offscreen.height - clampedY)),
       );
       this.templateMat = gray.roi(roi).clone();
     } finally {
