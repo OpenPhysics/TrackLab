@@ -152,7 +152,9 @@ export class VideoPlayerNode extends Node {
 
     // Store cleanup function
     this.disposeVideoPlayer = () => {
-      TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
+      TrackLabColors.videoBackgroundColorProperty.unlink(
+        videoBackgroundListener,
+      );
       model.isPlayingProperty.unlink(isPlayingListener);
       model.playbackRateProperty.unlink(playbackRateListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);

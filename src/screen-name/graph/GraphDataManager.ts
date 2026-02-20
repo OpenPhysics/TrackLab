@@ -271,7 +271,10 @@ export default class GraphDataManager {
     for (const [i, circle] of this.trailCirclePool.entries()) {
       if (i < numTrailPoints) {
         const point = this.dataPoints[startIndex + i];
-        if (!point) { circle.visible = false; continue; }
+        if (!point) {
+          circle.visible = false;
+          continue;
+        }
 
         const fraction = i / (numTrailPoints - 1 || 1); // 0 = oldest, 1 = newest
         circle.radius = minRadius + (maxRadius - minRadius) * fraction;

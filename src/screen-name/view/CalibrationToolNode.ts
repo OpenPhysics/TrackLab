@@ -1,6 +1,6 @@
+import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty } from "scenerystack/axon";
-import { Color } from "scenerystack";
 import { Shape } from "scenerystack/kite";
 import {
   Circle,
@@ -168,11 +168,14 @@ export class CalibrationToolNode extends Node {
 
     // ── Overlap warning text ──────────────────────────────────────────────
     // Shown when endpoints are too close together to produce a valid calibration.
-    const overlapWarning = new Text("Points too close — move apart to calibrate", {
-      font: WARNING_FONT,
-      fill: ENDPOINT_WARNING_COLOR,
-      visible: false,
-    });
+    const overlapWarning = new Text(
+      "Points too close — move apart to calibrate",
+      {
+        font: WARNING_FONT,
+        fill: ENDPOINT_WARNING_COLOR,
+        visible: false,
+      },
+    );
     this.addChild(overlapWarning);
 
     // ── Update geometry when endpoints move ───────────────────────────────
@@ -188,7 +191,9 @@ export class CalibrationToolNode extends Node {
 
       // Show warning and highlight endpoints when too close to be useful.
       const tooClose = p1.distance(p2) < OVERLAP_WARNING_DISTANCE;
-      const endpointFill = tooClose ? ENDPOINT_WARNING_COLOR : TrackLabColors.calibrationFillProperty.value;
+      const endpointFill = tooClose
+        ? ENDPOINT_WARNING_COLOR
+        : TrackLabColors.calibrationFillProperty.value;
       endpoint1.fill = endpointFill;
       endpoint2.fill = endpointFill;
       overlapWarning.visible = tooClose;

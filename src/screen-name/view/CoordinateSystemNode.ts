@@ -6,7 +6,12 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { VIDEO_CENTER_X, VIDEO_CENTER_Y, VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import {
+  VIDEO_CENTER_X,
+  VIDEO_CENTER_Y,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
@@ -150,11 +155,19 @@ export class CoordinateSystemNode extends Node {
     let isClamping = false;
     model.coordOriginProperty.lazyLink((pos) => {
       if (isClamping) return;
-      const clampedX = Math.max(VIDEO_BOUNDS.minX, Math.min(VIDEO_BOUNDS.maxX, pos.x));
-      const clampedY = Math.max(VIDEO_BOUNDS.minY, Math.min(VIDEO_BOUNDS.maxY, pos.y));
+      const clampedX = Math.max(
+        VIDEO_BOUNDS.minX,
+        Math.min(VIDEO_BOUNDS.maxX, pos.x),
+      );
+      const clampedY = Math.max(
+        VIDEO_BOUNDS.minY,
+        Math.min(VIDEO_BOUNDS.maxY, pos.y),
+      );
       if (clampedX !== pos.x || clampedY !== pos.y) {
         isClamping = true;
-        model.coordOriginProperty.value = model.coordOriginProperty.value.copy().setXY(clampedX, clampedY);
+        model.coordOriginProperty.value = model.coordOriginProperty.value
+          .copy()
+          .setXY(clampedX, clampedY);
         isClamping = false;
       }
     });

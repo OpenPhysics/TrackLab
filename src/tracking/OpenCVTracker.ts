@@ -32,7 +32,12 @@ interface MinMaxLocResult {
 interface CV {
   // Constructors
   readonly Mat: new () => CvMat;
-  readonly Rect: new (x: number, y: number, width: number, height: number) => CvRect;
+  readonly Rect: new (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => CvRect;
 
   // Factory from browser ImageData
   matFromImageData(imageData: ImageData): CvMat;
@@ -42,7 +47,12 @@ interface CV {
   readonly COLOR_RGBA2GRAY: number;
 
   // Template matching
-  matchTemplate(image: CvMat, templ: CvMat, result: CvMat, method: number): void;
+  matchTemplate(
+    image: CvMat,
+    templ: CvMat,
+    result: CvMat,
+    method: number,
+  ): void;
   minMaxLoc(src: CvMat): MinMaxLocResult;
   readonly TM_CCOEFF_NORMED: number;
 
@@ -132,7 +142,12 @@ export class OpenCVTracker {
   private captureFrame(video: HTMLVideoElement): ImageData {
     this.ctx.drawImage(video, 0, 0);
     try {
-      return this.ctx.getImageData(0, 0, this.offscreen.width, this.offscreen.height);
+      return this.ctx.getImageData(
+        0,
+        0,
+        this.offscreen.width,
+        this.offscreen.height,
+      );
     } catch (e) {
       const err = new Error(
         "Cannot read video pixels: the video source may be cross-origin without CORS headers.",

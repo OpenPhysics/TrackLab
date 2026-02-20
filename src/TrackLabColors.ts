@@ -27,30 +27,30 @@ function profileColor(
 // ── Track colour palette (one CSS color per symbol A–Z) ─────────────────────
 // 26 distinct, high-contrast colours so every possible track has a unique hue.
 export const TRACK_COLORS = [
-  new Color(255, 140, 0),   // A – orange
-  new Color(0, 188, 212),   // B – cyan
-  new Color(233, 30, 140),  // C – magenta
-  new Color(156, 39, 176),  // D – purple
-  new Color(205, 220, 57),  // E – lime-yellow
-  new Color(0, 229, 255),   // F – light cyan
-  new Color(255, 87, 34),   // G – deep orange
-  new Color(118, 255, 3),   // H – light green
-  new Color(244, 67, 54),   // I – red
-  new Color(63, 81, 181),   // J – indigo
-  new Color(0, 150, 136),   // K – teal
-  new Color(255, 235, 59),  // L – yellow
-  new Color(121, 85, 72),   // M – brown
-  new Color(96, 125, 139),  // N – blue-grey
-  new Color(233, 30, 99),   // O – pink
-  new Color(33, 150, 243),  // P – blue
-  new Color(139, 195, 74),  // Q – light green (darker)
-  new Color(255, 193, 7),   // R – amber
-  new Color(0, 188, 84),    // S – green
+  new Color(255, 140, 0), // A – orange
+  new Color(0, 188, 212), // B – cyan
+  new Color(233, 30, 140), // C – magenta
+  new Color(156, 39, 176), // D – purple
+  new Color(205, 220, 57), // E – lime-yellow
+  new Color(0, 229, 255), // F – light cyan
+  new Color(255, 87, 34), // G – deep orange
+  new Color(118, 255, 3), // H – light green
+  new Color(244, 67, 54), // I – red
+  new Color(63, 81, 181), // J – indigo
+  new Color(0, 150, 136), // K – teal
+  new Color(255, 235, 59), // L – yellow
+  new Color(121, 85, 72), // M – brown
+  new Color(96, 125, 139), // N – blue-grey
+  new Color(233, 30, 99), // O – pink
+  new Color(33, 150, 243), // P – blue
+  new Color(139, 195, 74), // Q – light green (darker)
+  new Color(255, 193, 7), // R – amber
+  new Color(0, 188, 84), // S – green
   new Color(121, 134, 203), // T – periwinkle
-  new Color(255, 112, 67),  // U – deep orange (lighter)
-  new Color(77, 208, 225),  // V – light teal
+  new Color(255, 112, 67), // U – deep orange (lighter)
+  new Color(77, 208, 225), // V – light teal
   new Color(174, 213, 129), // W – sage
-  new Color(240, 98, 146),  // X – light pink
+  new Color(240, 98, 146), // X – light pink
   new Color(129, 212, 250), // Y – sky blue
   new Color(178, 132, 190), // Z – lavender
 ];

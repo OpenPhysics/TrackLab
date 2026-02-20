@@ -465,7 +465,8 @@ export class DataTableNode extends Panel {
 
       // Cache <tbody> reference and rebuild the frame→row map.
       const tbody = this.tableWrapper.querySelector("tbody");
-      this.tableBodyRef = tbody instanceof HTMLTableSectionElement ? tbody : null;
+      this.tableBodyRef =
+        tbody instanceof HTMLTableSectionElement ? tbody : null;
       this.frameRowMap.clear();
       this.maxRenderedFrame = -Infinity;
 
@@ -515,8 +516,7 @@ export class DataTableNode extends Panel {
       // rare case (out-of-order manual digitizing on an earlier frame).
       const hasOutOfOrder = dataRows.some(
         (row) =>
-          !this.frameRowMap.has(row.frame) &&
-          row.frame < this.maxRenderedFrame,
+          !this.frameRowMap.has(row.frame) && row.frame < this.maxRenderedFrame,
       );
       if (hasOutOfOrder) {
         doFullRebuild(tracks, unit);
@@ -584,7 +584,9 @@ export class DataTableNode extends Panel {
       doFullRebuild(model.tracksProperty.value, unitProperty.value);
 
     const tableHeaderBgListener = () => fullRebuild();
-    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
+    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(
+      tableHeaderBgListener,
+    );
 
     const frameStringListener = () => fullRebuild();
     dataTableStrings.frameStringProperty.lazyLink(frameStringListener);
@@ -598,7 +600,9 @@ export class DataTableNode extends Panel {
     this.disposeDataTable = () => {
       model.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
-      TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
+      TrackLabColors.tableHeaderBackgroundProperty.unlink(
+        tableHeaderBgListener,
+      );
       dataTableStrings.frameStringProperty.unlink(frameStringListener);
       videoLoadedProperty.unlink(videoLoadedListener);
       exportButton.dispose();

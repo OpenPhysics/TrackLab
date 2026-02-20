@@ -104,7 +104,9 @@ export class DigitizingOverlayNode extends Node {
     const magCrosshairListener = (color: import("scenerystack").Color) => {
       magCrosshairColor = color.toCSS();
     };
-    TrackLabColors.digitizingMagnifierCrosshairProperty.link(magCrosshairListener);
+    TrackLabColors.digitizingMagnifierCrosshairProperty.link(
+      magCrosshairListener,
+    );
 
     const magShadowListener = (color: import("scenerystack").Color) => {
       magShadowColor = color.toCSS();
@@ -126,9 +128,12 @@ export class DigitizingOverlayNode extends Node {
      * Cached and only recomputed when the video's intrinsic dimensions change.
      */
     type VideoBoundsCache = {
-      renderedW: number; renderedH: number;
-      offsetX: number; offsetY: number;
-      videoW: number; videoH: number;
+      renderedW: number;
+      renderedH: number;
+      offsetX: number;
+      offsetY: number;
+      videoW: number;
+      videoH: number;
     };
     let cachedVideoBounds: VideoBoundsCache | null = null;
 
@@ -162,7 +167,9 @@ export class DigitizingOverlayNode extends Node {
     };
 
     // Invalidate the cache whenever the video's intrinsic dimensions become available.
-    const onMetadata = () => { cachedVideoBounds = null; };
+    const onMetadata = () => {
+      cachedVideoBounds = null;
+    };
     videoElement.addEventListener("loadedmetadata", onMetadata);
 
     const getRenderedVideoBounds = (): VideoBoundsCache => {
@@ -382,9 +389,15 @@ export class DigitizingOverlayNode extends Node {
     // Store cleanup function
     this.disposeDigitizingOverlay = () => {
       videoElement.removeEventListener("loadedmetadata", onMetadata);
-      TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
-      TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
-      TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
+      TrackLabColors.digitizingMagnifierBorderProperty.unlink(
+        magBorderListener,
+      );
+      TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(
+        magCrosshairListener,
+      );
+      TrackLabColors.digitizingMagnifierShadowProperty.unlink(
+        magShadowListener,
+      );
       model.currentTimeProperty.unlink(currentTimeListener);
       model.tracksProperty.unlink(tracksListener);
       model.modelViewTransformProperty.unlink(mvtListener);
