@@ -72,26 +72,4 @@ npm run fix        # fix lint + format issues together
 
 ## Testing
 
-There is currently **no test suite**. No test framework (Vitest, Jest) is configured.
-
-The highest-value targets for a first test pass are the pure functions in the model layer:
-
-| Function | File | Why it matters |
-|----------|------|----------------|
-| `buildModelViewTransform()` | `SimModel.ts` | Geometric transform composition — a regression here silently breaks all coordinate conversions |
-| `computeTrackKinematics()` | `SimModel.ts` | Finite-difference velocity/acceleration — edge cases at endpoints and null propagation are subtle |
-| `generateCSV()` | `DataTableNode.ts` | Data export format — users rely on correct decimal formatting and column order |
-
-To add tests, install [Vitest](https://vitest.dev/) (already compatible with the Vite build setup):
-
-```bash
-npm install -D vitest
-```
-
-Then add a `test` script to `package.json`:
-
-```json
-"test": "vitest run"
-```
-
-Place test files alongside source files as `*.test.ts` or in a top-level `tests/` directory.
+There is currently **no test suite**, and none should be added at this stage. The codebase is evolving rapidly — APIs, model structure, and UI components change frequently enough that maintaining tests would cost more than they save right now. Do not install a test framework or create test files.
