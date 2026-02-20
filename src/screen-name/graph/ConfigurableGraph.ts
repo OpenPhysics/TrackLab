@@ -672,7 +672,7 @@ export default class ConfigurableGraph extends Node {
         const x = this.getValueForAxis(xProperty, point);
         const y = this.getValueForAxis(yProperty, point);
 
-        if (x !== null && y !== null) {
+        if (x !== null && y !== null && Number.isFinite(x) && Number.isFinite(y)) {
           mappedPoints.push({ x, y });
         }
       }

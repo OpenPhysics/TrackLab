@@ -1,4 +1,5 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
+import { Bounds2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
@@ -6,8 +7,17 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
+import { VIDEO_CENTER_X, VIDEO_CENTER_Y, VIDEO_HEIGHT, VIDEO_WIDTH } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
+
+// Bounds of the video area in view (pixel) coordinates — used to clamp the coord origin drag.
+const VIDEO_BOUNDS = new Bounds2(
+  VIDEO_CENTER_X - VIDEO_WIDTH / 2,
+  VIDEO_CENTER_Y - VIDEO_HEIGHT / 2,
+  VIDEO_CENTER_X + VIDEO_WIDTH / 2,
+  VIDEO_CENTER_Y + VIDEO_HEIGHT / 2,
+);
 const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont({ size: 14, weight: "bold" });
 
@@ -133,6 +143,20 @@ export class CoordinateSystemNode extends Node {
     });
     model.coordAngleProperty.link((angle) => {
       rotatingNode.rotation = angle;
+    });
+
+    // ── Clamp coord origin to video bounds on every change ────────────────
+    // Prevents the user from dragging the coordinate system completely off-screen.
+    let isClamping = false;
+    model.coordOriginProperty.lazyLink((pos) => {
+      if (isClamping) return;
+      const clampedX = Math.max(VIDEO_BOUNDS.minX, Math.min(VIDEO_BOUNDS.maxX, pos.x));
+      const clampedY = Math.max(VIDEO_BOUNDS.minY, Math.min(VIDEO_BOUNDS.maxY, pos.y));
+      if (clampedX !== pos.x || clampedY !== pos.y) {
+        isClamping = true;
+        model.coordOriginProperty.value = model.coordOriginProperty.value.copy().setXY(clampedX, clampedY);
+        isClamping = false;
+      }
     });
 
     // ── Drag: translate the entire coordinate system ──────────────────────

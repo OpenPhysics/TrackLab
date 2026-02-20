@@ -40,8 +40,8 @@ export const FRAME_RATE_RANGE = new Range(1, 120);
 // The VideoPlayerNode is centered at layoutBounds.center + (0, -20).
 const LAYOUT_CENTER_X = 512; // 1024 / 2
 const LAYOUT_CENTER_Y = 309; // 618 / 2
-const VIDEO_CENTER_X = LAYOUT_CENTER_X; // 512
-const VIDEO_CENTER_Y = LAYOUT_CENTER_Y - 20; // 289
+export const VIDEO_CENTER_X = LAYOUT_CENTER_X; // 512
+export const VIDEO_CENTER_Y = LAYOUT_CENTER_Y - 20; // 289
 const CALIB_HALF_LEN = 100; // pixels from center to each calibration endpoint
 
 // Initial tool positions (view / pixel space)
@@ -417,7 +417,7 @@ export class SimModel {
     };
 
     const tracks = [...this.tracksProperty.value, track];
-    tracks.sort((a, b) => a.symbol.localeCompare(b.symbol));
+    tracks.sort((a, b) => a.symbol.charCodeAt(0) - b.symbol.charCodeAt(0));
     this.tracksProperty.value = tracks;
   }
 

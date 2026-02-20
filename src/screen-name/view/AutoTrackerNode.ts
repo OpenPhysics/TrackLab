@@ -59,6 +59,12 @@ export class AutoTrackerNode extends Node {
   private selecting = false;
   private selStart = Vector2.ZERO;
 
+  // Monotonically increasing counter — each new initFromVideo call captures the
+  // current value and only applies results if the counter hasn't changed by the
+  // time the async initialisation completes, preventing stale results from a
+  // previous drag from overwriting a more recent one.
+  private initVersion = 0;
+
   // Kept for removeEventListener / unlink in dispose()
   private readonly boundVideoElement: HTMLVideoElement;
   private readonly boundOnFrame: () => void;
@@ -137,6 +143,8 @@ export class AutoTrackerNode extends Node {
     const dragListener = new DragListener({
       start: (event) => {
         this.trail.length = 0;
+        // Bump version so any in-flight initFromVideo call is discarded when it resolves.
+        this.initVersion++;
         this.model.tracker.dispose();
         this.setCrosshairVisible(false);
         this.trailPath.shape = null;
@@ -191,14 +199,25 @@ export class AutoTrackerNode extends Node {
 
           // initFromVideo is async (loads WASM on first call); tracking begins
           // automatically once `ready` becomes true.
+          // Capture the current version so stale results from a previous drag
+          // (still awaiting WASM load) are discarded if a new drag has started.
+          const capturedVersion = this.initVersion;
           this.model.tracker
             .initFromVideo(videoElement, region)
+            .then(() => {
+              if (this.initVersion !== capturedVersion) {
+                // A newer drag has already started; discard this result.
+                this.model.tracker.dispose();
+              }
+            })
             .catch((err) => {
-              console.error(
-                "[AutoTracker] Tracking initialisation failed:",
-                err,
-              );
-              this.hintText.visible = true;
+              if (this.initVersion === capturedVersion) {
+                console.error(
+                  "[AutoTracker] Tracking initialisation failed:",
+                  err,
+                );
+                this.hintText.visible = true;
+              }
             });
         } else {
           this.hintText.visible = true;
@@ -222,8 +241,11 @@ export class AutoTrackerNode extends Node {
       const activeId = model.activeTrackIdProperty.value;
       if (activeId) {
         const time = videoElement.currentTime;
-        const frameDuration = model.frameDurationProperty.value;
-        const frame = Math.round(time / frameDuration);
+        // Multiply by frame rate directly rather than dividing by frameDuration
+        // (1/fps) to avoid cascading floating-point error at non-integer fps values
+        // like 29.97, which could cause two adjacent timestamps to map to the same
+        // frame or skip a frame entirely.
+        const frame = Math.round(time * model.frameRateProperty.value);
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {
