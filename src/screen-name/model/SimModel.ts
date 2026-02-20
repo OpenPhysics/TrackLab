@@ -440,6 +440,11 @@ export class SimModel {
     const tracks = this.tracksProperty.value.map((track) => {
       if (track.id !== id) return track;
 
+      // Reject duplicate frames.  Without this guard a second click on the
+      // same frame (manual digitizing) or a repeated timeupdate event would
+      // add a second point at the same frame index, corrupting kinematics.
+      if (track.points.some((p) => p.frame === frame)) return track;
+
       const point: TrackPoint = { frame, time, x, y };
       const updated: Track = { ...track, points: [...track.points, point] };
       return updated;

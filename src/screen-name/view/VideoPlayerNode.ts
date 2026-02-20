@@ -16,6 +16,8 @@ export class VideoPlayerNode extends Node {
   public readonly webcamPanel: WebcamPanel;
   private readonly model: SimModel;
   private readonly disposeVideoPlayer: () => void;
+  /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
+  private currentBlobUrl: string | null = null;
 
   public constructor(model: SimModel, listParent: Node) {
     super();
@@ -117,8 +119,13 @@ export class VideoPlayerNode extends Node {
       (blob, duration) => {
         model.isPlayingProperty.value = false;
         autoTrackerNode.reset();
-        const blobUrl = URL.createObjectURL(blob);
-        this.videoElement.src = blobUrl;
+        // Revoke the previous blob URL before creating a new one to prevent
+        // the browser from holding the recorded video in memory indefinitely.
+        if (this.currentBlobUrl) {
+          URL.revokeObjectURL(this.currentBlobUrl);
+        }
+        this.currentBlobUrl = URL.createObjectURL(blob);
+        this.videoElement.src = this.currentBlobUrl;
         this.videoElement.load();
         if (duration > 0) {
           model.durationProperty.value = duration;
@@ -144,6 +151,10 @@ export class VideoPlayerNode extends Node {
       this.videoElement.removeEventListener("durationchange", updateDuration);
       this.videoElement.removeEventListener("ended", onEnded);
       this.videoElement.removeEventListener("timeupdate", onTimeUpdate);
+      if (this.currentBlobUrl) {
+        URL.revokeObjectURL(this.currentBlobUrl);
+        this.currentBlobUrl = null;
+      }
       autoTrackerNode.dispose();
       playbackControlsNode.dispose();
       videoSourceControlNode.dispose();
@@ -158,12 +169,7 @@ export class VideoPlayerNode extends Node {
 
   /** Pause playback and advance by exactly one frame. */
   public stepForward(): void {
-    this.model.isPlayingProperty.value = false;
-    const frameDuration = this.model.frameDurationProperty.value;
-    const raw = this.videoElement.currentTime + frameDuration;
-    const clamped = Math.max(0, Math.min(raw, this.videoElement.duration));
-    this.videoElement.currentTime = clamped;
-    this.model.currentTimeProperty.value = clamped;
+    this.seekByFrames(1);
   }
 
   private seekByFrames(direction: number): void {

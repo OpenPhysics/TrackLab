@@ -1,7 +1,6 @@
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import {
-  Circle,
   DOM,
   FireListener,
   Line,
@@ -260,7 +259,11 @@ export class DigitizingOverlayNode extends Node {
     });
 
     // ── Mark dots layer ─────────────────────────────────────────────────────
+    // One Path per track is reused across rebuilds.  This avoids allocating
+    // and discarding SceneryStack nodes on every video frame (~30 Hz during
+    // playback), which caused significant GC pressure with many track points.
     const marksLayer = new Node({ pickable: false });
+    const trackPaths = new Map<string, Path>(); // track id → Path
 
     const rebuildMarks = () => {
       const frameDuration = model.frameDurationProperty.value;
@@ -268,24 +271,37 @@ export class DigitizingOverlayNode extends Node {
         model.currentTimeProperty.value / frameDuration,
       );
       const mvt = model.modelViewTransformProperty.value;
-      const circles: Circle[] = [];
-      for (const track of model.tracksProperty.value) {
+      const tracks = model.tracksProperty.value;
+      const activeTrackIds = new Set(tracks.map((t) => t.id));
+
+      // Update or create one Path per track.
+      for (const track of tracks) {
+        let path = trackPaths.get(track.id);
+        if (!path) {
+          path = new Path(null, { fill: track.color, pickable: false });
+          trackPaths.set(track.id, path);
+          marksLayer.addChild(path);
+        }
+        const shape = new Shape();
         for (const point of track.points) {
           if (point.frame <= currentFrame) {
             const localPt = mvt.transformPosition2(
               new Vector2(point.x, point.y),
             );
-            circles.push(
-              new Circle(MARK_DOT_RADIUS, {
-                fill: track.color,
-                x: localPt.x,
-                y: localPt.y,
-              }),
-            );
+            shape.circle(localPt.x, localPt.y, MARK_DOT_RADIUS);
           }
         }
+        path.shape = shape;
       }
-      marksLayer.children = circles;
+
+      // Remove paths for tracks that have been deleted.
+      for (const [id, path] of trackPaths) {
+        if (!activeTrackIds.has(id)) {
+          marksLayer.removeChild(path);
+          path.dispose();
+          trackPaths.delete(id);
+        }
+      }
     };
 
     const currentTimeListener = () => rebuildMarks();
@@ -355,6 +371,10 @@ export class DigitizingOverlayNode extends Node {
       model.frameRateProperty.unlink(frameRateListener);
       model.activeTrackIdProperty.unlink(activeTrackListener);
       model.magnifyVideoProperty.unlink(magnifyListener);
+      for (const path of trackPaths.values()) {
+        path.dispose();
+      }
+      trackPaths.clear();
     };
   }
 

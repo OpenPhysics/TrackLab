@@ -46,6 +46,8 @@ const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
 export class AutoTrackerNode extends Node {
   private readonly model: SimModel;
   private readonly trail: Array<{ x: number; y: number }> = [];
+  /** Frames already recorded to the active track; cleared on track change or reset. */
+  private readonly recordedFrames = new Set<number>();
 
   private readonly hintText: Text;
   private readonly selectionRect: Rectangle;
@@ -57,9 +59,10 @@ export class AutoTrackerNode extends Node {
   private selecting = false;
   private selStart = Vector2.ZERO;
 
-  // Kept for removeEventListener in dispose()
+  // Kept for removeEventListener / unlink in dispose()
   private readonly boundVideoElement: HTMLVideoElement;
   private readonly boundOnFrame: () => void;
+  private readonly boundClearRecordedFrames: () => void;
 
   public constructor(
     videoElement: HTMLVideoElement,
@@ -222,20 +225,14 @@ export class AutoTrackerNode extends Node {
         const frameDuration = model.frameDurationProperty.value;
         const frame = Math.round(time / frameDuration);
 
-        // Avoid duplicate points for the same frame.
-        const activeTrack = model.tracksProperty.value.find(
-          (t) => t.id === activeId,
-        );
-        const alreadyRecorded = activeTrack
-          ? activeTrack.points.some((p) => p.frame === frame)
-          : false;
-
-        if (!alreadyRecorded) {
+        // O(1) duplicate-frame check via Set (vs O(n) linear scan).
+        if (!this.recordedFrames.has(frame)) {
           // Convert video-pixel coords to global coords, then to model coords.
           const globalPt = this.localToGlobalPoint(new Vector2(pt.x, pt.y));
           const modelPt =
             model.modelViewTransformProperty.value.inversePosition2(globalPt);
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
+          this.recordedFrames.add(frame);
         }
       }
     };
@@ -245,6 +242,13 @@ export class AutoTrackerNode extends Node {
     // Store refs so dispose() can remove the listeners.
     this.boundVideoElement = videoElement;
     this.boundOnFrame = onFrame;
+
+    // Clear the recorded-frames set whenever the user switches to a different
+    // track so frames from the previous track don't suppress recording on the
+    // new one.
+    const clearRecordedFrames = () => this.recordedFrames.clear();
+    model.activeTrackIdProperty.lazyLink(clearRecordedFrames);
+    this.boundClearRecordedFrames = clearRecordedFrames;
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     autoTrackingShownProperty.link((shown) => {
@@ -280,6 +284,7 @@ export class AutoTrackerNode extends Node {
   public reset(): void {
     this.model.tracker.dispose();
     this.trail.length = 0;
+    this.recordedFrames.clear();
     this.selecting = false;
     this.selectionRect.visible = false;
     this.trailPath.shape = null;
@@ -290,6 +295,7 @@ export class AutoTrackerNode extends Node {
   public override dispose(): void {
     this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
     this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
+    this.model.activeTrackIdProperty.unlink(this.boundClearRecordedFrames);
     this.model.tracker.dispose();
     super.dispose();
   }
