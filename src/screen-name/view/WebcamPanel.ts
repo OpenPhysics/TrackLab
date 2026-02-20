@@ -385,11 +385,13 @@ export class WebcamPanel extends Node {
     this._stopButton.visible = false;
     this.setStatus(this.webcamStrings.processingStringProperty.value);
 
-    // Capture the stream before stopping preview (for FPS estimation)
+    // CRITICAL: Capture stream FPS BEFORE stopping the stream!
+    // Once tracks are stopped, getSettings() returns stale/invalid data.
     const stream = this.recorder.getStream();
+    const streamFPS = stream ? this.recorder.getFrameRate() : null;
 
     this.recordedBlob = await this.recorder.stopRecording();
-    this.recorder.stopPreview();
+    this.recorder.stopPreview(); // This stops all tracks - stream settings now invalid!
 
     this.previewLayer.visible = false;
     this.reviewLayer.visible = true;
@@ -398,7 +400,17 @@ export class WebcamPanel extends Node {
     // Estimate FPS and update the display
     this.setStatus("Estimating frame rate...");
     try {
-      this.fpsEstimate = await estimateVideoFrameRate(this.reviewElement, stream);
+      // Pass the pre-captured stream FPS if available
+      if (streamFPS && streamFPS > 0) {
+        this.fpsEstimate = {
+          fps: Math.round(streamFPS),
+          confidence: "high",
+          method: "stream settings",
+        };
+      } else {
+        // Fallback to empirical measurement from the recorded video
+        this.fpsEstimate = await estimateVideoFrameRate(this.reviewElement, null);
+      }
       this.updateFPSEstimateDisplay();
       // Set the estimated FPS as the initial value
       this.model.frameRateProperty.value = this.fpsEstimate.fps;
