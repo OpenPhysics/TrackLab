@@ -22,7 +22,12 @@ import {
   WEBCAM_PREVIEW_HEIGHT,
   WEBCAM_PREVIEW_WIDTH,
 } from "../../TrackLabConstants.js";
-import { fixWebmDuration, WebcamRecorder } from "../../webcam.js";
+import {
+  estimateVideoFrameRate,
+  type FPSEstimate,
+  fixWebmDuration,
+  WebcamRecorder,
+} from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
@@ -56,6 +61,7 @@ export class WebcamPanel extends Node {
   private readonly reviewElement: HTMLVideoElement;
   private readonly cameraSelect: HTMLSelectElement;
   private readonly statusText: Text;
+  private readonly fpsEstimateText: Text;
   private readonly previewLayer: Node;
   private readonly reviewLayer: Node;
   private readonly model: SimModel;
@@ -63,6 +69,7 @@ export class WebcamPanel extends Node {
   private recordedBlob: Blob | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   private recordingStart = 0;
+  private fpsEstimate: FPSEstimate | null = null;
 
   public constructor(options: WebcamPanelOptions) {
     super();
@@ -110,6 +117,12 @@ export class WebcamPanel extends Node {
     // ── Status ────────────────────────────────────────────────────────────
     this.statusText = new Text("", {
       font: FONT,
+      fill: TrackLabColors.textMutedProperty,
+    });
+
+    // ── FPS Estimate Display ──────────────────────────────────────────────
+    this.fpsEstimateText = new Text("", {
+      font: SMALL_FONT,
       fill: TrackLabColors.textMutedProperty,
     });
 
@@ -242,6 +255,7 @@ export class WebcamPanel extends Node {
     this.reviewLayer = new VBox({
       children: [
         reviewDOM,
+        this.fpsEstimateText,
         fpsControl,
         new HBox({
           children: [rerecordButton, useVideoButton],
@@ -320,6 +334,8 @@ export class WebcamPanel extends Node {
       this.reviewElement.src = "";
       this.recordedBlob = null;
     }
+    this.fpsEstimate = null;
+    this.fpsEstimateText.string = "";
     this.previewLayer.visible = true;
     this.reviewLayer.visible = false;
     this._startButton.visible = true;
@@ -369,12 +385,28 @@ export class WebcamPanel extends Node {
     this._stopButton.visible = false;
     this.setStatus(this.webcamStrings.processingStringProperty.value);
 
+    // Capture the stream before stopping preview (for FPS estimation)
+    const stream = this.recorder.getStream();
+
     this.recordedBlob = await this.recorder.stopRecording();
     this.recorder.stopPreview();
 
     this.previewLayer.visible = false;
     this.reviewLayer.visible = true;
     this.reviewElement.src = URL.createObjectURL(this.recordedBlob);
+
+    // Estimate FPS and update the display
+    this.setStatus("Estimating frame rate...");
+    try {
+      this.fpsEstimate = await estimateVideoFrameRate(this.reviewElement, stream);
+      this.updateFPSEstimateDisplay();
+      // Set the estimated FPS as the initial value
+      this.model.frameRateProperty.value = this.fpsEstimate.fps;
+    } catch (error) {
+      console.warn("Failed to estimate FPS:", error);
+      this.fpsEstimateText.string = "";
+    }
+
     this.clearStatus();
   }
 
@@ -405,6 +437,29 @@ export class WebcamPanel extends Node {
 
     this.cleanup();
     cb(blob, duration);
+  }
+
+  private updateFPSEstimateDisplay(): void {
+    if (!this.fpsEstimate) {
+      this.fpsEstimateText.string = "";
+      return;
+    }
+
+    const { fps, confidence, method } = this.fpsEstimate;
+
+    // Create confidence indicator
+    const confidenceSymbol =
+      confidence === "high" ? "✓" : confidence === "medium" ? "~" : "?";
+
+    // Format the display string
+    const confidenceText =
+      confidence === "high"
+        ? "High confidence"
+        : confidence === "medium"
+          ? "Medium confidence"
+          : "Low confidence";
+
+    this.fpsEstimateText.string = `Estimated: ${fps} fps ${confidenceSymbol} (${confidenceText}, ${method})`;
   }
 
   private startTimer(): void {

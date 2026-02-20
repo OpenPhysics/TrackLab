@@ -306,6 +306,14 @@ export class WebcamRecorder {
   }
 
   /**
+   * Get the current MediaStream (active or recently stopped).
+   * Returns null if no stream was ever created.
+   */
+  getStream(): MediaStream | null {
+    return this.stream;
+  }
+
+  /**
    * Clean up all resources.
    */
   cleanup(): void {
@@ -353,4 +361,89 @@ export function measureEmpiricalFrameRate(
 
     requestAnimationFrame(countFrames);
   });
+}
+
+export type FPSEstimate = {
+  fps: number;
+  confidence: "high" | "medium" | "low";
+  method: string;
+};
+
+/**
+ * Estimate the frame rate of a recorded video with confidence level.
+ * Tries multiple methods and returns the best estimate with confidence.
+ *
+ * @param video - Video element with the recorded blob loaded
+ * @param stream - Optional MediaStream used during recording
+ * @returns Promise with FPS estimate, confidence, and method used
+ */
+export async function estimateVideoFrameRate(
+  video: HTMLVideoElement,
+  stream?: MediaStream | null,
+): Promise<FPSEstimate> {
+  // Method 1: Try to get FPS from the stream settings (most reliable for webcam)
+  if (stream) {
+    const streamFPS = getFrameRateFromStream(stream);
+    if (streamFPS && streamFPS > 0) {
+      return {
+        fps: Math.round(streamFPS),
+        confidence: "high",
+        method: "stream settings",
+      };
+    }
+  }
+
+  // Method 2: Measure empirical frame rate from playback
+  try {
+    await new Promise<void>((resolve) => {
+      if (video.readyState >= 2) {
+        resolve();
+      } else {
+        video.addEventListener("loadeddata", () => resolve(), { once: true });
+      }
+    });
+
+    // Ensure video is playing
+    if (video.paused) {
+      await video.play();
+    }
+
+    // Measure for 1 second
+    const empiricalFPS = await measureEmpiricalFrameRate(video, 1000);
+
+    // Determine confidence based on how close to common frame rates
+    const commonRates = [15, 24, 25, 29.97, 30, 50, 60];
+    const roundedFPS = Math.round(empiricalFPS);
+    const closestCommon = commonRates.reduce((prev, curr) =>
+      Math.abs(curr - empiricalFPS) < Math.abs(prev - empiricalFPS)
+        ? curr
+        : prev,
+    );
+
+    const deviation = Math.abs(empiricalFPS - closestCommon);
+    let confidence: "high" | "medium" | "low" = "medium";
+
+    if (deviation < 1) {
+      confidence = "high";
+    } else if (deviation < 3) {
+      confidence = "medium";
+    } else {
+      confidence = "low";
+    }
+
+    return {
+      fps: roundedFPS,
+      confidence,
+      method: "empirical measurement",
+    };
+  } catch (error) {
+    console.warn("Failed to measure empirical frame rate:", error);
+  }
+
+  // Method 3: Fallback to default assumption
+  return {
+    fps: 30,
+    confidence: "low",
+    method: "default assumption",
+  };
 }
