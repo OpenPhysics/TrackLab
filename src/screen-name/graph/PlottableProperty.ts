@@ -15,8 +15,11 @@ export type PlottableProperty = {
   // The name to display in the selector (can be a string or a localized string property)
   name: string | TReadOnlyProperty<string>;
 
-  // The property to read values from
-  property: TReadOnlyProperty<number>;
+  // The property to read values from.
+  // Required when subStepAccessor is absent; may be omitted when subStepAccessor
+  // covers all usage paths (e.g. kinematic variables that are always pushed via
+  // addDataPointsFromSubSteps rather than polled with addDataPoint).
+  property?: TReadOnlyProperty<number>;
 
   // Optional unit string for axis label (e.g., "m", "m/s", "J")
   // Can be a static string or a dynamic property for units that depend on calibration

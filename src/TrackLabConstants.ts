@@ -10,6 +10,22 @@
 // Shared corner radius used by the main side panels.
 export const PANEL_CORNER_RADIUS = 8;
 
+// ── Video display dimensions ───────────────────────────────────────────────────
+// The video element is always rendered at this fixed pixel size.
+// Both the OpenCV tracker and all overlay nodes depend on these values.
+export const VIDEO_WIDTH = 640;
+export const VIDEO_HEIGHT = 360;
+
+// ── Video position in screen (layout) coordinates ────────────────────────────
+// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
+// The video element is centered at layoutBounds.center + (0, VIDEO_PLAYER_Y_OFFSET).
+export const VIDEO_CENTER_X = 512; // 1024 / 2
+export const VIDEO_CENTER_Y = 289; // 618 / 2 + VIDEO_PLAYER_Y_OFFSET  (309 - 20)
+
+// ── Initial calibration tool geometry ─────────────────────────────────────────
+// Half-length of the default calibration segment (pixels from centre to each endpoint).
+export const CALIB_HALF_LENGTH = 100;
+
 // ── Screen layout offsets ─────────────────────────────────────────────────────
 // SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
 export const VIDEO_PLAYER_Y_OFFSET = -20; // video center offset below layout center
