@@ -56,6 +56,14 @@ const CALIB_CENTER_INITIAL = new Vector2(
 const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
 const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
+// ── Bounds for clamping the coordinate-system origin ─────────────────────────
+// The origin must stay within the video area so the axes are always visible.
+// These are layout / pixel-space bounds, matching the view-layer video rectangle.
+const COORD_ORIGIN_BOUNDS_MIN_X = VIDEO_CENTER_X - VIDEO_WIDTH / 2;
+const COORD_ORIGIN_BOUNDS_MAX_X = VIDEO_CENTER_X + VIDEO_WIDTH / 2;
+const COORD_ORIGIN_BOUNDS_MIN_Y = VIDEO_CENTER_Y - VIDEO_HEIGHT / 2;
+const COORD_ORIGIN_BOUNDS_MAX_Y = VIDEO_CENTER_Y + VIDEO_HEIGHT / 2;
+
 // ── Model-view transform builder ───────────────────────────────────────────
 /**
  * Builds a Transform3 from the coordinate-system tool and calibration tool.
@@ -90,6 +98,36 @@ function buildModelViewTransform(
 }
 
 // ── Kinematics computation ───────────────────────────────────────────────
+
+/**
+ * Scalar finite difference at index i within an array of n values.
+ *
+ * Uses forward difference at the first point, backward difference at the last,
+ * and central differences for all interior points.  Returns null if the array
+ * has fewer than 2 elements, if the time interval is non-positive, or if
+ * either endpoint value is null.
+ *
+ * @param getValue  Returns the scalar quantity at index j (null = unknown).
+ * @param getTime   Returns the time stamp at index j.
+ * @param i         Index to differentiate at.
+ * @param n         Total number of elements.
+ */
+function finiteDifference(
+  getValue: (j: number) => number | null,
+  getTime: (j: number) => number,
+  i: number,
+  n: number,
+): number | null {
+  if (n < 2) return null;
+  const [prevIdx, nextIdx] =
+    i === 0 ? [0, 1] : i === n - 1 ? [n - 2, n - 1] : [i - 1, i + 1];
+  const prev = getValue(prevIdx);
+  const next = getValue(nextIdx);
+  const dt = getTime(nextIdx) - getTime(prevIdx);
+  if (prev === null || next === null || dt <= 0) return null;
+  return (next - prev) / dt;
+}
+
 /**
  * Computes velocity and acceleration for each point in a track.
  * Uses central differences where possible for better accuracy.
@@ -110,153 +148,27 @@ function computeTrackKinematics(track: Track): TrackKinematics {
     return { ...track, points: [] };
   }
 
-  // Helper to safely get a point (returns undefined if out of bounds)
-  const getPoint = (idx: number): TrackPoint | undefined => points[idx];
+  const getTime = (j: number) => points[j]?.time ?? 0;
+  const getX = (j: number) => points[j]?.x ?? null;
+  const getY = (j: number) => points[j]?.y ?? null;
 
-  // Compute velocity at index i using finite differences
-  const computeVelocity = (
-    i: number,
-  ): { vx: number | null; vy: number | null } => {
-    if (n < 2) {
-      return { vx: null, vy: null };
-    }
+  // First pass: velocities via finite difference of position
+  const vxArr = points.map((_, i) => finiteDifference(getX, getTime, i, n));
+  const vyArr = points.map((_, i) => finiteDifference(getY, getTime, i, n));
 
-    const curr = getPoint(i);
-    if (!curr) return { vx: null, vy: null };
+  // Second pass: accelerations via finite difference of velocity
+  const axArr = points.map((_, i) =>
+    finiteDifference((j) => vxArr[j] ?? null, getTime, i, n),
+  );
+  const ayArr = points.map((_, i) =>
+    finiteDifference((j) => vyArr[j] ?? null, getTime, i, n),
+  );
 
-    if (i === 0) {
-      // Forward difference for first point
-      const next = getPoint(1);
-      if (!next) return { vx: null, vy: null };
-      const dt = next.time - curr.time;
-      if (dt <= 0) return { vx: null, vy: null };
-      return {
-        vx: (next.x - curr.x) / dt,
-        vy: (next.y - curr.y) / dt,
-      };
-    }
-
-    if (i === n - 1) {
-      // Backward difference for last point
-      const prev = getPoint(n - 2);
-      if (!prev) return { vx: null, vy: null };
-      const dt = curr.time - prev.time;
-      if (dt <= 0) return { vx: null, vy: null };
-      return {
-        vx: (curr.x - prev.x) / dt,
-        vy: (curr.y - prev.y) / dt,
-      };
-    }
-
-    // Central difference for interior points
-    const prev = getPoint(i - 1);
-    const next = getPoint(i + 1);
-    if (!prev || !next) return { vx: null, vy: null };
-    const dt = next.time - prev.time;
-    if (dt <= 0) return { vx: null, vy: null };
-    return {
-      vx: (next.x - prev.x) / dt,
-      vy: (next.y - prev.y) / dt,
-    };
-  };
-
-  // First pass: compute velocities
-  const velocities = points.map((_, i) => computeVelocity(i));
-
-  // Helper to safely get velocity
-  const getVelocity = (
-    idx: number,
-  ): { vx: number | null; vy: number | null } | undefined => velocities[idx];
-
-  // Compute acceleration at index i using finite differences on velocities
-  const computeAcceleration = (
-    i: number,
-  ): { ax: number | null; ay: number | null } => {
-    if (n < 2) {
-      return { ax: null, ay: null };
-    }
-
-    const curr = getPoint(i);
-    if (!curr) return { ax: null, ay: null };
-
-    if (i === 0) {
-      // Forward difference
-      const v0 = getVelocity(0);
-      const v1 = getVelocity(1);
-      const next = getPoint(1);
-      if (!v0 || !v1 || !next) return { ax: null, ay: null };
-      if (
-        v0.vx === null ||
-        v1.vx === null ||
-        v0.vy === null ||
-        v1.vy === null
-      ) {
-        return { ax: null, ay: null };
-      }
-      const dt = next.time - curr.time;
-      if (dt <= 0) return { ax: null, ay: null };
-      return {
-        ax: (v1.vx - v0.vx) / dt,
-        ay: (v1.vy - v0.vy) / dt,
-      };
-    }
-
-    if (i === n - 1) {
-      // Backward difference
-      const vPrev = getVelocity(n - 2);
-      const vCurr = getVelocity(n - 1);
-      const prev = getPoint(n - 2);
-      if (!vPrev || !vCurr || !prev) return { ax: null, ay: null };
-      if (
-        vPrev.vx === null ||
-        vCurr.vx === null ||
-        vPrev.vy === null ||
-        vCurr.vy === null
-      ) {
-        return { ax: null, ay: null };
-      }
-      const dt = curr.time - prev.time;
-      if (dt <= 0) return { ax: null, ay: null };
-      return {
-        ax: (vCurr.vx - vPrev.vx) / dt,
-        ay: (vCurr.vy - vPrev.vy) / dt,
-      };
-    }
-
-    // Central difference
-    const vPrev = getVelocity(i - 1);
-    const vNext = getVelocity(i + 1);
-    const prev = getPoint(i - 1);
-    const next = getPoint(i + 1);
-    if (!vPrev || !vNext || !prev || !next) return { ax: null, ay: null };
-    if (
-      vPrev.vx === null ||
-      vNext.vx === null ||
-      vPrev.vy === null ||
-      vNext.vy === null
-    ) {
-      return { ax: null, ay: null };
-    }
-    const dt = next.time - prev.time;
-    if (dt <= 0) return { ax: null, ay: null };
-    return {
-      ax: (vNext.vx - vPrev.vx) / dt,
-      ay: (vNext.vy - vPrev.vy) / dt,
-    };
-  };
-
-  // Second pass: compute accelerations
-  const accelerations = points.map((_, i) => computeAcceleration(i));
-
-  // Combine all data into KinematicPoints
   const kinematicPoints: KinematicPoint[] = points.map((pt, i) => {
-    const vel = velocities[i];
-    const acc = accelerations[i];
-    const vx = vel?.vx ?? null;
-    const vy = vel?.vy ?? null;
-    const ax = acc?.ax ?? null;
-    const ay = acc?.ay ?? null;
-
+    const vx = vxArr[i] ?? null;
+    const vy = vyArr[i] ?? null;
+    const ax = axArr[i] ?? null;
+    const ay = ayArr[i] ?? null;
     return {
       frame: pt.frame,
       time: pt.time,
@@ -376,11 +288,27 @@ export class SimModel {
   public readonly canAddTrackProperty = new BooleanProperty(true);
 
   // ── Derived kinematics for all tracks ───────────────────────────────────
-  // Automatically computes velocity and acceleration from position data
+  // Cache keyed by track ID; only recomputes kinematics for tracks whose
+  // point array reference has changed since the last derivation.  Because
+  // addPointToTrack() always creates a new points array, reference equality
+  // is sufficient to detect modifications.
+  private readonly kinematicsCache = new Map<
+    string,
+    { points: Track["points"]; kinematics: TrackKinematics }
+  >();
+
   public readonly trackKinematicsProperty: TReadOnlyProperty<
     readonly TrackKinematics[]
   > = new DerivedProperty([this.tracksProperty], (tracks) =>
-    tracks.map((track) => computeTrackKinematics(track)),
+    tracks.map((track) => {
+      const cached = this.kinematicsCache.get(track.id);
+      if (cached && cached.points === track.points) {
+        return cached.kinematics;
+      }
+      const kinematics = computeTrackKinematics(track);
+      this.kinematicsCache.set(track.id, { points: track.points, kinematics });
+      return kinematics;
+    }),
   );
   // Symbols are assigned sequentially (A → Z) and intentionally not reused
   // after a track is removed.  Stable, unique symbols matter for data export
@@ -389,6 +317,27 @@ export class SimModel {
   private nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
 
   public constructor() {
+    // ── Clamp coord origin to the video area ────────────────────────────────
+    // Validation lives here rather than in the view so that any writer of
+    // coordOriginProperty (drag listener, programmatic reset, etc.) benefits
+    // from the constraint without needing per-call clamping logic.
+    // The guard `if (clampedX !== pos.x || clampedY !== pos.y)` prevents
+    // infinite recursion: after the clamped value is written, the listener
+    // fires again but finds the condition false and exits.
+    this.coordOriginProperty.lazyLink((pos) => {
+      const clampedX = Math.max(
+        COORD_ORIGIN_BOUNDS_MIN_X,
+        Math.min(COORD_ORIGIN_BOUNDS_MAX_X, pos.x),
+      );
+      const clampedY = Math.max(
+        COORD_ORIGIN_BOUNDS_MIN_Y,
+        Math.min(COORD_ORIGIN_BOUNDS_MAX_Y, pos.y),
+      );
+      if (clampedX !== pos.x || clampedY !== pos.y) {
+        this.coordOriginProperty.value = pos.copy().setXY(clampedX, clampedY);
+      }
+    });
+
     this.modelViewTransformProperty.lazyLink((newMVT) => {
       if (this.prevModelViewTransform === null) {
         this.prevModelViewTransform = newMVT;
@@ -475,6 +424,7 @@ export class SimModel {
 
   public reset(): void {
     this.prevModelViewTransform = null;
+    this.kinematicsCache.clear();
     this.isPlayingProperty.reset();
     this.currentTimeProperty.reset();
     this.durationProperty.reset();

@@ -209,6 +209,19 @@ export class AutoTrackerNode extends Node {
               if (this.initVersion !== capturedVersion) {
                 // A newer drag has already started; discard this result.
                 this.model.tracker.dispose();
+                return;
+              }
+              // Guard against the race condition where the user removes the
+              // active track while WASM was loading.  If the track no longer
+              // exists, abort tracking so the crosshair doesn't appear with
+              // nowhere to record points.
+              const activeId = this.model.activeTrackIdProperty.value;
+              const trackStillExists =
+                activeId !== null &&
+                this.model.tracksProperty.value.some((t) => t.id === activeId);
+              if (!trackStillExists) {
+                this.model.tracker.dispose();
+                this.hintText.visible = true;
               }
             })
             .catch((err) => {
