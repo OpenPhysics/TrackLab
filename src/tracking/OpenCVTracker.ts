@@ -66,14 +66,18 @@ let cvPromise: Promise<CV> | null = null;
 
 const CV_LOAD_TIMEOUT_MS = 30_000;
 
+/** Type predicate: confirms the WASM module has a usable `Mat` constructor. */
+function isCVReady(v: unknown): v is CV {
+  // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
+  return typeof (v as Record<string, unknown>)["Mat"] === "function";
+}
+
 function loadCV(): Promise<CV> {
   if (!cvPromise) {
     cvPromise = import("@techstark/opencv-js").then(async (mod) => {
-      // Single escape hatch at the WASM module boundary: the package ships no
-      // TypeScript typings, so we extract the runtime object as `unknown` and
-      // cast to `CV` only after confirming it is initialised.
-      // biome-ignore lint/suspicious/noExplicitAny: OpenCV.js WASM has no TypeScript typings
-      let cv: unknown = (mod as any).default ?? mod;
+      // The package ships no TypeScript typings so `mod` is `any`. Extract the
+      // runtime object as `unknown` and validate before use.
+      let cv: unknown = mod.default ?? mod;
 
       // The default export may itself be a Promise (v4.12.0+).
       if (cv instanceof Promise) {
@@ -81,8 +85,8 @@ function loadCV(): Promise<CV> {
       }
 
       // WASM may already be ready (e.g. in test environments).
-      if (typeof (cv as { Mat?: unknown }).Mat === "function") {
-        return cv as CV;
+      if (isCVReady(cv)) {
+        return cv;
       }
 
       // Wait for the Emscripten runtime to initialise, with a timeout so we
@@ -92,10 +96,15 @@ function loadCV(): Promise<CV> {
           reject(new Error("OpenCV WASM initialisation timed out"));
         }, CV_LOAD_TIMEOUT_MS);
 
-        (cv as CV).onRuntimeInitialized = () => {
-          clearTimeout(timer);
-          resolve(cv as CV);
-        };
+        (cv as { onRuntimeInitialized?: () => void }).onRuntimeInitialized =
+          () => {
+            clearTimeout(timer);
+            if (isCVReady(cv)) {
+              resolve(cv);
+            } else {
+              reject(new Error("OpenCV module did not initialise correctly"));
+            }
+          };
       });
     });
 
