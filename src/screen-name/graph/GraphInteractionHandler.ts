@@ -138,8 +138,8 @@ export default class GraphInteractionHandler {
     this.setupZoomControls();
     this.setupPanControls();
     this.setupTouchZoomControls();
-    this.setupYAxisTouchControls();
-    this.setupXAxisTouchControls();
+    this.setupAxisControls("y");
+    this.setupAxisControls("x");
     this.setupHeaderDrag();
   }
 
@@ -375,454 +375,229 @@ export default class GraphInteractionHandler {
   }
 
   /**
-   * Setup touch controls for the Y-axis (tick labels)
-   * Allows pinch-to-zoom on Y-axis only and one-finger drag for vertical panning
+   * Setup touch, mouse-drag, and mouse-wheel controls for one axis.
+   *
+   * Gestures supported (identical for both axes, just transposed):
+   *  - Single-finger touch drag  → pan the axis range
+   *  - Two-finger touch pinch    → zoom the axis range around the pinch midpoint
+   *  - Mouse drag on axis label  → pan the axis range
+   *  - Mouse wheel on axis label → zoom the axis range around the pointer
+   *
+   * Sign convention for pan deltas
+   *  - Touch pan: negate the screen delta so content follows the finger on both axes.
+   *  - Mouse drag Y: keep positive — screen Y is inverted from model Y so the signs
+   *    cancel and content still follows the drag.
+   *  - Mouse drag X: negate — screen X and model X share the same direction, so
+   *    negation is required to make content follow the drag.
    */
-  private setupYAxisTouchControls(): void {
-    // Track active touch pointers for Y-axis
-    const activePointers = new Map<Pointer, Vector2>();
-    let initialYDistance: number | null = null;
-    let initialYMidpoint: number | null = null;
-    let initialYRange: Range | null = null;
-    let singleTouchStartY: number | null = null;
+  private setupAxisControls(axis: "x" | "y"): void {
+    const isX = axis === "x";
+    const region = isX
+      ? this.xAxisInteractionRegion
+      : this.yAxisInteractionRegion;
 
-    this.yAxisInteractionRegion.addInputListener({
-      down: (event) => {
-        if (event.pointer.type === "touch") {
-          const globalPoint = event.pointer.point;
-          activePointers.set(event.pointer, globalPoint);
+    // Read the current model range for this axis.
+    const getRange = (): Range =>
+      isX
+        ? this.chartTransform.modelXRange
+        : this.chartTransform.modelYRange;
 
-          if (activePointers.size === 1) {
-            // Single touch - prepare for vertical pan
-            singleTouchStartY = globalPoint.y;
-            initialYRange = this.chartTransform.modelYRange.copy();
-            this.dataManager.setManuallyZoomed(true);
-          } else if (activePointers.size === 2) {
-            // Two touches - prepare for pinch zoom on Y-axis
-            const points = Array.from(activePointers.values());
-            const point0 = points[0];
-            const point1 = points[1];
-            if (point0 && point1) {
-              initialYDistance = Math.abs(point0.y - point1.y);
-              initialYMidpoint = (point0.y + point1.y) / 2;
-              initialYRange = this.chartTransform.modelYRange.copy();
-              singleTouchStartY = null; // Cancel single touch
-              this.dataManager.setManuallyZoomed(true);
-            }
-          }
-        }
-      },
-
-      move: (event) => {
-        if (
-          event.pointer.type === "touch" &&
-          activePointers.has(event.pointer)
-        ) {
-          const globalPoint = event.pointer.point;
-          activePointers.set(event.pointer, globalPoint);
-
-          if (
-            activePointers.size === 1 &&
-            singleTouchStartY !== null &&
-            initialYRange
-          ) {
-            // Single touch - vertical pan
-            const deltaY = globalPoint.y - singleTouchStartY;
-
-            // Convert delta to model coordinates (negate: dragging down pans values down)
-            const modelDeltaY =
-              -deltaY * (initialYRange.getLength() / this.graphHeight);
-
-            const newYRange = new Range(
-              initialYRange.min + modelDeltaY,
-              initialYRange.max + modelDeltaY,
-            );
-
-            this.chartTransform.setModelYRange(newYRange);
-            this.dataManager.updateTickSpacing(
-              this.chartTransform.modelXRange,
-              newYRange,
-            );
-          } else if (
-            activePointers.size === 2 &&
-            initialYDistance &&
-            initialYMidpoint !== null &&
-            initialYRange
-          ) {
-            // Two touches - pinch zoom on Y-axis only
-            const points = Array.from(activePointers.values());
-            const point0 = points[0];
-            const point1 = points[1];
-            if (!point0 || !point1) return;
-            const currentYDistance = Math.abs(point0.y - point1.y);
-
-            // Calculate zoom factor from Y-distance ratio
-            const zoomFactor = initialYDistance / currentYDistance;
-
-            // Convert initial midpoint Y to model coordinates
-            const viewMidpoint = new Vector2(
-              this.graphWidth / 2,
-              initialYMidpoint,
-            );
-            const localMidpoint =
-              this.chartRectangle.globalToLocalPoint(viewMidpoint);
-            const modelMidpointY =
-              this.chartTransform.viewToModelPosition(localMidpoint).y;
-
-            // Calculate new Y range centered on the midpoint
-            const yMin =
-              modelMidpointY -
-              (modelMidpointY - initialYRange.min) * zoomFactor;
-            const yMax =
-              modelMidpointY +
-              (initialYRange.max - modelMidpointY) * zoomFactor;
-
-            this.chartTransform.setModelYRange(new Range(yMin, yMax));
-            this.dataManager.updateTickSpacing(
-              this.chartTransform.modelXRange,
-              new Range(yMin, yMax),
-            );
-          }
-        }
-      },
-
-      up: (event) => {
-        if (event.pointer.type === "touch") {
-          activePointers.delete(event.pointer);
-
-          if (activePointers.size < 2) {
-            initialYDistance = null;
-            initialYMidpoint = null;
-          }
-          if (activePointers.size === 0) {
-            singleTouchStartY = null;
-            initialYRange = null;
-          }
-        }
-      },
-
-      cancel: (event) => {
-        if (event.pointer.type === "touch") {
-          activePointers.delete(event.pointer);
-          if (activePointers.size < 2) {
-            initialYDistance = null;
-            initialYMidpoint = null;
-          }
-          if (activePointers.size === 0) {
-            singleTouchStartY = null;
-            initialYRange = null;
-          }
-        }
-      },
-    });
-
-    // Add mouse drag support for Y-axis panning
-    let mouseDragStartY: number | null = null;
-    let mouseDragInitialYRange: Range | null = null;
-
-    const mouseDragListener = new DragListener({
-      start: (event) => {
-        mouseDragStartY = event.pointer.point.y;
-        mouseDragInitialYRange = this.chartTransform.modelYRange.copy();
-        this.dataManager.setManuallyZoomed(true);
-      },
-
-      drag: (event) => {
-        if (mouseDragStartY !== null && mouseDragInitialYRange) {
-          const deltaY = event.pointer.point.y - mouseDragStartY;
-
-          // Convert delta to model coordinates.
-          // Screen Y increases downward while model Y increases upward, so a
-          // positive screen delta (drag down) corresponds to a positive model
-          // delta (shift range up).  The result is that content follows the
-          // drag — dragging down pans the view down — matching the X-axis UX.
-          const modelDeltaY =
-            deltaY * (mouseDragInitialYRange.getLength() / this.graphHeight);
-
-          const newYRange = new Range(
-            mouseDragInitialYRange.min + modelDeltaY,
-            mouseDragInitialYRange.max + modelDeltaY,
-          );
-
-          this.chartTransform.setModelYRange(newYRange);
-          this.dataManager.updateTickSpacing(
-            this.chartTransform.modelXRange,
-            newYRange,
-          );
-        }
-      },
-
-      end: () => {
-        mouseDragStartY = null;
-        mouseDragInitialYRange = null;
-      },
-    });
-
-    this.yAxisInteractionRegion.addInputListener(mouseDragListener);
-
-    // Make Y-axis interaction region pickable so it can receive input
-    this.yAxisInteractionRegion.pickable = true;
-    this.yAxisInteractionRegion.cursor = "ns-resize";
-
-    // Add mouse wheel support for Y-axis zooming (zoom vertically only)
-    this.yAxisInteractionRegion.addInputListener({
-      wheel: (event) => {
-        event.handle();
-        const delta = event.domEvent?.deltaY ?? 0;
-
-        // Get mouse position on Y-axis
-        const mouseY = event.pointer.point.y;
-        const viewMidpoint = new Vector2(this.graphWidth / 2, mouseY);
-        const localMidpoint =
-          this.chartRectangle.globalToLocalPoint(viewMidpoint);
-        const modelCenterY =
-          this.chartTransform.viewToModelPosition(localMidpoint).y;
-
-        const currentRange = this.chartTransform.modelYRange;
-
-        // Zoom in or out on Y-axis only
-        const zoomFactor = delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
-
-        // Calculate new Y range centered on mouse position
-        const yMin =
-          modelCenterY - (modelCenterY - currentRange.min) / zoomFactor;
-        const yMax =
-          modelCenterY + (currentRange.max - modelCenterY) / zoomFactor;
-
-        const newYRange = new Range(yMin, yMax);
-
-        this.chartTransform.setModelYRange(newYRange);
+    // Apply a new range for this axis and update tick spacing.
+    const setRange = (range: Range): void => {
+      if (isX) {
+        this.chartTransform.setModelXRange(range);
+        this.dataManager.updateTickSpacing(
+          range,
+          this.chartTransform.modelYRange,
+        );
+      } else {
+        this.chartTransform.setModelYRange(range);
         this.dataManager.updateTickSpacing(
           this.chartTransform.modelXRange,
-          newYRange,
+          range,
         );
-        this.dataManager.setManuallyZoomed(true);
-      },
-    });
-  }
+      }
+    };
 
-  /**
-   * Setup touch controls for the X-axis (tick labels)
-   * Allows pinch-to-zoom on X-axis only and one-finger drag for horizontal panning
-   */
-  private setupXAxisTouchControls(): void {
-    // Track active touch pointers for X-axis
+    // Extract the scalar coordinate relevant to this axis from a 2-D point.
+    const coord = (p: Vector2): number => (isX ? p.x : p.y);
+
+    // ── Touch controls ──────────────────────────────────────────────────────
     const activePointers = new Map<Pointer, Vector2>();
-    let initialXDistance: number | null = null;
-    let initialXMidpoint: number | null = null;
-    let initialXRange: Range | null = null;
-    let singleTouchStartX: number | null = null;
+    let initialPinchDistance: number | null = null;
+    let initialPinchMidpoint: number | null = null;
+    let initialRange: Range | null = null;
+    let singleTouchStart: number | null = null;
 
-    this.xAxisInteractionRegion.addInputListener({
+    region.addInputListener({
       down: (event) => {
-        if (event.pointer.type === "touch") {
-          const globalPoint = event.pointer.point;
-          activePointers.set(event.pointer, globalPoint);
+        if (event.pointer.type !== "touch") return;
+        const pt = event.pointer.point;
+        activePointers.set(event.pointer, pt);
 
-          if (activePointers.size === 1) {
-            // Single touch - prepare for horizontal pan
-            singleTouchStartX = globalPoint.x;
-            initialXRange = this.chartTransform.modelXRange.copy();
+        if (activePointers.size === 1) {
+          singleTouchStart = coord(pt);
+          initialRange = getRange().copy();
+          this.dataManager.setManuallyZoomed(true);
+        } else if (activePointers.size === 2) {
+          const points = Array.from(activePointers.values());
+          const p0 = points[0];
+          const p1 = points[1];
+          if (p0 && p1) {
+            initialPinchDistance = Math.abs(coord(p0) - coord(p1));
+            initialPinchMidpoint = (coord(p0) + coord(p1)) / 2;
+            initialRange = getRange().copy();
+            singleTouchStart = null;
             this.dataManager.setManuallyZoomed(true);
-          } else if (activePointers.size === 2) {
-            // Two touches - prepare for pinch zoom on X-axis
-            const points = Array.from(activePointers.values());
-            const point0 = points[0];
-            const point1 = points[1];
-            if (point0 && point1) {
-              initialXDistance = Math.abs(point0.x - point1.x);
-              initialXMidpoint = (point0.x + point1.x) / 2;
-              initialXRange = this.chartTransform.modelXRange.copy();
-              singleTouchStartX = null; // Cancel single touch
-              this.dataManager.setManuallyZoomed(true);
-            }
           }
         }
       },
 
       move: (event) => {
         if (
-          event.pointer.type === "touch" &&
-          activePointers.has(event.pointer)
+          event.pointer.type !== "touch" ||
+          !activePointers.has(event.pointer)
+        )
+          return;
+        const pt = event.pointer.point;
+        activePointers.set(event.pointer, pt);
+
+        if (activePointers.size === 1 && singleTouchStart !== null && initialRange) {
+          // Single touch: pan. Negate so content follows the finger on both axes.
+          const axisSize = isX ? this.graphWidth : this.graphHeight;
+          const modelDelta =
+            -(coord(pt) - singleTouchStart) *
+            (initialRange.getLength() / axisSize);
+          setRange(
+            new Range(
+              initialRange.min + modelDelta,
+              initialRange.max + modelDelta,
+            ),
+          );
+        } else if (
+          activePointers.size === 2 &&
+          initialPinchDistance &&
+          initialPinchMidpoint !== null &&
+          initialRange
         ) {
-          const globalPoint = event.pointer.point;
-          activePointers.set(event.pointer, globalPoint);
+          // Two-finger pinch: zoom this axis only, centered on the pinch midpoint.
+          const points = Array.from(activePointers.values());
+          const p0 = points[0];
+          const p1 = points[1];
+          if (!p0 || !p1) return;
+          const zoomFactor =
+            initialPinchDistance / Math.abs(coord(p0) - coord(p1));
 
-          if (
-            activePointers.size === 1 &&
-            singleTouchStartX !== null &&
-            initialXRange
-          ) {
-            // Single touch - horizontal pan
-            const deltaX = globalPoint.x - singleTouchStartX;
+          // Build a view midpoint at the pinch centre; use the graph centre on
+          // the perpendicular axis so the localToModel conversion is correct.
+          const viewMidpoint = isX
+            ? new Vector2(initialPinchMidpoint, this.graphHeight / 2)
+            : new Vector2(this.graphWidth / 2, initialPinchMidpoint);
+          const localMidpoint =
+            this.chartRectangle.globalToLocalPoint(viewMidpoint);
+          const modelPos =
+            this.chartTransform.viewToModelPosition(localMidpoint);
+          const modelCenter = isX ? modelPos.x : modelPos.y;
 
-            // Convert delta to model coordinates
-            const modelDeltaX =
-              -deltaX * (initialXRange.getLength() / this.graphWidth);
-
-            const newXRange = new Range(
-              initialXRange.min + modelDeltaX,
-              initialXRange.max + modelDeltaX,
-            );
-
-            this.chartTransform.setModelXRange(newXRange);
-            this.dataManager.updateTickSpacing(
-              newXRange,
-              this.chartTransform.modelYRange,
-            );
-          } else if (
-            activePointers.size === 2 &&
-            initialXDistance &&
-            initialXMidpoint !== null &&
-            initialXRange
-          ) {
-            // Two touches - pinch zoom on X-axis only
-            const points = Array.from(activePointers.values());
-            const point0 = points[0];
-            const point1 = points[1];
-            if (!point0 || !point1) return;
-            const currentXDistance = Math.abs(point0.x - point1.x);
-
-            // Calculate zoom factor from X-distance ratio
-            const zoomFactor = initialXDistance / currentXDistance;
-
-            // Convert initial midpoint X to model coordinates
-            const viewMidpoint = new Vector2(
-              initialXMidpoint,
-              this.graphHeight / 2,
-            );
-            const localMidpoint =
-              this.chartRectangle.globalToLocalPoint(viewMidpoint);
-            const modelMidpointX =
-              this.chartTransform.viewToModelPosition(localMidpoint).x;
-
-            // Calculate new X range centered on the midpoint
-            const xMin =
-              modelMidpointX -
-              (modelMidpointX - initialXRange.min) * zoomFactor;
-            const xMax =
-              modelMidpointX +
-              (initialXRange.max - modelMidpointX) * zoomFactor;
-
-            this.chartTransform.setModelXRange(new Range(xMin, xMax));
-            this.dataManager.updateTickSpacing(
-              new Range(xMin, xMax),
-              this.chartTransform.modelYRange,
-            );
-          }
+          setRange(
+            new Range(
+              modelCenter - (modelCenter - initialRange.min) * zoomFactor,
+              modelCenter + (initialRange.max - modelCenter) * zoomFactor,
+            ),
+          );
         }
       },
 
       up: (event) => {
-        if (event.pointer.type === "touch") {
-          activePointers.delete(event.pointer);
-
-          if (activePointers.size < 2) {
-            initialXDistance = null;
-            initialXMidpoint = null;
-          }
-          if (activePointers.size === 0) {
-            singleTouchStartX = null;
-            initialXRange = null;
-          }
+        if (event.pointer.type !== "touch") return;
+        activePointers.delete(event.pointer);
+        if (activePointers.size < 2) {
+          initialPinchDistance = null;
+          initialPinchMidpoint = null;
+        }
+        if (activePointers.size === 0) {
+          singleTouchStart = null;
+          initialRange = null;
         }
       },
 
       cancel: (event) => {
-        if (event.pointer.type === "touch") {
-          activePointers.delete(event.pointer);
-          if (activePointers.size < 2) {
-            initialXDistance = null;
-            initialXMidpoint = null;
-          }
-          if (activePointers.size === 0) {
-            singleTouchStartX = null;
-            initialXRange = null;
-          }
+        if (event.pointer.type !== "touch") return;
+        activePointers.delete(event.pointer);
+        if (activePointers.size < 2) {
+          initialPinchDistance = null;
+          initialPinchMidpoint = null;
+        }
+        if (activePointers.size === 0) {
+          singleTouchStart = null;
+          initialRange = null;
         }
       },
     });
 
-    // Add mouse drag support for X-axis panning
-    let mouseDragStartX: number | null = null;
-    let mouseDragInitialXRange: Range | null = null;
+    // ── Mouse drag ──────────────────────────────────────────────────────────
+    let mouseDragStart: number | null = null;
+    let mouseDragInitialRange: Range | null = null;
 
     const mouseDragListener = new DragListener({
       start: (event) => {
-        mouseDragStartX = event.pointer.point.x;
-        mouseDragInitialXRange = this.chartTransform.modelXRange.copy();
+        mouseDragStart = coord(event.pointer.point);
+        mouseDragInitialRange = getRange().copy();
         this.dataManager.setManuallyZoomed(true);
       },
 
       drag: (event) => {
-        if (mouseDragStartX !== null && mouseDragInitialXRange) {
-          const deltaX = event.pointer.point.x - mouseDragStartX;
-
-          // Convert delta to model coordinates.
-          // Screen X and model X share the same direction, so without the
-          // negation a rightward drag would shift the range right and the
-          // content would move LEFT.  The negation makes the content follow
-          // the drag — dragging right pans the view right — matching the
-          // Y-axis UX above.
-          const modelDeltaX =
-            -deltaX * (mouseDragInitialXRange.getLength() / this.graphWidth);
-
-          const newXRange = new Range(
-            mouseDragInitialXRange.min + modelDeltaX,
-            mouseDragInitialXRange.max + modelDeltaX,
-          );
-
-          this.chartTransform.setModelXRange(newXRange);
-          this.dataManager.updateTickSpacing(
-            newXRange,
-            this.chartTransform.modelYRange,
-          );
-        }
+        if (mouseDragStart === null || !mouseDragInitialRange) return;
+        const axisSize = isX ? this.graphWidth : this.graphHeight;
+        const delta = coord(event.pointer.point) - mouseDragStart;
+        // X: negate (screen X and model X share direction; negation makes content follow drag).
+        // Y: keep positive (screen Y is inverted from model Y; signs cancel, content follows drag).
+        const modelDelta =
+          (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
+        setRange(
+          new Range(
+            mouseDragInitialRange.min + modelDelta,
+            mouseDragInitialRange.max + modelDelta,
+          ),
+        );
       },
 
       end: () => {
-        mouseDragStartX = null;
-        mouseDragInitialXRange = null;
+        mouseDragStart = null;
+        mouseDragInitialRange = null;
       },
     });
 
-    this.xAxisInteractionRegion.addInputListener(mouseDragListener);
+    region.addInputListener(mouseDragListener);
+    region.pickable = true;
+    region.cursor = isX ? "ew-resize" : "ns-resize";
 
-    // Make X-axis interaction region pickable so it can receive input
-    this.xAxisInteractionRegion.pickable = true;
-    this.xAxisInteractionRegion.cursor = "ew-resize";
-
-    // Add mouse wheel support for X-axis zooming (zoom horizontally only)
-    this.xAxisInteractionRegion.addInputListener({
+    // ── Mouse wheel ─────────────────────────────────────────────────────────
+    region.addInputListener({
       wheel: (event) => {
         event.handle();
         const delta = event.domEvent?.deltaY ?? 0;
+        const mouseCoord = coord(event.pointer.point);
 
-        // Get mouse position on X-axis
-        const mouseX = event.pointer.point.x;
-        const viewMidpoint = new Vector2(mouseX, this.graphHeight / 2);
+        // Place the zoom anchor at the pointer position on this axis, centred
+        // on the perpendicular axis so the localToModel lookup is accurate.
+        const viewMidpoint = isX
+          ? new Vector2(mouseCoord, this.graphHeight / 2)
+          : new Vector2(this.graphWidth / 2, mouseCoord);
         const localMidpoint =
           this.chartRectangle.globalToLocalPoint(viewMidpoint);
-        const modelCenterX =
-          this.chartTransform.viewToModelPosition(localMidpoint).x;
+        const modelPos =
+          this.chartTransform.viewToModelPosition(localMidpoint);
+        const modelCenter = isX ? modelPos.x : modelPos.y;
 
-        const currentRange = this.chartTransform.modelXRange;
-
-        // Zoom in or out on X-axis only
+        const currentRange = getRange();
         const zoomFactor = delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
-        // Calculate new X range centered on mouse position
-        const xMin =
-          modelCenterX - (modelCenterX - currentRange.min) / zoomFactor;
-        const xMax =
-          modelCenterX + (currentRange.max - modelCenterX) / zoomFactor;
-
-        const newXRange = new Range(xMin, xMax);
-
-        this.chartTransform.setModelXRange(newXRange);
-        this.dataManager.updateTickSpacing(
-          newXRange,
-          this.chartTransform.modelYRange,
+        setRange(
+          new Range(
+            modelCenter - (modelCenter - currentRange.min) / zoomFactor,
+            modelCenter + (currentRange.max - modelCenter) / zoomFactor,
+          ),
         );
         this.dataManager.setManuallyZoomed(true);
       },
@@ -1028,14 +803,6 @@ export default class GraphInteractionHandler {
         );
       }
     });
-  }
-
-  /**
-   * Get resize handles array
-   * @deprecated Not currently called anywhere — consider removing.
-   */
-  public getResizeHandles(): Rectangle[] {
-    return this.resizeHandles;
   }
 
   /**
