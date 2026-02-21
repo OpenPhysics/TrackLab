@@ -1,28 +1,12 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Bounds2 } from "scenerystack/dot";
+import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import {
-  VIDEO_CENTER_X,
-  VIDEO_CENTER_Y,
-  VIDEO_HEIGHT,
-  VIDEO_WIDTH,
-} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
-
-const ARROW_LENGTH = 120;
-
-// Bounds of the video area in view (pixel) coordinates — used to clamp the coord origin drag.
-const VIDEO_BOUNDS = new Bounds2(
-  VIDEO_CENTER_X - VIDEO_WIDTH / 2,
-  VIDEO_CENTER_Y - VIDEO_HEIGHT / 2,
-  VIDEO_CENTER_X + VIDEO_WIDTH / 2,
-  VIDEO_CENTER_Y + VIDEO_HEIGHT / 2,
-);
 const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont({ size: 14, weight: "bold" });
 
@@ -44,6 +28,8 @@ const ROTATE_SHIFT_DRAG_SPEED = 20;
 const DEG_TO_RAD = Math.PI / 180;
 
 export class CoordinateSystemNode extends Node {
+  private readonly disposeCoordinateSystemNode: () => void;
+
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     model: SimModel,
@@ -143,34 +129,15 @@ export class CoordinateSystemNode extends Node {
     this.addChild(positionNode);
 
     // ── Property → scene-graph linkage ────────────────────────────────────
-    model.coordOriginProperty.link((pos) => {
+    const onOriginChange = (pos: Vector2) => {
       positionNode.translation = pos;
-    });
-    model.coordAngleProperty.link((angle) => {
-      rotatingNode.rotation = angle;
-    });
+    };
+    model.coordOriginProperty.link(onOriginChange);
 
-    // ── Clamp coord origin to video bounds on every change ────────────────
-    // Prevents the user from dragging the coordinate system completely off-screen.
-    let isClamping = false;
-    model.coordOriginProperty.lazyLink((pos) => {
-      if (isClamping) return;
-      const clampedX = Math.max(
-        VIDEO_BOUNDS.minX,
-        Math.min(VIDEO_BOUNDS.maxX, pos.x),
-      );
-      const clampedY = Math.max(
-        VIDEO_BOUNDS.minY,
-        Math.min(VIDEO_BOUNDS.maxY, pos.y),
-      );
-      if (clampedX !== pos.x || clampedY !== pos.y) {
-        isClamping = true;
-        model.coordOriginProperty.value = model.coordOriginProperty.value
-          .copy()
-          .setXY(clampedX, clampedY);
-        isClamping = false;
-      }
-    });
+    const onAngleChange = (angle: number) => {
+      rotatingNode.rotation = angle;
+    };
+    model.coordAngleProperty.link(onAngleChange);
 
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener(
@@ -209,8 +176,20 @@ export class CoordinateSystemNode extends Node {
     );
 
     // ── Visibility: only shown once a video with a finite duration is loaded
-    videoLoadedProperty.link((loaded) => {
+    const onVideoLoaded = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(onVideoLoaded);
+
+    this.disposeCoordinateSystemNode = () => {
+      model.coordOriginProperty.unlink(onOriginChange);
+      model.coordAngleProperty.unlink(onAngleChange);
+      videoLoadedProperty.unlink(onVideoLoaded);
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeCoordinateSystemNode();
+    super.dispose();
   }
 }

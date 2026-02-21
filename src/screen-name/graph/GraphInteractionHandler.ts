@@ -539,7 +539,11 @@ export default class GraphInteractionHandler {
         if (mouseDragStartY !== null && mouseDragInitialYRange) {
           const deltaY = event.pointer.point.y - mouseDragStartY;
 
-          // Convert delta to model coordinates
+          // Convert delta to model coordinates.
+          // Screen Y increases downward while model Y increases upward, so a
+          // positive screen delta (drag down) corresponds to a positive model
+          // delta (shift range up).  The result is that content follows the
+          // drag — dragging down pans the view down — matching the X-axis UX.
           const modelDeltaY =
             deltaY * (mouseDragInitialYRange.getLength() / this.graphHeight);
 
@@ -766,7 +770,12 @@ export default class GraphInteractionHandler {
         if (mouseDragStartX !== null && mouseDragInitialXRange) {
           const deltaX = event.pointer.point.x - mouseDragStartX;
 
-          // Convert delta to model coordinates
+          // Convert delta to model coordinates.
+          // Screen X and model X share the same direction, so without the
+          // negation a rightward drag would shift the range right and the
+          // content would move LEFT.  The negation makes the content follow
+          // the drag — dragging right pans the view right — matching the
+          // Y-axis UX above.
           const modelDeltaX =
             -deltaX * (mouseDragInitialXRange.getLength() / this.graphWidth);
 

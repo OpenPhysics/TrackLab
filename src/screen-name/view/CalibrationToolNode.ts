@@ -1,6 +1,6 @@
 import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty, Multilink } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import {
   Circle,
@@ -47,6 +47,8 @@ const OVERLAP_WARNING_DISTANCE = 10;
 const ENDPOINT_WARNING_COLOR = new Color(255, 60, 60);
 
 export class CalibrationToolNode extends Node {
+  private readonly disposeCalibrationToolNode: () => void;
+
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     listParent: Node,
@@ -238,8 +240,13 @@ export class CalibrationToolNode extends Node {
         overlapWarning.top = mid.y + MIDPOINT_Y_OFFSET;
       }
     };
-    model.calibPoint1Property.link(updateGeometry);
-    model.calibPoint2Property.link(updateGeometry);
+    // A single Multilink replaces two separate link() calls so that geometry
+    // is rebuilt once per change event regardless of which endpoint moved,
+    // and disposal is managed in one place.
+    const calibMultilink = Multilink.multilink(
+      [model.calibPoint1Property, model.calibPoint2Property],
+      updateGeometry,
+    );
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     endpoint1.addInputListener(
@@ -264,8 +271,21 @@ export class CalibrationToolNode extends Node {
     );
 
     // ── Visibility ─────────────────────────────────────────────────────────
-    videoLoadedProperty.link((loaded) => {
+    const onVideoLoaded = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(onVideoLoaded);
+
+    this.disposeCalibrationToolNode = () => {
+      calibMultilink.dispose();
+      videoLoadedProperty.unlink(onVideoLoaded);
+      rangePatternProperty.dispose();
+      buttonLabelProperty.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeCalibrationToolNode();
+    super.dispose();
   }
 }

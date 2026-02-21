@@ -499,4 +499,9 @@ export class WebcamPanel extends Node {
       this.timerInterval = null;
     }
   }
+
+  public override dispose(): void {
+    this.cleanup();
+    super.dispose();
+  }
 }

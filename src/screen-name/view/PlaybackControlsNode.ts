@@ -27,6 +27,7 @@ const INFO_DISPLAY_SPACING = 4; // gap between time label and frame counter
  */
 export class PlaybackControlsNode extends HBox {
   private isScrubbing = false;
+  private readonly disposePlaybackControlsNode: () => void;
 
   public constructor(
     model: SimModel,
@@ -51,14 +52,16 @@ export class PlaybackControlsNode extends HBox {
     const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // view → model
-    timeSpeedProperty.link((speed) => {
+    const onSpeedChange = (speed: TimeSpeed) => {
       model.playbackRateProperty.value = speedMap.get(speed) ?? SPEED_NORMAL;
-    });
+    };
+    timeSpeedProperty.link(onSpeedChange);
 
     // model → view  (handles reset and any future programmatic rate changes)
-    model.playbackRateProperty.lazyLink((rate: number) => {
+    const onRateChange = (rate: number) => {
       timeSpeedProperty.value = rateToSpeed.get(rate) ?? TimeSpeed.NORMAL;
-    });
+    };
+    model.playbackRateProperty.lazyLink(onRateChange);
 
     // ── TimeControlNode: play/pause + step back + step forward + speed ─────
     const timeControlNode = new TimeControlNode(model.isPlayingProperty, {
@@ -100,11 +103,12 @@ export class PlaybackControlsNode extends HBox {
       enabledProperty: model.videoLoadedProperty,
     });
 
-    model.currentTimeProperty.lazyLink((time) => {
+    const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
         videoElement.currentTime = time;
       }
-    });
+    };
+    model.currentTimeProperty.lazyLink(onTimeChange);
 
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
@@ -123,12 +127,15 @@ export class PlaybackControlsNode extends HBox {
       [
         model.currentTimeProperty,
         model.durationProperty,
-        model.frameDurationProperty,
+        model.frameRateProperty,
       ],
-      (time: number, duration: number, frameDuration: number) => {
+      (time: number, duration: number, frameRate: number) => {
         if (duration <= 0) return "0/0";
-        const current = Math.round(time / frameDuration);
-        const total = Math.round(duration / frameDuration);
+        // Multiply by frame rate directly rather than dividing by frameDuration
+        // (1/fps) to avoid cascading floating-point error at non-integer fps
+        // values like 29.97, matching the approach used in AutoTrackerNode.
+        const current = Math.round(time * frameRate);
+        const total = Math.round(duration * frameRate);
         return `${current}/${total}`;
       },
     );
@@ -149,9 +156,24 @@ export class PlaybackControlsNode extends HBox {
     });
 
     this.children = [infoDisplay, timeControlNode, scrubber];
+
+    this.disposePlaybackControlsNode = () => {
+      timeSpeedProperty.unlink(onSpeedChange);
+      model.playbackRateProperty.unlink(onRateChange);
+      model.currentTimeProperty.unlink(onTimeChange);
+      timeSpeedProperty.dispose();
+      rangeProperty.dispose();
+      totalTimeTextProperty.dispose();
+      frameCountTextProperty.dispose(); // no longer observes frameDurationProperty
+    };
   }
 
   public get scrubbing(): boolean {
     return this.isScrubbing;
+  }
+
+  public override dispose(): void {
+    this.disposePlaybackControlsNode();
+    super.dispose();
   }
 }

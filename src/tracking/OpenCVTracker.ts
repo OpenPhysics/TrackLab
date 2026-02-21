@@ -184,12 +184,12 @@ export class OpenCVTracker {
       // read outside the source image and crash.
       const clampedX = Math.round(Math.max(0, region.x));
       const clampedY = Math.round(Math.max(0, region.y));
-      const roi = new cv.Rect(
-        clampedX,
-        clampedY,
-        Math.round(Math.min(region.w, this.offscreen.width - clampedX)),
-        Math.round(Math.min(region.h, this.offscreen.height - clampedY)),
-      );
+      const roiW = Math.round(Math.min(region.w, this.offscreen.width - clampedX));
+      const roiH = Math.round(Math.min(region.h, this.offscreen.height - clampedY));
+      if (roiW <= 0 || roiH <= 0) {
+        throw new Error(`Invalid ROI dimensions: ${roiW}x${roiH}`);
+      }
+      const roi = new cv.Rect(clampedX, clampedY, roiW, roiH);
       this.templateMat = gray.roi(roi).clone();
     } finally {
       frame.delete();
@@ -211,8 +211,10 @@ export class OpenCVTracker {
     let imageData: ImageData;
     try {
       imageData = this.captureFrame(video);
-    } catch {
-      // Cross-origin video — silently skip this frame rather than crashing.
+    } catch (e) {
+      // Cross-origin video without CORS headers — skip this frame and warn
+      // so developers can diagnose the source of the failure.
+      console.warn("[OpenCVTracker] Frame capture failed — video may be cross-origin:", e);
       return null;
     }
     const frame = cv.matFromImageData(imageData);

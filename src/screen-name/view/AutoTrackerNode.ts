@@ -46,7 +46,14 @@ const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
  */
 export class AutoTrackerNode extends Node {
   private readonly model: SimModel;
-  private readonly trail: Array<{ x: number; y: number }> = [];
+
+  // ── Trail: O(1) ring buffer ────────────────────────────────────────────
+  // Using a fixed-size circular buffer instead of a plain array so that the
+  // oldest-point eviction at 30 Hz is O(1) rather than O(n) (Array.shift).
+  private readonly trailBuf: Array<{ x: number; y: number }> =
+    new Array(MAX_TRAIL);
+  private trailHead = 0; // index of the slot where the NEXT write will land
+  private trailSize = 0; // number of valid entries (0 … MAX_TRAIL)
   /** Frames already recorded to the active track; cleared on track change or reset. */
   private readonly recordedFrames = new Set<number>();
 
@@ -143,7 +150,8 @@ export class AutoTrackerNode extends Node {
     // ── Drag listener: region selection ──────────────────────────────────
     const dragListener = new DragListener({
       start: (event) => {
-        this.trail.length = 0;
+        this.trailHead = 0;
+        this.trailSize = 0;
         // Bump version so any in-flight initFromVideo call is discarded when it resolves.
         this.initVersion++;
         this.model.tracker.dispose();
@@ -209,6 +217,19 @@ export class AutoTrackerNode extends Node {
               if (this.initVersion !== capturedVersion) {
                 // A newer drag has already started; discard this result.
                 this.model.tracker.dispose();
+                return;
+              }
+              // Guard against the race condition where the user removes the
+              // active track while WASM was loading.  If the track no longer
+              // exists, abort tracking so the crosshair doesn't appear with
+              // nowhere to record points.
+              const activeId = this.model.activeTrackIdProperty.value;
+              const trackStillExists =
+                activeId !== null &&
+                this.model.tracksProperty.value.some((t) => t.id === activeId);
+              if (!trackStillExists) {
+                this.model.tracker.dispose();
+                this.hintText.visible = true;
               }
             })
             .catch((err) => {
@@ -234,8 +255,10 @@ export class AutoTrackerNode extends Node {
       const pt = this.model.tracker.track(videoElement);
       if (!pt) return;
 
-      this.trail.push(pt);
-      if (this.trail.length > MAX_TRAIL) this.trail.shift();
+      // O(1) ring-buffer write: overwrite the oldest slot when full.
+      this.trailBuf[this.trailHead] = pt;
+      this.trailHead = (this.trailHead + 1) % MAX_TRAIL;
+      if (this.trailSize < MAX_TRAIL) this.trailSize++;
       this.updateTrackerVisuals(pt);
 
       // ── Record position to model if a track is active ─────────────────
@@ -289,8 +312,12 @@ export class AutoTrackerNode extends Node {
 
   private updateTrackerVisuals(pt: { x: number; y: number }): void {
     const shape = new Shape();
-    for (const p of this.trail) {
-      shape.circle(p.x, p.y, TRAIL_DOT_RADIUS);
+    // Iterate the ring buffer from oldest to newest.
+    // tail = (head - size + MAX_TRAIL) % MAX_TRAIL is the index of the oldest entry.
+    for (let i = 0; i < this.trailSize; i++) {
+      const idx = (this.trailHead - this.trailSize + i + MAX_TRAIL) % MAX_TRAIL;
+      const p = this.trailBuf[idx];
+      if (p) shape.circle(p.x, p.y, TRAIL_DOT_RADIUS);
     }
     this.trailPath.shape = shape;
     this.trailPath.visible = true;
@@ -306,7 +333,8 @@ export class AutoTrackerNode extends Node {
   /** Clear tracking state (template, trail, visuals). */
   public reset(): void {
     this.model.tracker.dispose();
-    this.trail.length = 0;
+    this.trailHead = 0;
+    this.trailSize = 0;
     this.recordedFrames.clear();
     this.selecting = false;
     this.selectionRect.visible = false;
