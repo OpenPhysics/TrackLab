@@ -1,6 +1,6 @@
 import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty, Multilink } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import {
   Circle,
@@ -240,8 +240,13 @@ export class CalibrationToolNode extends Node {
         overlapWarning.top = mid.y + MIDPOINT_Y_OFFSET;
       }
     };
-    model.calibPoint1Property.link(updateGeometry);
-    model.calibPoint2Property.link(updateGeometry);
+    // A single Multilink replaces two separate link() calls so that geometry
+    // is rebuilt once per change event regardless of which endpoint moved,
+    // and disposal is managed in one place.
+    const calibMultilink = Multilink.multilink(
+      [model.calibPoint1Property, model.calibPoint2Property],
+      updateGeometry,
+    );
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     endpoint1.addInputListener(
@@ -272,8 +277,7 @@ export class CalibrationToolNode extends Node {
     videoLoadedProperty.link(onVideoLoaded);
 
     this.disposeCalibrationToolNode = () => {
-      model.calibPoint1Property.unlink(updateGeometry);
-      model.calibPoint2Property.unlink(updateGeometry);
+      calibMultilink.dispose();
       videoLoadedProperty.unlink(onVideoLoaded);
       rangePatternProperty.dispose();
       buttonLabelProperty.dispose();

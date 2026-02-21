@@ -211,8 +211,10 @@ export class OpenCVTracker {
     let imageData: ImageData;
     try {
       imageData = this.captureFrame(video);
-    } catch {
-      // Cross-origin video — silently skip this frame rather than crashing.
+    } catch (e) {
+      // Cross-origin video without CORS headers — skip this frame and warn
+      // so developers can diagnose the source of the failure.
+      console.warn("[OpenCVTracker] Frame capture failed — video may be cross-origin:", e);
       return null;
     }
     const frame = cv.matFromImageData(imageData);

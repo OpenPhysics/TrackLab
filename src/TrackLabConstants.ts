@@ -10,6 +10,11 @@
 // Shared corner radius used by the main side panels.
 export const PANEL_CORNER_RADIUS = 8;
 
+// ── Screen layout bounds ───────────────────────────────────────────────────────
+// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
+const LAYOUT_WIDTH = 1024;
+const LAYOUT_HEIGHT = 618;
+
 // ── Video display dimensions ───────────────────────────────────────────────────
 // The video element is always rendered at this fixed pixel size.
 // Both the OpenCV tracker and all overlay nodes depend on these values.
@@ -17,18 +22,16 @@ export const VIDEO_WIDTH = 640;
 export const VIDEO_HEIGHT = 360;
 
 // ── Video position in screen (layout) coordinates ────────────────────────────
-// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
 // The video element is centered at layoutBounds.center + (0, VIDEO_PLAYER_Y_OFFSET).
-export const VIDEO_CENTER_X = 512; // 1024 / 2
-export const VIDEO_CENTER_Y = 289; // 618 / 2 + VIDEO_PLAYER_Y_OFFSET  (309 - 20)
+export const VIDEO_PLAYER_Y_OFFSET = -20; // video center offset below layout center
+export const VIDEO_CENTER_X = LAYOUT_WIDTH / 2; // 512
+export const VIDEO_CENTER_Y = LAYOUT_HEIGHT / 2 + VIDEO_PLAYER_Y_OFFSET; // 289
 
 // ── Initial calibration tool geometry ─────────────────────────────────────────
 // Half-length of the default calibration segment (pixels from centre to each endpoint).
 export const CALIB_HALF_LENGTH = 100;
 
 // ── Screen layout offsets ─────────────────────────────────────────────────────
-// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
-export const VIDEO_PLAYER_Y_OFFSET = -20; // video center offset below layout center
 export const CONTROL_PANEL_LEFT_MARGIN = 10; // control panel inset from layout left edge
 export const TRACK_LIST_LEFT_SPACING = -100; // offset from video right edge (negative moves panels left)
 export const DATA_TABLE_TOP_SPACING = 8; // gap between track list bottom and data table
