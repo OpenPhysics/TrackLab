@@ -1,5 +1,5 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Bounds2 } from "scenerystack/dot";
+import { Bounds2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
@@ -44,6 +44,8 @@ const ROTATE_SHIFT_DRAG_SPEED = 20;
 const DEG_TO_RAD = Math.PI / 180;
 
 export class CoordinateSystemNode extends Node {
+  private readonly disposeCoordinateSystemNode: () => void;
+
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     model: SimModel,
@@ -143,17 +145,20 @@ export class CoordinateSystemNode extends Node {
     this.addChild(positionNode);
 
     // ── Property → scene-graph linkage ────────────────────────────────────
-    model.coordOriginProperty.link((pos) => {
+    const onOriginChange = (pos: Vector2) => {
       positionNode.translation = pos;
-    });
-    model.coordAngleProperty.link((angle) => {
+    };
+    model.coordOriginProperty.link(onOriginChange);
+
+    const onAngleChange = (angle: number) => {
       rotatingNode.rotation = angle;
-    });
+    };
+    model.coordAngleProperty.link(onAngleChange);
 
     // ── Clamp coord origin to video bounds on every change ────────────────
     // Prevents the user from dragging the coordinate system completely off-screen.
     let isClamping = false;
-    model.coordOriginProperty.lazyLink((pos) => {
+    const onOriginClamp = (pos: Vector2) => {
       if (isClamping) return;
       const clampedX = Math.max(
         VIDEO_BOUNDS.minX,
@@ -170,7 +175,8 @@ export class CoordinateSystemNode extends Node {
           .setXY(clampedX, clampedY);
         isClamping = false;
       }
-    });
+    };
+    model.coordOriginProperty.lazyLink(onOriginClamp);
 
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener(
@@ -209,8 +215,21 @@ export class CoordinateSystemNode extends Node {
     );
 
     // ── Visibility: only shown once a video with a finite duration is loaded
-    videoLoadedProperty.link((loaded) => {
+    const onVideoLoaded = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(onVideoLoaded);
+
+    this.disposeCoordinateSystemNode = () => {
+      model.coordOriginProperty.unlink(onOriginChange);
+      model.coordAngleProperty.unlink(onAngleChange);
+      model.coordOriginProperty.unlink(onOriginClamp);
+      videoLoadedProperty.unlink(onVideoLoaded);
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeCoordinateSystemNode();
+    super.dispose();
   }
 }

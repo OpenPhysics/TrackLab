@@ -47,6 +47,8 @@ const OVERLAP_WARNING_DISTANCE = 10;
 const ENDPOINT_WARNING_COLOR = new Color(255, 60, 60);
 
 export class CalibrationToolNode extends Node {
+  private readonly disposeCalibrationToolNode: () => void;
+
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     listParent: Node,
@@ -264,8 +266,22 @@ export class CalibrationToolNode extends Node {
     );
 
     // ── Visibility ─────────────────────────────────────────────────────────
-    videoLoadedProperty.link((loaded) => {
+    const onVideoLoaded = (loaded: boolean) => {
       this.visible = loaded;
-    });
+    };
+    videoLoadedProperty.link(onVideoLoaded);
+
+    this.disposeCalibrationToolNode = () => {
+      model.calibPoint1Property.unlink(updateGeometry);
+      model.calibPoint2Property.unlink(updateGeometry);
+      videoLoadedProperty.unlink(onVideoLoaded);
+      rangePatternProperty.dispose();
+      buttonLabelProperty.dispose();
+    };
+  }
+
+  public override dispose(): void {
+    this.disposeCalibrationToolNode();
+    super.dispose();
   }
 }

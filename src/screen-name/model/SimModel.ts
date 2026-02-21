@@ -455,10 +455,16 @@ export class SimModel {
     const tracks = this.tracksProperty.value.map((track) => {
       if (track.id !== id) return track;
 
-      // Reject duplicate frames.  Without this guard a second click on the
-      // same frame (manual digitizing) or a repeated timeupdate event would
-      // add a second point at the same frame index, corrupting kinematics.
-      if (track.points.some((p) => p.frame === frame)) return track;
+      // If the user re-digitizes a point at the same frame (e.g. to correct a
+      // misclick), replace the existing coordinates rather than silently
+      // discarding the new position.  Adding a second point at the same frame
+      // would corrupt kinematics, so replacement is the only safe update path.
+      const existingIndex = track.points.findIndex((p) => p.frame === frame);
+      if (existingIndex !== -1) {
+        const updatedPoints = [...track.points];
+        updatedPoints[existingIndex] = { frame, time, x, y };
+        return { ...track, points: updatedPoints };
+      }
 
       const point: TrackPoint = { frame, time, x, y };
       const updated: Track = { ...track, points: [...track.points, point] };
