@@ -19,7 +19,7 @@ import type { WebcamPanel } from "./WebcamPanel.js";
  */
 export class VideoPlayerNode extends Node {
   /** The underlying HTML video element used for display and pixel capture. */
-  public readonly videoElement: HTMLVideoElement;
+  private readonly videoElement: HTMLVideoElement;
   /** Webcam recording panel; positioned by SimScreenView for correct z-ordering. */
   public readonly webcamPanel: WebcamPanel;
   private readonly model: SimModel;
@@ -191,7 +191,7 @@ export class VideoPlayerNode extends Node {
   }
 
   /** Pause playback and advance by exactly one frame. */
-  public stepForward(): void {
+  private stepForward(): void {
     this.seekByFrames(1);
   }
 

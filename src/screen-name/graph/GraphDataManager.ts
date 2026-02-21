@@ -296,6 +296,7 @@ export default class GraphDataManager {
 
   /**
    * Get the manually zoomed state
+   * @deprecated Not currently called anywhere — consider removing.
    */
   public isManualZoom(): boolean {
     return this.isManuallyZoomed;

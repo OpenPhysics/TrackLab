@@ -1046,6 +1046,7 @@ export default class GraphInteractionHandler {
 
   /**
    * Get resize handles array
+   * @deprecated Not currently called anywhere — consider removing.
    */
   public getResizeHandles(): Rectangle[] {
     return this.resizeHandles;

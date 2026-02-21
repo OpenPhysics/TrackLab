@@ -68,12 +68,9 @@ const _RESIZE_DOT_RADIUS = 2;
 const _RESIZE_DOT_SPACING = 5;
 
 export default class ConfigurableGraph extends Node {
-  private readonly availableProperties: PlottableProperty[];
   private readonly xPropertyProperty: Property<PlottableProperty>;
   private readonly yPropertyProperty: Property<PlottableProperty>;
   private readonly chartTransform: ChartTransform;
-  private readonly linePlot: LinePlot;
-  private readonly chartRectangle: ChartRectangle;
   private graphWidth: number;
   private graphHeight: number;
   private readonly initialWidth: number;
@@ -81,11 +78,6 @@ export default class ConfigurableGraph extends Node {
 
   // Drag and resize UI components
   private readonly headerBar;
-  private readonly isDraggingProperty: BooleanProperty;
-  private readonly isResizingProperty: BooleanProperty;
-
-  // Trail points
-  private readonly trailNode: Node;
 
   // Clipped data container for line plot and trail
   private readonly clippedDataContainer: Node;
@@ -98,14 +90,6 @@ export default class ConfigurableGraph extends Node {
   private readonly xAxisLabelNode: Text;
   private readonly yAxisLabelNode: Text;
 
-  // Grid and tick components
-  private readonly verticalGridLineSet: GridLineSet;
-  private readonly horizontalGridLineSet: GridLineSet;
-  private readonly xTickMarkSet: TickMarkSet;
-  private readonly yTickMarkSet: TickMarkSet;
-  private readonly xTickLabelSet: TickLabelSet;
-  private readonly yTickLabelSet: TickLabelSet;
-
   // Invisible interaction regions for axis controls
   private readonly xAxisInteractionRegion: Rectangle;
   private readonly yAxisInteractionRegion: Rectangle;
@@ -114,15 +98,8 @@ export default class ConfigurableGraph extends Node {
   private readonly dataManager: GraphDataManager;
   private readonly interactionHandler: GraphInteractionHandler;
 
-  // Control buttons
-  private readonly rescaleButton: Node;
-  private readonly controlButtonsPanel: Node;
-
   // Title panel with combo boxes (needs to be on top of header bar)
   private readonly titlePanel: Node;
-
-  // Optional drag target (the node to move when dragging the header bar)
-  private readonly dragTargetNode: Node | undefined;
 
   // Sub-step decimation counter for high-resolution data
   private decimationCounter: number = 0;
@@ -149,12 +126,10 @@ export default class ConfigurableGraph extends Node {
   ) {
     super();
 
-    this.availableProperties = availableProperties;
     this.graphWidth = width;
     this.graphHeight = height;
     this.initialWidth = width;
     this.initialHeight = height;
-    this.dragTargetNode = dragTargetNode;
 
     // Properties to track current axis selections
     this.xPropertyProperty = new Property(initialXProperty);
@@ -164,8 +139,8 @@ export default class ConfigurableGraph extends Node {
     this.graphVisibleProperty = new BooleanProperty(false);
 
     // Properties for drag and resize states
-    this.isDraggingProperty = new BooleanProperty(false);
-    this.isResizingProperty = new BooleanProperty(false);
+    const isDraggingProperty = new BooleanProperty(false);
+    const isResizingProperty = new BooleanProperty(false);
 
     // Create a container for all graph content
     this.graphContentNode = new Node();
@@ -180,18 +155,18 @@ export default class ConfigurableGraph extends Node {
     });
 
     // Create chart background
-    this.chartRectangle = new ChartRectangle(this.chartTransform, {
+    const chartRectangle = new ChartRectangle(this.chartTransform, {
       fill: TrackLabColors.graphBackgroundProperty,
       stroke: TrackLabColors.controlPanelStrokeProperty,
     });
-    this.graphContentNode.addChild(this.chartRectangle);
+    this.graphContentNode.addChild(chartRectangle);
 
     // Create grid lines, tick marks, and tick labels
     const initialSpacing = GraphDataManager.calculateTickSpacing(
       initialRange.getLength(),
     );
 
-    this.verticalGridLineSet = new GridLineSet(
+    const verticalGridLineSet = new GridLineSet(
       this.chartTransform,
       Orientation.VERTICAL,
       initialSpacing,
@@ -200,9 +175,9 @@ export default class ConfigurableGraph extends Node {
         lineWidth: GRID_LINE_WIDTH,
       },
     );
-    this.graphContentNode.addChild(this.verticalGridLineSet);
+    this.graphContentNode.addChild(verticalGridLineSet);
 
-    this.horizontalGridLineSet = new GridLineSet(
+    const horizontalGridLineSet = new GridLineSet(
       this.chartTransform,
       Orientation.HORIZONTAL,
       initialSpacing,
@@ -211,9 +186,9 @@ export default class ConfigurableGraph extends Node {
         lineWidth: GRID_LINE_WIDTH,
       },
     );
-    this.graphContentNode.addChild(this.horizontalGridLineSet);
+    this.graphContentNode.addChild(horizontalGridLineSet);
 
-    this.xTickMarkSet = new TickMarkSet(
+    const xTickMarkSet = new TickMarkSet(
       this.chartTransform,
       Orientation.HORIZONTAL,
       initialSpacing,
@@ -223,9 +198,9 @@ export default class ConfigurableGraph extends Node {
         stroke: TrackLabColors.controlPanelStrokeProperty,
       },
     );
-    this.graphContentNode.addChild(this.xTickMarkSet);
+    this.graphContentNode.addChild(xTickMarkSet);
 
-    this.yTickMarkSet = new TickMarkSet(
+    const yTickMarkSet = new TickMarkSet(
       this.chartTransform,
       Orientation.VERTICAL,
       initialSpacing,
@@ -235,9 +210,9 @@ export default class ConfigurableGraph extends Node {
         stroke: TrackLabColors.controlPanelStrokeProperty,
       },
     );
-    this.graphContentNode.addChild(this.yTickMarkSet);
+    this.graphContentNode.addChild(yTickMarkSet);
 
-    this.xTickLabelSet = new TickLabelSet(
+    const xTickLabelSet = new TickLabelSet(
       this.chartTransform,
       Orientation.HORIZONTAL,
       initialSpacing,
@@ -250,9 +225,9 @@ export default class ConfigurableGraph extends Node {
           }),
       },
     );
-    this.graphContentNode.addChild(this.xTickLabelSet);
+    this.graphContentNode.addChild(xTickLabelSet);
 
-    this.yTickLabelSet = new TickLabelSet(
+    const yTickLabelSet = new TickLabelSet(
       this.chartTransform,
       Orientation.VERTICAL,
       initialSpacing,
@@ -265,7 +240,7 @@ export default class ConfigurableGraph extends Node {
           }),
       },
     );
-    this.graphContentNode.addChild(this.yTickLabelSet);
+    this.graphContentNode.addChild(yTickLabelSet);
 
     // Create invisible interaction regions for axis controls
     // These regions capture mouse/touch events across the entire tick label area,
@@ -300,17 +275,17 @@ export default class ConfigurableGraph extends Node {
     this.graphContentNode.addChild(this.xAxisInteractionRegion);
 
     // Create line plot
-    this.linePlot = new LinePlot(this.chartTransform, [], {
+    const linePlot = new LinePlot(this.chartTransform, [], {
       stroke: TrackLabColors.plot1Property,
       lineWidth: PLOT_LINE_WIDTH,
     });
 
     // Create trail node for showing recent points
-    this.trailNode = new Node();
+    const trailNode = new Node();
 
     // Wrap line plot and trail in a clipped container to prevent overflow beyond the grid
     this.clippedDataContainer = new Node({
-      children: [this.linePlot, this.trailNode],
+      children: [linePlot, trailNode],
       clipArea: Shape.rect(0, 0, width, height),
     });
     this.graphContentNode.addChild(this.clippedDataContainer);
@@ -336,22 +311,22 @@ export default class ConfigurableGraph extends Node {
     // Initialize data manager
     this.dataManager = new GraphDataManager(
       this.chartTransform,
-      this.linePlot,
-      this.trailNode,
+      linePlot,
+      trailNode,
       maxDataPoints,
       {
-        verticalGridLineSet: this.verticalGridLineSet,
-        horizontalGridLineSet: this.horizontalGridLineSet,
-        xTickMarkSet: this.xTickMarkSet,
-        yTickMarkSet: this.yTickMarkSet,
-        xTickLabelSet: this.xTickLabelSet,
-        yTickLabelSet: this.yTickLabelSet,
+        verticalGridLineSet,
+        horizontalGridLineSet,
+        xTickMarkSet,
+        yTickMarkSet,
+        xTickLabelSet,
+        yTickLabelSet,
       },
     );
 
     // Create controls panel helper
     const controlsPanel = new GraphControlsPanel(
-      this.availableProperties,
+      availableProperties,
       this.xPropertyProperty,
       this.yPropertyProperty,
       this.graphWidth,
@@ -418,7 +393,7 @@ export default class ConfigurableGraph extends Node {
     };
 
     // Create rescale button
-    this.rescaleButton = createButton("↻", () => {
+    const rescaleButton = createButton("↻", () => {
       // Reset manual zoom flag and rescale to fit data
       this.dataManager.setManuallyZoomed(false);
       this.dataManager.updateAxisRanges();
@@ -451,9 +426,9 @@ export default class ConfigurableGraph extends Node {
     });
 
     // Create HBox to hold all buttons
-    this.controlButtonsPanel = new HBox({
+    const controlButtonsPanel = new HBox({
       children: [
-        this.rescaleButton,
+        rescaleButton,
         zoomInButton,
         zoomOutButton,
         panLeftButton,
@@ -466,7 +441,7 @@ export default class ConfigurableGraph extends Node {
       top: buttonPadding,
     });
 
-    this.graphContentNode.addChild(this.controlButtonsPanel);
+    this.graphContentNode.addChild(controlButtonsPanel);
 
     // Update labels when axes change
     this.xPropertyProperty.link((property) => {
@@ -497,19 +472,19 @@ export default class ConfigurableGraph extends Node {
     this.interactionHandler = new GraphInteractionHandler(
       {
         chartTransform: this.chartTransform,
-        chartRectangle: this.chartRectangle,
+        chartRectangle,
         dataManager: this.dataManager,
       },
       {
-        isDraggingProperty: this.isDraggingProperty,
-        isResizingProperty: this.isResizingProperty,
+        isDraggingProperty,
+        isResizingProperty,
       },
       {
         headerBar: this.headerBar,
         graphNode: this,
-        ...(this.dragTargetNode && { dragTargetNode: this.dragTargetNode }),
-        xTickLabelSet: this.xTickLabelSet,
-        yTickLabelSet: this.yTickLabelSet,
+        ...(dragTargetNode && { dragTargetNode }),
+        xTickLabelSet,
+        yTickLabelSet,
         xAxisInteractionRegion: this.xAxisInteractionRegion,
         yAxisInteractionRegion: this.yAxisInteractionRegion,
       },
@@ -540,12 +515,12 @@ export default class ConfigurableGraph extends Node {
     });
 
     // Add visual feedback for drag and resize operations
-    this.isDraggingProperty.link((isDragging) => {
+    isDraggingProperty.link((isDragging) => {
       this.opacity = isDragging ? 0.8 : 1.0;
       this.headerBar.cursor = isDragging ? "grabbing" : "grab";
     });
 
-    this.isResizingProperty.link((isResizing) => {
+    isResizingProperty.link((isResizing) => {
       this.opacity = isResizing ? 0.8 : 1.0;
     });
   }
@@ -629,7 +604,8 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
-   * Add a new data point based on current property values
+   * Add a new data point based on current property values.
+   * @deprecated Not currently called anywhere — superseded by addDataPointsFromSubSteps.
    */
   public addDataPoint(): void {
     const xValue = this.xPropertyProperty.value.property?.value;
