@@ -28,9 +28,22 @@ const ROTATE_DRAG_SPEED = 100; // degrees/s (converted to radians) for keyboard 
 const ROTATE_SHIFT_DRAG_SPEED = 20;
 const DEG_TO_RAD = Math.PI / 180;
 
+/**
+ * Draggable and rotatable XY-axis overlay rendered on top of the video.
+ *
+ * The origin can be dragged anywhere on screen; a small disk on the X axis
+ * controls rotation by pointer angle. Both gestures write directly to
+ * `model.coordOriginProperty` and `model.coordAngleProperty`, keeping the
+ * model-view transform in sync. Keyboard drag is supported via RichDragListener.
+ * Hidden until a video is loaded.
+ */
 export class CoordinateSystemNode extends Node {
   private readonly disposeCoordinateSystemNode: () => void;
 
+  /**
+   * @param videoLoadedProperty - Controls visibility; node is hidden until a video is loaded.
+   * @param model - Provides and receives coordOriginProperty / coordAngleProperty.
+   */
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     model: SimModel,

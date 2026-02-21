@@ -362,6 +362,10 @@ export class SimModel {
     });
   }
 
+  /**
+   * Create a new track labelled with the next available letter (A–Z) and a
+   * unique color. Does nothing once all 26 letter slots are exhausted.
+   */
   public addTrack(): void {
     if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) return; // 'Z' is the last allowed symbol
     const symbol = String.fromCharCode(this.nextSymbolCode);
@@ -385,6 +389,10 @@ export class SimModel {
     this.tracksProperty.value = tracks;
   }
 
+  /**
+   * Remove the track with the given `id`. If that track is currently active,
+   * `activeTrackIdProperty` is cleared to null first.
+   */
   public removeTrack(id: string): void {
     if (this.activeTrackIdProperty.value === id) {
       this.activeTrackIdProperty.value = null;
@@ -394,6 +402,18 @@ export class SimModel {
     );
   }
 
+  /**
+   * Record a digitized position for `frame` on the track identified by `id`.
+   * If a point at the same frame already exists it is replaced (update
+   * semantics), preventing duplicate-frame corruption in the kinematics
+   * calculation. Coordinates are in model space (real-world units).
+   *
+   * @param id - ID of the target track.
+   * @param frame - Integer frame index (derived from `time * frameRate`).
+   * @param time - Video timestamp in seconds.
+   * @param x - Horizontal position in model coordinates.
+   * @param y - Vertical position in model coordinates.
+   */
   public addPointToTrack(
     id: string,
     frame: number,

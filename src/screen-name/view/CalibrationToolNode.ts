@@ -46,9 +46,23 @@ const ENDPOINT_SHIFT_DRAG_SPEED = 40; // pixels/s for shift-key keyboard drag
 const OVERLAP_WARNING_DISTANCE = 10;
 const ENDPOINT_WARNING_COLOR = new Color(255, 60, 60);
 
+/**
+ * Two-endpoint calibration ruler overlay for setting the real-world scale.
+ *
+ * The user drags the two endpoints to span a known distance, then enters the
+ * value via a keypad. A midpoint panel shows the current distance and a unit
+ * selector (m, cm, ft …). Endpoints turn red and a warning appears when they
+ * are too close together to produce a valid calibration. Hidden until a video
+ * is loaded.
+ */
 export class CalibrationToolNode extends Node {
   private readonly disposeCalibrationToolNode: () => void;
 
+  /**
+   * @param videoLoadedProperty - Controls visibility; node is hidden until a video is loaded.
+   * @param listParent - Scene-graph node used as the popup list parent for the unit ComboBox.
+   * @param model - Provides calibration properties and receives user-entered values.
+   */
   public constructor(
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     listParent: Node,

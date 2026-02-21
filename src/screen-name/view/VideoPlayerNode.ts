@@ -12,14 +12,25 @@ import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
 import { VideoSourceControlNode } from "./VideoSourceControlNode.js";
 import type { WebcamPanel } from "./WebcamPanel.js";
 
+/**
+ * Hosts the HTML video element together with all video overlays (auto-tracker,
+ * digitizing crosshair), the playback controls bar, and the video source
+ * selector. Also synchronises playback between the video element and the model.
+ */
 export class VideoPlayerNode extends Node {
+  /** The underlying HTML video element used for display and pixel capture. */
   public readonly videoElement: HTMLVideoElement;
+  /** Webcam recording panel; positioned by SimScreenView for correct z-ordering. */
   public readonly webcamPanel: WebcamPanel;
   private readonly model: SimModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
   private currentBlobUrl: string | null = null;
 
+  /**
+   * @param model - Simulation model providing reactive playback and track state.
+   * @param listParent - Scene-graph node used as the popup list parent for combo boxes.
+   */
   public constructor(model: SimModel, listParent: Node) {
     super();
     this.model = model;

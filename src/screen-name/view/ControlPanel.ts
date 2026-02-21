@@ -139,7 +139,16 @@ function makeRow(
 
 // ── ControlPanel class ────────────────────────────────────────────────────
 
+/**
+ * Left-side toggle panel containing checkboxes for the axes, calibration,
+ * magnifier, and auto-tracking overlays. The auto-tracking row is conditionally
+ * visible based on the user-preference flag.
+ */
 export class ControlPanel extends Panel {
+  /**
+   * @param model - Provides the boolean visibility properties bound to each checkbox.
+   * @param trackLabPreferences - Determines whether the auto-tracking checkbox is shown.
+   */
   public constructor(
     model: SimModel,
     trackLabPreferences: TrackLabPreferencesModel,

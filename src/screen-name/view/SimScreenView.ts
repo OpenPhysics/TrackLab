@@ -17,9 +17,22 @@ import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
+/**
+ * Root layout for the simulation screen.
+ *
+ * Positions all major UI regions: control panel, track list, video player with
+ * overlays, coordinate system, calibration tool, data table, kinematics graph,
+ * and reset button. The webcam modal is placed above all other content for
+ * correct z-ordering.
+ */
 export class SimScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
 
+  /**
+   * @param model - The simulation model owning all reactive state.
+   * @param trackLabPreferences - User preference flags (e.g. auto-tracking toggle).
+   * @param options - Optional ScreenView configuration passed to the superclass.
+   */
   public constructor(
     model: SimModel,
     trackLabPreferences: TrackLabPreferencesModel,

@@ -79,6 +79,11 @@ export class AutoTrackerNode extends Node {
   private readonly boundOnFrame: () => void;
   private readonly boundClearRecordedFrames: () => void;
 
+  /**
+   * @param videoElement - The video element used both for pixel capture and frame events.
+   * @param autoTrackingShownProperty - Combined gate (video loaded AND toggle on); controls visibility.
+   * @param model - Provides active track state and receives recorded positions via addPointToTrack.
+   */
   public constructor(
     videoElement: HTMLVideoElement,
     autoTrackingShownProperty: TReadOnlyProperty<boolean>,

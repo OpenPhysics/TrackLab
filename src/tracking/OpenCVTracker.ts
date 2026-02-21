@@ -129,6 +129,10 @@ export class OpenCVTracker {
   private readonly offscreen: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
 
+  /**
+   * @param videoWidth - Pixel width of the video element (used for the offscreen canvas).
+   * @param videoHeight - Pixel height of the video element.
+   */
   public constructor(videoWidth: number, videoHeight: number) {
     this.offscreen = document.createElement("canvas");
     this.offscreen.width = videoWidth;

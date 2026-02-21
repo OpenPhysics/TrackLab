@@ -49,12 +49,27 @@ const FPS_CONTROL_SPACING = 6; // gap between "fps:" label and spinner
 const FPS_SPINNER_SCALE = 0.7;
 const FPS_SPINNER_MIN_WIDTH = 50;
 
+/** Configuration passed to WebcamPanel at construction time. */
 type WebcamPanelOptions = {
+  /** Simulation model; used to write the detected frame rate. */
   model: SimModel;
+  /** Called with the recorded blob and its duration when the user confirms the video. */
   onVideoReady: (blob: Blob, duration: number) => void;
+  /** Called when the user dismisses the panel without confirming a recording. */
   onCancel: () => void;
 };
 
+/**
+ * Modal panel for recording video from a webcam.
+ *
+ * Two phases:
+ *  - **Preview**: live camera feed with camera selector, start, and stop buttons.
+ *  - **Review**: recorded video playback with frame-rate estimation, a re-record
+ *    option, and a "Use Video" button that fires `onVideoReady`.
+ *
+ * The panel is hidden by default; call `open()` to request camera permission and
+ * begin the preview. Call `cleanup()` to release all camera resources.
+ */
 export class WebcamPanel extends Node {
   private readonly recorder = new WebcamRecorder();
   private readonly previewElement: HTMLVideoElement;
@@ -306,6 +321,11 @@ export class WebcamPanel extends Node {
 
   // ── Public ───────────────────────────────────────────────────────────────
 
+  /**
+   * Request camera permission, populate the camera selector, and start the
+   * live preview. Must be called before the panel is shown to the user.
+   * If permission is denied the panel displays an error status and returns.
+   */
   public async open(): Promise<void> {
     // Reset UI to preview state without starting the camera yet (no permission yet).
     this.resetPreviewUI();
@@ -343,6 +363,10 @@ export class WebcamPanel extends Node {
     this.clearStatus();
   }
 
+  /**
+   * Stop the recording timer, release all camera tracks, and revoke any
+   * outstanding blob URL. Safe to call multiple times.
+   */
   public cleanup(): void {
     this.stopTimer();
     this.recorder.cleanup();
