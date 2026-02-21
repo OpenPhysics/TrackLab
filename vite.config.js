@@ -65,16 +65,48 @@ function serveVideos() {
   };
 }
 
+/**
+ * Security headers required for:
+ *  - COOP/COEP: SharedArrayBuffer (FFmpeg WASM)
+ *  - CSP: restrict resource loading to same-origin + known blob/data exceptions
+ *  - X-Content-Type-Options: prevent MIME sniffing
+ *  - X-Frame-Options: prevent clickjacking (belt-and-suspenders alongside frame-ancestors)
+ */
+const securityHeaders = {
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    // 'wasm-unsafe-eval' is required for FFmpeg/OpenCV WASM modules
+    "script-src 'self' 'wasm-unsafe-eval'",
+    // FFmpeg and OpenCV spin up blob: workers
+    "worker-src blob: 'self'",
+    // Inline styles are set via element.style / cssText throughout the UI layer
+    "style-src 'self' 'unsafe-inline'",
+    // blob: for video playback and CSV download; data: for icons
+    "img-src 'self' blob: data:",
+    // blob: for webcam recordings and loaded video files
+    "media-src 'self' blob:",
+    // blob: for fetch inside workers; 'self' for local video middleware
+    "connect-src 'self' blob:",
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+  ].join("; "),
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   // So the build can be served from an arbitrary path
   base: "./",
   server: {
-    headers: {
-      // Required for SharedArrayBuffer used by @ffmpeg/ffmpeg
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "require-corp",
-    },
+    headers: securityHeaders,
+  },
+  preview: {
+    headers: securityHeaders,
   },
   plugins: [
     serveVideos(),
