@@ -104,6 +104,13 @@ export default class ConfigurableGraph extends Node {
   // Sub-step decimation counter for high-resolution data
   private decimationCounter: number = 0;
 
+  // Drag and resize state properties (kept for dispose)
+  private readonly isDraggingProperty: BooleanProperty;
+  private readonly isResizingProperty: BooleanProperty;
+
+  // Listener refs kept for unlink in dispose()
+  private readonly disposeConfigurableGraph: () => void;
+
   /**
    * @param availableProperties - List of properties that can be plotted
    * @param initialXProperty - Initial property for x-axis
@@ -139,8 +146,10 @@ export default class ConfigurableGraph extends Node {
     this.graphVisibleProperty = new BooleanProperty(false);
 
     // Properties for drag and resize states
-    const isDraggingProperty = new BooleanProperty(false);
-    const isResizingProperty = new BooleanProperty(false);
+    this.isDraggingProperty = new BooleanProperty(false);
+    this.isResizingProperty = new BooleanProperty(false);
+    const isDraggingProperty = this.isDraggingProperty;
+    const isResizingProperty = this.isResizingProperty;
 
     // Create a container for all graph content
     this.graphContentNode = new Node();
@@ -440,17 +449,19 @@ export default class ConfigurableGraph extends Node {
     this.graphContentNode.addChild(controlButtonsPanel);
 
     // Update labels when axes change
-    this.xPropertyProperty.link((property) => {
+    const xPropertyListener = (property: PlottableProperty) => {
       this.xAxisLabelNode.string = this.formatAxisLabel(property);
       this.xAxisLabelNode.centerX = this.graphWidth / 2;
       this.clearData();
-    });
+    };
+    this.xPropertyProperty.link(xPropertyListener);
 
-    this.yPropertyProperty.link((property) => {
+    const yPropertyListener = (property: PlottableProperty) => {
       this.yAxisLabelNode.string = this.formatAxisLabel(property);
       this.yAxisLabelNode.centerY = this.graphHeight / 2;
       this.clearData();
-    });
+    };
+    this.yPropertyProperty.link(yPropertyListener);
 
     // Create header bar (checkbox is now in ToolsControlPanel)
     this.headerBar = controlsPanel.createHeaderBar();
@@ -501,24 +512,40 @@ export default class ConfigurableGraph extends Node {
     }
 
     // Link visibility property to the content node, header bar, title panel, and resize handles
-    this.graphVisibleProperty.link((visible) => {
+    const graphVisibleListener = (visible: boolean) => {
       this.graphContentNode.visible = visible;
       this.headerBar.visible = visible;
       this.titlePanel.visible = visible;
       resizeHandles.forEach((handle) => {
         handle.visible = visible;
       });
-    });
+    };
+    this.graphVisibleProperty.link(graphVisibleListener);
 
     // Add visual feedback for drag and resize operations
-    isDraggingProperty.link((isDragging) => {
+    const isDraggingListener = (isDragging: boolean) => {
       this.opacity = isDragging ? 0.8 : 1.0;
       this.headerBar.cursor = isDragging ? "grabbing" : "grab";
-    });
+    };
+    isDraggingProperty.link(isDraggingListener);
 
-    isResizingProperty.link((isResizing) => {
+    const isResizingListener = (isResizing: boolean) => {
       this.opacity = isResizing ? 0.8 : 1.0;
-    });
+    };
+    isResizingProperty.link(isResizingListener);
+
+    this.disposeConfigurableGraph = () => {
+      this.xPropertyProperty.unlink(xPropertyListener);
+      this.yPropertyProperty.unlink(yPropertyListener);
+      this.graphVisibleProperty.unlink(graphVisibleListener);
+      isDraggingProperty.unlink(isDraggingListener);
+      isResizingProperty.unlink(isResizingListener);
+      this.xPropertyProperty.dispose();
+      this.yPropertyProperty.dispose();
+      this.graphVisibleProperty.dispose();
+      this.isDraggingProperty.dispose();
+      this.isResizingProperty.dispose();
+    };
   }
 
   /**
@@ -720,6 +747,11 @@ export default class ConfigurableGraph extends Node {
    */
   public getGraphVisibleProperty(): BooleanProperty {
     return this.graphVisibleProperty;
+  }
+
+  public override dispose(): void {
+    this.disposeConfigurableGraph();
+    super.dispose();
   }
 
   /**
