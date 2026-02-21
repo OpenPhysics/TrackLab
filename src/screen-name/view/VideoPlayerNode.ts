@@ -104,6 +104,8 @@ export class VideoPlayerNode extends Node {
       () => this.seekByFrames(-1),
       () => this.seekByFrames(1),
     );
+    // Pin to the video width so internal text changes never shift the row.
+    playbackControlsNode.preferredWidth = VIDEO_WIDTH;
 
     // Sync model time from video during playback (event-driven, not polled)
     const onTimeUpdate = () => {

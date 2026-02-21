@@ -21,6 +21,7 @@ const SCRUBBER_TRACK_HEIGHT = 4;
 const SCRUBBER_THUMB_WIDTH = 12;
 const SCRUBBER_THUMB_HEIGHT = 24;
 const INFO_DISPLAY_SPACING = 4; // gap between time label and frame counter
+const INFO_DISPLAY_WIDTH = 75; // fixed width to prevent layout shift when text changes
 
 /**
  * Playback controls including time control, scrubber, and time/frame display.
@@ -153,6 +154,7 @@ export class PlaybackControlsNode extends HBox {
       children: [totalTimeLabel, frameCountLabel],
       spacing: INFO_DISPLAY_SPACING,
       align: "left",
+      preferredWidth: INFO_DISPLAY_WIDTH,
     });
 
     // ── Rewind-to-zero button ──────────────────────────────────────────────

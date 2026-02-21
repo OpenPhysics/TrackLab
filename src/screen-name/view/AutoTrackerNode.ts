@@ -50,8 +50,9 @@ export class AutoTrackerNode extends Node {
   // ── Trail: O(1) ring buffer ────────────────────────────────────────────
   // Using a fixed-size circular buffer instead of a plain array so that the
   // oldest-point eviction at 30 Hz is O(1) rather than O(n) (Array.shift).
-  private readonly trailBuf: Array<{ x: number; y: number }> =
-    new Array(MAX_TRAIL);
+  private readonly trailBuf: Array<{ x: number; y: number }> = new Array(
+    MAX_TRAIL,
+  );
   private trailHead = 0; // index of the slot where the NEXT write will land
   private trailSize = 0; // number of valid entries (0 … MAX_TRAIL)
   /** Frames already recorded to the active track; cleared on track change or reset. */

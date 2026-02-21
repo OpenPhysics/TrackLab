@@ -14,9 +14,7 @@ import strings_fr from "./strings_fr.json";
 // TypeScript verifies that both language files share identical key structures.
 // If a key is added to one file but not the other, a type error will appear
 // here before the app is ever run.
-// biome-ignore lint/correctness/noUnusedVariables: compile-time type guard only
 const _enMatchesFr: typeof strings_fr = strings_en;
-// biome-ignore lint/correctness/noUnusedVariables: compile-time type guard only
 const _frMatchesEn: typeof strings_en = strings_fr;
 
 /**
