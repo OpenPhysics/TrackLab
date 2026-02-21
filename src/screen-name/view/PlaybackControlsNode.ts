@@ -6,7 +6,7 @@ import {
   TimeControlNode,
   TimeSpeed,
 } from "scenerystack/scenery-phet";
-import { Slider } from "scenerystack/sun";
+import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -155,7 +155,24 @@ export class PlaybackControlsNode extends HBox {
       align: "left",
     });
 
-    this.children = [infoDisplay, timeControlNode, scrubber];
+    // ── Rewind-to-zero button ──────────────────────────────────────────────
+    const rewindButton = new RectangularPushButton({
+      content: new Text("\u23EE", {
+        font: new PhetFont(16),
+        fill: TrackLabColors.textOnDarkProperty,
+      }),
+      baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      listener: () => {
+        model.isPlayingProperty.value = false;
+        model.currentTimeProperty.value = 0;
+        videoElement.currentTime = 0;
+      },
+      enabledProperty: model.videoLoadedProperty,
+      tandem: Tandem.OPT_OUT,
+    });
+
+    this.children = [infoDisplay, timeControlNode, scrubber, rewindButton];
 
     this.disposePlaybackControlsNode = () => {
       timeSpeedProperty.unlink(onSpeedChange);
