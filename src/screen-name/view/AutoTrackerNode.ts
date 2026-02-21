@@ -78,6 +78,8 @@ export class AutoTrackerNode extends Node {
   private readonly boundVideoElement: HTMLVideoElement;
   private readonly boundOnFrame: () => void;
   private readonly boundClearRecordedFrames: () => void;
+  private readonly boundAutoTrackingShownProperty: TReadOnlyProperty<boolean>;
+  private readonly boundAutoTrackingShownListener: (shown: boolean) => void;
 
   /**
    * @param videoElement - The video element used both for pixel capture and frame events.
@@ -303,11 +305,14 @@ export class AutoTrackerNode extends Node {
     this.boundClearRecordedFrames = clearRecordedFrames;
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
-    autoTrackingShownProperty.link((shown) => {
+    const autoTrackingShownListener = (shown: boolean) => {
       if (!shown) this.reset();
       this.visible = shown;
       if (shown) this.hintText.visible = true;
-    });
+    };
+    autoTrackingShownProperty.link(autoTrackingShownListener);
+    this.boundAutoTrackingShownProperty = autoTrackingShownProperty;
+    this.boundAutoTrackingShownListener = autoTrackingShownListener;
   }
 
   private setCrosshairVisible(visible: boolean): void {
@@ -353,6 +358,7 @@ export class AutoTrackerNode extends Node {
     this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
     this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
     this.model.activeTrackIdProperty.unlink(this.boundClearRecordedFrames);
+    this.boundAutoTrackingShownProperty.unlink(this.boundAutoTrackingShownListener);
     this.model.tracker.dispose();
     super.dispose();
   }
