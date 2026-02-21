@@ -10,10 +10,7 @@ import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
-import type {
-  PlottableProperty,
-  SubStepDataPoint,
-} from "../graph/PlottableProperty.js";
+import type { PlottableProperty } from "../graph/PlottableProperty.js";
 import type { SimModel } from "../model/SimModel.js";
 
 // Graph dimensions
@@ -21,21 +18,12 @@ const GRAPH_WIDTH = 300;
 const GRAPH_HEIGHT = 200;
 const MAX_DATA_POINTS = 5000;
 
-/**
- * Creates a PlottableProperty for a kinematic variable driven entirely by
- * subStepAccessor.  No backing Property is needed because KinematicsGraphNode
- * always feeds data via addDataPointsFromSubSteps rather than addDataPoint.
- */
 function createPlottableProperty(
   name: string,
   unit: string | TReadOnlyProperty<string>,
-  accessor: (point: SubStepDataPoint) => number,
+  accessor: (point: Record<string, number>) => number,
 ): PlottableProperty {
-  return {
-    name,
-    unit,
-    subStepAccessor: accessor,
-  };
+  return { name, unit, accessor };
 }
 
 export class KinematicsGraphNode extends VBox {
@@ -282,8 +270,7 @@ export class KinematicsGraphNode extends VBox {
 
     if (!trackData || trackData.points.length === 0) return;
 
-    // Convert kinematic points to SubStepDataPoint format for the graph
-    const subStepData: SubStepDataPoint[] = trackData.points.map((pt) => ({
+    const dataPoints = trackData.points.map((pt) => ({
       t: pt.time,
       x: pt.x,
       y: pt.y,
@@ -295,8 +282,8 @@ export class KinematicsGraphNode extends VBox {
       aMag: pt.accelerationMagnitude ?? Number.NaN,
     }));
 
-    if (subStepData.length > 0) {
-      this.graph.addDataPointsFromSubSteps(subStepData);
+    if (dataPoints.length > 0) {
+      this.graph.addDataPoints(dataPoints);
     }
   }
 }

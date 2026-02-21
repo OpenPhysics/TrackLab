@@ -84,9 +84,9 @@ export default class GraphDataManager {
   }
 
   /**
-   * Add multiple data points at once (for sub-step data).
+   * Add multiple data points at once.
    * More efficient than calling addDataPoint repeatedly.
-   * @param points - Array of [x, y] value pairs
+   * @param points - Array of x/y value pairs
    */
   public addDataPoints(points: Array<{ x: number; y: number }>): void {
     if (points.length === 0) return;

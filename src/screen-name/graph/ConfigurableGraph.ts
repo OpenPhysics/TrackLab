@@ -28,15 +28,11 @@ import {
 } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import TrackLabColors from "../../TrackLabColors.js";
-import { SUB_STEP_DECIMATION } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import GraphControlsPanel from "./GraphControlsPanel.js";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
-import type {
-  PlottableProperty,
-  SubStepDataPoint,
-} from "./PlottableProperty.js";
+import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Grid line styling
 const GRID_LINE_WIDTH = 0.5;
@@ -100,9 +96,6 @@ export default class ConfigurableGraph extends Node {
 
   // Title panel with combo boxes (needs to be on top of header bar)
   private readonly titlePanel: Node;
-
-  // Sub-step decimation counter for high-resolution data
-  private decimationCounter: number = 0;
 
   // Drag and resize state properties (kept for dispose)
   private readonly isDraggingProperty: BooleanProperty;
@@ -624,59 +617,27 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
-   * Add a new data point based on current property values.
-   * @deprecated Not currently called anywhere — superseded by addDataPointsFromSubSteps.
-   */
-  public addDataPoint(): void {
-    const xValue = this.xPropertyProperty.value.property?.value;
-    const yValue = this.yPropertyProperty.value.property?.value;
-    if (xValue === undefined || yValue === undefined) return;
-
-    this.dataManager.addDataPoint(xValue, yValue);
-  }
-
-  /**
    * Clear all data points
    */
   public clearData(): void {
     this.dataManager.clearData();
-    this.decimationCounter = 0;
   }
 
   /**
-   * Add data points from sub-step data collected during ODE integration.
-   * Maps the sub-step data to the currently selected x and y axes.
-   * Uses decimation to prevent memory overflow while maintaining smooth curves.
-   * @param subStepData - Array of sub-step data points from the model
+   * Add data points from a record array, mapping each record to the selected axes.
    */
-  public addDataPointsFromSubSteps(subStepData: SubStepDataPoint[]): void {
-    if (subStepData.length === 0) return;
+  public addDataPoints(dataPoints: Array<Record<string, number>>): void {
+    if (dataPoints.length === 0) return;
 
     const xProperty = this.xPropertyProperty.value;
     const yProperty = this.yPropertyProperty.value;
 
-    // Map sub-step data to x/y values with decimation
     const mappedPoints: Array<{ x: number; y: number }> = [];
-    const decimation = SUB_STEP_DECIMATION;
-
-    for (const point of subStepData) {
-      this.decimationCounter++;
-
-      // Only keep every Nth point
-      if (this.decimationCounter >= decimation) {
-        this.decimationCounter = 0;
-
-        const x = this.getValueForAxis(xProperty, point);
-        const y = this.getValueForAxis(yProperty, point);
-
-        if (
-          x !== null &&
-          y !== null &&
-          Number.isFinite(x) &&
-          Number.isFinite(y)
-        ) {
-          mappedPoints.push({ x, y });
-        }
+    for (const point of dataPoints) {
+      const x = this.getValueForAxis(xProperty, point);
+      const y = this.getValueForAxis(yProperty, point);
+      if (x !== null && y !== null && Number.isFinite(x) && Number.isFinite(y)) {
+        mappedPoints.push({ x, y });
       }
     }
 
@@ -686,19 +647,16 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
-   * Get the value for a specific axis from a sub-step data point.
-   * Uses the type-safe subStepAccessor when available, otherwise falls back
-   * to the current property value for derived quantities (energy, RMS, etc.).
+   * Get the value for a specific axis from a data point record.
+   * Uses the accessor when available, otherwise falls back to property.value.
    */
   private getValueForAxis(
     axisProperty: PlottableProperty,
-    point: SubStepDataPoint,
+    point: Record<string, number>,
   ): number | null {
-    if (axisProperty.subStepAccessor) {
-      return axisProperty.subStepAccessor(point);
+    if (axisProperty.accessor) {
+      return axisProperty.accessor(point);
     }
-    // For properties without sub-step data, fall back to current property value.
-    // This handles derived properties like energy, RMS values, etc.
     return axisProperty.property?.value ?? null;
   }
 
