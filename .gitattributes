@@ -1,0 +1,7 @@
+# Normalize line endings to LF on commit
+* text=auto eol=lf
+
+# Binary files — no line-ending conversion
+*.png  binary
+*.ico  binary
+*.mp4  binary
