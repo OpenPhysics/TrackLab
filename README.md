@@ -9,6 +9,7 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 - **Calibration tool** — Define a known reference distance to convert pixel measurements to real-world units (mm, cm, m, km, in, ft)
 - **Auto-tracking** — Select any object and track it across frames using OpenCV template matching
 - **Manual digitizing** — Add multiple tracks (A, B, C…) and place points frame-by-frame with a crosshair cursor and magnifier
+- **Kinematics graph** — Configurable X-Y plot of any two kinematic quantities (position, velocity, acceleration, speed) for any track
 - **Data table** — Spreadsheet view of all track data with CSV export
 - **Webcam recording** — Capture live video directly in the browser and use it as the analysis source
 - **Configurable frame rate** — Set video frame rate (15–60 fps) for accurate time calculations
@@ -144,9 +145,16 @@ src/
 │       ├── AutoTrackerNode.ts       # Auto-tracking overlay and trail
 │       ├── DigitizingOverlayNode.ts # Manual digitizing crosshair + magnifier
 │       ├── DataTableNode.ts         # Spreadsheet of track data, CSV export
+│       ├── KinematicsGraphNode.ts   # Configurable kinematics graph (wraps graph/)
 │       ├── TrackListPanel.ts        # Add/remove tracks for digitizing
 │       ├── WebcamPanel.ts           # Webcam recording dialog
 │       └── KeyboardShortcutsNode.ts
+├── graph/
+│   ├── ConfigurableGraph.ts         # Top-level graph node; axis selectors, chart layout, zoom/reset
+│   ├── GraphDataManager.ts          # Data points, auto-scaling, tick spacing
+│   ├── GraphInteractionHandler.ts   # Pan, pinch-zoom, axis drag, resize, header drag gestures
+│   ├── GraphControlsPanel.ts        # Axis property selector dropdowns
+│   └── PlottableProperty.ts         # Interface for quantities that appear in the axis selector
 └── tracking/
     └── OpenCVTracker.ts     # OpenCV template matching (TM_CCOEFF_NORMED)
 ```

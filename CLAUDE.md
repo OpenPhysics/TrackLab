@@ -28,6 +28,7 @@ src/screen-name/view/      ← all UI components
 | `AutoTrackerNode.ts` | Auto-tracking selection box and trail rendering |
 | `DigitizingOverlayNode.ts` | Manual digitizing crosshair and magnifier |
 | `DataTableNode.ts` | Spreadsheet of track data, CSV export |
+| `KinematicsGraphNode.ts` | Configurable kinematics graph; wraps `ConfigurableGraph` with track and unit wiring |
 | `TrackListPanel.ts` | Add/remove tracks for manual digitizing |
 | `ControlPanel.ts` | Left-side toggle panel |
 | `WebcamPanel.ts` | Webcam recording dialog |
@@ -38,12 +39,12 @@ src/screen-name/view/      ← all UI components
 | File | Responsibility |
 |------|----------------|
 | `ConfigurableGraph.ts` | Top-level graph node; owns axis selectors, chart layout, and zoom/reset buttons |
-| `GraphDataManager.ts` | Accumulates data points, owns auto-scaling, tick spacing, and trail circle rendering |
+| `GraphDataManager.ts` | Accumulates data points, owns auto-scaling and tick spacing |
 | `GraphInteractionHandler.ts` | All pointer/touch/keyboard gestures — pan, pinch-zoom, axis drag, resize, header drag |
 | `GraphControlsPanel.ts` | Axis property selector dropdowns (what to plot on each axis) |
 | `PlottableProperty.ts` | `PlottableProperty` type — interface any quantity must satisfy to appear in the selector |
 
-> **Note:** `GraphInteractionHandler.ts` is the largest file in the codebase (~1,150 lines). When modifying gesture logic, read the existing `zoom()` / `pan()` / `rescaleAxes()` helpers before adding new code — many edge cases (pinch center preservation, manual-zoom locking, axis-specific gestures) are already handled.
+> **Note:** `GraphInteractionHandler.ts` is the largest file in the codebase (~930 lines). When modifying gesture logic, read the existing `zoom()` / `pan()` / `rescaleAxes()` helpers before adding new code — many edge cases (pinch center preservation, manual-zoom locking, axis-specific gestures) are already handled.
 
 The other source directories are less frequently modified:
 
