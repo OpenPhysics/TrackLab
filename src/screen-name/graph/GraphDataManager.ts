@@ -1,6 +1,6 @@
 /**
  * Manages data points, axis ranges, and visualization updates for a configurable graph.
- * Handles auto-scaling, tick spacing calculations, and trail point rendering.
+ * Handles auto-scaling and tick spacing calculations.
  */
 
 import type {
@@ -11,8 +11,6 @@ import type {
   TickMarkSet,
 } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
-import { Circle, type Node } from "scenerystack/scenery";
-import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
 
 /**
@@ -32,13 +30,7 @@ export default class GraphDataManager {
   private readonly maxDataPoints: number;
   private readonly chartTransform: ChartTransform;
   private readonly linePlot: LinePlot;
-  private readonly trailNode: Node;
-  private readonly trailLength: number = 5;
   private isManuallyZoomed: boolean = false;
-
-  // Pool of Circle nodes reused by updateTrail() to avoid allocating and
-  // discarding SceneryStack nodes on every update (pan, zoom, new data, etc.).
-  private readonly trailCirclePool: Circle[] = [];
 
   // Grid and tick components
   private readonly verticalGridLineSet: GridLineSet;
@@ -51,13 +43,11 @@ export default class GraphDataManager {
   public constructor(
     chartTransform: ChartTransform,
     linePlot: LinePlot,
-    trailNode: Node,
     maxDataPoints: number,
     gridConfig: GridVisualizationConfig,
   ) {
     this.chartTransform = chartTransform;
     this.linePlot = linePlot;
-    this.trailNode = trailNode;
     this.maxDataPoints = maxDataPoints;
     this.verticalGridLineSet = gridConfig.verticalGridLineSet;
     this.horizontalGridLineSet = gridConfig.horizontalGridLineSet;
@@ -91,9 +81,6 @@ export default class GraphDataManager {
     if (this.dataPoints.length > 1 && !this.isManuallyZoomed) {
       this.updateAxisRanges();
     }
-
-    // Update the trail visualization
-    this.updateTrail();
   }
 
   /**
@@ -123,9 +110,6 @@ export default class GraphDataManager {
     if (this.dataPoints.length > 1 && !this.isManuallyZoomed) {
       this.updateAxisRanges();
     }
-
-    // Update the trail visualization
-    this.updateTrail();
   }
 
   /**
@@ -142,9 +126,6 @@ export default class GraphDataManager {
 
     // Reset tick spacing
     this.updateTickSpacing(defaultRange, defaultRange);
-
-    // Clear trail
-    this.trailNode.removeAllChildren();
 
     // Reset zoom state
     this.isManuallyZoomed = false;
@@ -241,50 +222,6 @@ export default class GraphDataManager {
 
     // Ensure minimum spacing to prevent too many ticks
     return Math.max(spacing, rangeLength / 20);
-  }
-
-  /**
-   * Update the trail visualization showing the most recent points.
-   * Reuses a pool of Circle nodes (updating radius, opacity, position) instead
-   * of destroying and recreating nodes on every call.
-   */
-  public updateTrail(): void {
-    const numTrailPoints = Math.min(this.trailLength, this.dataPoints.length);
-    const startIndex = this.dataPoints.length - numTrailPoints;
-
-    const minRadius = 3;
-    const maxRadius = 5;
-    const minOpacity = 0.2;
-    const maxOpacity = 0.8;
-
-    // Grow the pool if needed.
-    while (this.trailCirclePool.length < numTrailPoints) {
-      const circle = new Circle(minRadius, {
-        fill: TrackLabColors.plot1Property,
-        opacity: minOpacity,
-      });
-      this.trailCirclePool.push(circle);
-      this.trailNode.addChild(circle);
-    }
-
-    // Update each pool circle (visible ones first, then hide extras).
-    for (const [i, circle] of this.trailCirclePool.entries()) {
-      if (i < numTrailPoints) {
-        const point = this.dataPoints[startIndex + i];
-        if (!point) {
-          circle.visible = false;
-          continue;
-        }
-
-        const fraction = i / (numTrailPoints - 1 || 1); // 0 = oldest, 1 = newest
-        circle.radius = minRadius + (maxRadius - minRadius) * fraction;
-        circle.opacity = minOpacity + (maxOpacity - minOpacity) * fraction;
-        circle.center = this.chartTransform.modelToViewPosition(point);
-        circle.visible = true;
-      } else {
-        circle.visible = false;
-      }
-    }
   }
 
   /**

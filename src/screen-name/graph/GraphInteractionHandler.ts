@@ -234,9 +234,6 @@ export default class GraphInteractionHandler {
 
           // Update tick spacing
           this.dataManager.updateTickSpacing(newXRange, newYRange);
-
-          // Update trail with new transform
-          this.dataManager.updateTrail();
         }
       },
 
@@ -343,9 +340,6 @@ export default class GraphInteractionHandler {
               this.chartTransform.modelXRange,
               this.chartTransform.modelYRange,
             );
-
-            // Update trail
-            this.dataManager.updateTrail();
           }
         }
       },
@@ -449,7 +443,6 @@ export default class GraphInteractionHandler {
               this.chartTransform.modelXRange,
               newYRange,
             );
-            this.dataManager.updateTrail();
           } else if (
             activePointers.size === 2 &&
             initialYDistance &&
@@ -489,7 +482,6 @@ export default class GraphInteractionHandler {
               this.chartTransform.modelXRange,
               new Range(yMin, yMax),
             );
-            this.dataManager.updateTrail();
           }
         }
       },
@@ -557,7 +549,6 @@ export default class GraphInteractionHandler {
             this.chartTransform.modelXRange,
             newYRange,
           );
-          this.dataManager.updateTrail();
         }
       },
 
@@ -605,7 +596,6 @@ export default class GraphInteractionHandler {
           this.chartTransform.modelXRange,
           newYRange,
         );
-        this.dataManager.updateTrail();
         this.dataManager.setManuallyZoomed(true);
       },
     });
@@ -680,7 +670,6 @@ export default class GraphInteractionHandler {
               newXRange,
               this.chartTransform.modelYRange,
             );
-            this.dataManager.updateTrail();
           } else if (
             activePointers.size === 2 &&
             initialXDistance &&
@@ -720,7 +709,6 @@ export default class GraphInteractionHandler {
               new Range(xMin, xMax),
               this.chartTransform.modelYRange,
             );
-            this.dataManager.updateTrail();
           }
         }
       },
@@ -789,7 +777,6 @@ export default class GraphInteractionHandler {
             newXRange,
             this.chartTransform.modelYRange,
           );
-          this.dataManager.updateTrail();
         }
       },
 
@@ -837,7 +824,6 @@ export default class GraphInteractionHandler {
           newXRange,
           this.chartTransform.modelYRange,
         );
-        this.dataManager.updateTrail();
         this.dataManager.setManuallyZoomed(true);
       },
     });
@@ -1088,9 +1074,6 @@ export default class GraphInteractionHandler {
 
     // Update tick spacing
     this.dataManager.updateTickSpacing(newXRange, newYRange);
-
-    // Update trail with new transform
-    this.dataManager.updateTrail();
   }
 
   /**
@@ -1172,9 +1155,6 @@ export default class GraphInteractionHandler {
 
     // Update tick spacing
     this.dataManager.updateTickSpacing(newXRange, newYRange);
-
-    // Update trail with new transform
-    this.dataManager.updateTrail();
   }
 }
 

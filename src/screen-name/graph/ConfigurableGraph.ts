@@ -280,12 +280,9 @@ export default class ConfigurableGraph extends Node {
       lineWidth: PLOT_LINE_WIDTH,
     });
 
-    // Create trail node for showing recent points
-    const trailNode = new Node();
-
-    // Wrap line plot and trail in a clipped container to prevent overflow beyond the grid
+    // Wrap line plot in a clipped container to prevent overflow beyond the grid
     this.clippedDataContainer = new Node({
-      children: [linePlot, trailNode],
+      children: [linePlot],
       clipArea: Shape.rect(0, 0, width, height),
     });
     this.graphContentNode.addChild(this.clippedDataContainer);
@@ -312,7 +309,6 @@ export default class ConfigurableGraph extends Node {
     this.dataManager = new GraphDataManager(
       this.chartTransform,
       linePlot,
-      trailNode,
       maxDataPoints,
       {
         verticalGridLineSet,
@@ -598,9 +594,6 @@ export default class ConfigurableGraph extends Node {
     // Update interaction handler dimensions
     this.interactionHandler.updateDimensions(newWidth, newHeight);
     this.interactionHandler.updateResizeHandlePositions();
-
-    // Update trail with new transform
-    this.dataManager.updateTrail();
   }
 
   /**
