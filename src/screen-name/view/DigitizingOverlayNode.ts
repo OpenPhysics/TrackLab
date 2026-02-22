@@ -1,13 +1,6 @@
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import {
-  DOM,
-  FireListener,
-  Line,
-  Node,
-  Path,
-  Rectangle,
-} from "scenerystack/scenery";
+import { DOM, FireListener, Line, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
@@ -33,20 +26,13 @@ const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the vi
 export class DigitizingOverlayNode extends Node {
   private readonly disposeDigitizingOverlay: () => void;
 
-  public constructor(
-    videoElement: HTMLVideoElement,
-    model: SimModel,
-    onPointAdded: () => void,
-  ) {
+  public constructor(videoElement: HTMLVideoElement, model: SimModel, onPointAdded: () => void) {
     super();
 
     // Cached CSS color strings for canvas drawing (updated via property links)
-    let magBorderColor =
-      TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
-    let magCrosshairColor =
-      TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
-    let magShadowColor =
-      TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
+    let magBorderColor = TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
+    let magCrosshairColor = TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
+    let magShadowColor = TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
 
     // Custom cursor: large circle + 4 segments that stop at the empty centre
     const cursorCircle = new Path(Shape.circle(0, 0, OUTER_R), {
@@ -73,13 +59,7 @@ export class DigitizingOverlayNode extends Node {
     const cursorNode = new Node({
       visible: false,
       pickable: false,
-      children: [
-        cursorCircle,
-        cursorLineLeft,
-        cursorLineRight,
-        cursorLineTop,
-        cursorLineBottom,
-      ],
+      children: [cursorCircle, cursorLineLeft, cursorLineRight, cursorLineTop, cursorLineBottom],
     });
 
     // ── Magnifier (zoomed view near the cursor) ─────────────────────────────
@@ -104,9 +84,7 @@ export class DigitizingOverlayNode extends Node {
     const magCrosshairListener = (color: import("scenerystack").Color) => {
       magCrosshairColor = color.toCSS();
     };
-    TrackLabColors.digitizingMagnifierCrosshairProperty.link(
-      magCrosshairListener,
-    );
+    TrackLabColors.digitizingMagnifierCrosshairProperty.link(magCrosshairListener);
 
     const magShadowListener = (color: import("scenerystack").Color) => {
       magShadowColor = color.toCSS();
@@ -115,8 +93,9 @@ export class DigitizingOverlayNode extends Node {
     TrackLabColors.digitizingMagnifierShadowProperty.link(magShadowListener);
 
     const magCtx = magCanvas.getContext("2d");
-    if (!magCtx)
+    if (!magCtx) {
       throw new Error("Could not get 2D context from magnifier canvas");
+    }
 
     const magnifierNode = new DOM(magCanvas, { allowInput: false });
     magnifierNode.visible = false;
@@ -179,14 +158,8 @@ export class DigitizingOverlayNode extends Node {
       return cachedVideoBounds;
     };
 
-    const updateMagnifier = (
-      localX: number,
-      localY: number,
-      crosshairX: number,
-      crosshairY: number,
-    ) => {
-      const { renderedW, renderedH, offsetX, offsetY, videoW, videoH } =
-        getRenderedVideoBounds();
+    const updateMagnifier = (localX: number, localY: number, crosshairX: number, crosshairY: number) => {
+      const { renderedW, renderedH, offsetX, offsetY, videoW, videoH } = getRenderedVideoBounds();
 
       const videoX = ((localX - offsetX) / renderedW) * videoW;
       const videoY = ((localY - offsetY) / renderedH) * videoH;
@@ -203,30 +176,14 @@ export class DigitizingOverlayNode extends Node {
       magCtx.arc(MAG_SIZE / 2, MAG_SIZE / 2, MAG_SIZE / 2, 0, Math.PI * 2);
       magCtx.clip();
 
-      magCtx.drawImage(
-        videoElement,
-        sx,
-        sy,
-        srcW,
-        srcH,
-        0,
-        0,
-        MAG_SIZE,
-        MAG_SIZE,
-      );
+      magCtx.drawImage(videoElement, sx, sy, srcW, srcH, 0, 0, MAG_SIZE, MAG_SIZE);
 
       magCtx.restore();
 
       magCtx.strokeStyle = magBorderColor;
       magCtx.lineWidth = MAG_BORDER_WIDTH;
       magCtx.beginPath();
-      magCtx.arc(
-        MAG_SIZE / 2,
-        MAG_SIZE / 2,
-        MAG_SIZE / 2 - MAG_BORDER_WIDTH / 2,
-        0,
-        Math.PI * 2,
-      );
+      magCtx.arc(MAG_SIZE / 2, MAG_SIZE / 2, MAG_SIZE / 2 - MAG_BORDER_WIDTH / 2, 0, Math.PI * 2);
       magCtx.stroke();
 
       magCtx.strokeStyle = magCrosshairColor;
@@ -253,20 +210,12 @@ export class DigitizingOverlayNode extends Node {
 
     digitizingOverlay.addInputListener({
       move: (event) => {
-        const localPt = digitizingOverlay.globalToLocalPoint(
-          event.pointer.point,
-        );
+        const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
         cursorNode.translation = localPt;
         cursorNode.visible = true;
 
-        const magX = Math.max(
-          0,
-          Math.min(localPt.x - MAG_SIZE / 2, VIDEO_WIDTH - MAG_SIZE),
-        );
-        const magY = Math.max(
-          0,
-          Math.min(localPt.y - MAG_SIZE / 2, VIDEO_HEIGHT - MAG_SIZE),
-        );
+        const magX = Math.max(0, Math.min(localPt.x - MAG_SIZE / 2, VIDEO_WIDTH - MAG_SIZE));
+        const magY = Math.max(0, Math.min(localPt.y - MAG_SIZE / 2, VIDEO_HEIGHT - MAG_SIZE));
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
@@ -294,9 +243,7 @@ export class DigitizingOverlayNode extends Node {
 
     const rebuildMarks = () => {
       const frameDuration = model.frameDurationProperty.value;
-      const currentFrame = Math.round(
-        model.currentTimeProperty.value / frameDuration,
-      );
+      const currentFrame = Math.round(model.currentTimeProperty.value / frameDuration);
       const mvt = model.modelViewTransformProperty.value;
       const tracks = model.tracksProperty.value;
       const activeTrackIds = new Set(tracks.map((t) => t.id));
@@ -312,9 +259,7 @@ export class DigitizingOverlayNode extends Node {
         const shape = new Shape();
         for (const point of track.points) {
           if (point.frame <= currentFrame) {
-            const localPt = mvt.transformPosition2(
-              new Vector2(point.x, point.y),
-            );
+            const localPt = mvt.transformPosition2(new Vector2(point.x, point.y));
             shape.circle(localPt.x, localPt.y, MARK_DOT_RADIUS);
           }
         }
@@ -345,30 +290,36 @@ export class DigitizingOverlayNode extends Node {
 
     const activeTrackListener = (activeId: string | null) => {
       digitizingOverlay.visible = activeId !== null;
-      if (!activeId) cursorNode.visible = false;
+      if (!activeId) {
+        cursorNode.visible = false;
+      }
     };
     model.activeTrackIdProperty.link(activeTrackListener);
 
     const magnifyListener = (magnify: boolean) => {
-      if (!magnify) magnifierNode.visible = false;
+      if (!magnify) {
+        magnifierNode.visible = false;
+      }
     };
     model.magnifyVideoProperty.link(magnifyListener);
 
     digitizingOverlay.addInputListener(
       new FireListener({
         fire: (event) => {
-          if (!event) return;
+          if (!event) {
+            return;
+          }
           const activeId = model.activeTrackIdProperty.value;
-          if (!activeId) return;
+          if (!activeId) {
+            return;
+          }
 
-          const track = model.tracksProperty.value.find(
-            (t) => t.id === activeId,
-          );
-          if (!track) return;
+          const track = model.tracksProperty.value.find((t) => t.id === activeId);
+          if (!track) {
+            return;
+          }
 
-          const localPt = digitizingOverlay.globalToLocalPoint(
-            event.pointer.point,
-          );
+          const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
 
           const time = model.currentTimeProperty.value;
           const frame = Math.round(time * model.frameRateProperty.value);
@@ -389,15 +340,9 @@ export class DigitizingOverlayNode extends Node {
     // Store cleanup function
     this.disposeDigitizingOverlay = () => {
       videoElement.removeEventListener("loadedmetadata", onMetadata);
-      TrackLabColors.digitizingMagnifierBorderProperty.unlink(
-        magBorderListener,
-      );
-      TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(
-        magCrosshairListener,
-      );
-      TrackLabColors.digitizingMagnifierShadowProperty.unlink(
-        magShadowListener,
-      );
+      TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
+      TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
+      TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
       model.currentTimeProperty.unlink(currentTimeListener);
       model.tracksProperty.unlink(tracksListener);
       model.modelViewTransformProperty.unlink(mvtListener);

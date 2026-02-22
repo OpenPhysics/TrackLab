@@ -11,18 +11,11 @@
  */
 
 import type { BooleanProperty } from "scenerystack/axon";
-import type {
-  ChartRectangle,
-  ChartTransform,
-  TickLabelSet,
-} from "scenerystack/bamboo";
-import {
-  type Node,
-  Rectangle,
-} from "scenerystack/scenery";
+import type { ChartRectangle, ChartTransform, TickLabelSet } from "scenerystack/bamboo";
+import type { Node, Rectangle } from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
-import type GraphDataManager from "./GraphDataManager.js";
 import AxisGestureHandler from "./AxisGestureHandler.js";
+import type GraphDataManager from "./GraphDataManager.js";
 import HeaderDragHandler from "./HeaderDragHandler.js";
 import PanGestureHandler from "./PanGestureHandler.js";
 import ResizeGestureHandler from "./ResizeGestureHandler.js";

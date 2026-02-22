@@ -1,11 +1,5 @@
-import {
-  BooleanProperty,
-  DerivedProperty,
-  NumberProperty,
-  Property,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
-import { Range, Transform3, Vector2 } from "scenerystack/dot";
+import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
@@ -17,9 +11,9 @@ import {
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
-import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
 import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
+import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
@@ -40,14 +34,8 @@ export const PLAYBACK_RATE_RANGE = new Range(0.1, 4);
 
 // ── Initial tool positions (view / pixel space) ───────────────────────────
 // These default positions are computed from the shared video layout constants.
-const COORD_ORIGIN_INITIAL = new Vector2(
-  VIDEO_CENTER_X - VIDEO_WIDTH / 4,
-  VIDEO_CENTER_Y,
-);
-const CALIB_CENTER_INITIAL = new Vector2(
-  VIDEO_CENTER_X,
-  VIDEO_CENTER_Y + VIDEO_HEIGHT / 4,
-);
+const COORD_ORIGIN_INITIAL = new Vector2(VIDEO_CENTER_X - VIDEO_WIDTH / 4, VIDEO_CENTER_Y);
+const CALIB_CENTER_INITIAL = new Vector2(VIDEO_CENTER_X, VIDEO_CENTER_Y + VIDEO_HEIGHT / 4);
 const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
 const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
@@ -77,16 +65,15 @@ export class SimModel {
   // ── Playback speed multiplier (1 = normal, 0.5 = slow, 2 = fast) ────────
   // The view maps its TimeSpeed enum to this value; the model stays free of
   // any scenery-phet dependency.
-  public readonly playbackRateProperty = new NumberProperty(
-    DEFAULT_PLAYBACK_RATE,
-    {
-      range: PLAYBACK_RATE_RANGE,
-    },
-  );
+  public readonly playbackRateProperty = new NumberProperty(DEFAULT_PLAYBACK_RATE, {
+    range: PLAYBACK_RATE_RANGE,
+  });
 
   // Derived frame duration for convenience
-  public readonly frameDurationProperty: TReadOnlyProperty<number> =
-    new DerivedProperty([this.frameRateProperty], (fps) => 1 / fps);
+  public readonly frameDurationProperty: TReadOnlyProperty<number> = new DerivedProperty(
+    [this.frameRateProperty],
+    (fps) => 1 / fps,
+  );
 
   // ── OpenCV Tracker (computational service) ────────────────────────────
   public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
@@ -100,54 +87,54 @@ export class SimModel {
   public readonly autoTrackingProperty = new BooleanProperty(false);
 
   // ── Coordinate system tool state (view / pixel space) ─────────────────
-  public readonly coordOriginProperty = new Property<Vector2>(
-    COORD_ORIGIN_INITIAL.copy(),
-  );
+  public readonly coordOriginProperty = new Property<Vector2>(COORD_ORIGIN_INITIAL.copy());
   public readonly coordAngleProperty = new NumberProperty(0);
 
   // ── Calibration tool state ────────────────────────────────────────────
-  public readonly calibPoint1Property = new Property<Vector2>(
-    CALIB_P1_INITIAL.copy(),
-  );
-  public readonly calibPoint2Property = new Property<Vector2>(
-    CALIB_P2_INITIAL.copy(),
-  );
+  public readonly calibPoint1Property = new Property<Vector2>(CALIB_P1_INITIAL.copy());
+  public readonly calibPoint2Property = new Property<Vector2>(CALIB_P2_INITIAL.copy());
   public readonly calibDistanceProperty = new NumberProperty(1, {
     range: CALIBRATION_DISTANCE_RANGE,
   });
   public readonly calibUnitProperty = new Property<CalibrationUnit>("m");
 
   // ── Derived unit strings (for display in graphs and tables) ────────────
-  public readonly distanceUnitProperty: TReadOnlyProperty<string> =
-    new DerivedProperty([this.calibUnitProperty], (unit) => unit);
+  public readonly distanceUnitProperty: TReadOnlyProperty<string> = new DerivedProperty(
+    [this.calibUnitProperty],
+    (unit) => unit,
+  );
 
-  public readonly velocityUnitProperty: TReadOnlyProperty<string> =
-    new DerivedProperty([this.calibUnitProperty], (unit) => `${unit}/s`);
+  public readonly velocityUnitProperty: TReadOnlyProperty<string> = new DerivedProperty(
+    [this.calibUnitProperty],
+    (unit) => `${unit}/s`,
+  );
 
-  public readonly accelerationUnitProperty: TReadOnlyProperty<string> =
-    new DerivedProperty([this.calibUnitProperty], (unit) => `${unit}/s²`);
+  public readonly accelerationUnitProperty: TReadOnlyProperty<string> = new DerivedProperty(
+    [this.calibUnitProperty],
+    (unit) => `${unit}/s²`,
+  );
 
   // ── Model-view transform (derived; the view never writes to this) ─────
-  public readonly modelViewTransformProperty: TReadOnlyProperty<Transform3> =
-    new DerivedProperty(
-      [
-        this.coordOriginProperty,
-        this.coordAngleProperty,
-        this.calibPoint1Property,
-        this.calibPoint2Property,
-        this.calibDistanceProperty,
-      ],
-      (origin, angle, p1, p2, dist) =>
-        buildModelViewTransform(origin, angle, p1, p2, dist),
-    );
+  public readonly modelViewTransformProperty: TReadOnlyProperty<Transform3> = new DerivedProperty(
+    [
+      this.coordOriginProperty,
+      this.coordAngleProperty,
+      this.calibPoint1Property,
+      this.calibPoint2Property,
+      this.calibDistanceProperty,
+    ],
+    (origin, angle, p1, p2, dist) => buildModelViewTransform(origin, angle, p1, p2, dist),
+  );
 
   // When coord system or calibration changes, recompute track points so they
   // stay at the same pixel positions on the video (invariant under MVT changes).
   private prevModelViewTransform: Transform3 | null = null;
 
   // ── Video loaded (true once a finite-duration video is loaded) ───────────
-  public readonly videoLoadedProperty: TReadOnlyProperty<boolean> =
-    new DerivedProperty([this.durationProperty], (d) => d > 0);
+  public readonly videoLoadedProperty: TReadOnlyProperty<boolean> = new DerivedProperty(
+    [this.durationProperty],
+    (d) => d > 0,
+  );
 
   // ── Manual particle tracks ────────────────────────────────────────────
   // INVARIANT: every TrackPoint's (x, y) is expressed in the coordinate
@@ -171,23 +158,20 @@ export class SimModel {
   // point array reference has changed since the last derivation.  Because
   // addPointToTrack() always creates a new points array, reference equality
   // is sufficient to detect modifications.
-  private readonly kinematicsCache = new Map<
-    string,
-    { points: Track["points"]; kinematics: TrackKinematics }
-  >();
+  private readonly kinematicsCache = new Map<string, { points: Track["points"]; kinematics: TrackKinematics }>();
 
-  public readonly trackKinematicsProperty: TReadOnlyProperty<
-    readonly TrackKinematics[]
-  > = new DerivedProperty([this.tracksProperty], (tracks) =>
-    tracks.map((track) => {
-      const cached = this.kinematicsCache.get(track.id);
-      if (cached && cached.points === track.points) {
-        return cached.kinematics;
-      }
-      const kinematics = computeTrackKinematics(track);
-      this.kinematicsCache.set(track.id, { points: track.points, kinematics });
-      return kinematics;
-    }),
+  public readonly trackKinematicsProperty: TReadOnlyProperty<readonly TrackKinematics[]> = new DerivedProperty(
+    [this.tracksProperty],
+    (tracks) =>
+      tracks.map((track) => {
+        const cached = this.kinematicsCache.get(track.id);
+        if (cached && cached.points === track.points) {
+          return cached.kinematics;
+        }
+        const kinematics = computeTrackKinematics(track);
+        this.kinematicsCache.set(track.id, { points: track.points, kinematics });
+        return kinematics;
+      }),
   );
   // Symbols are assigned sequentially (A → Z) and intentionally not reused
   // after a track is removed.  Stable, unique symbols matter for data export
@@ -204,24 +188,18 @@ export class SimModel {
     // infinite recursion: after the clamped value is written, the listener
     // fires again but finds the condition false and exits.
     this.coordOriginProperty.lazyLink((pos) => {
-      const clampedX = Math.max(
-        COORD_ORIGIN_BOUNDS_MIN_X,
-        Math.min(COORD_ORIGIN_BOUNDS_MAX_X, pos.x),
-      );
-      const clampedY = Math.max(
-        COORD_ORIGIN_BOUNDS_MIN_Y,
-        Math.min(COORD_ORIGIN_BOUNDS_MAX_Y, pos.y),
-      );
+      const clampedX = Math.max(COORD_ORIGIN_BOUNDS_MIN_X, Math.min(COORD_ORIGIN_BOUNDS_MAX_X, pos.x));
+      const clampedY = Math.max(COORD_ORIGIN_BOUNDS_MIN_Y, Math.min(COORD_ORIGIN_BOUNDS_MAX_Y, pos.y));
       if (clampedX !== pos.x || clampedY !== pos.y) {
         this.coordOriginProperty.value = pos.copy().setXY(clampedX, clampedY);
       }
     });
 
-    this.modelViewTransformProperty.lazyLink((newMVT) => {
+    this.modelViewTransformProperty.lazyLink((newMvt) => {
       if (this.prevModelViewTransform !== null) {
-        this.retransformTrackPoints(this.prevModelViewTransform, newMVT);
+        this.retransformTrackPoints(this.prevModelViewTransform, newMvt);
       }
-      this.prevModelViewTransform = newMVT;
+      this.prevModelViewTransform = newMvt;
     });
   }
 
@@ -256,18 +234,17 @@ export class SimModel {
    * Writing raw pixel coordinates or stale model coordinates directly into
    * `tracksProperty` will silently corrupt the track data.
    */
-  private retransformTrackPoints(
-    prevMVT: Transform3,
-    newMVT: Transform3,
-  ): void {
+  private retransformTrackPoints(prevMvt: Transform3, newMvt: Transform3): void {
     const tracks = this.tracksProperty.value;
-    if (tracks.length === 0) return;
+    if (tracks.length === 0) {
+      return;
+    }
 
     this.tracksProperty.value = tracks.map((track) => ({
       ...track,
       points: track.points.map((pt) => {
-        const pixelPos = prevMVT.transformPosition2(new Vector2(pt.x, pt.y));
-        const newModelPt = newMVT.inversePosition2(pixelPos);
+        const pixelPos = prevMvt.transformPosition2(new Vector2(pt.x, pt.y));
+        const newModelPt = newMvt.inversePosition2(pixelPos);
         return { ...pt, x: newModelPt.x, y: newModelPt.y };
       }),
     }));
@@ -278,15 +255,15 @@ export class SimModel {
    * unique color. Does nothing once all 26 letter slots are exhausted.
    */
   public addTrack(): void {
-    if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) return; // 'Z' is the last allowed symbol
+    if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) {
+      return; // 'Z' is the last allowed symbol
+    }
     const symbol = String.fromCharCode(this.nextSymbolCode);
-    const colorIndex =
-      (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length;
+    const colorIndex = (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length;
     const trackColor = TRACK_COLORS[colorIndex];
     const color = trackColor ? trackColor.toCSS() : "#000000";
     this.nextSymbolCode++;
-    this.canAddTrackProperty.value =
-      this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
+    this.canAddTrackProperty.value = this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
 
     const track: Track = {
       id: `track-${symbol}`,
@@ -308,9 +285,7 @@ export class SimModel {
     if (this.activeTrackIdProperty.value === id) {
       this.activeTrackIdProperty.value = null;
     }
-    this.tracksProperty.value = this.tracksProperty.value.filter(
-      (t) => t.id !== id,
-    );
+    this.tracksProperty.value = this.tracksProperty.value.filter((t) => t.id !== id);
   }
 
   /**
@@ -325,15 +300,11 @@ export class SimModel {
    * @param x - Horizontal position in model coordinates.
    * @param y - Vertical position in model coordinates.
    */
-  public addPointToTrack(
-    id: string,
-    frame: number,
-    time: number,
-    x: number,
-    y: number,
-  ): void {
+  public addPointToTrack(id: string, frame: number, time: number, x: number, y: number): void {
     const tracks = this.tracksProperty.value.map((track) => {
-      if (track.id !== id) return track;
+      if (track.id !== id) {
+        return track;
+      }
 
       // If the user re-digitizes a point at the same frame (e.g. to correct a
       // misclick), replace the existing coordinates rather than silently

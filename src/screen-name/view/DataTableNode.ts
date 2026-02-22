@@ -78,11 +78,7 @@ function buildDataRows(tracks: readonly Track[]): DataRow[] {
 /**
  * Generate CSV content from tracks.
  */
-function generateCSV(
-  tracks: readonly Track[],
-  unit: string,
-  labels: TableLabels,
-): string {
+function generateCsv(tracks: readonly Track[], unit: string, labels: TableLabels): string {
   const dataRows = buildDataRows(tracks);
 
   // Header row
@@ -95,17 +91,11 @@ function generateCSV(
 
   // Data rows
   for (const row of dataRows) {
-    const cells: string[] = [
-      String(row.frame),
-      row.time.toFixed(CSV_DECIMAL_PLACES),
-    ];
+    const cells: string[] = [String(row.frame), row.time.toFixed(CSV_DECIMAL_PLACES)];
     for (const track of tracks) {
       const val = row.values.get(track.id);
       if (val) {
-        cells.push(
-          val.x.toFixed(CSV_DECIMAL_PLACES),
-          val.y.toFixed(CSV_DECIMAL_PLACES),
-        );
+        cells.push(val.x.toFixed(CSV_DECIMAL_PLACES), val.y.toFixed(CSV_DECIMAL_PLACES));
       } else {
         cells.push("", "");
       }
@@ -139,7 +129,7 @@ type TableColors = {
  * Build an HTML table element for the data.
  * Height adjusts based on row count, with min/max constraints.
  */
-function buildHTMLTable(
+function buildHtmlTable(
   tracks: readonly Track[],
   unit: string,
   colors: TableColors,
@@ -254,7 +244,9 @@ function buildHTMLTable(
   } else {
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
-      if (!row) continue;
+      if (!row) {
+        continue;
+      }
       const tr = document.createElement("tr");
       tr.style.background = i % 2 === 0 ? colors.rowOdd : colors.rowEven;
 
@@ -384,8 +376,8 @@ export class DataTableNode extends Panel {
     });
 
     // ── Create scrollable HTML table ─────────────────────────────────────────
-    const tableWrapper = buildHTMLTable([], "m", getTableColors(), getLabels());
-    const tableDOMNode = new DOM(tableWrapper, { allowInput: true });
+    const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels());
+    const tableDomNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
     const exportButton = new RectangularPushButton({
@@ -409,7 +401,7 @@ export class DataTableNode extends Panel {
       listener: () => {
         const tracks = model.tracksProperty.value;
         const unit = unitProperty.value;
-        const csv = generateCSV(tracks, unit, getLabels());
+        const csv = generateCsv(tracks, unit, getLabels());
 
         // Create download — no DOM insertion needed in modern browsers.
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -438,7 +430,7 @@ export class DataTableNode extends Panel {
 
     // ── Main content ─────────────────────────────────────────────────────────
     const content = new VBox({
-      children: [titleRow, tableDOMNode],
+      children: [titleRow, tableDomNode],
       spacing: CONTENT_SPACING,
       align: "left",
     });
@@ -458,7 +450,7 @@ export class DataTableNode extends Panel {
     // Replaces the entire table DOM and refreshes cached references.
     const doFullRebuild = (tracks: readonly Track[], unit: string) => {
       const colors = getTableColors();
-      const newWrapper = buildHTMLTable(tracks, unit, colors, getLabels());
+      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels());
 
       this.tableWrapper.innerHTML = "";
       if (newWrapper.firstChild) {
@@ -469,8 +461,7 @@ export class DataTableNode extends Panel {
 
       // Cache <tbody> reference and rebuild the frame→row map.
       const tbody = this.tableWrapper.querySelector("tbody");
-      this.tableBodyRef =
-        tbody instanceof HTMLTableSectionElement ? tbody : null;
+      this.tableBodyRef = tbody instanceof HTMLTableSectionElement ? tbody : null;
       this.frameRowMap.clear();
       this.maxRenderedFrame = -Infinity;
 
@@ -519,8 +510,7 @@ export class DataTableNode extends Panel {
       // sort order of the table would break; fall back to full rebuild in that
       // rare case (out-of-order manual digitizing on an earlier frame).
       const hasOutOfOrder = dataRows.some(
-        (row) =>
-          !this.frameRowMap.has(row.frame) && row.frame < this.maxRenderedFrame,
+        (row) => !this.frameRowMap.has(row.frame) && row.frame < this.maxRenderedFrame,
       );
       if (hasOutOfOrder) {
         doFullRebuild(tracks, unit);
@@ -545,28 +535,26 @@ export class DataTableNode extends Panel {
             const val = row.values.get(track.id);
             const xCell = cells[cellIdx];
             const yCell = cells[cellIdx + 1];
-            if (xCell)
-              xCell.textContent = val
-                ? val.x.toFixed(CELL_DECIMAL_PLACES)
-                : "—";
-            if (yCell)
-              yCell.textContent = val
-                ? val.y.toFixed(CELL_DECIMAL_PLACES)
-                : "—";
+            if (xCell) {
+              xCell.textContent = val ? val.x.toFixed(CELL_DECIMAL_PLACES) : "—";
+            }
+            if (yCell) {
+              yCell.textContent = val ? val.y.toFixed(CELL_DECIMAL_PLACES) : "—";
+            }
             cellIdx += 2;
           }
         } else {
           // Append a brand-new row at the bottom.
           const rowIndex = this.frameRowMap.size; // 0-based index of this row
-          const tr = buildSingleDataRow(
+          const newRow = buildSingleDataRow(
             row,
             tracks,
             cellStyle,
             rowIndex % 2 !== 0, // isEven flag: index 0 → rowOdd, index 1 → rowEven, …
             colors,
           );
-          this.tableBodyRef.appendChild(tr);
-          this.frameRowMap.set(row.frame, tr);
+          this.tableBodyRef.appendChild(newRow);
+          this.frameRowMap.set(row.frame, newRow);
           if (row.frame > this.maxRenderedFrame) {
             this.maxRenderedFrame = row.frame;
           }
@@ -584,13 +572,10 @@ export class DataTableNode extends Panel {
     // Colour profile and locale changes require a full rebuild because cell
     // colours and label strings are baked into the DOM; they are not captured
     // by the track-ID / unit structural-change check above.
-    const fullRebuild = () =>
-      doFullRebuild(model.tracksProperty.value, unitProperty.value);
+    const fullRebuild = () => doFullRebuild(model.tracksProperty.value, unitProperty.value);
 
     const tableHeaderBgListener = () => fullRebuild();
-    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(
-      tableHeaderBgListener,
-    );
+    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
 
     const frameStringListener = () => fullRebuild();
     dataTableStrings.frameStringProperty.lazyLink(frameStringListener);
@@ -604,9 +589,7 @@ export class DataTableNode extends Panel {
     this.disposeDataTable = () => {
       model.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
-      TrackLabColors.tableHeaderBackgroundProperty.unlink(
-        tableHeaderBgListener,
-      );
+      TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
       dataTableStrings.frameStringProperty.unlink(frameStringListener);
       videoLoadedProperty.unlink(videoLoadedListener);
       exportButton.dispose();

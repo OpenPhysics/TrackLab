@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import pngToIco from "png-to-ico";
 import sharp from "sharp";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, "..");
+const Dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(Dirname, "..");
 
 const svgBuffer = readFileSync(resolve(root, "public/icons/icon.svg"));
 
@@ -19,7 +19,6 @@ const pngIcons = [
 for (const { name, size } of pngIcons) {
   const dest = resolve(root, "public", name);
   await sharp(svgBuffer).resize(size, size).png().toFile(dest);
-  console.log(`Generated ${name} (${size}x${size})`);
 }
 
 // Generate multi-size favicon.ico (16, 32, 48, 64)
@@ -34,4 +33,3 @@ for (const size of faviconSizes) {
 const icoBuffer = await pngToIco(faviconPngs);
 const faviconDest = resolve(root, "public", "favicon.ico");
 writeFileSync(faviconDest, icoBuffer);
-console.log(`Generated favicon.ico (16x16, 32x32, 48x48, 64x64)`);

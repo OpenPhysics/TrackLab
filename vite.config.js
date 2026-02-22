@@ -12,17 +12,21 @@ function serveVideos() {
     name: "serve-videos",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (!req.url?.startsWith("/videos/")) return next();
+        if (!req.url?.startsWith("/videos/")) {
+          return next();
+        }
 
-        const filename = decodeURIComponent(
-          req.url.slice("/videos/".length).split("?")[0],
-        );
+        const filename = decodeURIComponent(req.url.slice("/videos/".length).split("?")[0]);
         const videosDir = path.resolve("videos");
         const filePath = path.resolve(videosDir, filename);
 
         // Prevent directory traversal
-        if (!filePath.startsWith(videosDir + path.sep)) return next();
-        if (!fs.existsSync(filePath)) return next();
+        if (!filePath.startsWith(videosDir + path.sep)) {
+          return next();
+        }
+        if (!fs.existsSync(filePath)) {
+          return next();
+        }
 
         const stat = fs.statSync(filePath);
         const total = stat.size;
@@ -57,7 +61,9 @@ function serveVideos() {
     closeBundle() {
       const src = path.resolve("videos");
       const dest = path.resolve("dist", "videos");
-      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
       for (const file of fs.readdirSync(src)) {
         fs.copyFileSync(path.join(src, file), path.join(dest, file));
       }

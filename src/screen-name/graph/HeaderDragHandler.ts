@@ -14,7 +14,7 @@ export interface HeaderDragElements {
   headerBar: Rectangle;
   graphNode: Node;
   /** If provided, this node is moved instead of graphNode. */
-  dragTargetNode?: Node;
+  dragTargetNode?: Node | undefined;
 }
 
 export default class HeaderDragHandler {
@@ -22,10 +22,7 @@ export default class HeaderDragHandler {
   private readonly dragTargetNode: Node;
   private readonly isDraggingProperty: BooleanProperty;
 
-  public constructor(
-    elements: HeaderDragElements,
-    isDraggingProperty: BooleanProperty,
-  ) {
+  public constructor(elements: HeaderDragElements, isDraggingProperty: BooleanProperty) {
     this.headerBar = elements.headerBar;
     this.dragTargetNode = elements.dragTargetNode ?? elements.graphNode;
     this.isDraggingProperty = isDraggingProperty;
@@ -47,16 +44,15 @@ export default class HeaderDragHandler {
 
     const dragListener = new DragListener({
       start: (event) => {
-        dragStartPosition = new Vector2(
-          this.dragTargetNode.x,
-          this.dragTargetNode.y,
-        );
+        dragStartPosition = new Vector2(this.dragTargetNode.x, this.dragTargetNode.y);
         dragStartPointerPoint = event.pointer.point.copy();
         this.isDraggingProperty.value = true;
       },
 
       drag: (event) => {
-        if (!dragStartPosition || !dragStartPointerPoint) return;
+        if (!(dragStartPosition && dragStartPointerPoint)) {
+          return;
+        }
         const delta = event.pointer.point.minus(dragStartPointerPoint);
         this.dragTargetNode.x = dragStartPosition.x + delta.x;
         this.dragTargetNode.y = dragStartPosition.y + delta.y;

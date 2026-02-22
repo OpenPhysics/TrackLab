@@ -5,7 +5,7 @@
  */
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
-import { Range, Vector2 } from "scenerystack/dot";
+import { Range, type Vector2 } from "scenerystack/dot";
 import { DragListener } from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
@@ -48,28 +48,16 @@ export default class PanGestureHandler {
 
     switch (direction) {
       case "left":
-        newXRange = new Range(
-          currentXRange.min - xDelta,
-          currentXRange.max - xDelta,
-        );
+        newXRange = new Range(currentXRange.min - xDelta, currentXRange.max - xDelta);
         break;
       case "right":
-        newXRange = new Range(
-          currentXRange.min + xDelta,
-          currentXRange.max + xDelta,
-        );
+        newXRange = new Range(currentXRange.min + xDelta, currentXRange.max + xDelta);
         break;
       case "up":
-        newYRange = new Range(
-          currentYRange.min + yDelta,
-          currentYRange.max + yDelta,
-        );
+        newYRange = new Range(currentYRange.min + yDelta, currentYRange.max + yDelta);
         break;
       case "down":
-        newYRange = new Range(
-          currentYRange.min - yDelta,
-          currentYRange.max - yDelta,
-        );
+        newYRange = new Range(currentYRange.min - yDelta, currentYRange.max - yDelta);
         break;
     }
 
@@ -87,11 +75,8 @@ export default class PanGestureHandler {
 
     const dragListener = new DragListener({
       start: (event) => {
-        const viewPoint = this.chartRectangle.globalToLocalPoint(
-          event.pointer.point,
-        );
-        dragStartModelPoint =
-          this.chartTransform.viewToModelPosition(viewPoint);
+        const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
+        dragStartModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
         dragStartXRange = this.chartTransform.modelXRange.copy();
         dragStartYRange = this.chartTransform.modelYRange.copy();
 
@@ -100,26 +85,18 @@ export default class PanGestureHandler {
       },
 
       drag: (event) => {
-        if (!dragStartModelPoint || !dragStartXRange || !dragStartYRange)
+        if (!(dragStartModelPoint && dragStartXRange && dragStartYRange)) {
           return;
+        }
 
-        const viewPoint = this.chartRectangle.globalToLocalPoint(
-          event.pointer.point,
-        );
-        const currentModelPoint =
-          this.chartTransform.viewToModelPosition(viewPoint);
+        const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
+        const currentModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
 
         const deltaX = dragStartModelPoint.x - currentModelPoint.x;
         const deltaY = dragStartModelPoint.y - currentModelPoint.y;
 
-        const newXRange = new Range(
-          dragStartXRange.min + deltaX,
-          dragStartXRange.max + deltaX,
-        );
-        const newYRange = new Range(
-          dragStartYRange.min + deltaY,
-          dragStartYRange.max + deltaY,
-        );
+        const newXRange = new Range(dragStartXRange.min + deltaX, dragStartXRange.max + deltaX);
+        const newYRange = new Range(dragStartYRange.min + deltaY, dragStartYRange.max + deltaY);
 
         this.chartTransform.setModelXRange(newXRange);
         this.chartTransform.setModelYRange(newYRange);

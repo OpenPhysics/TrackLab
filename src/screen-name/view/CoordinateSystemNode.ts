@@ -7,6 +7,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
+
 const ARROW_LENGTH = 120;
 const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont({ size: 14, weight: "bold" });
@@ -44,10 +45,7 @@ export class CoordinateSystemNode extends Node {
    * @param videoLoadedProperty - Controls visibility; node is hidden until a video is loaded.
    * @param model - Provides and receives coordOriginProperty / coordAngleProperty.
    */
-  public constructor(
-    videoLoadedProperty: TReadOnlyProperty<boolean>,
-    model: SimModel,
-  ) {
+  public constructor(videoLoadedProperty: TReadOnlyProperty<boolean>, model: SimModel) {
     super();
 
     const coordStrings = StringManager.getInstance().getCoordSystem();
@@ -107,11 +105,7 @@ export class CoordinateSystemNode extends Node {
       focusable: true,
       accessibleName: "Rotation Handle",
     });
-    const handleTouchArea = Shape.circle(
-      0,
-      0,
-      HANDLE_RADIUS + HANDLE_TOUCH_DILATION,
-    );
+    const handleTouchArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_TOUCH_DILATION);
     handleDisk.mouseArea = handleTouchArea;
     handleDisk.touchArea = handleTouchArea;
     rotatingNode.addChild(handleDisk);
@@ -133,10 +127,7 @@ export class CoordinateSystemNode extends Node {
     });
     // Expand touch/mouse area for easier pickup (origin + axes region)
     positionNode.boundsProperty.lazyLink(() => {
-      const dilated = positionNode.localBounds.dilatedXY(
-        ORIGIN_TOUCH_DILATION,
-        ORIGIN_TOUCH_DILATION,
-      );
+      const dilated = positionNode.localBounds.dilatedXY(ORIGIN_TOUCH_DILATION, ORIGIN_TOUCH_DILATION);
       positionNode.mouseArea = dilated;
       positionNode.touchArea = dilated;
     });
@@ -181,8 +172,7 @@ export class CoordinateSystemNode extends Node {
           dragSpeed: ROTATE_DRAG_SPEED,
           shiftDragSpeed: ROTATE_SHIFT_DRAG_SPEED,
           drag: (_event, listener) => {
-            model.coordAngleProperty.value +=
-              listener.modelDelta.x * DEG_TO_RAD;
+            model.coordAngleProperty.value += listener.modelDelta.x * DEG_TO_RAD;
           },
         },
         tandem: Tandem.OPT_OUT,

@@ -29,15 +29,10 @@ interface MinMaxLocResult {
 }
 
 /** Typed surface of the OpenCV.js module used by this tracker. */
-interface CV {
+interface Cv {
   // Constructors
   readonly Mat: new () => CvMat;
-  readonly Rect: new (
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-  ) => CvRect;
+  readonly Rect: new (x: number, y: number, width: number, height: number) => CvRect;
 
   // Factory from browser ImageData
   matFromImageData(imageData: ImageData): CvMat;
@@ -47,12 +42,7 @@ interface CV {
   readonly COLOR_RGBA2GRAY: number;
 
   // Template matching
-  matchTemplate(
-    image: CvMat,
-    templ: CvMat,
-    result: CvMat,
-    method: number,
-  ): void;
+  matchTemplate(image: CvMat, templ: CvMat, result: CvMat, method: number): void;
   minMaxLoc(src: CvMat): MinMaxLocResult;
   readonly TM_CCOEFF_NORMED: number;
 
@@ -62,17 +52,17 @@ interface CV {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-let cvPromise: Promise<CV> | null = null;
+let cvPromise: Promise<Cv> | null = null;
 
 const CV_LOAD_TIMEOUT_MS = 30_000;
 
 /** Type predicate: confirms the WASM module has a usable `Mat` constructor. */
-function isCVReady(v: unknown): v is CV {
+function isCvReady(v: unknown): v is Cv {
   // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
   return typeof (v as Record<string, unknown>)["Mat"] === "function";
 }
 
-function loadCV(): Promise<CV> {
+function loadCv(): Promise<Cv> {
   if (!cvPromise) {
     cvPromise = import("@techstark/opencv-js").then(async (mod) => {
       // The package ships no TypeScript typings so `mod` is `any`. Extract the
@@ -85,26 +75,25 @@ function loadCV(): Promise<CV> {
       }
 
       // WASM may already be ready (e.g. in test environments).
-      if (isCVReady(cv)) {
+      if (isCvReady(cv)) {
         return cv;
       }
 
       // Wait for the Emscripten runtime to initialise, with a timeout so we
       // never hang indefinitely.
-      return new Promise<CV>((resolve, reject) => {
+      return new Promise<Cv>((resolve, reject) => {
         const timer = setTimeout(() => {
           reject(new Error("OpenCV WASM initialisation timed out"));
         }, CV_LOAD_TIMEOUT_MS);
 
-        (cv as { onRuntimeInitialized?: () => void }).onRuntimeInitialized =
-          () => {
-            clearTimeout(timer);
-            if (isCVReady(cv)) {
-              resolve(cv);
-            } else {
-              reject(new Error("OpenCV module did not initialise correctly"));
-            }
-          };
+        (cv as { onRuntimeInitialized?: () => void }).onRuntimeInitialized = () => {
+          clearTimeout(timer);
+          if (isCvReady(cv)) {
+            resolve(cv);
+          } else {
+            reject(new Error("OpenCV module did not initialise correctly"));
+          }
+        };
       });
     });
 
@@ -124,7 +113,7 @@ export type TrackerRegion = { x: number; y: number; w: number; h: number };
  * each subsequent frame using normalised cross-correlation (TM_CCOEFF_NORMED).
  */
 export class OpenCVTracker {
-  private cv: CV | null = null;
+  private cv: Cv | null = null;
   private templateMat: CvMat | null = null;
   private readonly offscreen: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -138,7 +127,9 @@ export class OpenCVTracker {
     this.offscreen.width = videoWidth;
     this.offscreen.height = videoHeight;
     const ctx = this.offscreen.getContext("2d");
-    if (!ctx) throw new Error("Could not get 2D context from offscreen canvas");
+    if (!ctx) {
+      throw new Error("Could not get 2D context from offscreen canvas");
+    }
     this.ctx = ctx;
   }
 
@@ -155,16 +146,9 @@ export class OpenCVTracker {
   private captureFrame(video: HTMLVideoElement): ImageData {
     this.ctx.drawImage(video, 0, 0);
     try {
-      return this.ctx.getImageData(
-        0,
-        0,
-        this.offscreen.width,
-        this.offscreen.height,
-      );
+      return this.ctx.getImageData(0, 0, this.offscreen.width, this.offscreen.height);
     } catch (e) {
-      const err = new Error(
-        "Cannot read video pixels: the video source may be cross-origin without CORS headers.",
-      );
+      const err = new Error("Cannot read video pixels: the video source may be cross-origin without CORS headers.");
       throw Object.assign(err, { cause: e });
     }
   }
@@ -173,15 +157,12 @@ export class OpenCVTracker {
    * Capture the template from the currently visible video frame inside `region`,
    * loading OpenCV (WASM) on first call.
    */
-  public async initFromVideo(
-    video: HTMLVideoElement,
-    region: TrackerRegion,
-  ): Promise<void> {
+  public async initFromVideo(video: HTMLVideoElement, region: TrackerRegion): Promise<void> {
     // Capture into a local const so TypeScript can narrow CV through the
     // subsequent captureFrame() call (class fields can't be narrowed across
     // method calls).
     // biome-ignore lint/suspicious/noAssignInExpressions: Assignment + local const needed for TypeScript narrowing
-    const cv = (this.cv = await loadCV());
+    const cv = (this.cv = await loadCv());
 
     const imageData = this.captureFrame(video);
     const frame = cv.matFromImageData(imageData);
@@ -189,7 +170,9 @@ export class OpenCVTracker {
     try {
       cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
 
-      if (this.templateMat) this.templateMat.delete();
+      if (this.templateMat) {
+        this.templateMat.delete();
+      }
 
       // Clamp the origin first, then use the clamped values when bounding the
       // width and height.  Without this, a negative region.x / region.y makes
@@ -197,12 +180,8 @@ export class OpenCVTracker {
       // read outside the source image and crash.
       const clampedX = Math.round(Math.max(0, region.x));
       const clampedY = Math.round(Math.max(0, region.y));
-      const roiW = Math.round(
-        Math.min(region.w, this.offscreen.width - clampedX),
-      );
-      const roiH = Math.round(
-        Math.min(region.h, this.offscreen.height - clampedY),
-      );
+      const roiW = Math.round(Math.min(region.w, this.offscreen.width - clampedX));
+      const roiH = Math.round(Math.min(region.h, this.offscreen.height - clampedY));
       if (roiW <= 0 || roiH <= 0) {
         throw new Error(`Invalid ROI dimensions: ${roiW}x${roiH}`);
       }
@@ -223,18 +202,14 @@ export class OpenCVTracker {
     // remainder of the method (class fields can't be narrowed across calls).
     const cv = this.cv;
     const templateMat = this.templateMat;
-    if (!cv || !templateMat) return null;
+    if (!(cv && templateMat)) {
+      return null;
+    }
 
     let imageData: ImageData;
     try {
       imageData = this.captureFrame(video);
-    } catch (e) {
-      // Cross-origin video without CORS headers — skip this frame and warn
-      // so developers can diagnose the source of the failure.
-      console.warn(
-        "[OpenCVTracker] Frame capture failed — video may be cross-origin:",
-        e,
-      );
+    } catch (_e) {
       return null;
     }
     const frame = cv.matFromImageData(imageData);

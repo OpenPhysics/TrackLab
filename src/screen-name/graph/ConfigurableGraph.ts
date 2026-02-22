@@ -3,29 +3,12 @@
  * This provides a flexible way to explore relationships between any two quantities.
  */
 
-import {
-  BooleanProperty,
-  Property,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
-import {
-  ChartRectangle,
-  ChartTransform,
-  GridLineSet,
-  LinePlot,
-  TickLabelSet,
-  TickMarkSet,
-} from "scenerystack/bamboo";
+import { BooleanProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { ChartRectangle, ChartTransform, GridLineSet, LinePlot, TickLabelSet, TickMarkSet } from "scenerystack/bamboo";
 import { Range } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Orientation } from "scenerystack/phet-core";
-import {
-  FireListener,
-  HBox,
-  Node,
-  Rectangle,
-  Text,
-} from "scenerystack/scenery";
+import { FireListener, HBox, Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
@@ -57,11 +40,6 @@ const BUTTON_CORNER_RADIUS = 3;
 const BUTTON_FONT = new PhetFont({ size: 14, weight: "bold" });
 const BUTTON_HOVER_OPACITY = 0.8;
 const TITLE_BOTTOM_OFFSET = -5;
-
-// Resize handle (reserved for future use)
-const _RESIZE_HANDLE_SIZE = 16;
-const _RESIZE_DOT_RADIUS = 2;
-const _RESIZE_DOT_SPACING = 5;
 
 export default class ConfigurableGraph extends Node {
   private readonly xPropertyProperty: Property<PlottableProperty>;
@@ -120,7 +98,7 @@ export default class ConfigurableGraph extends Node {
     initialYProperty: PlottableProperty,
     width: number,
     height: number,
-    maxDataPoints: number = 2000,
+    maxDataPoints: number,
     listParent: Node,
     dragTargetNode?: Node,
   ) {
@@ -164,84 +142,52 @@ export default class ConfigurableGraph extends Node {
     this.graphContentNode.addChild(chartRectangle);
 
     // Create grid lines, tick marks, and tick labels
-    const initialSpacing = GraphDataManager.calculateTickSpacing(
-      initialRange.getLength(),
-    );
+    const initialSpacing = GraphDataManager.calculateTickSpacing(initialRange.getLength());
 
-    const verticalGridLineSet = new GridLineSet(
-      this.chartTransform,
-      Orientation.VERTICAL,
-      initialSpacing,
-      {
-        stroke: TrackLabColors.gridLinesProperty,
-        lineWidth: GRID_LINE_WIDTH,
-      },
-    );
+    const verticalGridLineSet = new GridLineSet(this.chartTransform, Orientation.VERTICAL, initialSpacing, {
+      stroke: TrackLabColors.gridLinesProperty,
+      lineWidth: GRID_LINE_WIDTH,
+    });
     this.graphContentNode.addChild(verticalGridLineSet);
 
-    const horizontalGridLineSet = new GridLineSet(
-      this.chartTransform,
-      Orientation.HORIZONTAL,
-      initialSpacing,
-      {
-        stroke: TrackLabColors.gridLinesProperty,
-        lineWidth: GRID_LINE_WIDTH,
-      },
-    );
+    const horizontalGridLineSet = new GridLineSet(this.chartTransform, Orientation.HORIZONTAL, initialSpacing, {
+      stroke: TrackLabColors.gridLinesProperty,
+      lineWidth: GRID_LINE_WIDTH,
+    });
     this.graphContentNode.addChild(horizontalGridLineSet);
 
-    const xTickMarkSet = new TickMarkSet(
-      this.chartTransform,
-      Orientation.HORIZONTAL,
-      initialSpacing,
-      {
-        edge: "min",
-        extent: TICK_EXTENT,
-        stroke: TrackLabColors.controlPanelStrokeProperty,
-      },
-    );
+    const xTickMarkSet = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, initialSpacing, {
+      edge: "min",
+      extent: TICK_EXTENT,
+      stroke: TrackLabColors.controlPanelStrokeProperty,
+    });
     this.graphContentNode.addChild(xTickMarkSet);
 
-    const yTickMarkSet = new TickMarkSet(
-      this.chartTransform,
-      Orientation.VERTICAL,
-      initialSpacing,
-      {
-        edge: "min",
-        extent: TICK_EXTENT,
-        stroke: TrackLabColors.controlPanelStrokeProperty,
-      },
-    );
+    const yTickMarkSet = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, initialSpacing, {
+      edge: "min",
+      extent: TICK_EXTENT,
+      stroke: TrackLabColors.controlPanelStrokeProperty,
+    });
     this.graphContentNode.addChild(yTickMarkSet);
 
-    const xTickLabelSet = new TickLabelSet(
-      this.chartTransform,
-      Orientation.HORIZONTAL,
-      initialSpacing,
-      {
-        edge: "min",
-        createLabel: (value: number) =>
-          new Text(value.toFixed(TICK_LABEL_DECIMALS), {
-            font: TICK_LABEL_FONT,
-            fill: TrackLabColors.textProperty,
-          }),
-      },
-    );
+    const xTickLabelSet = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, initialSpacing, {
+      edge: "min",
+      createLabel: (value: number) =>
+        new Text(value.toFixed(TICK_LABEL_DECIMALS), {
+          font: TICK_LABEL_FONT,
+          fill: TrackLabColors.textProperty,
+        }),
+    });
     this.graphContentNode.addChild(xTickLabelSet);
 
-    const yTickLabelSet = new TickLabelSet(
-      this.chartTransform,
-      Orientation.VERTICAL,
-      initialSpacing,
-      {
-        edge: "min",
-        createLabel: (value: number) =>
-          new Text(value.toFixed(TICK_LABEL_DECIMALS), {
-            font: TICK_LABEL_FONT,
-            fill: TrackLabColors.textProperty,
-          }),
-      },
-    );
+    const yTickLabelSet = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, initialSpacing, {
+      edge: "min",
+      createLabel: (value: number) =>
+        new Text(value.toFixed(TICK_LABEL_DECIMALS), {
+          font: TICK_LABEL_FONT,
+          fill: TrackLabColors.textProperty,
+        }),
+    });
     this.graphContentNode.addChild(yTickLabelSet);
 
     // Create invisible interaction regions for axis controls
@@ -251,29 +197,17 @@ export default class ConfigurableGraph extends Node {
     const axisInteractionHeight = X_AXIS_INTERACTION_HEIGHT;
 
     // Y-axis interaction region (left side of graph, covering full height)
-    this.yAxisInteractionRegion = new Rectangle(
-      -axisInteractionWidth,
-      0,
-      axisInteractionWidth,
-      height,
-      {
-        fill: "transparent",
-        pickable: true,
-      },
-    );
+    this.yAxisInteractionRegion = new Rectangle(-axisInteractionWidth, 0, axisInteractionWidth, height, {
+      fill: "transparent",
+      pickable: true,
+    });
     this.graphContentNode.addChild(this.yAxisInteractionRegion);
 
     // X-axis interaction region (bottom of graph, covering full width)
-    this.xAxisInteractionRegion = new Rectangle(
-      0,
-      height,
-      width,
-      axisInteractionHeight,
-      {
-        fill: "transparent",
-        pickable: true,
-      },
-    );
+    this.xAxisInteractionRegion = new Rectangle(0, height, width, axisInteractionHeight, {
+      fill: "transparent",
+      pickable: true,
+    });
     this.graphContentNode.addChild(this.xAxisInteractionRegion);
 
     // Create line plot
@@ -308,19 +242,14 @@ export default class ConfigurableGraph extends Node {
     this.graphContentNode.addChild(this.yAxisLabelNode);
 
     // Initialize data manager
-    this.dataManager = new GraphDataManager(
-      this.chartTransform,
-      linePlot,
-      maxDataPoints,
-      {
-        verticalGridLineSet,
-        horizontalGridLineSet,
-        xTickMarkSet,
-        yTickMarkSet,
-        xTickLabelSet,
-        yTickLabelSet,
-      },
-    );
+    this.dataManager = new GraphDataManager(this.chartTransform, linePlot, maxDataPoints, {
+      verticalGridLineSet,
+      horizontalGridLineSet,
+      xTickMarkSet,
+      yTickMarkSet,
+      xTickLabelSet,
+      yTickLabelSet,
+    });
 
     // Create controls panel helper
     const controlsPanel = new GraphControlsPanel(
@@ -349,19 +278,11 @@ export default class ConfigurableGraph extends Node {
         fill: TrackLabColors.controlPanelStrokeProperty,
       });
 
-      const buttonBackground = new Rectangle(
-        0,
-        0,
-        buttonSize,
-        buttonSize,
-        BUTTON_CORNER_RADIUS,
-        BUTTON_CORNER_RADIUS,
-        {
-          fill: TrackLabColors.controlPanelFillProperty,
-          stroke: TrackLabColors.controlPanelStrokeProperty,
-          cursor: "pointer",
-        },
-      );
+      const buttonBackground = new Rectangle(0, 0, buttonSize, buttonSize, BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS, {
+        fill: TrackLabColors.controlPanelFillProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
+        cursor: "pointer",
+      });
 
       const button = new Node({
         children: [buttonBackground, buttonText],
@@ -425,15 +346,7 @@ export default class ConfigurableGraph extends Node {
 
     // Create HBox to hold all buttons
     const controlButtonsPanel = new HBox({
-      children: [
-        rescaleButton,
-        zoomInButton,
-        zoomOutButton,
-        panLeftButton,
-        panRightButton,
-        panUpButton,
-        panDownButton,
-      ],
+      children: [rescaleButton, zoomInButton, zoomOutButton, panLeftButton, panRightButton, panUpButton, panDownButton],
       spacing: buttonSpacing,
       left: buttonPadding,
       top: buttonPadding,
@@ -551,10 +464,10 @@ export default class ConfigurableGraph extends Node {
   /**
    * Get the string value from a unit (which can be string or TReadOnlyProperty<string>)
    */
-  private getUnitValue(
-    unit: string | TReadOnlyProperty<string> | undefined,
-  ): string | undefined {
-    if (unit === undefined) return undefined;
+  private getUnitValue(unit: string | TReadOnlyProperty<string> | undefined): string | undefined {
+    if (unit === undefined) {
+      return undefined;
+    }
     return typeof unit === "string" ? unit : unit.value;
   }
 
@@ -590,18 +503,8 @@ export default class ConfigurableGraph extends Node {
     // Update invisible interaction regions
     const axisInteractionWidth = 60;
     const axisInteractionHeight = 30;
-    this.yAxisInteractionRegion.setRect(
-      -axisInteractionWidth,
-      0,
-      axisInteractionWidth,
-      newHeight,
-    );
-    this.xAxisInteractionRegion.setRect(
-      0,
-      newHeight,
-      newWidth,
-      axisInteractionHeight,
-    );
+    this.yAxisInteractionRegion.setRect(-axisInteractionWidth, 0, axisInteractionWidth, newHeight);
+    this.xAxisInteractionRegion.setRect(0, newHeight, newWidth, axisInteractionHeight);
 
     // Update axis labels positions
     this.xAxisLabelNode.centerX = newWidth / 2;
@@ -627,7 +530,9 @@ export default class ConfigurableGraph extends Node {
    * Add data points from a record array, mapping each record to the selected axes.
    */
   public addDataPoints(dataPoints: Array<Record<string, number>>): void {
-    if (dataPoints.length === 0) return;
+    if (dataPoints.length === 0) {
+      return;
+    }
 
     const xProperty = this.xPropertyProperty.value;
     const yProperty = this.yPropertyProperty.value;
@@ -651,10 +556,7 @@ export default class ConfigurableGraph extends Node {
    * Dispatches on the PlottableProperty variant: RecordPlottable uses an
    * accessor function; LivePlottable reads from a reactive property.
    */
-  private getValueForAxis(
-    axisProperty: PlottableProperty,
-    point: Record<string, number>,
-  ): number | null {
+  private getValueForAxis(axisProperty: PlottableProperty, point: Record<string, number>): number | null {
     if ("accessor" in axisProperty) {
       return axisProperty.accessor(point);
     }
@@ -665,12 +567,8 @@ export default class ConfigurableGraph extends Node {
    * Update the axis labels (call when units change)
    */
   public updateAxisLabels(): void {
-    this.xAxisLabelNode.string = this.formatAxisLabel(
-      this.xPropertyProperty.value,
-    );
-    this.yAxisLabelNode.string = this.formatAxisLabel(
-      this.yPropertyProperty.value,
-    );
+    this.xAxisLabelNode.string = this.formatAxisLabel(this.xPropertyProperty.value);
+    this.yAxisLabelNode.string = this.formatAxisLabel(this.yPropertyProperty.value);
   }
 
   /**
@@ -721,10 +619,7 @@ export default class ConfigurableGraph extends Node {
     this.graphVisibleProperty.reset();
 
     // Reset graph size to initial dimensions if it has been resized
-    if (
-      this.graphWidth !== this.initialWidth ||
-      this.graphHeight !== this.initialHeight
-    ) {
+    if (this.graphWidth !== this.initialWidth || this.graphHeight !== this.initialHeight) {
       this.resizeGraph(this.initialWidth, this.initialHeight);
     }
 
