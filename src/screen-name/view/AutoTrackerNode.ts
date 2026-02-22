@@ -1,14 +1,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import {
-  DragListener,
-  Line,
-  Node,
-  Path,
-  Rectangle,
-  Text,
-} from "scenerystack/scenery";
+import { DragListener, Line, Node, Path, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -50,9 +43,7 @@ export class AutoTrackerNode extends Node {
   // ── Trail: O(1) ring buffer ────────────────────────────────────────────
   // Using a fixed-size circular buffer instead of a plain array so that the
   // oldest-point eviction at 30 Hz is O(1) rather than O(n) (Array.shift).
-  private readonly trailBuf: Array<{ x: number; y: number }> = new Array(
-    MAX_TRAIL,
-  );
+  private readonly trailBuf: Array<{ x: number; y: number }> = new Array(MAX_TRAIL);
   private trailHead = 0; // index of the slot where the NEXT write will land
   private trailSize = 0; // number of valid entries (0 … MAX_TRAIL)
   /** Frames already recorded to the active track; cleared on track change or reset. */
@@ -142,14 +133,11 @@ export class AutoTrackerNode extends Node {
       lineWidth: CROSSHAIR_LINE_WIDTH,
       visible: false,
     });
-    this.crosshairCircle = new Path(
-      Shape.circle(0, 0, CROSSHAIR_CIRCLE_RADIUS),
-      {
-        stroke: crosshairStroke,
-        lineWidth: CROSSHAIR_LINE_WIDTH,
-        visible: false,
-      },
-    );
+    this.crosshairCircle = new Path(Shape.circle(0, 0, CROSSHAIR_CIRCLE_RADIUS), {
+      stroke: crosshairStroke,
+      lineWidth: CROSSHAIR_LINE_WIDTH,
+      visible: false,
+    });
     this.addChild(this.trailPath);
     this.addChild(this.crosshairCircle);
     this.addChild(this.crosshairH);
@@ -174,7 +162,9 @@ export class AutoTrackerNode extends Node {
         this.selectionRect.visible = true;
       },
       drag: (event) => {
-        if (!this.selecting) return;
+        if (!this.selecting) {
+          return;
+        }
         const p = this.globalToLocalPoint(event.pointer.point);
         this.selectionRect.setRect(
           Math.min(this.selStart.x, p.x),
@@ -184,7 +174,9 @@ export class AutoTrackerNode extends Node {
         );
       },
       end: (event) => {
-        if (!this.selecting) return;
+        if (!this.selecting) {
+          return;
+        }
         this.selecting = false;
         this.selectionRect.visible = false;
 
@@ -233,19 +225,14 @@ export class AutoTrackerNode extends Node {
               // nowhere to record points.
               const activeId = this.model.activeTrackIdProperty.value;
               const trackStillExists =
-                activeId !== null &&
-                this.model.tracksProperty.value.some((t) => t.id === activeId);
+                activeId !== null && this.model.tracksProperty.value.some((t) => t.id === activeId);
               if (!trackStillExists) {
                 this.model.tracker.dispose();
                 this.hintText.visible = true;
               }
             })
-            .catch((err) => {
+            .catch((_err) => {
               if (this.initVersion === capturedVersion) {
-                console.error(
-                  "[AutoTracker] Tracking initialisation failed:",
-                  err,
-                );
                 this.hintText.visible = true;
               }
             });
@@ -259,14 +246,20 @@ export class AutoTrackerNode extends Node {
 
     // ── Track on every video frame ────────────────────────────────────────
     const onFrame = () => {
-      if (!this.visible || !this.model.tracker.ready) return;
+      if (!(this.visible && this.model.tracker.ready)) {
+        return;
+      }
       const pt = this.model.tracker.track(videoElement);
-      if (!pt) return;
+      if (!pt) {
+        return;
+      }
 
       // O(1) ring-buffer write: overwrite the oldest slot when full.
       this.trailBuf[this.trailHead] = pt;
       this.trailHead = (this.trailHead + 1) % MAX_TRAIL;
-      if (this.trailSize < MAX_TRAIL) this.trailSize++;
+      if (this.trailSize < MAX_TRAIL) {
+        this.trailSize++;
+      }
       this.updateTrackerVisuals(pt);
 
       // ── Record position to model if a track is active ─────────────────
@@ -283,8 +276,7 @@ export class AutoTrackerNode extends Node {
         if (!this.recordedFrames.has(frame)) {
           // Convert video-pixel coords to global coords, then to model coords.
           const globalPt = this.localToGlobalPoint(new Vector2(pt.x, pt.y));
-          const modelPt =
-            model.modelViewTransformProperty.value.inversePosition2(globalPt);
+          const modelPt = model.modelViewTransformProperty.value.inversePosition2(globalPt);
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           this.recordedFrames.add(frame);
         }
@@ -306,9 +298,13 @@ export class AutoTrackerNode extends Node {
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     const autoTrackingShownListener = (shown: boolean) => {
-      if (!shown) this.reset();
+      if (!shown) {
+        this.reset();
+      }
       this.visible = shown;
-      if (shown) this.hintText.visible = true;
+      if (shown) {
+        this.hintText.visible = true;
+      }
     };
     autoTrackingShownProperty.link(autoTrackingShownListener);
     this.boundAutoTrackingShownProperty = autoTrackingShownProperty;
@@ -328,7 +324,9 @@ export class AutoTrackerNode extends Node {
     for (let i = 0; i < this.trailSize; i++) {
       const idx = (this.trailHead - this.trailSize + i + MAX_TRAIL) % MAX_TRAIL;
       const p = this.trailBuf[idx];
-      if (p) shape.circle(p.x, p.y, TRAIL_DOT_RADIUS);
+      if (p) {
+        shape.circle(p.x, p.y, TRAIL_DOT_RADIUS);
+      }
     }
     this.trailPath.shape = shape;
     this.trailPath.visible = true;

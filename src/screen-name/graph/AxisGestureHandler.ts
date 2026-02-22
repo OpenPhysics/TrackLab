@@ -41,11 +41,7 @@ export default class AxisGestureHandler {
 
   private readonly zoomFactor: number = 1.1;
 
-  public constructor(
-    chartConfig: ChartConfig,
-    regions: AxisInteractionRegions,
-    dimensions: GraphDimensions,
-  ) {
+  public constructor(chartConfig: ChartConfig, regions: AxisInteractionRegions, dimensions: GraphDimensions) {
     this.chartTransform = chartConfig.chartTransform;
     this.chartRectangle = chartConfig.chartRectangle;
     this.dataManager = chartConfig.dataManager;
@@ -76,30 +72,19 @@ export default class AxisGestureHandler {
 
   private setupAxisControls(axis: "x" | "y"): void {
     const isX = axis === "x";
-    const region = isX
-      ? this.xAxisInteractionRegion
-      : this.yAxisInteractionRegion;
+    const region = isX ? this.xAxisInteractionRegion : this.yAxisInteractionRegion;
 
     // Read the current model range for this axis.
-    const getRange = (): Range =>
-      isX
-        ? this.chartTransform.modelXRange
-        : this.chartTransform.modelYRange;
+    const getRange = (): Range => (isX ? this.chartTransform.modelXRange : this.chartTransform.modelYRange);
 
     // Apply a new range for this axis and update tick spacing.
     const setRange = (range: Range): void => {
       if (isX) {
         this.chartTransform.setModelXRange(range);
-        this.dataManager.updateTickSpacing(
-          range,
-          this.chartTransform.modelYRange,
-        );
+        this.dataManager.updateTickSpacing(range, this.chartTransform.modelYRange);
       } else {
         this.chartTransform.setModelYRange(range);
-        this.dataManager.updateTickSpacing(
-          this.chartTransform.modelXRange,
-          range,
-        );
+        this.dataManager.updateTickSpacing(this.chartTransform.modelXRange, range);
       }
     };
 
@@ -131,7 +116,9 @@ export default class AxisGestureHandler {
 
     region.addInputListener({
       down: (event) => {
-        if (event.pointer.type !== "touch") return;
+        if (event.pointer.type !== "touch") {
+          return;
+        }
         const pt = event.pointer.point;
         activePointers.set(event.pointer, pt);
 
@@ -154,54 +141,35 @@ export default class AxisGestureHandler {
       },
 
       move: (event) => {
-        if (
-          event.pointer.type !== "touch" ||
-          !activePointers.has(event.pointer)
-        )
+        if (event.pointer.type !== "touch" || !activePointers.has(event.pointer)) {
           return;
+        }
         const pt = event.pointer.point;
         activePointers.set(event.pointer, pt);
 
-        if (
-          activePointers.size === 1 &&
-          singleTouchStart !== null &&
-          initialRange
-        ) {
+        if (activePointers.size === 1 && singleTouchStart !== null && initialRange) {
           // Single touch: pan. Negate so content follows the finger on both axes.
           const axisSize = isX ? this.graphWidth : this.graphHeight;
-          const modelDelta =
-            -(coord(pt) - singleTouchStart) *
-            (initialRange.getLength() / axisSize);
-          setRange(
-            new Range(
-              initialRange.min + modelDelta,
-              initialRange.max + modelDelta,
-            ),
-          );
-        } else if (
-          activePointers.size === 2 &&
-          initialPinchDistance &&
-          initialPinchMidpoint !== null &&
-          initialRange
-        ) {
+          const modelDelta = -(coord(pt) - singleTouchStart) * (initialRange.getLength() / axisSize);
+          setRange(new Range(initialRange.min + modelDelta, initialRange.max + modelDelta));
+        } else if (activePointers.size === 2 && initialPinchDistance && initialPinchMidpoint !== null && initialRange) {
           // Two-finger pinch: zoom this axis only, centered on the pinch midpoint.
           const points = Array.from(activePointers.values());
           const p0 = points[0];
           const p1 = points[1];
-          if (!p0 || !p1) return;
+          if (!(p0 && p1)) {
+            return;
+          }
 
-          const zoomFactor =
-            initialPinchDistance / Math.abs(coord(p0) - coord(p1));
+          const zoomFactor = initialPinchDistance / Math.abs(coord(p0) - coord(p1));
 
           // Build a view midpoint at the pinch centre; use the graph centre on
           // the perpendicular axis so the localToModel conversion is correct.
           const viewMidpoint = isX
             ? new Vector2(initialPinchMidpoint, this.graphHeight / 2)
             : new Vector2(this.graphWidth / 2, initialPinchMidpoint);
-          const localMidpoint =
-            this.chartRectangle.globalToLocalPoint(viewMidpoint);
-          const modelPos =
-            this.chartTransform.viewToModelPosition(localMidpoint);
+          const localMidpoint = this.chartRectangle.globalToLocalPoint(viewMidpoint);
+          const modelPos = this.chartTransform.viewToModelPosition(localMidpoint);
           const modelCenter = isX ? modelPos.x : modelPos.y;
 
           setRange(
@@ -214,7 +182,9 @@ export default class AxisGestureHandler {
       },
 
       up: (event) => {
-        if (event.pointer.type !== "touch") return;
+        if (event.pointer.type !== "touch") {
+          return;
+        }
         activePointers.delete(event.pointer);
         if (activePointers.size < 2) {
           initialPinchDistance = null;
@@ -227,7 +197,9 @@ export default class AxisGestureHandler {
       },
 
       cancel: (event) => {
-        if (event.pointer.type !== "touch") return;
+        if (event.pointer.type !== "touch") {
+          return;
+        }
         activePointers.delete(event.pointer);
         if (activePointers.size < 2) {
           initialPinchDistance = null;
@@ -261,19 +233,15 @@ export default class AxisGestureHandler {
       },
 
       drag: (event) => {
-        if (mouseDragStart === null || !mouseDragInitialRange) return;
+        if (mouseDragStart === null || !mouseDragInitialRange) {
+          return;
+        }
         const axisSize = isX ? this.graphWidth : this.graphHeight;
         const delta = coord(event.pointer.point) - mouseDragStart;
         // X: negate (screen X and model X share direction; negation makes content follow drag).
         // Y: keep positive (screen Y is inverted from model Y; signs cancel, content follows drag).
-        const modelDelta =
-          (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
-        setRange(
-          new Range(
-            mouseDragInitialRange.min + modelDelta,
-            mouseDragInitialRange.max + modelDelta,
-          ),
-        );
+        const modelDelta = (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
+        setRange(new Range(mouseDragInitialRange.min + modelDelta, mouseDragInitialRange.max + modelDelta));
       },
 
       end: () => {
@@ -305,15 +273,12 @@ export default class AxisGestureHandler {
         const viewMidpoint = isX
           ? new Vector2(mouseCoord, this.graphHeight / 2)
           : new Vector2(this.graphWidth / 2, mouseCoord);
-        const localMidpoint =
-          this.chartRectangle.globalToLocalPoint(viewMidpoint);
-        const modelPos =
-          this.chartTransform.viewToModelPosition(localMidpoint);
+        const localMidpoint = this.chartRectangle.globalToLocalPoint(viewMidpoint);
+        const modelPos = this.chartTransform.viewToModelPosition(localMidpoint);
         const modelCenter = isX ? modelPos.x : modelPos.y;
 
         const currentRange = getRange();
-        const zoomFactor =
-          delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
+        const zoomFactor = delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
         setRange(
           new Range(

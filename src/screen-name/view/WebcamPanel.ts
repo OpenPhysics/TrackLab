@@ -1,12 +1,7 @@
 import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
-import {
-  CloseButton,
-  PhetFont,
-  RefreshButton,
-  StopIconShape,
-} from "scenerystack/scenery-phet";
+import { CloseButton, PhetFont, RefreshButton, StopIconShape } from "scenerystack/scenery-phet";
 import {
   ButtonNode,
   cameraSolidShape,
@@ -18,16 +13,8 @@ import {
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import {
-  WEBCAM_PREVIEW_HEIGHT,
-  WEBCAM_PREVIEW_WIDTH,
-} from "../../TrackLabConstants.js";
-import {
-  estimateVideoFrameRate,
-  type FPSEstimate,
-  fixWebmDuration,
-  WebcamRecorder,
-} from "../../webcam.js";
+import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
+import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
@@ -94,14 +81,11 @@ export class WebcamPanel extends Node {
     this.cameraSelect = document.createElement("select");
     this.cameraSelect.style.font = "14px sans-serif";
     this.cameraSelect.style.padding = "4px";
-    const cameraSelectDOM = new DOM(this.cameraSelect, { allowInput: true });
+    const cameraSelectDom = new DOM(this.cameraSelect, { allowInput: true });
 
     this.cameraSelect.addEventListener("change", async () => {
       if (!this.recorder.isRecording()) {
-        await this.recorder.startPreview(
-          this.previewElement,
-          this.cameraSelect.value || undefined,
-        );
+        await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
       }
     });
 
@@ -115,7 +99,7 @@ export class WebcamPanel extends Node {
     TrackLabColors.videoBackgroundColorProperty.link((c) => {
       this.previewElement.style.background = c.toCSS();
     });
-    const previewDOM = new DOM(this.previewElement, { allowInput: false });
+    const previewDom = new DOM(this.previewElement, { allowInput: false });
 
     // ── Review video ──────────────────────────────────────────────────────
     this.reviewElement = document.createElement("video");
@@ -127,7 +111,7 @@ export class WebcamPanel extends Node {
     TrackLabColors.videoBackgroundColorProperty.link((c) => {
       this.reviewElement.style.background = c.toCSS();
     });
-    const reviewDOM = new DOM(this.reviewElement, { allowInput: true });
+    const reviewDom = new DOM(this.reviewElement, { allowInput: true });
 
     // ── Status ────────────────────────────────────────────────────────────
     this.statusText = new Text("", {
@@ -215,24 +199,20 @@ export class WebcamPanel extends Node {
       fill: TrackLabColors.textMutedProperty,
     });
 
-    const fpsSpinner = new NumberSpinner(
-      this.model.frameRateProperty,
-      new Property(FRAME_RATE_RANGE),
-      {
-        deltaValue: 1,
-        numberDisplayOptions: {
-          decimalPlaces: 0,
-          textOptions: { font: SMALL_FONT },
-          minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
-        },
-        arrowsPosition: "leftRight",
-        arrowButtonOptions: {
-          scale: FPS_SPINNER_SCALE,
-          buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-        },
-        tandem: Tandem.OPT_OUT,
+    const fpsSpinner = new NumberSpinner(this.model.frameRateProperty, new Property(FRAME_RATE_RANGE), {
+      deltaValue: 1,
+      numberDisplayOptions: {
+        decimalPlaces: 0,
+        textOptions: { font: SMALL_FONT },
+        minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
       },
-    );
+      arrowsPosition: "leftRight",
+      arrowButtonOptions: {
+        scale: FPS_SPINNER_SCALE,
+        buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      },
+      tandem: Tandem.OPT_OUT,
+    });
 
     const fpsControl = new HBox({
       children: [fpsLabel, fpsSpinner],
@@ -249,11 +229,11 @@ export class WebcamPanel extends Node {
     this.previewLayer = new VBox({
       children: [
         new HBox({
-          children: [cameraIcon, cameraSelectDOM],
+          children: [cameraIcon, cameraSelectDom],
           spacing: CAMERA_ROW_SPACING,
           align: "center",
         }),
-        previewDOM,
+        previewDom,
         new HBox({
           children: [cancelButton, startButton, stopButton],
           spacing: LAYER_SPACING,
@@ -269,7 +249,7 @@ export class WebcamPanel extends Node {
     // ── Layer: review ─────────────────────────────────────────────────────
     this.reviewLayer = new VBox({
       children: [
-        reviewDOM,
+        reviewDom,
         this.fpsEstimateText,
         fpsControl,
         new HBox({
@@ -289,12 +269,7 @@ export class WebcamPanel extends Node {
       accessibleName: "Record from Webcam",
     });
     const content = new VBox({
-      children: [
-        titleIcon,
-        this.previewLayer,
-        this.reviewLayer,
-        this.statusText,
-      ],
+      children: [titleIcon, this.previewLayer, this.reviewLayer, this.statusText],
       spacing: LAYER_SPACING,
       align: "center",
     });
@@ -339,10 +314,7 @@ export class WebcamPanel extends Node {
     }
 
     await this.populateCameras();
-    await this.recorder.startPreview(
-      this.previewElement,
-      this.cameraSelect.value || undefined,
-    );
+    await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
     this.clearStatus();
     this._startButton.enabled = true;
   }
@@ -412,7 +384,7 @@ export class WebcamPanel extends Node {
     // CRITICAL: Capture stream FPS BEFORE stopping the stream!
     // Once tracks are stopped, getSettings() returns stale/invalid data.
     const stream = this.recorder.getStream();
-    const streamFPS = stream ? this.recorder.getFrameRate() : null;
+    const streamFps = stream ? this.recorder.getFrameRate() : null;
 
     this.recordedBlob = await this.recorder.stopRecording();
     this.recorder.stopPreview(); // This stops all tracks - stream settings now invalid!
@@ -425,24 +397,20 @@ export class WebcamPanel extends Node {
     this.setStatus("Estimating frame rate...");
     try {
       // Pass the pre-captured stream FPS if available
-      if (streamFPS && streamFPS > 0) {
+      if (streamFps && streamFps > 0) {
         this.fpsEstimate = {
-          fps: Math.round(streamFPS),
+          fps: Math.round(streamFps),
           confidence: "high",
           method: "stream settings",
         };
       } else {
         // Fallback to empirical measurement from the recorded video
-        this.fpsEstimate = await estimateVideoFrameRate(
-          this.reviewElement,
-          null,
-        );
+        this.fpsEstimate = await estimateVideoFrameRate(this.reviewElement, null);
       }
       this.updateFPSEstimateDisplay();
       // Set the estimated FPS as the initial value
       this.model.frameRateProperty.value = this.fpsEstimate.fps;
-    } catch (error) {
-      console.warn("Failed to estimate FPS:", error);
+    } catch (_error) {
       this.fpsEstimateText.string = "";
     }
 
@@ -452,17 +420,14 @@ export class WebcamPanel extends Node {
   private async goToPreview(): Promise<void> {
     this.resetPreviewUI();
     this._startButton.enabled = false;
-    await this.recorder.startPreview(
-      this.previewElement,
-      this.cameraSelect.value || undefined,
-    );
+    await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
     this._startButton.enabled = true;
   }
 
-  private async useVideo(
-    cb: (blob: Blob, duration: number) => void,
-  ): Promise<void> {
-    if (!this.recordedBlob) return;
+  private async useVideo(cb: (blob: Blob, duration: number) => void): Promise<void> {
+    if (!this.recordedBlob) {
+      return;
+    }
     this.setStatus(this.webcamStrings.fixingMetadataStringProperty.value);
 
     let blob = this.recordedBlob;
@@ -487,16 +452,11 @@ export class WebcamPanel extends Node {
     const { fps, confidence, method } = this.fpsEstimate;
 
     // Create confidence indicator
-    const confidenceSymbol =
-      confidence === "high" ? "✓" : confidence === "medium" ? "~" : "?";
+    const confidenceSymbol = confidence === "high" ? "✓" : confidence === "medium" ? "~" : "?";
 
     // Format the display string
     const confidenceText =
-      confidence === "high"
-        ? "High confidence"
-        : confidence === "medium"
-          ? "Medium confidence"
-          : "Low confidence";
+      confidence === "high" ? "High confidence" : confidence === "medium" ? "Medium confidence" : "Low confidence";
 
     this.fpsEstimateText.string = `Estimated: ${fps} fps ${confidenceSymbol} (${confidenceText}, ${method})`;
   }
@@ -508,12 +468,7 @@ export class WebcamPanel extends Node {
         .toString()
         .padStart(2, "0");
       const s = (secs % 60).toString().padStart(2, "0");
-      this.setStatus(
-        this.webcamStrings.recordingStringProperty.value.replace(
-          "{{time}}",
-          `${m}:${s}`,
-        ),
-      );
+      this.setStatus(this.webcamStrings.recordingStringProperty.value.replace("{{time}}", `${m}:${s}`));
     }, 1000);
   }
 

@@ -6,7 +6,7 @@
  * from Track.ts — no Axon Properties, no SceneryStack dependencies.
  */
 
-import type { Track, TrackKinematics, KinematicPoint } from "./Track.js";
+import type { KinematicPoint, Track, TrackKinematics } from "./Track.js";
 
 /**
  * Scalar finite difference at index i within an array of n values.
@@ -27,13 +27,16 @@ function finiteDifference(
   i: number,
   n: number,
 ): number | null {
-  if (n < 2) return null;
-  const [prevIdx, nextIdx] =
-    i === 0 ? [0, 1] : i === n - 1 ? [n - 2, n - 1] : [i - 1, i + 1];
+  if (n < 2) {
+    return null;
+  }
+  const [prevIdx, nextIdx] = i === 0 ? [0, 1] : i === n - 1 ? [n - 2, n - 1] : [i - 1, i + 1];
   const prev = getValue(prevIdx);
   const next = getValue(nextIdx);
   const dt = getTime(nextIdx) - getTime(prevIdx);
-  if (prev === null || next === null || dt <= 0) return null;
+  if (prev === null || next === null || dt <= 0) {
+    return null;
+  }
   return (next - prev) / dt;
 }
 
@@ -66,12 +69,8 @@ export function computeTrackKinematics(track: Track): TrackKinematics {
   const vyArr = points.map((_, i) => finiteDifference(getY, getTime, i, n));
 
   // Second pass: accelerations via finite difference of velocity
-  const axArr = points.map((_, i) =>
-    finiteDifference((j) => vxArr[j] ?? null, getTime, i, n),
-  );
-  const ayArr = points.map((_, i) =>
-    finiteDifference((j) => vyArr[j] ?? null, getTime, i, n),
-  );
+  const axArr = points.map((_, i) => finiteDifference((j) => vxArr[j] ?? null, getTime, i, n));
+  const ayArr = points.map((_, i) => finiteDifference((j) => vyArr[j] ?? null, getTime, i, n));
 
   const kinematicPoints: KinematicPoint[] = points.map((pt, i) => {
     const vx = vxArr[i] ?? null;
@@ -88,8 +87,7 @@ export function computeTrackKinematics(track: Track): TrackKinematics {
       speed: vx !== null && vy !== null ? Math.sqrt(vx * vx + vy * vy) : null,
       ax,
       ay,
-      accelerationMagnitude:
-        ax !== null && ay !== null ? Math.sqrt(ax * ax + ay * ay) : null,
+      accelerationMagnitude: ax !== null && ay !== null ? Math.sqrt(ax * ax + ay * ay) : null,
     };
   });
 

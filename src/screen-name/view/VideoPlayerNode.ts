@@ -73,18 +73,10 @@ export class VideoPlayerNode extends Node {
       [model.videoLoadedProperty, model.autoTrackingProperty],
       (loaded, tracking) => loaded && tracking,
     );
-    const autoTrackerNode = new AutoTrackerNode(
-      this.videoElement,
-      autoTrackingShownProperty,
-      model,
-    );
+    const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, model);
 
     // ── Manual digitizing overlay ─────────────────────────────────────────
-    const digitizingOverlayNode = new DigitizingOverlayNode(
-      this.videoElement,
-      model,
-      () => this.stepForward(),
-    );
+    const digitizingOverlayNode = new DigitizingOverlayNode(this.videoElement, model, () => this.stepForward());
 
     const videoLayer = new Node({
       children: [videoNode, autoTrackerNode, digitizingOverlayNode],
@@ -165,9 +157,7 @@ export class VideoPlayerNode extends Node {
 
     // Store cleanup function
     this.disposeVideoPlayer = () => {
-      TrackLabColors.videoBackgroundColorProperty.unlink(
-        videoBackgroundListener,
-      );
+      TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       model.isPlayingProperty.unlink(isPlayingListener);
       model.playbackRateProperty.unlink(playbackRateListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);

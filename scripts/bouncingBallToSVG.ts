@@ -29,10 +29,7 @@ const FLOOR_WIDTH = 0.8; // stroke-width
  *  T_n ∝ sqrt(h_n).  We normalise so the total "time" = 1.
  */
 function buildBounces(): Array<{ tStart: number; tEnd: number; h: number }> {
-  const heights = Array.from(
-    { length: NUM_BOUNCES },
-    (_, n) => INITIAL_HEIGHT * RESTITUTION ** n,
-  );
+  const heights = Array.from({ length: NUM_BOUNCES }, (_, n) => INITIAL_HEIGHT * RESTITUTION ** n);
 
   // flight time ∝ sqrt(h)
   const durations = heights.map((h) => Math.sqrt(h));
@@ -59,9 +56,7 @@ function computeSnapshots(): Point[] {
 
   // x positions of bounce endpoints (floor contacts) spaced proportionally
   // to flight time (= proportional to normalised duration)
-  const xContacts: number[] = bounces.map(
-    (b) => X_START + b.tStart * (X_END - X_START),
-  );
+  const xContacts: number[] = bounces.map((b) => X_START + b.tStart * (X_END - X_START));
   xContacts.push(X_END); // final landing
 
   for (let i = 0; i < TOTAL_SNAPSHOTS; i++) {
@@ -70,7 +65,9 @@ function computeSnapshots(): Point[] {
 
     // find which bounce this snapshot falls in
     const bounce = bounces.find((b) => tGlobal >= b.tStart && tGlobal < b.tEnd);
-    if (!bounce) continue; // shouldn't happen
+    if (!bounce) {
+      continue; // shouldn't happen
+    }
 
     const bounceIdx = bounces.indexOf(bounce);
     // local time within this bounce, in [0, 1]
@@ -93,13 +90,9 @@ function computeSnapshots(): Point[] {
   return points;
 }
 
-function buildSVG(points: Point[]): string {
-  const circles = points
-    .map(
-      (p) =>
-        `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" ` +
-        `fill="${BALL_COLOR}" opacity="${BALL_OPACITY}"/>`,
-    )
+function buildSvg(snapshots: Point[]): string {
+  const circles = snapshots
+    .map((p) => `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" fill="${BALL_COLOR}" opacity="${BALL_OPACITY}"/>`)
     .join("\n");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" \
@@ -113,12 +106,9 @@ ${circles}
 }
 
 const points = computeSnapshots();
-const svg = buildSVG(points);
+const svg = buildSvg(points);
 
 // Write to public/icons/icon.svg (source for PNG icon generation)
 const outputPath = "public/icons/icon.svg";
 fs.mkdirSync("public/icons", { recursive: true });
 fs.writeFileSync(outputPath, svg, "utf8");
-console.log(
-  `✓ Generated ${outputPath} with ${points.length} bouncing ball snapshots`,
-);

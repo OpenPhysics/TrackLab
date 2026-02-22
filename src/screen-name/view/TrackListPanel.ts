@@ -14,26 +14,10 @@
  */
 
 import { Color } from "scenerystack";
-import {
-  BooleanProperty,
-  DerivedProperty,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
-import {
-  Circle,
-  Line,
-  Node,
-  Rectangle,
-  Text,
-  VBox,
-} from "scenerystack/scenery";
+import { BooleanProperty, DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
+import { Circle, Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import {
-  ButtonNode,
-  Checkbox,
-  Panel,
-  RectangularPushButton,
-} from "scenerystack/sun";
+import { ButtonNode, Checkbox, Panel, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
@@ -116,20 +100,12 @@ class TrackRowNode extends Node {
     const ROW_CY = ROW_HEIGHT / 2;
 
     // ── Rounded background (purely visual, not pickable) ──────────────────
-    const bg = new Rectangle(
-      0,
-      0,
-      PANEL_WIDTH,
-      ROW_HEIGHT,
-      ROW_CORNER_RADIUS,
-      ROW_CORNER_RADIUS,
-      {
-        fill: trackColor.withAlpha(ROW_BG_ALPHA),
-        stroke: trackColor.withAlpha(ROW_STROKE_ALPHA),
-        lineWidth: ROW_STROKE_WIDTH,
-        pickable: false,
-      },
-    );
+    const bg = new Rectangle(0, 0, PANEL_WIDTH, ROW_HEIGHT, ROW_CORNER_RADIUS, ROW_CORNER_RADIUS, {
+      fill: trackColor.withAlpha(ROW_BG_ALPHA),
+      stroke: trackColor.withAlpha(ROW_STROKE_ALPHA),
+      lineWidth: ROW_STROKE_WIDTH,
+      pickable: false,
+    });
 
     // ── Colour badge with symbol letter ───────────────────────────────────
     const badge = new Circle(BADGE_R, {
@@ -146,9 +122,7 @@ class TrackRowNode extends Node {
     symbolLabel.centerY = ROW_CY;
 
     // ── Checkbox: activates this track for video digitizing ───────────────
-    const isDigitizingProperty = new BooleanProperty(
-      model.activeTrackIdProperty.value === track.id,
-    );
+    const isDigitizingProperty = new BooleanProperty(model.activeTrackIdProperty.value === track.id);
 
     // Sync checkbox from model (when another track becomes active, uncheck this one).
     // Axon Properties deduplicate same-value writes, so no infinite loop can occur.
@@ -167,14 +141,10 @@ class TrackRowNode extends Node {
     };
     isDigitizingProperty.lazyLink(digitizingListener);
 
-    const checkbox = new Checkbox(
-      isDigitizingProperty,
-      new Rectangle(0, 0, 0, 0),
-      {
-        boxWidth: CHECKBOX_BOX_WIDTH,
-        tandem: Tandem.OPT_OUT,
-      },
-    );
+    const checkbox = new Checkbox(isDigitizingProperty, new Rectangle(0, 0, 0, 0), {
+      boxWidth: CHECKBOX_BOX_WIDTH,
+      tandem: Tandem.OPT_OUT,
+    });
     checkbox.left = CHECKBOX_X;
     checkbox.centerY = ROW_CY;
 
@@ -218,10 +188,7 @@ class TrackRowNode extends Node {
 export class TrackListPanel extends Panel {
   private readonly disposeTrackListPanel: () => void;
 
-  public constructor(
-    model: SimModel,
-    videoLoadedProperty: TReadOnlyProperty<boolean>,
-  ) {
+  public constructor(model: SimModel, videoLoadedProperty: TReadOnlyProperty<boolean>) {
     const trackListStrings = StringManager.getInstance().getTrackList();
 
     // Width enforcer: invisible rectangle keeps the panel wide even when the
@@ -292,7 +259,9 @@ export class TrackListPanel extends Panel {
     let lastIds = "";
     const tracksListener = (tracks: readonly Track[]) => {
       const ids = tracks.map((t) => t.id).join(",");
-      if (ids === lastIds) return;
+      if (ids === lastIds) {
+        return;
+      }
       lastIds = ids;
       // Dispose old track rows before creating new ones
       for (const child of trackListVBox.children) {
@@ -300,9 +269,7 @@ export class TrackListPanel extends Panel {
           child.dispose();
         }
       }
-      trackListVBox.children = tracks.map(
-        (track) => new TrackRowNode(track, model),
-      );
+      trackListVBox.children = tracks.map((track) => new TrackRowNode(track, model));
     };
     model.tracksProperty.link(tracksListener);
 

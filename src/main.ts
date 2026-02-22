@@ -35,18 +35,13 @@ onReadyToLaunch(() => {
       simulationOptions: {
         customPreferences: [
           {
-            createContent: (_tandem: Tandem) =>
-              new TrackLabPreferencesNode(trackLabPreferences),
+            createContent: (_tandem: Tandem) => new TrackLabPreferencesNode(trackLabPreferences),
           },
         ],
       },
     }),
   };
 
-  const sim = new Sim(
-    stringManager.getTitleStringProperty(),
-    screens,
-    simOptions,
-  );
+  const sim = new Sim(stringManager.getTitleStringProperty(), screens, simOptions);
   sim.start();
 });

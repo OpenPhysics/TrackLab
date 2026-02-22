@@ -33,11 +33,7 @@ export class SimScreenView extends ScreenView {
    * @param trackLabPreferences - User preference flags (e.g. auto-tracking toggle).
    * @param options - Optional ScreenView configuration passed to the superclass.
    */
-  public constructor(
-    model: SimModel,
-    trackLabPreferences: TrackLabPreferencesModel,
-    options?: ScreenViewOptions,
-  ) {
+  public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel, options?: ScreenViewOptions) {
     super(options);
 
     // Combined visibility: video loaded AND user-toggled model flag.
@@ -67,34 +63,22 @@ export class SimScreenView extends ScreenView {
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
     this.videoPlayerNode.left = controlPanel.right + 20;
-    this.videoPlayerNode.centerY =
-      this.layoutBounds.centerY + VIDEO_PLAYER_Y_OFFSET;
+    this.videoPlayerNode.centerY = this.layoutBounds.centerY + VIDEO_PLAYER_Y_OFFSET;
     this.addChild(this.videoPlayerNode);
 
     // ── Coordinate system overlay (above video, below camera modal) ─────────
     // Reads/writes model.coordOriginProperty and model.coordAngleProperty.
-    const coordinateSystemNode = new CoordinateSystemNode(
-      axesShownProperty,
-      model,
-    );
+    const coordinateSystemNode = new CoordinateSystemNode(axesShownProperty, model);
     this.addChild(coordinateSystemNode);
 
     // ── Calibration tool overlay (above video, below camera modal) ─────────
     // Reads/writes model.calibPoint1/2Property, model.calibDistanceProperty,
     // and model.calibUnitProperty.
-    const calibrationToolNode = new CalibrationToolNode(
-      calibrationShownProperty,
-      this,
-      model,
-    );
+    const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
     this.addChild(calibrationToolNode);
 
     // ── Data table (top, a bit to the left) ──────────────────────────────
-    const dataTableNode = new DataTableNode(
-      model,
-      model.videoLoadedProperty,
-      model.calibUnitProperty,
-    );
+    const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
     dataTableNode.left = this.videoPlayerNode.right + 20;
     dataTableNode.top = this.layoutBounds.top + 10;

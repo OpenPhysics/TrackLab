@@ -2,11 +2,7 @@
 import "./splash.js";
 
 import type { TBrand } from "scenerystack/brand";
-import {
-  brand,
-  madeWithSceneryStackOnDark,
-  madeWithSceneryStackOnLight,
-} from "scenerystack/brand";
+import { brand, madeWithSceneryStackOnDark, madeWithSceneryStackOnLight } from "scenerystack/brand";
 
 const Brand: TBrand = {
   // Nickname for the brand, which should match the brand subdirectory name, grunt option for --brand as well as the

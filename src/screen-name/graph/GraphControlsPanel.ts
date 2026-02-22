@@ -4,11 +4,7 @@
  * - Header bar
  */
 
-import {
-  DerivedProperty,
-  type Property,
-  type TReadOnlyProperty,
-} from "scenerystack/axon";
+import { DerivedProperty, type Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { HBox, type Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox } from "scenerystack/sun";
@@ -118,10 +114,7 @@ export default class GraphControlsPanel {
     });
 
     const vsText = new Text(
-      new DerivedProperty(
-        [StringManager.getInstance().getControls().graphVsStringProperty],
-        (vs: string) => ` ${vs} `,
-      ),
+      new DerivedProperty([StringManager.getInstance().getControls().graphVsStringProperty], (vs: string) => ` ${vs} `),
       {
         font: TITLE_FONT,
         fill: TrackLabColors.textProperty,
@@ -146,10 +139,8 @@ export default class GraphControlsPanel {
    */
   public createHeaderBar(): Rectangle {
     // Create header bar with dynamic fill that darkens the control panel background
-    const headerFillProperty = new DerivedProperty(
-      [TrackLabColors.controlPanelFillProperty],
-      (backgroundColor) =>
-        backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
+    const headerFillProperty = new DerivedProperty([TrackLabColors.controlPanelFillProperty], (backgroundColor) =>
+      backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
     );
     const headerBar = new Rectangle(
       0,
@@ -173,10 +164,7 @@ export default class GraphControlsPanel {
   /**
    * Update header bar width when graph is resized
    */
-  public static updateHeaderBarWidth(
-    headerBar: Rectangle,
-    newWidth: number,
-  ): void {
+  public static updateHeaderBarWidth(headerBar: Rectangle, newWidth: number): void {
     headerBar.setRect(0, -HEADER_HEIGHT, newWidth, HEADER_HEIGHT);
   }
 }

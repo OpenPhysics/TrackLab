@@ -6,16 +6,17 @@
  */
 
 import { LocalizedString, type ReadOnlyProperty } from "scenerystack";
-import strings_en from "./strings_en.json";
-import strings_fr from "./strings_fr.json";
+import stringsEn from "./strings_en.json";
+import stringsFr from "./strings_fr.json";
 
 // ── Compile-time key-parity check ─────────────────────────────────────────────
-// These assignments are never executed at runtime; they exist solely so
-// TypeScript verifies that both language files share identical key structures.
-// If a key is added to one file but not the other, a type error will appear
-// here before the app is ever run.
-const _enMatchesFr: typeof strings_fr = strings_en;
-const _frMatchesEn: typeof strings_en = strings_fr;
+// These type aliases exist solely so TypeScript verifies that both language files
+// share identical key structures. If a key is added to one file but not the
+// other, a type error will appear here before the app is ever run.
+type _EnMatchesFr = typeof stringsEn extends typeof stringsFr ? true : never;
+type _FrMatchesEn = typeof stringsFr extends typeof stringsEn ? true : never;
+// Force evaluation (unused types are not checked without a reference).
+declare const _parity: _EnMatchesFr & _FrMatchesEn;
 
 /**
  * Manages all localized strings for the simulation
@@ -32,8 +33,8 @@ export class StringManager {
    */
   private constructor() {
     this.stringProperties = LocalizedString.getNestedStringProperties({
-      en: strings_en,
-      fr: strings_fr,
+      en: stringsEn,
+      fr: stringsFr,
     });
   }
 
@@ -81,28 +82,16 @@ export class StringManager {
     panViewStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      titleStringProperty:
-        this.stringProperties.keyboardShortcuts.titleStringProperty,
-      simulationControlsStringProperty:
-        this.stringProperties.keyboardShortcuts
-          .simulationControlsStringProperty,
-      graphInteractionsStringProperty:
-        this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
-      playPauseSimulationStringProperty:
-        this.stringProperties.keyboardShortcuts
-          .playPauseSimulationStringProperty,
-      resetSimulationStringProperty:
-        this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
-      stepBackwardStringProperty:
-        this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
-      stepForwardStringProperty:
-        this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
-      resetZoomStringProperty:
-        this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
-      zoomInOutStringProperty:
-        this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
-      panViewStringProperty:
-        this.stringProperties.keyboardShortcuts.panViewStringProperty,
+      titleStringProperty: this.stringProperties.keyboardShortcuts.titleStringProperty,
+      simulationControlsStringProperty: this.stringProperties.keyboardShortcuts.simulationControlsStringProperty,
+      graphInteractionsStringProperty: this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
+      playPauseSimulationStringProperty: this.stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
+      resetSimulationStringProperty: this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
+      stepBackwardStringProperty: this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
+      stepForwardStringProperty: this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
+      resetZoomStringProperty: this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
+      zoomInOutStringProperty: this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
+      panViewStringProperty: this.stringProperties.keyboardShortcuts.panViewStringProperty,
     };
   }
 
@@ -127,8 +116,7 @@ export class StringManager {
       speedStringProperty: this.stringProperties.controls.speedStringProperty,
       recordStringProperty: this.stringProperties.controls.recordStringProperty,
       stopStringProperty: this.stringProperties.controls.stopStringProperty,
-      graphVsStringProperty:
-        this.stringProperties.controls.graphVsStringProperty,
+      graphVsStringProperty: this.stringProperties.controls.graphVsStringProperty,
     };
   }
 
@@ -149,15 +137,11 @@ export class StringManager {
       trackStringProperty: this.stringProperties.tracking.trackStringProperty,
       targetStringProperty: this.stringProperties.tracking.targetStringProperty,
       originStringProperty: this.stringProperties.tracking.originStringProperty,
-      calibrateStringProperty:
-        this.stringProperties.tracking.calibrateStringProperty,
+      calibrateStringProperty: this.stringProperties.tracking.calibrateStringProperty,
       scaleStringProperty: this.stringProperties.tracking.scaleStringProperty,
-      positionStringProperty:
-        this.stringProperties.tracking.positionStringProperty,
-      velocityStringProperty:
-        this.stringProperties.tracking.velocityStringProperty,
-      accelerationStringProperty:
-        this.stringProperties.tracking.accelerationStringProperty,
+      positionStringProperty: this.stringProperties.tracking.positionStringProperty,
+      velocityStringProperty: this.stringProperties.tracking.velocityStringProperty,
+      accelerationStringProperty: this.stringProperties.tracking.accelerationStringProperty,
     };
   }
 
@@ -172,14 +156,10 @@ export class StringManager {
     exportStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      openFileStringProperty:
-        this.stringProperties.video.openFileStringProperty,
-      frameRateStringProperty:
-        this.stringProperties.video.frameRateStringProperty,
-      currentFrameStringProperty:
-        this.stringProperties.video.currentFrameStringProperty,
-      durationStringProperty:
-        this.stringProperties.video.durationStringProperty,
+      openFileStringProperty: this.stringProperties.video.openFileStringProperty,
+      frameRateStringProperty: this.stringProperties.video.frameRateStringProperty,
+      currentFrameStringProperty: this.stringProperties.video.currentFrameStringProperty,
+      durationStringProperty: this.stringProperties.video.durationStringProperty,
       exportStringProperty: this.stringProperties.video.exportStringProperty,
     };
   }
@@ -196,13 +176,10 @@ export class StringManager {
   } {
     return {
       timeStringProperty: this.stringProperties.measurement.timeStringProperty,
-      distanceStringProperty:
-        this.stringProperties.measurement.distanceStringProperty,
-      angleStringProperty:
-        this.stringProperties.measurement.angleStringProperty,
+      distanceStringProperty: this.stringProperties.measurement.distanceStringProperty,
+      angleStringProperty: this.stringProperties.measurement.angleStringProperty,
       massStringProperty: this.stringProperties.measurement.massStringProperty,
-      gravityStringProperty:
-        this.stringProperties.measurement.gravityStringProperty,
+      gravityStringProperty: this.stringProperties.measurement.gravityStringProperty,
     };
   }
 
@@ -215,13 +192,10 @@ export class StringManager {
     enableAutoTrackingDescriptionStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      simulationStringProperty:
-        this.stringProperties.preferences.simulationStringProperty,
-      enableAutoTrackingStringProperty:
-        this.stringProperties.preferences.enableAutoTrackingStringProperty,
+      simulationStringProperty: this.stringProperties.preferences.simulationStringProperty,
+      enableAutoTrackingStringProperty: this.stringProperties.preferences.enableAutoTrackingStringProperty,
       enableAutoTrackingDescriptionStringProperty:
-        this.stringProperties.preferences
-          .enableAutoTrackingDescriptionStringProperty,
+        this.stringProperties.preferences.enableAutoTrackingDescriptionStringProperty,
     };
   }
 
@@ -232,8 +206,7 @@ export class StringManager {
     dragToSelectStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      dragToSelectStringProperty:
-        this.stringProperties.autoTracker.dragToSelectStringProperty,
+      dragToSelectStringProperty: this.stringProperties.autoTracker.dragToSelectStringProperty,
     };
   }
 
@@ -250,11 +223,9 @@ export class StringManager {
     return {
       titleStringProperty: this.stringProperties.dataTable.titleStringProperty,
       csvStringProperty: this.stringProperties.dataTable.csvStringProperty,
-      noDataStringProperty:
-        this.stringProperties.dataTable.noDataStringProperty,
+      noDataStringProperty: this.stringProperties.dataTable.noDataStringProperty,
       frameStringProperty: this.stringProperties.dataTable.frameStringProperty,
-      timeSecondsStringProperty:
-        this.stringProperties.dataTable.timeSecondsStringProperty,
+      timeSecondsStringProperty: this.stringProperties.dataTable.timeSecondsStringProperty,
     };
   }
 
@@ -266,10 +237,8 @@ export class StringManager {
     tracksStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      addTrackStringProperty:
-        this.stringProperties.trackList.addTrackStringProperty,
-      tracksStringProperty:
-        this.stringProperties.trackList.tracksStringProperty,
+      addTrackStringProperty: this.stringProperties.trackList.addTrackStringProperty,
+      tracksStringProperty: this.stringProperties.trackList.tracksStringProperty,
     };
   }
 
@@ -282,8 +251,7 @@ export class StringManager {
   } {
     return {
       fpsStringProperty: this.stringProperties.ui.fpsStringProperty,
-      selectVideoStringProperty:
-        this.stringProperties.ui.selectVideoStringProperty,
+      selectVideoStringProperty: this.stringProperties.ui.selectVideoStringProperty,
     };
   }
 
@@ -295,10 +263,8 @@ export class StringManager {
     yAxisLabelStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      xAxisLabelStringProperty:
-        this.stringProperties.coordSystem.xAxisLabelStringProperty,
-      yAxisLabelStringProperty:
-        this.stringProperties.coordSystem.yAxisLabelStringProperty,
+      xAxisLabelStringProperty: this.stringProperties.coordSystem.xAxisLabelStringProperty,
+      yAxisLabelStringProperty: this.stringProperties.coordSystem.yAxisLabelStringProperty,
     };
   }
 
@@ -313,16 +279,11 @@ export class StringManager {
     recordingStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      requestingAccessStringProperty:
-        this.stringProperties.webcam.requestingAccessStringProperty,
-      accessDeniedStringProperty:
-        this.stringProperties.webcam.accessDeniedStringProperty,
-      processingStringProperty:
-        this.stringProperties.webcam.processingStringProperty,
-      fixingMetadataStringProperty:
-        this.stringProperties.webcam.fixingMetadataStringProperty,
-      recordingStringProperty:
-        this.stringProperties.webcam.recordingStringProperty,
+      requestingAccessStringProperty: this.stringProperties.webcam.requestingAccessStringProperty,
+      accessDeniedStringProperty: this.stringProperties.webcam.accessDeniedStringProperty,
+      processingStringProperty: this.stringProperties.webcam.processingStringProperty,
+      fixingMetadataStringProperty: this.stringProperties.webcam.fixingMetadataStringProperty,
+      recordingStringProperty: this.stringProperties.webcam.recordingStringProperty,
     };
   }
 
@@ -341,24 +302,15 @@ export class StringManager {
     springWarsStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      ballOilStringProperty:
-        this.stringProperties.videoFiles.ballOilStringProperty,
-      bouncingCartStringProperty:
-        this.stringProperties.videoFiles.bouncingCartStringProperty,
-      cartPendulumStringProperty:
-        this.stringProperties.videoFiles.cartPendulumStringProperty,
-      cupsClipsStringProperty:
-        this.stringProperties.videoFiles.cupsClipsStringProperty,
-      parachuteMonkeyStringProperty:
-        this.stringProperties.videoFiles.parachuteMonkeyStringProperty,
-      pendulumStringProperty:
-        this.stringProperties.videoFiles.pendulumStringProperty,
-      pendulumDragStringProperty:
-        this.stringProperties.videoFiles.pendulumDragStringProperty,
-      pucksCollideStringProperty:
-        this.stringProperties.videoFiles.pucksCollideStringProperty,
-      springWarsStringProperty:
-        this.stringProperties.videoFiles.springWarsStringProperty,
+      ballOilStringProperty: this.stringProperties.videoFiles.ballOilStringProperty,
+      bouncingCartStringProperty: this.stringProperties.videoFiles.bouncingCartStringProperty,
+      cartPendulumStringProperty: this.stringProperties.videoFiles.cartPendulumStringProperty,
+      cupsClipsStringProperty: this.stringProperties.videoFiles.cupsClipsStringProperty,
+      parachuteMonkeyStringProperty: this.stringProperties.videoFiles.parachuteMonkeyStringProperty,
+      pendulumStringProperty: this.stringProperties.videoFiles.pendulumStringProperty,
+      pendulumDragStringProperty: this.stringProperties.videoFiles.pendulumDragStringProperty,
+      pucksCollideStringProperty: this.stringProperties.videoFiles.pucksCollideStringProperty,
+      springWarsStringProperty: this.stringProperties.videoFiles.springWarsStringProperty,
     };
   }
 }

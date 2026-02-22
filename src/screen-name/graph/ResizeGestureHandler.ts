@@ -9,7 +9,7 @@
  */
 
 import type { BooleanProperty } from "scenerystack/axon";
-import { Vector2 } from "scenerystack/dot";
+import type { Vector2 } from "scenerystack/dot";
 import { DragListener, type Node, Rectangle } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
@@ -66,20 +66,12 @@ export default class ResizeGestureHandler {
     ];
 
     corners.forEach((corner, index) => {
-      const handle = new Rectangle(
-        corner.x + HANDLE_OFFSET,
-        corner.y + HANDLE_OFFSET,
-        HANDLE_SIZE,
-        HANDLE_SIZE,
-        2,
-        2,
-        {
-          fill: TrackLabColors.controlPanelFillProperty,
-          stroke: TrackLabColors.controlPanelStrokeProperty,
-          lineWidth: 2,
-          cursor: corner.cursor,
-        },
-      );
+      const handle = new Rectangle(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE, 2, 2, {
+        fill: TrackLabColors.controlPanelFillProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
+        lineWidth: 2,
+        cursor: corner.cursor,
+      });
 
       this.handles.push(handle);
       this.attachDragListener(handle, index);
@@ -103,12 +95,7 @@ export default class ResizeGestureHandler {
     this.handles.forEach((handle, index) => {
       const corner = corners[index];
       if (corner) {
-        handle.setRect(
-          corner.x + HANDLE_OFFSET,
-          corner.y + HANDLE_OFFSET,
-          HANDLE_SIZE,
-          HANDLE_SIZE,
-        );
+        handle.setRect(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE);
       }
     });
   }
@@ -137,7 +124,9 @@ export default class ResizeGestureHandler {
       },
 
       drag: (event) => {
-        if (!dragStartGraphBounds || !dragStartPointerPoint) return;
+        if (!(dragStartGraphBounds && dragStartPointerPoint)) {
+          return;
+        }
 
         const delta = event.pointer.point.minus(dragStartPointerPoint);
         let newWidth = dragStartGraphBounds.width;
@@ -148,35 +137,23 @@ export default class ResizeGestureHandler {
         switch (cornerIndex) {
           case 0: // Top-left
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width - delta.x);
-            newHeight = Math.max(
-              MIN_HEIGHT,
-              dragStartGraphBounds.height - delta.y,
-            );
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height - delta.y);
             deltaX = dragStartGraphBounds.width - newWidth;
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 1: // Top-right
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width + delta.x);
-            newHeight = Math.max(
-              MIN_HEIGHT,
-              dragStartGraphBounds.height - delta.y,
-            );
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height - delta.y);
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 2: // Bottom-left
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width - delta.x);
-            newHeight = Math.max(
-              MIN_HEIGHT,
-              dragStartGraphBounds.height + delta.y,
-            );
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height + delta.y);
             deltaX = dragStartGraphBounds.width - newWidth;
             break;
           case 3: // Bottom-right
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width + delta.x);
-            newHeight = Math.max(
-              MIN_HEIGHT,
-              dragStartGraphBounds.height + delta.y,
-            );
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height + delta.y);
             break;
         }
 

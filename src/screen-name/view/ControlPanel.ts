@@ -23,19 +23,13 @@ const PANEL_Y_MARGIN = 12;
 
 /** Two small XY arrows. */
 function axesIcon(): Node {
-  const xArrow = new ArrowNode(
-    0,
-    ICON_SIZE * 0.7,
-    ICON_SIZE * 0.85,
-    ICON_SIZE * 0.7,
-    {
-      fill: TrackLabColors.axisXColorProperty,
-      stroke: null,
-      headWidth: ICON_ARROW_HEAD_SIZE,
-      headHeight: ICON_ARROW_HEAD_SIZE,
-      tailWidth: ICON_ARROW_TAIL_WIDTH,
-    },
-  );
+  const xArrow = new ArrowNode(0, ICON_SIZE * 0.7, ICON_SIZE * 0.85, ICON_SIZE * 0.7, {
+    fill: TrackLabColors.axisXColorProperty,
+    stroke: null,
+    headWidth: ICON_ARROW_HEAD_SIZE,
+    headHeight: ICON_ARROW_HEAD_SIZE,
+    tailWidth: ICON_ARROW_TAIL_WIDTH,
+  });
   const yArrow = new ArrowNode(0, ICON_SIZE * 0.7, 0, ICON_SIZE * 0.05, {
     fill: TrackLabColors.axisYColorProperty,
     stroke: null,
@@ -127,10 +121,7 @@ function trackingIcon(): Node {
 
 // ── Helper ────────────────────────────────────────────────────────────────
 
-function makeRow(
-  icon: Node,
-  property: SimModel["axesVisibleProperty"],
-): Checkbox {
+function makeRow(icon: Node, property: SimModel["axesVisibleProperty"]): Checkbox {
   return new Checkbox(property, icon, {
     checkboxColor: TrackLabColors.checkboxColorProperty,
     checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
@@ -149,18 +140,11 @@ export class ControlPanel extends Panel {
    * @param model - Provides the boolean visibility properties bound to each checkbox.
    * @param trackLabPreferences - Determines whether the auto-tracking checkbox is shown.
    */
-  public constructor(
-    model: SimModel,
-    trackLabPreferences: TrackLabPreferencesModel,
-  ) {
-    const autoTrackingCheckbox = makeRow(
-      trackingIcon(),
-      model.autoTrackingProperty,
-    );
+  public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel) {
+    const autoTrackingCheckbox = makeRow(trackingIcon(), model.autoTrackingProperty);
     // The auto-tracking checkbox is only visible if the preference allows it.
     // When the preference is disabled, the checkbox is completely hidden from the panel.
-    autoTrackingCheckbox.visibleProperty =
-      trackLabPreferences.enableAutoTrackingProperty;
+    autoTrackingCheckbox.visibleProperty = trackLabPreferences.enableAutoTrackingProperty;
 
     const rows = new VBox({
       children: [

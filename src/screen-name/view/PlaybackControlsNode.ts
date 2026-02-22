@@ -1,11 +1,7 @@
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
-import {
-  PhetFont,
-  TimeControlNode,
-  TimeSpeed,
-} from "scenerystack/scenery-phet";
+import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
@@ -47,9 +43,7 @@ export class PlaybackControlsNode extends HBox {
       [TimeSpeed.NORMAL, SPEED_NORMAL],
       [TimeSpeed.SLOW, SPEED_SLOW],
     ]);
-    const rateToSpeed = new Map(
-      Array.from(speedMap.entries()).map(([k, v]) => [v, k]),
-    );
+    const rateToSpeed = new Map(Array.from(speedMap.entries()).map(([k, v]) => [v, k]));
     const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // view → model
@@ -113,25 +107,24 @@ export class PlaybackControlsNode extends HBox {
 
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
-      if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        return "0:00";
+      }
       const mins = Math.floor(seconds / 60);
       const secs = Math.floor(seconds % 60);
       return `${mins}:${String(secs).padStart(2, "0")}`;
     };
 
-    const totalTimeTextProperty = new DerivedProperty(
-      [model.durationProperty],
-      (duration: number) => formatDuration(duration),
+    const totalTimeTextProperty = new DerivedProperty([model.durationProperty], (duration: number) =>
+      formatDuration(duration),
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [
-        model.currentTimeProperty,
-        model.durationProperty,
-        model.frameRateProperty,
-      ],
+      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty],
       (time: number, duration: number, frameRate: number) => {
-        if (duration <= 0) return "0/0";
+        if (duration <= 0) {
+          return "0/0";
+        }
         // Multiply by frame rate directly rather than dividing by frameDuration
         // (1/fps) to avoid cascading floating-point error at non-integer fps
         // values like 29.97, matching the approach used in AutoTrackerNode.

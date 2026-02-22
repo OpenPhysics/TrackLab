@@ -120,16 +120,11 @@ export class VideoSourceControlNode extends HBox {
       })),
     ];
 
-    const videoComboBox = new ComboBox(
-      selectedVideoProperty,
-      comboItems,
-      listParent,
-      {
-        buttonFill: TrackLabColors.comboBoxButtonFillProperty,
-        listFill: TrackLabColors.comboBoxListFillProperty,
-        highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
-      },
-    );
+    const videoComboBox = new ComboBox(selectedVideoProperty, comboItems, listParent, {
+      buttonFill: TrackLabColors.comboBoxButtonFillProperty,
+      listFill: TrackLabColors.comboBoxListFillProperty,
+      highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
+    });
 
     selectedVideoProperty.lazyLink((filename) => {
       if (filename) {

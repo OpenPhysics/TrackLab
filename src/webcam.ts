@@ -22,7 +22,9 @@ export interface FrameRateCapabilities {
  */
 export function getFrameRateFromStream(stream: MediaStream): number | null {
   const track = stream.getVideoTracks()[0];
-  if (!track) return null;
+  if (!track) {
+    return null;
+  }
   const settings = track.getSettings();
   const rate = settings.frameRate;
   return typeof rate === "number" && Number.isFinite(rate) ? rate : null;
@@ -32,15 +34,16 @@ export function getFrameRateFromStream(stream: MediaStream): number | null {
  * Get frame rate capabilities from a MediaStream's video track.
  * Returns null if no video track or capabilities are not available.
  */
-export function getFrameRateCapabilitiesFromStream(
-  stream: MediaStream,
-): FrameRateCapabilities | null {
+export function getFrameRateCapabilitiesFromStream(stream: MediaStream): FrameRateCapabilities | null {
   const track = stream.getVideoTracks()[0];
-  if (!track) return null;
+  if (!track) {
+    return null;
+  }
   const caps = track.getCapabilities();
   const fr = caps.frameRate;
-  if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number")
+  if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") {
     return null;
+  }
   return { min: fr.min, max: fr.max };
 }
 
@@ -49,12 +52,7 @@ export function getFrameRateCapabilitiesFromStream(
  * Prioritizes WebM formats for best browser support, falls back to MP4.
  */
 export function getSupportedMimeType(): string {
-  const types = [
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm",
-    "video/mp4",
-  ];
+  const types = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
   return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
 }
 
@@ -62,9 +60,7 @@ export function getSupportedMimeType(): string {
  * Fix WebM blob duration by seeking to the end to force browser to calculate it.
  * WebM files from MediaRecorder often have Infinity duration until seeked.
  */
-export function fixWebmDuration(
-  blob: Blob,
-): Promise<{ blob: Blob; duration: number }> {
+export function fixWebmDuration(blob: Blob): Promise<{ blob: Blob; duration: number }> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -74,8 +70,8 @@ export function fixWebmDuration(
 
     // Shared cleanup: cancel the timeout and revoke the blob URL.
     // Called exactly once from whichever path settles the promise first.
-    const cleanup = (timeoutId: ReturnType<typeof setTimeout>) => {
-      clearTimeout(timeoutId);
+    const cleanup = (tid: ReturnType<typeof setTimeout>) => {
+      clearTimeout(tid);
       URL.revokeObjectURL(blobUrl);
     };
 
@@ -141,8 +137,7 @@ export class WebcamRecorder {
         track.stop();
       }
       return true;
-    } catch (err) {
-      console.error("Camera permission denied:", err);
+    } catch (_err) {
       return false;
     }
   }
@@ -161,17 +156,11 @@ export class WebcamRecorder {
    * @param deviceId - Optional device ID to use a specific camera
    * @param frameRate - Optional frame rate constraints (e.g. { ideal: 60, max: 60 })
    */
-  async startPreview(
-    previewEl: HTMLVideoElement,
-    deviceId?: string,
-    frameRate?: FrameRateConstraints,
-  ): Promise<void> {
+  async startPreview(previewEl: HTMLVideoElement, deviceId?: string, frameRate?: FrameRateConstraints): Promise<void> {
     // Stop any existing stream first
     this.stopPreview();
 
-    const videoConstraints: MediaTrackConstraints = deviceId
-      ? { deviceId: { exact: deviceId } }
-      : {};
+    const videoConstraints: MediaTrackConstraints = deviceId ? { deviceId: { exact: deviceId } } : {};
     if (frameRate) {
       videoConstraints.frameRate = frameRate;
     }
@@ -278,7 +267,9 @@ export class WebcamRecorder {
    */
   getFrameRate(): number | null {
     const track = this.stream?.getVideoTracks()[0];
-    if (!track) return null;
+    if (!track) {
+      return null;
+    }
     const settings = track.getSettings();
     const rate = settings.frameRate;
     return typeof rate === "number" && Number.isFinite(rate) ? rate : null;
@@ -290,11 +281,14 @@ export class WebcamRecorder {
    */
   getFrameRateCapabilities(): FrameRateCapabilities | null {
     const track = this.stream?.getVideoTracks()[0];
-    if (!track) return null;
+    if (!track) {
+      return null;
+    }
     const caps = track.getCapabilities();
     const fr = caps.frameRate;
-    if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number")
+    if (!fr || typeof fr.min !== "number" || typeof fr.max !== "number") {
       return null;
+    }
     return { min: fr.min, max: fr.max };
   }
 
@@ -335,10 +329,7 @@ export class WebcamRecorder {
  * @param durationMs - Duration to measure in ms (default 1000)
  * @returns Promise resolving to the measured FPS
  */
-export function measureEmpiricalFrameRate(
-  video: HTMLVideoElement,
-  durationMs: number = 1000,
-): Promise<number> {
+export function measureEmpiricalFrameRate(video: HTMLVideoElement, durationMs: number = 1000): Promise<number> {
   return new Promise((resolve, reject) => {
     if (video.readyState < 2) {
       reject(new Error("Video must be playing and have enough data"));
@@ -383,10 +374,10 @@ export async function estimateVideoFrameRate(
 ): Promise<FPSEstimate> {
   // Method 1: Try to get FPS from the stream settings (most reliable for webcam)
   if (stream) {
-    const streamFPS = getFrameRateFromStream(stream);
-    if (streamFPS && streamFPS > 0) {
+    const streamFps = getFrameRateFromStream(stream);
+    if (streamFps && streamFps > 0) {
       return {
-        fps: Math.round(streamFPS),
+        fps: Math.round(streamFps),
         confidence: "high",
         method: "stream settings",
       };
@@ -409,18 +400,16 @@ export async function estimateVideoFrameRate(
     }
 
     // Measure for 1 second
-    const empiricalFPS = await measureEmpiricalFrameRate(video, 1000);
+    const empiricalFps = await measureEmpiricalFrameRate(video, 1000);
 
     // Determine confidence based on how close to common frame rates
     const commonRates = [15, 24, 25, 29.97, 30, 50, 60];
-    const roundedFPS = Math.round(empiricalFPS);
+    const roundedFps = Math.round(empiricalFps);
     const closestCommon = commonRates.reduce((prev, curr) =>
-      Math.abs(curr - empiricalFPS) < Math.abs(prev - empiricalFPS)
-        ? curr
-        : prev,
+      Math.abs(curr - empiricalFps) < Math.abs(prev - empiricalFps) ? curr : prev,
     );
 
-    const deviation = Math.abs(empiricalFPS - closestCommon);
+    const deviation = Math.abs(empiricalFps - closestCommon);
     let confidence: "high" | "medium" | "low" = "medium";
 
     if (deviation < 1) {
@@ -432,12 +421,12 @@ export async function estimateVideoFrameRate(
     }
 
     return {
-      fps: roundedFPS,
+      fps: roundedFps,
       confidence,
       method: "empirical measurement",
     };
-  } catch (error) {
-    console.warn("Failed to measure empirical frame rate:", error);
+  } catch (_error) {
+    /* measurement failed — fall through to default */
   }
 
   // Method 3: Fallback to default assumption

@@ -105,7 +105,7 @@ export class KinematicsGraphNode extends VBox {
     const initialXProperty = plottableProperties[1];
     const initialYProperty = plottableProperties[2];
 
-    if (!initialXProperty || !initialYProperty) {
+    if (!(initialXProperty && initialYProperty)) {
       throw new Error("Failed to initialize plottable properties");
     }
 
@@ -129,9 +129,7 @@ export class KinematicsGraphNode extends VBox {
     this.trackSelectorContainer = new Node();
 
     // Update combo box when tracks change (link fires immediately, building initial selector)
-    const tracksListener = (
-      tracks: readonly import("../model/Track.js").Track[],
-    ) => {
+    const tracksListener = (tracks: readonly import("../model/Track.js").Track[]) => {
       // Dispose old combo box FIRST to disconnect it from the property
       // (prevents assertion error when property value changes)
       if (this.currentComboBox) {
@@ -144,10 +142,7 @@ export class KinematicsGraphNode extends VBox {
       const firstTrack = tracks[0];
       if (tracks.length === 0 || !firstTrack) {
         this.selectedTrackProperty.value = null;
-      } else if (
-        currentId === null ||
-        !tracks.some((t) => t.id === currentId)
-      ) {
+      } else if (currentId === null || !tracks.some((t) => t.id === currentId)) {
         this.selectedTrackProperty.value = firstTrack.id;
       }
 
@@ -211,15 +206,10 @@ export class KinematicsGraphNode extends VBox {
     });
 
     const trackComboBoxItems = this.createTrackComboBoxItems();
-    this.currentComboBox = new ComboBox(
-      this.selectedTrackProperty,
-      trackComboBoxItems,
-      this.listParent,
-      {
-        xMargin: 8,
-        yMargin: 4,
-      },
-    );
+    this.currentComboBox = new ComboBox(this.selectedTrackProperty, trackComboBoxItems, this.listParent, {
+      xMargin: 8,
+      yMargin: 4,
+    });
 
     const trackSelector = new HBox({
       spacing: 8,
@@ -263,12 +253,16 @@ export class KinematicsGraphNode extends VBox {
     this.graph.clearData();
 
     const selectedId = this.selectedTrackProperty.value;
-    if (selectedId === null) return;
+    if (selectedId === null) {
+      return;
+    }
 
     const kinematics = this.model.trackKinematicsProperty.value;
     const trackData = kinematics.find((tk) => tk.id === selectedId);
 
-    if (!trackData || trackData.points.length === 0) return;
+    if (!trackData || trackData.points.length === 0) {
+      return;
+    }
 
     const dataPoints = trackData.points.map((pt) => ({
       t: pt.time,

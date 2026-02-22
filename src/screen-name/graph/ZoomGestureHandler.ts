@@ -76,9 +76,7 @@ export default class ZoomGestureHandler {
       wheel: (event) => {
         event.handle();
         const delta = event.domEvent?.deltaY ?? 0;
-        const pointerPoint = this.chartRectangle.globalToLocalPoint(
-          event.pointer.point,
-        );
+        const pointerPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
 
         if (delta < 0) {
           this.zoom(this.zoomFactor, pointerPoint);
@@ -109,10 +107,10 @@ export default class ZoomGestureHandler {
 
     this.chartRectangle.addInputListener({
       down: (event) => {
-        if (event.pointer.type !== "touch") return;
-        const localPoint = this.chartRectangle.globalToLocalPoint(
-          event.pointer.point,
-        );
+        if (event.pointer.type !== "touch") {
+          return;
+        }
+        const localPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
         activePointers.set(event.pointer, localPoint);
 
         if (activePointers.size === 2) {
@@ -130,58 +128,40 @@ export default class ZoomGestureHandler {
       },
 
       move: (event) => {
-        if (
-          event.pointer.type !== "touch" ||
-          !activePointers.has(event.pointer)
-        )
+        if (event.pointer.type !== "touch" || !activePointers.has(event.pointer)) {
           return;
+        }
 
-        const localPoint = this.chartRectangle.globalToLocalPoint(
-          event.pointer.point,
-        );
+        const localPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
         activePointers.set(event.pointer, localPoint);
 
-        if (
-          activePointers.size === 2 &&
-          initialDistance &&
-          initialMidpoint &&
-          initialXRange &&
-          initialYRange
-        ) {
+        if (activePointers.size === 2 && initialDistance && initialMidpoint && initialXRange && initialYRange) {
           const points = Array.from(activePointers.values());
           const point0 = points[0];
           const point1 = points[1];
-          if (!point0 || !point1) return;
+          if (!(point0 && point1)) {
+            return;
+          }
 
           const currentDistance = point0.distance(point1);
           const zoomFactor = initialDistance / currentDistance;
-          const initialModelCenter =
-            this.chartTransform.viewToModelPosition(initialMidpoint);
+          const initialModelCenter = this.chartTransform.viewToModelPosition(initialMidpoint);
 
-          const xMin =
-            initialModelCenter.x -
-            (initialModelCenter.x - initialXRange.min) * zoomFactor;
-          const xMax =
-            initialModelCenter.x +
-            (initialXRange.max - initialModelCenter.x) * zoomFactor;
-          const yMin =
-            initialModelCenter.y -
-            (initialModelCenter.y - initialYRange.min) * zoomFactor;
-          const yMax =
-            initialModelCenter.y +
-            (initialYRange.max - initialModelCenter.y) * zoomFactor;
+          const xMin = initialModelCenter.x - (initialModelCenter.x - initialXRange.min) * zoomFactor;
+          const xMax = initialModelCenter.x + (initialXRange.max - initialModelCenter.x) * zoomFactor;
+          const yMin = initialModelCenter.y - (initialModelCenter.y - initialYRange.min) * zoomFactor;
+          const yMax = initialModelCenter.y + (initialYRange.max - initialModelCenter.y) * zoomFactor;
 
           this.chartTransform.setModelXRange(new Range(xMin, xMax));
           this.chartTransform.setModelYRange(new Range(yMin, yMax));
-          this.dataManager.updateTickSpacing(
-            this.chartTransform.modelXRange,
-            this.chartTransform.modelYRange,
-          );
+          this.dataManager.updateTickSpacing(this.chartTransform.modelXRange, this.chartTransform.modelYRange);
         }
       },
 
       up: (event) => {
-        if (event.pointer.type !== "touch") return;
+        if (event.pointer.type !== "touch") {
+          return;
+        }
         activePointers.delete(event.pointer);
         if (activePointers.size < 2) {
           initialDistance = null;
@@ -192,7 +172,9 @@ export default class ZoomGestureHandler {
       },
 
       cancel: (event) => {
-        if (event.pointer.type !== "touch") return;
+        if (event.pointer.type !== "touch") {
+          return;
+        }
         activePointers.delete(event.pointer);
         if (activePointers.size < 2) {
           initialDistance = null;
@@ -213,11 +195,7 @@ export default class ZoomGestureHandler {
    * @param centerPoint - Zoom anchor in local view coordinates
    * @param setManualFlag - When true, suppresses subsequent auto-rescaling
    */
-  public zoom(
-    factor: number,
-    centerPoint: Vector2,
-    setManualFlag: boolean = true,
-  ): void {
+  public zoom(factor: number, centerPoint: Vector2, setManualFlag: boolean = true): void {
     if (setManualFlag) {
       this.dataManager.setManuallyZoomed(true);
     }

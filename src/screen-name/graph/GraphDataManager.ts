@@ -3,13 +3,7 @@
  * Handles auto-scaling and tick spacing calculations.
  */
 
-import type {
-  ChartTransform,
-  GridLineSet,
-  LinePlot,
-  TickLabelSet,
-  TickMarkSet,
-} from "scenerystack/bamboo";
+import type { ChartTransform, GridLineSet, LinePlot, TickLabelSet, TickMarkSet } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
 import trackLab from "../../TrackLabNamespace.js";
 
@@ -62,7 +56,7 @@ export default class GraphDataManager {
    */
   public addDataPoint(xValue: number, yValue: number): void {
     // Skip invalid values
-    if (!Number.isFinite(xValue) || !Number.isFinite(yValue)) {
+    if (!(Number.isFinite(xValue) && Number.isFinite(yValue))) {
       return;
     }
 
@@ -89,7 +83,9 @@ export default class GraphDataManager {
    * @param points - Array of x/y value pairs
    */
   public addDataPoints(points: Array<{ x: number; y: number }>): void {
-    if (points.length === 0) return;
+    if (points.length === 0) {
+      return;
+    }
 
     // Add all valid points
     for (const { x, y } of points) {

@@ -15,8 +15,7 @@ import trackLab from "../../TrackLabNamespace.js";
 export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
   public constructor() {
     const stringManager = StringManager.getInstance();
-    const keyboardShortcutsStrings =
-      stringManager.getKeyboardShortcutsStrings();
+    const keyboardShortcutsStrings = stringManager.getKeyboardShortcutsStrings();
 
     // Create sections for simulation controls
     const simulationControlsSection = new KeyboardHelpSection(
@@ -42,23 +41,17 @@ export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
     );
 
     // Create sections for graph interactions
-    const graphInteractionsSection = new KeyboardHelpSection(
-      keyboardShortcutsStrings.graphInteractionsStringProperty,
-      [
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.resetZoomStringProperty,
-          new TextKeyNode("Double-click"),
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.zoomInOutStringProperty,
-          new TextKeyNode("Mouse wheel"),
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.panViewStringProperty,
-          new TextKeyNode("Drag"),
-        ),
-      ],
-    );
+    const graphInteractionsSection = new KeyboardHelpSection(keyboardShortcutsStrings.graphInteractionsStringProperty, [
+      KeyboardHelpSectionRow.labelWithIcon(
+        keyboardShortcutsStrings.resetZoomStringProperty,
+        new TextKeyNode("Double-click"),
+      ),
+      KeyboardHelpSectionRow.labelWithIcon(
+        keyboardShortcutsStrings.zoomInOutStringProperty,
+        new TextKeyNode("Mouse wheel"),
+      ),
+      KeyboardHelpSectionRow.labelWithIcon(keyboardShortcutsStrings.panViewStringProperty, new TextKeyNode("Drag")),
+    ]);
 
     // Left column has simulation controls, right column has graph interactions
     super([simulationControlsSection], [graphInteractionsSection], {

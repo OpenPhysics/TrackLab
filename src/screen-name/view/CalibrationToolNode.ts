@@ -2,23 +2,10 @@ import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
-import {
-  Circle,
-  HBox,
-  Line,
-  Node,
-  RichDragListener,
-  Text,
-} from "scenerystack/scenery";
+import { Circle, HBox, Line, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
-import {
-  ButtonNode,
-  ComboBox,
-  type ComboBoxItem,
-  Panel,
-  TextPushButton,
-} from "scenerystack/sun";
+import { ButtonNode, ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -63,11 +50,7 @@ export class CalibrationToolNode extends Node {
    * @param listParent - Scene-graph node used as the popup list parent for the unit ComboBox.
    * @param model - Provides calibration properties and receives user-entered values.
    */
-  public constructor(
-    videoLoadedProperty: TReadOnlyProperty<boolean>,
-    listParent: Node,
-    model: SimModel,
-  ) {
+  public constructor(videoLoadedProperty: TReadOnlyProperty<boolean>, listParent: Node, model: SimModel) {
     super();
 
     // ── Connecting line with shadow for visibility on all backgrounds ────
@@ -115,11 +98,7 @@ export class CalibrationToolNode extends Node {
       });
     const endpoint1 = makeEndpoint("Calibration Point 1");
     const endpoint2 = makeEndpoint("Calibration Point 2");
-    const endpointTouchArea = Shape.circle(
-      0,
-      0,
-      ENDPOINT_RADIUS + ENDPOINT_TOUCH_DILATION,
-    );
+    const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + ENDPOINT_TOUCH_DILATION);
     endpoint1.mouseArea = endpointTouchArea;
     endpoint1.touchArea = endpointTouchArea;
     endpoint2.mouseArea = endpointTouchArea;
@@ -138,10 +117,7 @@ export class CalibrationToolNode extends Node {
       tandem: Tandem.OPT_OUT,
     });
     // Pattern shown inside the dialog as "Range: {{min}} – {{max}} <unit>"
-    const rangePatternProperty = new DerivedProperty(
-      [model.calibUnitProperty],
-      (unit) => `{{min}} – {{max}} ${unit}`,
-    );
+    const rangePatternProperty = new DerivedProperty([model.calibUnitProperty], (unit) => `{{min}} – {{max}} ${unit}`);
 
     // ── Midpoint panel ────────────────────────────────────────────────────
     // Button showing current value + unit; clicking it opens the keypad.
@@ -162,34 +138,30 @@ export class CalibrationToolNode extends Node {
           },
           model.calibDistanceProperty.range,
           rangePatternProperty,
-          () => {},
+          () => {
+            /* no-op: keypad close callback not needed */
+          },
         );
       },
       tandem: Tandem.OPT_OUT,
     });
 
     // Unit selector
-    const unitItems: ComboBoxItem<(typeof CALIBRATION_UNITS)[number]>[] =
-      CALIBRATION_UNITS.map((unit) => ({
-        value: unit,
-        createNode: () =>
-          new Text(unit, {
-            font: FONT,
-            fill: TrackLabColors.textOnDarkProperty,
-          }),
-        tandemName: `${unit}Item`,
-      }));
-    const unitComboBox = new ComboBox(
-      model.calibUnitProperty,
-      unitItems,
-      listParent,
-      {
-        buttonFill: TrackLabColors.comboBoxButtonFillProperty,
-        listFill: TrackLabColors.comboBoxListFillProperty,
-        highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
-        tandem: Tandem.OPT_OUT,
-      },
-    );
+    const unitItems: ComboBoxItem<(typeof CALIBRATION_UNITS)[number]>[] = CALIBRATION_UNITS.map((unit) => ({
+      value: unit,
+      createNode: () =>
+        new Text(unit, {
+          font: FONT,
+          fill: TrackLabColors.textOnDarkProperty,
+        }),
+      tandemName: `${unit}Item`,
+    }));
+    const unitComboBox = new ComboBox(model.calibUnitProperty, unitItems, listParent, {
+      buttonFill: TrackLabColors.comboBoxButtonFillProperty,
+      listFill: TrackLabColors.comboBoxListFillProperty,
+      highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
+      tandem: Tandem.OPT_OUT,
+    });
 
     const midpointPanel = new Panel(
       new HBox({
@@ -210,14 +182,11 @@ export class CalibrationToolNode extends Node {
 
     // ── Overlap warning text ──────────────────────────────────────────────
     // Shown when endpoints are too close together to produce a valid calibration.
-    const overlapWarning = new Text(
-      "Points too close — move apart to calibrate",
-      {
-        font: WARNING_FONT,
-        fill: ENDPOINT_WARNING_COLOR,
-        visible: false,
-      },
-    );
+    const overlapWarning = new Text("Points too close — move apart to calibrate", {
+      font: WARNING_FONT,
+      fill: ENDPOINT_WARNING_COLOR,
+      visible: false,
+    });
     this.addChild(overlapWarning);
 
     // ── Update geometry when endpoints move ───────────────────────────────
@@ -243,9 +212,7 @@ export class CalibrationToolNode extends Node {
 
       // Show warning and highlight endpoints when too close to be useful.
       const tooClose = p1.distance(p2) < OVERLAP_WARNING_DISTANCE;
-      const endpointFill = tooClose
-        ? ENDPOINT_WARNING_COLOR
-        : TrackLabColors.calibrationFillProperty.value;
+      const endpointFill = tooClose ? ENDPOINT_WARNING_COLOR : TrackLabColors.calibrationFillProperty.value;
       endpoint1.fill = endpointFill;
       endpoint2.fill = endpointFill;
       overlapWarning.visible = tooClose;
@@ -257,10 +224,7 @@ export class CalibrationToolNode extends Node {
     // A single Multilink replaces two separate link() calls so that geometry
     // is rebuilt once per change event regardless of which endpoint moved,
     // and disposal is managed in one place.
-    const calibMultilink = Multilink.multilink(
-      [model.calibPoint1Property, model.calibPoint2Property],
-      updateGeometry,
-    );
+    const calibMultilink = Multilink.multilink([model.calibPoint1Property, model.calibPoint2Property], updateGeometry);
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     endpoint1.addInputListener(
