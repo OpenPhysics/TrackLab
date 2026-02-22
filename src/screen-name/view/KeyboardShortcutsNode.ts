@@ -37,6 +37,10 @@ export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
           keyboardShortcutsStrings.stepForwardStringProperty,
           new TextKeyNode("\u2192"), // Right arrow
         ),
+        KeyboardHelpSectionRow.labelWithIcon(
+          keyboardShortcutsStrings.rewindToStartStringProperty,
+          new TextKeyNode("Home"),
+        ),
       ],
     );
 

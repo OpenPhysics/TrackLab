@@ -55,8 +55,11 @@ export class SimScreenView extends ScreenView {
     // ── Track list panel (beneath control panel) ─────────────────────────
     const trackListPanel = new TrackListPanel(model, model.videoLoadedProperty);
     this.addChild(trackListPanel);
-    trackListPanel.left = controlPanel.left;
-    trackListPanel.top = controlPanel.bottom + DATA_TABLE_TOP_SPACING;
+    // Reactively reposition whenever controlPanel resizes (e.g. auto-tracking row toggles).
+    controlPanel.boundsProperty.link(() => {
+      trackListPanel.left = controlPanel.left;
+      trackListPanel.top = controlPanel.bottom + DATA_TABLE_TOP_SPACING;
+    });
 
     // ── Video player (shifted left) ──────────────────────────────────────
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside

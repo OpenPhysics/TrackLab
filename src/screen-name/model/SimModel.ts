@@ -1,5 +1,5 @@
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
-import { Range, type Transform3, Vector2 } from "scenerystack/dot";
+import { Dimension2, Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
@@ -74,6 +74,11 @@ export class SimModel {
     [this.frameRateProperty],
     (fps) => 1 / fps,
   );
+
+  // ── Actual display dimensions of the loaded video ─────────────────────
+  // Updated in VideoPlayerNode once loadedmetadata fires.  Starts at the
+  // max dimensions; overlays and the OpenCV canvas react to changes.
+  public readonly videoDimensionsProperty = new Property<Dimension2>(new Dimension2(VIDEO_WIDTH, VIDEO_HEIGHT));
 
   // ── OpenCV Tracker (computational service) ────────────────────────────
   public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);

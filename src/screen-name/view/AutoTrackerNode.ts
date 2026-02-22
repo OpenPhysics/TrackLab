@@ -1,5 +1,5 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Vector2 } from "scenerystack/dot";
+import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { DragListener, Line, Node, Path, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -260,6 +260,13 @@ export class AutoTrackerNode extends Node {
     });
     hitArea.addInputListener(dragListener);
 
+    // ── Resize hit-area when the loaded video's display dimensions change ──
+    const videoDimensionsListener = (dims: Dimension2) => {
+      hitArea.setRect(0, 0, dims.width, dims.height);
+      centeredLabels.center = new Vector2(dims.width / 2, dims.height / 2);
+    };
+    model.videoDimensionsProperty.link(videoDimensionsListener);
+
     // ── Track on every video frame ────────────────────────────────────────
     const onFrame = () => {
       if (!(this.visible && this.model.tracker.ready)) {
@@ -325,6 +332,7 @@ export class AutoTrackerNode extends Node {
       videoElement.removeEventListener("seeked", onFrame);
       model.activeTrackIdProperty.unlink(clearRecordedFrames);
       autoTrackingShownProperty.unlink(autoTrackingShownListener);
+      model.videoDimensionsProperty.unlink(videoDimensionsListener);
       this.model.tracker.dispose();
     };
   }

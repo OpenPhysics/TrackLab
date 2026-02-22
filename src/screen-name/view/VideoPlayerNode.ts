@@ -1,4 +1,5 @@
 import { DerivedProperty } from "scenerystack/axon";
+import { Dimension2 } from "scenerystack/dot";
 import { DOM, Node, VBox } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
@@ -112,6 +113,29 @@ export class VideoPlayerNode extends Node {
     // Pin to the video width so internal text changes never shift the row.
     playbackControlsNode.preferredWidth = VIDEO_WIDTH;
 
+    // ── Fit video element to its intrinsic aspect ratio ───────────────────
+    // When a new clip is loaded, scale it to fill as much of VIDEO_WIDTH ×
+    // VIDEO_HEIGHT as possible while preserving aspect ratio.  Setting the
+    // element to the exact content size eliminates letterbox/pillarbox bars
+    // and ensures overlay hit-areas and the OpenCV canvas share the same
+    // coordinate space as what the user sees.
+    const onDimensionsLoaded = () => {
+      const intrinsicW = this.videoElement.videoWidth;
+      const intrinsicH = this.videoElement.videoHeight;
+      if (!(intrinsicW && intrinsicH)) {
+        return;
+      }
+      const scale = Math.min(VIDEO_WIDTH / intrinsicW, VIDEO_HEIGHT / intrinsicH);
+      const displayW = Math.round(intrinsicW * scale);
+      const displayH = Math.round(intrinsicH * scale);
+      this.videoElement.width = displayW;
+      this.videoElement.height = displayH;
+      model.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
+      playbackControlsNode.preferredWidth = displayW;
+      model.tracker.resize(displayW, displayH);
+    };
+    this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
+
     // Sync model time from video during playback (event-driven, not polled)
     const onTimeUpdate = () => {
       if (!playbackControlsNode.scrubbing) {
@@ -157,12 +181,25 @@ export class VideoPlayerNode extends Node {
     this.webcamPanel = videoSourceControlNode.webcamPanel;
     this.addChild(mainContent);
 
+    // ── Home key → rewind to start ────────────────────────────────────────
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.key === "Home" && model.videoLoadedProperty.value) {
+        this.rewindToStart();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+
     // Store cleanup function
     this.disposeVideoPlayer = () => {
+      document.removeEventListener("keydown", onKeyDown);
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       model.isPlayingProperty.unlink(isPlayingListener);
       model.playbackRateProperty.unlink(playbackRateListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
+      this.videoElement.removeEventListener("loadedmetadata", onDimensionsLoaded);
       this.videoElement.removeEventListener("durationchange", updateDuration);
       this.videoElement.removeEventListener("ended", onEnded);
       this.videoElement.removeEventListener("timeupdate", onTimeUpdate);
@@ -180,6 +217,13 @@ export class VideoPlayerNode extends Node {
   public override dispose(): void {
     this.disposeVideoPlayer();
     super.dispose();
+  }
+
+  /** Pause playback and seek to the very beginning of the video. */
+  private rewindToStart(): void {
+    this.model.isPlayingProperty.value = false;
+    this.model.currentTimeProperty.value = 0;
+    this.videoElement.currentTime = 0;
   }
 
   /** Pause playback and advance by exactly one frame. */

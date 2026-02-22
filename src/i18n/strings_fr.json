@@ -45,6 +45,7 @@
     "resetSimulation": "Réinitialiser la simulation",
     "stepBackward": "Reculer d'un pas",
     "stepForward": "Avancer d'un pas",
+    "rewindToStart": "Revenir au début",
     "resetZoom": "Réinitialiser le zoom",
     "zoomInOut": "Zoom avant/arrière",
     "panView": "Déplacer la vue"

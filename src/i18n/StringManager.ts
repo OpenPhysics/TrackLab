@@ -77,6 +77,7 @@ export class StringManager {
     resetSimulationStringProperty: ReadOnlyProperty<string>;
     stepBackwardStringProperty: ReadOnlyProperty<string>;
     stepForwardStringProperty: ReadOnlyProperty<string>;
+    rewindToStartStringProperty: ReadOnlyProperty<string>;
     resetZoomStringProperty: ReadOnlyProperty<string>;
     zoomInOutStringProperty: ReadOnlyProperty<string>;
     panViewStringProperty: ReadOnlyProperty<string>;
@@ -89,6 +90,7 @@ export class StringManager {
       resetSimulationStringProperty: this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
       stepBackwardStringProperty: this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
       stepForwardStringProperty: this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
+      rewindToStartStringProperty: this.stringProperties.keyboardShortcuts.rewindToStartStringProperty,
       resetZoomStringProperty: this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
       zoomInOutStringProperty: this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
       panViewStringProperty: this.stringProperties.keyboardShortcuts.panViewStringProperty,

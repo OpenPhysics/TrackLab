@@ -166,11 +166,23 @@ export class OpenCVTracker {
   }
 
   /**
-   * Draw the current video frame onto the offscreen canvas (GPU-side operation).
-   * Must be called before readPixels().
+   * Resize the offscreen canvas to new dimensions.
+   * Call this when the video element's display size changes (e.g. a new clip
+   * with a different aspect ratio is loaded) so that template capture and
+   * matching operate in the same pixel space as the displayed content.
+   */
+  public resize(width: number, height: number): void {
+    this.offscreen.width = width;
+    this.offscreen.height = height;
+  }
+
+  /**
+   * Draw the current video frame onto the offscreen canvas, scaled to fill
+   * the canvas exactly.  Using explicit destination dimensions ensures the
+   * captured pixels align with the displayed video (no black-bar offsets).
    */
   private drawVideoFrame(video: HTMLVideoElement): void {
-    this.ctx.drawImage(video, 0, 0);
+    this.ctx.drawImage(video, 0, 0, this.offscreen.width, this.offscreen.height);
   }
 
   /**

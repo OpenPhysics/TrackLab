@@ -1,4 +1,4 @@
-import { Vector2 } from "scenerystack/dot";
+import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Line, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
@@ -208,14 +208,21 @@ export class DigitizingOverlayNode extends Node {
     digitizingOverlay.addChild(cursorNode);
     digitizingOverlay.addChild(magnifierNode);
 
+    // ── Resize overlay to match the loaded video's display dimensions ──────
+    const videoDimensionsListener = (dims: Dimension2) => {
+      digitizingOverlay.setRect(0, 0, dims.width, dims.height);
+    };
+    model.videoDimensionsProperty.link(videoDimensionsListener);
+
     digitizingOverlay.addInputListener({
       move: (event) => {
         const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
         cursorNode.translation = localPt;
         cursorNode.visible = true;
 
-        const magX = Math.max(0, Math.min(localPt.x - MAG_SIZE / 2, VIDEO_WIDTH - MAG_SIZE));
-        const magY = Math.max(0, Math.min(localPt.y - MAG_SIZE / 2, VIDEO_HEIGHT - MAG_SIZE));
+        const { width: overlayW, height: overlayH } = model.videoDimensionsProperty.value;
+        const magX = Math.max(0, Math.min(localPt.x - MAG_SIZE / 2, overlayW - MAG_SIZE));
+        const magY = Math.max(0, Math.min(localPt.y - MAG_SIZE / 2, overlayH - MAG_SIZE));
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
@@ -342,6 +349,7 @@ export class DigitizingOverlayNode extends Node {
       TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
       TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
       TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
+      model.videoDimensionsProperty.unlink(videoDimensionsListener);
       model.currentTimeProperty.unlink(currentTimeListener);
       model.tracksProperty.unlink(tracksListener);
       model.modelViewTransformProperty.unlink(mvtListener);
