@@ -15,12 +15,17 @@ const FONT = new PhetFont({ size: 14, weight: "bold" });
 const ARROW_HEAD_WIDTH = 12;
 const ARROW_HEAD_HEIGHT = 10;
 const ARROW_TAIL_WIDTH = 3;
+const SHADOW_ARROW_HEAD_WIDTH = 16; // wider shadow for contrast outline
+const SHADOW_ARROW_HEAD_HEIGHT = 14;
+const SHADOW_ARROW_TAIL_WIDTH = 7;
 const LABEL_OFFSET_X = 6; // gap between arrow tip and axis label
 const LABEL_OFFSET_Y = 4; // gap between arrow tip and axis label
+const LABEL_STROKE_WIDTH = 0.6; // outline width for axis label text
 const HANDLE_RADIUS = 8; // rotation handle disk radius
 const HANDLE_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const HANDLE_LINE_WIDTH = 1.5;
 const ORIGIN_RADIUS = 5; // origin marker circle radius
+const ORIGIN_SHADOW_LINE_WIDTH = 4; // wider outline for contrast
 const ORIGIN_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
 const ORIGIN_LINE_WIDTH = 1;
 const TRANSLATE_DRAG_SPEED = 300; // pixels/s for normal keyboard drag
@@ -53,6 +58,27 @@ export class CoordinateSystemNode extends Node {
     // ── Rotating node: axes + rotation handle ─────────────────────────────
     const rotatingNode = new Node();
 
+    // ── Shadow arrows (rendered first, underneath) for contrast on all backgrounds
+    rotatingNode.addChild(
+      new ArrowNode(0, 0, ARROW_LENGTH, 0, {
+        fill: TrackLabColors.coordShadowStrokeProperty,
+        stroke: null,
+        headWidth: SHADOW_ARROW_HEAD_WIDTH,
+        headHeight: SHADOW_ARROW_HEAD_HEIGHT,
+        tailWidth: SHADOW_ARROW_TAIL_WIDTH,
+      }),
+    );
+    rotatingNode.addChild(
+      new ArrowNode(0, 0, 0, -ARROW_LENGTH, {
+        fill: TrackLabColors.coordShadowStrokeProperty,
+        stroke: null,
+        headWidth: SHADOW_ARROW_HEAD_WIDTH,
+        headHeight: SHADOW_ARROW_HEAD_HEIGHT,
+        tailWidth: SHADOW_ARROW_TAIL_WIDTH,
+      }),
+    );
+
+    // ── Main axis arrows (rendered on top of shadows)
     // X axis arrow (horizontal, pointing right)
     rotatingNode.addChild(
       new ArrowNode(0, 0, ARROW_LENGTH, 0, {
@@ -75,10 +101,13 @@ export class CoordinateSystemNode extends Node {
       }),
     );
 
+    // ── Axis labels with outline stroke for contrast
     rotatingNode.addChild(
       new Text(coordStrings.xAxisLabelStringProperty, {
         font: FONT,
         fill: TrackLabColors.axisXColorProperty,
+        stroke: TrackLabColors.coordShadowStrokeProperty,
+        lineWidth: LABEL_STROKE_WIDTH,
         left: ARROW_LENGTH + LABEL_OFFSET_X,
         centerY: 0,
       }),
@@ -88,6 +117,8 @@ export class CoordinateSystemNode extends Node {
       new Text(coordStrings.yAxisLabelStringProperty, {
         font: FONT,
         fill: TrackLabColors.axisYColorProperty,
+        stroke: TrackLabColors.coordShadowStrokeProperty,
+        lineWidth: LABEL_STROKE_WIDTH,
         centerX: 0,
         bottom: -ARROW_LENGTH - LABEL_OFFSET_Y,
       }),
@@ -110,7 +141,12 @@ export class CoordinateSystemNode extends Node {
     handleDisk.touchArea = handleTouchArea;
     rotatingNode.addChild(handleDisk);
 
-    // ── Origin marker ─────────────────────────────────────────────────────
+    // ── Origin marker with shadow outline for contrast ──────────────────
+    const originShadow = new Circle(ORIGIN_RADIUS, {
+      stroke: TrackLabColors.coordShadowStrokeProperty,
+      lineWidth: ORIGIN_SHADOW_LINE_WIDTH,
+      fill: "transparent",
+    });
     const originMarker = new Circle(ORIGIN_RADIUS, {
       fill: TrackLabColors.originFillProperty,
       stroke: TrackLabColors.originStrokeProperty,
@@ -119,7 +155,7 @@ export class CoordinateSystemNode extends Node {
 
     // ── Position wrapper: translates with model.coordOriginProperty ───────
     const positionNode = new Node({
-      children: [rotatingNode, originMarker],
+      children: [rotatingNode, originShadow, originMarker],
       cursor: "move",
       tagName: "div",
       focusable: true,

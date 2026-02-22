@@ -89,16 +89,16 @@ const TrackLabColors = {
     new Color(160, 160, 180), // Darker stroke for light panel
   ),
 
-  // Axes (X red, Y green) - semi-transparent for better video visibility
+  // Axes (X red, Y green)
   axisXColorProperty: profileColor(
     "axisX",
-    new Color(255, 68, 68, 0.5), // 50% opacity
-    new Color(238, 51, 51, 0.5),
+    new Color(255, 68, 68, 0.85),
+    new Color(238, 51, 51, 0.85),
   ),
   axisYColorProperty: profileColor(
     "axisY",
-    new Color(68, 204, 68, 0.5), // 50% opacity
-    new Color(51, 187, 51, 0.5),
+    new Color(68, 204, 68, 0.85),
+    new Color(51, 187, 51, 0.85),
   ),
 
   // Calibration tool (bright colors with shadows for visibility on all backgrounds)
@@ -170,6 +170,12 @@ const TrackLabColors = {
     "originStroke",
     new Color(119, 119, 119, 0.8), // 80% opacity stroke for visibility
     new Color(70, 70, 70, 0.8),
+  ),
+  // Shadow/outline stroke for coordinate system (contrast on all backgrounds)
+  coordShadowStrokeProperty: profileColor(
+    "coordShadowStroke",
+    new Color(0, 0, 0, 0.8), // Dark shadow for contrast on light backgrounds
+    new Color(0, 0, 0, 0.8),
   ),
 
   // Buttons
