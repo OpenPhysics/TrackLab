@@ -6,7 +6,6 @@ import {
   CONTROL_PANEL_LEFT_MARGIN,
   DATA_TABLE_TOP_SPACING,
   RESET_BUTTON_MARGIN,
-  VIDEO_PLAYER_Y_OFFSET,
 } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
@@ -66,7 +65,7 @@ export class SimScreenView extends ScreenView {
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
     this.videoPlayerNode.left = controlPanel.right + 20;
-    this.videoPlayerNode.centerY = this.layoutBounds.centerY + VIDEO_PLAYER_Y_OFFSET;
+    this.videoPlayerNode.top = this.layoutBounds.top + 10;
     this.addChild(this.videoPlayerNode);
 
     // ── Coordinate system overlay (above video, below camera modal) ─────────
@@ -95,6 +94,16 @@ export class SimScreenView extends ScreenView {
       bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
+
+    // ── Playback controls bar (bottom of screen, same height as reset button) ─
+    const playbackControlsNode = this.videoPlayerNode.playbackControlsNode;
+    this.addChild(playbackControlsNode);
+    playbackControlsNode.centerX = this.videoPlayerNode.centerX;
+    playbackControlsNode.centerY = resetAllButton.centerY;
+    playbackControlsNode.boundsProperty.lazyLink(() => {
+      playbackControlsNode.centerX = this.videoPlayerNode.centerX;
+      playbackControlsNode.centerY = resetAllButton.centerY;
+    });
 
     // ── Kinematics graph (bottom right, above reset all) ─────────────────
     const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);

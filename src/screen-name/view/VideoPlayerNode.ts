@@ -23,6 +23,8 @@ export class VideoPlayerNode extends Node {
   private readonly videoElement: HTMLVideoElement;
   /** Webcam recording panel; positioned by SimScreenView for correct z-ordering. */
   public readonly webcamPanel: WebcamPanel;
+  /** Playback controls bar; positioned by SimScreenView at the bottom of the screen. */
+  public readonly playbackControlsNode: PlaybackControlsNode;
   private readonly model: SimModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
@@ -103,15 +105,15 @@ export class VideoPlayerNode extends Node {
     };
     model.playbackRateProperty.link(playbackRateListener);
 
-    // ── Playback controls ─────────────────────────────────────────────────
-    const playbackControlsNode = new PlaybackControlsNode(
+    // ── Playback controls (positioned by SimScreenView at screen bottom) ──
+    this.playbackControlsNode = new PlaybackControlsNode(
       model,
       this.videoElement,
       () => this.seekByFrames(-1),
       () => this.seekByFrames(1),
     );
     // Pin to the video width so internal text changes never shift the row.
-    playbackControlsNode.preferredWidth = VIDEO_WIDTH;
+    this.playbackControlsNode.preferredWidth = VIDEO_WIDTH;
 
     // ── Fit video element to its intrinsic aspect ratio ───────────────────
     // When a new clip is loaded, scale it to fill as much of VIDEO_WIDTH ×
@@ -131,14 +133,14 @@ export class VideoPlayerNode extends Node {
       this.videoElement.width = displayW;
       this.videoElement.height = displayH;
       model.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
-      playbackControlsNode.preferredWidth = displayW;
+      this.playbackControlsNode.preferredWidth = displayW;
       model.tracker.resize(displayW, displayH);
     };
     this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
 
     // Sync model time from video during playback (event-driven, not polled)
     const onTimeUpdate = () => {
-      if (!playbackControlsNode.scrubbing) {
+      if (!this.playbackControlsNode.scrubbing) {
         model.currentTimeProperty.value = this.videoElement.currentTime;
       }
     };
@@ -173,7 +175,7 @@ export class VideoPlayerNode extends Node {
 
     // ── Layout ─────────────────────────────────────────────────────────────
     const mainContent = new VBox({
-      children: [videoSourceControlNode, videoLayer, playbackControlsNode],
+      children: [videoSourceControlNode, videoLayer],
       spacing: MAIN_CONTENT_SPACING,
       align: "center",
     });
@@ -208,7 +210,7 @@ export class VideoPlayerNode extends Node {
         this.currentBlobUrl = null;
       }
       autoTrackerNode.dispose();
-      playbackControlsNode.dispose();
+      this.playbackControlsNode.dispose();
       videoSourceControlNode.dispose();
       autoTrackingShownProperty.dispose();
     };
