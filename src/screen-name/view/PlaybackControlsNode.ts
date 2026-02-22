@@ -108,11 +108,9 @@ export class PlaybackControlsNode extends HBox {
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
       if (!Number.isFinite(seconds) || seconds <= 0) {
-        return "0:00";
+        return "0.00 s";
       }
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${String(secs).padStart(2, "0")}`;
+      return `${seconds.toFixed(2)} s`;
     };
 
     const totalTimeTextProperty = new DerivedProperty([model.durationProperty], (duration: number) =>
@@ -167,7 +165,7 @@ export class PlaybackControlsNode extends HBox {
       tandem: Tandem.OPT_OUT,
     });
 
-    this.children = [infoDisplay, timeControlNode, scrubber, rewindButton];
+    this.children = [timeControlNode, scrubber, rewindButton, infoDisplay];
 
     this.disposePlaybackControlsNode = () => {
       timeSpeedProperty.unlink(onSpeedChange);
