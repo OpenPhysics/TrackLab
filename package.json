@@ -16,7 +16,8 @@
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
     "generate-svg-icon": "tsx scripts/bouncingBallToSVG.ts",
-    "icons": "npm run generate-svg-icon && tsx scripts/generate-icons.ts"
+    "icons": "npm run generate-svg-icon && tsx scripts/generate-icons.ts",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",
