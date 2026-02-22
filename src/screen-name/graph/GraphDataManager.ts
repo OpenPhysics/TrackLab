@@ -76,6 +76,7 @@ export default class GraphDataManager {
     const result: Vector2[] = new Array(this.dataSize);
     for (let i = 0; i < this.dataSize; i++) {
       const idx = (this.dataHead - this.dataSize + i + this.maxDataPoints) % this.maxDataPoints;
+      // biome-ignore lint/style/noNonNullAssertion: index is within dataSize, slot is always written
       result[i] = this.dataBuf[idx]!;
     }
     return result;
@@ -109,11 +110,20 @@ export default class GraphDataManager {
     this.yMax = -Infinity;
     for (let i = 0; i < this.dataSize; i++) {
       const idx = (this.dataHead - this.dataSize + i + this.maxDataPoints) % this.maxDataPoints;
+      // biome-ignore lint/style/noNonNullAssertion: index is within dataSize, slot is always written
       const p = this.dataBuf[idx]!;
-      if (p.x < this.xMin) this.xMin = p.x;
-      if (p.x > this.xMax) this.xMax = p.x;
-      if (p.y < this.yMin) this.yMin = p.y;
-      if (p.y > this.yMax) this.yMax = p.y;
+      if (p.x < this.xMin) {
+        this.xMin = p.x;
+      }
+      if (p.x > this.xMax) {
+        this.xMax = p.x;
+      }
+      if (p.y < this.yMin) {
+        this.yMin = p.y;
+      }
+      if (p.y > this.yMax) {
+        this.yMax = p.y;
+      }
     }
   }
 
@@ -123,10 +133,18 @@ export default class GraphDataManager {
    * axis extreme (the common case — a buffer that has never filled — never rescans).
    */
   private updateMinMaxIncremental(x: number, y: number, evicted: Vector2 | undefined): void {
-    if (x < this.xMin) this.xMin = x;
-    if (x > this.xMax) this.xMax = x;
-    if (y < this.yMin) this.yMin = y;
-    if (y > this.yMax) this.yMax = y;
+    if (x < this.xMin) {
+      this.xMin = x;
+    }
+    if (x > this.xMax) {
+      this.xMax = x;
+    }
+    if (y < this.yMin) {
+      this.yMin = y;
+    }
+    if (y > this.yMax) {
+      this.yMax = y;
+    }
     if (
       evicted !== undefined &&
       (evicted.x <= this.xMin || evicted.x >= this.xMax || evicted.y <= this.yMin || evicted.y >= this.yMax)
@@ -190,10 +208,18 @@ export default class GraphDataManager {
       if (Number.isFinite(x) && Number.isFinite(y)) {
         const evicted = this.writePoint(x, y);
         // Inline incremental update (avoids function-call overhead in tight loop).
-        if (x < this.xMin) this.xMin = x;
-        if (x > this.xMax) this.xMax = x;
-        if (y < this.yMin) this.yMin = y;
-        if (y > this.yMax) this.yMax = y;
+        if (x < this.xMin) {
+          this.xMin = x;
+        }
+        if (x > this.xMax) {
+          this.xMax = x;
+        }
+        if (y < this.yMin) {
+          this.yMin = y;
+        }
+        if (y > this.yMax) {
+          this.yMax = y;
+        }
         if (
           evicted !== undefined &&
           (evicted.x <= this.xMin || evicted.x >= this.xMax || evicted.y <= this.yMin || evicted.y >= this.yMax)

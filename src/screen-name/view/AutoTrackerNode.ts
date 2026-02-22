@@ -243,10 +243,10 @@ export class AutoTrackerNode extends Node {
               }
             })
             .catch((err: unknown) => {
+              // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
               console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
               if (this.initVersion === capturedVersion) {
-                const message =
-                  err instanceof Error ? err.message : "Tracking initialisation failed. Try again.";
+                const message = err instanceof Error ? err.message : "Tracking initialisation failed. Try again.";
                 this.errorText.string = message;
                 this.errorText.visible = true;
                 this.hintText.visible = true;

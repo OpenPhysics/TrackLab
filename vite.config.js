@@ -120,9 +120,12 @@ export default defineConfig({
       registerType: "autoUpdate",
       manifest: {
         name: "trackLab",
+        // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         short_name: "trackLab",
         description: "trackLab simulation",
+        // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         theme_color: "#1a1a2e",
+        // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         background_color: "#000000",
         display: "standalone",
         orientation: "landscape",

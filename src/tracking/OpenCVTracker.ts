@@ -31,8 +31,15 @@ interface MinMaxLocResult {
 /** Typed surface of the OpenCV.js module used by this tracker. */
 interface Cv {
   // Constructors
+  // biome-ignore lint/style/useNamingConvention: OpenCV API uses PascalCase for constructor properties
   readonly Mat: new () => CvMat;
-  readonly Rect: new (x: number, y: number, width: number, height: number) => CvRect;
+  // biome-ignore lint/style/useNamingConvention: OpenCV API uses PascalCase for constructor properties
+  readonly Rect: new (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => CvRect;
 
   // Factory from browser ImageData
   matFromImageData(imageData: ImageData): CvMat;

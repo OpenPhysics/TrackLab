@@ -13,10 +13,10 @@ import stringsFr from "./strings_fr.json";
 // These type aliases exist solely so TypeScript verifies that both language files
 // share identical key structures. If a key is added to one file but not the
 // other, a type error will appear here before the app is ever run.
-type _EnMatchesFr = typeof stringsEn extends typeof stringsFr ? true : never;
-type _FrMatchesEn = typeof stringsFr extends typeof stringsEn ? true : never;
+type EnMatchesFr = typeof stringsEn extends typeof stringsFr ? true : never;
+type FrMatchesEn = typeof stringsFr extends typeof stringsEn ? true : never;
 // Force evaluation (unused types are not checked without a reference).
-declare const _parity: _EnMatchesFr & _FrMatchesEn;
+declare const _parity: EnMatchesFr & FrMatchesEn;
 
 /**
  * Manages all localized strings for the simulation
