@@ -52,7 +52,11 @@
   "preferences": {
     "simulation": "Simulation",
     "enableAutoTracking": "Activer le suivi automatique",
-    "enableAutoTrackingDescription": "Lorsque activé, affiche la case à cocher du suivi automatique dans le panneau de contrôle, permettant le suivi automatique d'objets basé sur OpenCV. Lorsque désactivé, la case est cachée et seule la numérisation manuelle est disponible."
+    "enableAutoTrackingDescription": "Lorsque activé, affiche la case à cocher du suivi automatique dans le panneau de contrôle, permettant le suivi automatique d'objets basé sur OpenCV. Lorsque désactivé, la case est cachée et seule la numérisation manuelle est disponible.",
+    "showVelocity": "Afficher la vitesse",
+    "showVelocityDescription": "Lorsque activé, les composantes de vitesse (vx, vy, rapidité) sont disponibles comme choix sur les axes du graphique cinématique.",
+    "showAcceleration": "Afficher l'accélération",
+    "showAccelerationDescription": "Lorsque activé, les composantes d'accélération (ax, ay, |a|) sont disponibles comme choix sur les axes du graphique cinématique."
   },
   "autoTracker": {
     "dragToSelect": "Faire glisser sur la vidéo pour sélectionner l'objet à suivre"

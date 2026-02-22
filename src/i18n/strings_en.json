@@ -52,7 +52,11 @@
   "preferences": {
     "simulation": "Simulation",
     "enableAutoTracking": "Enable Auto-Tracking",
-    "enableAutoTrackingDescription": "When enabled, shows the auto-tracking checkbox in the control panel, allowing OpenCV-based automatic object tracking. When disabled, the checkbox is hidden and only manual digitizing is available."
+    "enableAutoTrackingDescription": "When enabled, shows the auto-tracking checkbox in the control panel, allowing OpenCV-based automatic object tracking. When disabled, the checkbox is hidden and only manual digitizing is available.",
+    "showVelocity": "Show Velocity",
+    "showVelocityDescription": "When enabled, velocity components (vx, vy, speed) are available as choices on the kinematics graph axes.",
+    "showAcceleration": "Show Acceleration",
+    "showAccelerationDescription": "When enabled, acceleration components (ax, ay, |a|) are available as choices on the kinematics graph axes."
   },
   "autoTracker": {
     "dragToSelect": "Drag on video to select object to track"
