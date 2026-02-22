@@ -11,7 +11,7 @@ fi
 echo "Running Biome fix on staged files..."
 
 # Run biome fix on the staged files
-echo "$STAGED" | xargs npx biome check --write --no-errors-on-unmatched
+echo "$STAGED" | xargs ./node_modules/.bin/biome check --write --no-errors-on-unmatched
 
 STATUS=$?
 

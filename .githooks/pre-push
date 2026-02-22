@@ -3,7 +3,7 @@
 # Blocks the push if there are lint errors or type errors.
 
 echo "Running Biome lint check..."
-npx biome lint .
+./node_modules/.bin/biome lint .
 LINT_STATUS=$?
 
 if [ $LINT_STATUS -ne 0 ]; then
@@ -13,7 +13,7 @@ if [ $LINT_STATUS -ne 0 ]; then
 fi
 
 echo "Running TypeScript type check..."
-npx tsc --noEmit
+./node_modules/.bin/tsc --noEmit
 TSC_STATUS=$?
 
 if [ $TSC_STATUS -ne 0 ]; then
