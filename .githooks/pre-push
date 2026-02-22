@@ -2,8 +2,16 @@
 # Pre-push hook: run full lint and type-check before pushing.
 # Blocks the push if there are lint errors or type errors.
 
+BIOME="./node_modules/.bin/biome"
+TSC="./node_modules/.bin/tsc"
+
+if [ ! -x "$BIOME" ] || [ ! -x "$TSC" ]; then
+  echo "Required tools not found in node_modules. Run 'npm install' first."
+  exit 1
+fi
+
 echo "Running Biome lint check..."
-./node_modules/.bin/biome lint .
+"$BIOME" lint .
 LINT_STATUS=$?
 
 if [ $LINT_STATUS -ne 0 ]; then
@@ -13,7 +21,7 @@ if [ $LINT_STATUS -ne 0 ]; then
 fi
 
 echo "Running TypeScript type check..."
-./node_modules/.bin/tsc --noEmit
+"$TSC" --noEmit
 TSC_STATUS=$?
 
 if [ $TSC_STATUS -ne 0 ]; then
