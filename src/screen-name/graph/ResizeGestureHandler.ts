@@ -9,7 +9,7 @@
  */
 
 import type { BooleanProperty } from "scenerystack/axon";
-import { Vector2 } from "scenerystack/dot";
+import type { Vector2 } from "scenerystack/dot";
 import { DragListener, type Node, Rectangle } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
@@ -147,7 +147,10 @@ export default class ResizeGestureHandler {
 
         switch (cornerIndex) {
           case 0: // Top-left
-            newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width - delta.x);
+            newWidth = Math.max(
+              MIN_WIDTH,
+              dragStartGraphBounds.width - delta.x,
+            );
             newHeight = Math.max(
               MIN_HEIGHT,
               dragStartGraphBounds.height - delta.y,
@@ -156,7 +159,10 @@ export default class ResizeGestureHandler {
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 1: // Top-right
-            newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width + delta.x);
+            newWidth = Math.max(
+              MIN_WIDTH,
+              dragStartGraphBounds.width + delta.x,
+            );
             newHeight = Math.max(
               MIN_HEIGHT,
               dragStartGraphBounds.height - delta.y,
@@ -164,7 +170,10 @@ export default class ResizeGestureHandler {
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 2: // Bottom-left
-            newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width - delta.x);
+            newWidth = Math.max(
+              MIN_WIDTH,
+              dragStartGraphBounds.width - delta.x,
+            );
             newHeight = Math.max(
               MIN_HEIGHT,
               dragStartGraphBounds.height + delta.y,
@@ -172,7 +181,10 @@ export default class ResizeGestureHandler {
             deltaX = dragStartGraphBounds.width - newWidth;
             break;
           case 3: // Bottom-right
-            newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width + delta.x);
+            newWidth = Math.max(
+              MIN_WIDTH,
+              dragStartGraphBounds.width + delta.x,
+            );
             newHeight = Math.max(
               MIN_HEIGHT,
               dragStartGraphBounds.height + delta.y,

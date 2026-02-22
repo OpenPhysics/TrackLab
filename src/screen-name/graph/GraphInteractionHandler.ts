@@ -16,13 +16,10 @@ import type {
   ChartTransform,
   TickLabelSet,
 } from "scenerystack/bamboo";
-import {
-  type Node,
-  Rectangle,
-} from "scenerystack/scenery";
+import type { Node, Rectangle } from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
-import type GraphDataManager from "./GraphDataManager.js";
 import AxisGestureHandler from "./AxisGestureHandler.js";
+import type GraphDataManager from "./GraphDataManager.js";
 import HeaderDragHandler from "./HeaderDragHandler.js";
 import PanGestureHandler from "./PanGestureHandler.js";
 import ResizeGestureHandler from "./ResizeGestureHandler.js";
@@ -110,7 +107,9 @@ export default class GraphInteractionHandler {
       {
         headerBar: uiElements.headerBar,
         graphNode: uiElements.graphNode,
-        dragTargetNode: uiElements.dragTargetNode,
+        ...(uiElements.dragTargetNode && {
+          dragTargetNode: uiElements.dragTargetNode,
+        }),
       },
       uiState.isDraggingProperty,
     );

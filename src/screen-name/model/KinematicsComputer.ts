@@ -6,7 +6,7 @@
  * from Track.ts — no Axon Properties, no SceneryStack dependencies.
  */
 
-import type { Track, TrackKinematics, KinematicPoint } from "./Track.js";
+import type { KinematicPoint, Track, TrackKinematics } from "./Track.js";
 
 /**
  * Scalar finite difference at index i within an array of n values.

@@ -358,7 +358,9 @@ export class AutoTrackerNode extends Node {
     this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
     this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
     this.model.activeTrackIdProperty.unlink(this.boundClearRecordedFrames);
-    this.boundAutoTrackingShownProperty.unlink(this.boundAutoTrackingShownListener);
+    this.boundAutoTrackingShownProperty.unlink(
+      this.boundAutoTrackingShownListener,
+    );
     this.model.tracker.dispose();
     super.dispose();
   }

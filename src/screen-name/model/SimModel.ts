@@ -5,7 +5,7 @@ import {
   Property,
   type TReadOnlyProperty,
 } from "scenerystack/axon";
-import { Range, Transform3, Vector2 } from "scenerystack/dot";
+import { Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
@@ -17,9 +17,9 @@ import {
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
-import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
 import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
+import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;

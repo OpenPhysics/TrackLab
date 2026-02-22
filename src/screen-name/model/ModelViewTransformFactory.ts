@@ -6,7 +6,7 @@
  * no SceneryStack UI dependencies.
  */
 
-import { Matrix3, Transform3, Vector2 } from "scenerystack/dot";
+import { Matrix3, Transform3, type Vector2 } from "scenerystack/dot";
 import {
   MIN_CALIB_DISTANCE,
   MIN_PIXEL_DISTANCE,

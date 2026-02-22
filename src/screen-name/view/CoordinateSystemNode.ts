@@ -7,6 +7,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import type { SimModel } from "../model/SimModel.js";
+
 const ARROW_LENGTH = 120;
 const HANDLE_FRACTION = 1 / 3;
 const FONT = new PhetFont({ size: 14, weight: "bold" });

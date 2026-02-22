@@ -16,10 +16,17 @@
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
-import { DragListener, type Pointer, type Rectangle } from "scenerystack/scenery";
+import {
+  DragListener,
+  type Pointer,
+  type Rectangle,
+} from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
-import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
+import type {
+  ChartConfig,
+  GraphDimensions,
+} from "./GraphInteractionHandler.js";
 
 /**
  * The two axis-interaction regions the handler needs access to.
@@ -82,9 +89,7 @@ export default class AxisGestureHandler {
 
     // Read the current model range for this axis.
     const getRange = (): Range =>
-      isX
-        ? this.chartTransform.modelXRange
-        : this.chartTransform.modelYRange;
+      isX ? this.chartTransform.modelXRange : this.chartTransform.modelYRange;
 
     // Apply a new range for this axis and update tick spacing.
     const setRange = (range: Range): void => {
@@ -267,7 +272,9 @@ export default class AxisGestureHandler {
         // X: negate (screen X and model X share direction; negation makes content follow drag).
         // Y: keep positive (screen Y is inverted from model Y; signs cancel, content follows drag).
         const modelDelta =
-          (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
+          (isX ? -1 : 1) *
+          delta *
+          (mouseDragInitialRange.getLength() / axisSize);
         setRange(
           new Range(
             mouseDragInitialRange.min + modelDelta,
@@ -307,13 +314,11 @@ export default class AxisGestureHandler {
           : new Vector2(this.graphWidth / 2, mouseCoord);
         const localMidpoint =
           this.chartRectangle.globalToLocalPoint(viewMidpoint);
-        const modelPos =
-          this.chartTransform.viewToModelPosition(localMidpoint);
+        const modelPos = this.chartTransform.viewToModelPosition(localMidpoint);
         const modelCenter = isX ? modelPos.x : modelPos.y;
 
         const currentRange = getRange();
-        const zoomFactor =
-          delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
+        const zoomFactor = delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
         setRange(
           new Range(

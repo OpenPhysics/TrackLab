@@ -5,7 +5,7 @@
  */
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
-import { Range, Vector2 } from "scenerystack/dot";
+import { Range, type Vector2 } from "scenerystack/dot";
 import { DragListener } from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
