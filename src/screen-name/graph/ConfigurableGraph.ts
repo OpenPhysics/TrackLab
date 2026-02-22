@@ -648,16 +648,17 @@ export default class ConfigurableGraph extends Node {
 
   /**
    * Get the value for a specific axis from a data point record.
-   * Uses the accessor when available, otherwise falls back to property.value.
+   * Dispatches on the PlottableProperty variant: RecordPlottable uses an
+   * accessor function; LivePlottable reads from a reactive property.
    */
   private getValueForAxis(
     axisProperty: PlottableProperty,
     point: Record<string, number>,
   ): number | null {
-    if (axisProperty.accessor) {
+    if ("accessor" in axisProperty) {
       return axisProperty.accessor(point);
     }
-    return axisProperty.property?.value ?? null;
+    return axisProperty.property.value;
   }
 
   /**
