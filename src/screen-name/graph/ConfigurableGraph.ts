@@ -470,9 +470,9 @@ export default class ConfigurableGraph extends Node {
       this.graphContentNode.visible = visible;
       this.headerBar.visible = visible;
       this.titlePanel.visible = visible;
-      resizeHandles.forEach((handle) => {
+      for (const handle of resizeHandles) {
         handle.visible = visible;
-      });
+      }
     };
     this.graphVisibleProperty.link(graphVisibleListener);
 

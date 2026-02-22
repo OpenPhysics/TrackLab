@@ -86,6 +86,7 @@ export class VideoPlayerNode extends Node {
     const isPlayingListener = (isPlaying: boolean) => {
       if (isPlaying) {
         this.videoElement.play().catch((err: unknown) => {
+          // biome-ignore lint/suspicious/noConsole: error logging for video playback failure
           console.error("Video playback failed:", err);
           model.isPlayingProperty.value = false;
         });

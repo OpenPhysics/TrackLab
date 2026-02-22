@@ -488,6 +488,7 @@ export class DataTableNode extends Panel {
     // or colour change) and an incremental row-append on data-only changes
     // (new points added to existing tracks).  During auto-tracking this fires
     // ~30 times/s, so avoiding unnecessary full DOM rebuilds is critical.
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: intentionally complex — must handle structural and incremental updates efficiently
     const rebuildTable = () => {
       const tracks = model.tracksProperty.value;
       const unit = unitProperty.value;
