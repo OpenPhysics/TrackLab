@@ -32,7 +32,7 @@ export class TrackLabPreferencesModel {
 
     // By default, velocity and acceleration are shown on the graph
     this.showVelocityInGraphProperty = new BooleanProperty(true);
-    this.showAccelerationInGraphProperty = new BooleanProperty(true);
+    this.showAccelerationInGraphProperty = new BooleanProperty(false);
   }
 
   public reset(): void {
