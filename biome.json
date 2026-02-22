@@ -135,6 +135,18 @@
   "files": {
     "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist"]
   },
+  "overrides": [
+    {
+      "includes": ["src/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "useExplicitType": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
