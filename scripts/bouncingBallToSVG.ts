@@ -105,8 +105,8 @@ ${circles}
 </svg>`;
 }
 
-const points = computeSnapshots();
-const svg = buildSvg(points);
+const points: Point[] = computeSnapshots();
+const svg: string = buildSvg(points);
 
 // Write to public/icons/icon.svg (source for PNG icon generation)
 const outputPath = "public/icons/icon.svg";
