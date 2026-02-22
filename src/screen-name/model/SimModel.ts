@@ -5,12 +5,10 @@ import {
   Property,
   type TReadOnlyProperty,
 } from "scenerystack/axon";
-import { Matrix3, Range, Transform3, Vector2 } from "scenerystack/dot";
+import { Range, Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
-  MIN_CALIB_DISTANCE,
-  MIN_PIXEL_DISTANCE,
   TRACK_SYMBOL_FIRST_CODE,
   TRACK_SYMBOL_LAST_CODE,
   VIDEO_CENTER_X,
@@ -19,12 +17,9 @@ import {
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
 import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
-import type {
-  KinematicPoint,
-  Track,
-  TrackKinematics,
-  TrackPoint,
-} from "./Track.js";
+import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
+import { computeTrackKinematics } from "./KinematicsComputer.js";
+import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
 
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
@@ -63,134 +58,6 @@ const COORD_ORIGIN_BOUNDS_MIN_X = VIDEO_CENTER_X - VIDEO_WIDTH / 2;
 const COORD_ORIGIN_BOUNDS_MAX_X = VIDEO_CENTER_X + VIDEO_WIDTH / 2;
 const COORD_ORIGIN_BOUNDS_MIN_Y = VIDEO_CENTER_Y - VIDEO_HEIGHT / 2;
 const COORD_ORIGIN_BOUNDS_MAX_Y = VIDEO_CENTER_Y + VIDEO_HEIGHT / 2;
-
-// ── Model-view transform builder ───────────────────────────────────────────
-/**
- * Builds a Transform3 from the coordinate-system tool and calibration tool.
- *
- * Composed as:  T(origin) · R(θ) · S(s, −s)
- *
- *   S(s, −s)  — scale model units to pixels, flip Y (model +y points up)
- *   R(θ)      — rotate by the coord-system angle (clockwise on screen)
- *   T(origin) — translate so model origin lands on the coord-system view position
- *
- * where s = |p2 − p1| / calibrationDistance  (pixels per model unit).
- * Returns the identity transform when the calibration segment has zero length.
- */
-function buildModelViewTransform(
-  origin: Vector2,
-  angle: number,
-  p1: Vector2,
-  p2: Vector2,
-  dist: number,
-): Transform3 {
-  const pixelDist = p1.distance(p2);
-  if (pixelDist < MIN_PIXEL_DISTANCE || dist < MIN_CALIB_DISTANCE) {
-    return new Transform3(Matrix3.IDENTITY);
-  }
-  const s = pixelDist / dist; // pixels per model unit
-
-  const matrix = Matrix3.translationFromVector(origin)
-    .timesMatrix(Matrix3.rotation2(angle))
-    .timesMatrix(Matrix3.scaling(s, -s));
-
-  return new Transform3(matrix);
-}
-
-// ── Kinematics computation ───────────────────────────────────────────────
-
-/**
- * Scalar finite difference at index i within an array of n values.
- *
- * Uses forward difference at the first point, backward difference at the last,
- * and central differences for all interior points.  Returns null if the array
- * has fewer than 2 elements, if the time interval is non-positive, or if
- * either endpoint value is null.
- *
- * @param getValue  Returns the scalar quantity at index j (null = unknown).
- * @param getTime   Returns the time stamp at index j.
- * @param i         Index to differentiate at.
- * @param n         Total number of elements.
- */
-function finiteDifference(
-  getValue: (j: number) => number | null,
-  getTime: (j: number) => number,
-  i: number,
-  n: number,
-): number | null {
-  if (n < 2) return null;
-  const [prevIdx, nextIdx] =
-    i === 0 ? [0, 1] : i === n - 1 ? [n - 2, n - 1] : [i - 1, i + 1];
-  const prev = getValue(prevIdx);
-  const next = getValue(nextIdx);
-  const dt = getTime(nextIdx) - getTime(prevIdx);
-  if (prev === null || next === null || dt <= 0) return null;
-  return (next - prev) / dt;
-}
-
-/**
- * Computes velocity and acceleration for each point in a track.
- * Uses central differences where possible for better accuracy.
- *
- * Velocity at point i:
- *   - If only one point: null
- *   - Otherwise: (position[i+1] - position[i-1]) / (time[i+1] - time[i-1])
- *     (falls back to forward/backward difference at endpoints)
- *
- * Acceleration at point i:
- *   - Computed from velocities using the same differencing approach
- */
-function computeTrackKinematics(track: Track): TrackKinematics {
-  const { points } = track;
-  const n = points.length;
-
-  if (n === 0) {
-    return { ...track, points: [] };
-  }
-
-  const getTime = (j: number) => points[j]?.time ?? 0;
-  const getX = (j: number) => points[j]?.x ?? null;
-  const getY = (j: number) => points[j]?.y ?? null;
-
-  // First pass: velocities via finite difference of position
-  const vxArr = points.map((_, i) => finiteDifference(getX, getTime, i, n));
-  const vyArr = points.map((_, i) => finiteDifference(getY, getTime, i, n));
-
-  // Second pass: accelerations via finite difference of velocity
-  const axArr = points.map((_, i) =>
-    finiteDifference((j) => vxArr[j] ?? null, getTime, i, n),
-  );
-  const ayArr = points.map((_, i) =>
-    finiteDifference((j) => vyArr[j] ?? null, getTime, i, n),
-  );
-
-  const kinematicPoints: KinematicPoint[] = points.map((pt, i) => {
-    const vx = vxArr[i] ?? null;
-    const vy = vyArr[i] ?? null;
-    const ax = axArr[i] ?? null;
-    const ay = ayArr[i] ?? null;
-    return {
-      frame: pt.frame,
-      time: pt.time,
-      x: pt.x,
-      y: pt.y,
-      vx,
-      vy,
-      speed: vx !== null && vy !== null ? Math.sqrt(vx * vx + vy * vy) : null,
-      ax,
-      ay,
-      accelerationMagnitude:
-        ax !== null && ay !== null ? Math.sqrt(ax * ax + ay * ay) : null,
-    };
-  });
-
-  return {
-    id: track.id,
-    symbol: track.symbol,
-    color: track.color,
-    points: kinematicPoints,
-  };
-}
 
 export class SimModel {
   public readonly isPlayingProperty = new BooleanProperty(false);
