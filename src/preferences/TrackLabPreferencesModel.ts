@@ -2,7 +2,8 @@
  * TrackLabPreferencesModel - Model for trackLab simulation preferences.
  *
  * Manages user preferences for the trackLab simulation, including whether
- * the auto-tracking feature is enabled.
+ * the auto-tracking feature is enabled and which kinematic quantities appear
+ * on the graph axes.
  */
 
 import { BooleanProperty } from "scenerystack/axon";
@@ -15,12 +16,28 @@ export class TrackLabPreferencesModel {
    */
   public readonly enableAutoTrackingProperty: BooleanProperty;
 
+  /**
+   * Whether velocity quantities (vx, vy, speed) appear in the graph axis selectors.
+   */
+  public readonly showVelocityInGraphProperty: BooleanProperty;
+
+  /**
+   * Whether acceleration quantities (ax, ay, |a|) appear in the graph axis selectors.
+   */
+  public readonly showAccelerationInGraphProperty: BooleanProperty;
+
   public constructor() {
     // By default, auto-tracking checkbox is hidden
     this.enableAutoTrackingProperty = new BooleanProperty(false);
+
+    // By default, velocity and acceleration are shown on the graph
+    this.showVelocityInGraphProperty = new BooleanProperty(true);
+    this.showAccelerationInGraphProperty = new BooleanProperty(false);
   }
 
   public reset(): void {
     this.enableAutoTrackingProperty.reset();
+    this.showVelocityInGraphProperty.reset();
+    this.showAccelerationInGraphProperty.reset();
   }
 }

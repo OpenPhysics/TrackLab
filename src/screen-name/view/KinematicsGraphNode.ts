@@ -3,14 +3,17 @@
  *
  * A configurable graph that displays kinematic data from tracks.
  * Users can select which variables to plot on each axis (t, x, y, vx, vy, speed, ax, ay, |a|).
+ * The velocity and acceleration groups can be hidden via user preferences.
  */
 
 import { Property } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
+import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
-import { buildKinematicsPlottableProperties } from "../graph/kinematics-plottable-properties.js";
+import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
+import type { PlottableProperty } from "../graph/PlottableProperty.js";
 import type { SimModel } from "../model/SimModel.js";
 
 // Graph dimensions
@@ -27,7 +30,7 @@ export class KinematicsGraphNode extends VBox {
   private currentComboBox: ComboBox<string | null> | null = null;
   private readonly disposeKinematicsGraph: () => void;
 
-  public constructor(model: SimModel, listParent: Node) {
+  public constructor(model: SimModel, listParent: Node, preferencesModel: TrackLabPreferencesModel) {
     super({
       spacing: 8,
       align: "left",
@@ -37,13 +40,28 @@ export class KinematicsGraphNode extends VBox {
     this.listParent = listParent;
     this.selectedTrackProperty = new Property<string | null>(null);
 
-    // Build the registry of plottable quantities from the canonical definition.
-    // To add a new quantity, edit kinematics-plottable-properties.ts — not here.
-    const plottableProperties = buildKinematicsPlottableProperties(model);
+    // Build the categorised groups of plottable quantities.
+    // Object references are stable — the same PlottableProperty instances are
+    // reused across filter updates so identity checks in setAvailableProperties work.
+    const groups = buildKinematicsPlottableGroups(model);
+
+    /** Compute the current filtered list from preference state. */
+    const getFilteredProperties = (): PlottableProperty[] => {
+      const result: PlottableProperty[] = [...groups.time, ...groups.position];
+      if (preferencesModel.showVelocityInGraphProperty.value) {
+        result.push(...groups.velocity);
+      }
+      if (preferencesModel.showAccelerationInGraphProperty.value) {
+        result.push(...groups.acceleration);
+      }
+      return result;
+    };
+
+    const initialFiltered = getFilteredProperties();
 
     // Default: plot y vs x (trajectory)
-    const initialXProperty = plottableProperties[1];
-    const initialYProperty = plottableProperties[2];
+    const initialXProperty = groups.position[0];
+    const initialYProperty = groups.position[1];
 
     if (!(initialXProperty && initialYProperty)) {
       throw new Error("Failed to initialize plottable properties");
@@ -52,7 +70,7 @@ export class KinematicsGraphNode extends VBox {
     // Create the configurable graph
     // Pass 'this' (KinematicsGraphNode) as dragTargetNode so dragging moves the whole container
     this.graph = new ConfigurableGraph(
-      plottableProperties,
+      initialFiltered,
       initialXProperty,
       initialYProperty,
       GRAPH_WIDTH,
@@ -112,6 +130,17 @@ export class KinematicsGraphNode extends VBox {
     };
     model.distanceUnitProperty.lazyLink(distanceUnitListener);
 
+    // When preferences change, rebuild the available properties in the graph selectors.
+    const velocityPrefListener = () => {
+      this.graph.setAvailableProperties(getFilteredProperties());
+    };
+    preferencesModel.showVelocityInGraphProperty.lazyLink(velocityPrefListener);
+
+    const accelerationPrefListener = () => {
+      this.graph.setAvailableProperties(getFilteredProperties());
+    };
+    preferencesModel.showAccelerationInGraphProperty.lazyLink(accelerationPrefListener);
+
     // Layout
     this.children = [this.trackSelectorContainer, this.graph];
 
@@ -123,6 +152,8 @@ export class KinematicsGraphNode extends VBox {
       this.graph.getXPropertyProperty().unlink(xPropertyListener);
       this.graph.getYPropertyProperty().unlink(yPropertyListener);
       model.distanceUnitProperty.unlink(distanceUnitListener);
+      preferencesModel.showVelocityInGraphProperty.unlink(velocityPrefListener);
+      preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
       if (this.currentComboBox) {
         this.currentComboBox.dispose();
       }

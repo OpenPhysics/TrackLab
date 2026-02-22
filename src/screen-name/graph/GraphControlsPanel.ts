@@ -28,10 +28,19 @@ const HEADER_LINE_WIDTH = 2;
 const HEADER_DARKEN_FACTOR = 0.1;
 
 export default class GraphControlsPanel {
-  private readonly availableProperties: PlottableProperty[];
+  private availableProperties: PlottableProperty[];
   private readonly xPropertyProperty: Property<PlottableProperty>;
   private readonly yPropertyProperty: Property<PlottableProperty>;
   private readonly graphWidth: number;
+
+  // Stored references needed to rebuild combo boxes without recreating the whole panel.
+  private listParent: Node | null = null;
+  private titleHBox: HBox | null = null;
+  private xComboBox: ComboBox<PlottableProperty> | null = null;
+  private yComboBox: ComboBox<PlottableProperty> | null = null;
+  private leftParenNode: Text | null = null;
+  private vsTextNode: Text | null = null;
+  private rightParenNode: Text | null = null;
 
   public constructor(
     availableProperties: PlottableProperty[],
@@ -62,9 +71,9 @@ export default class GraphControlsPanel {
   }
 
   /**
-   * Create title panel with "(Y vs X)" format where Y and X are combo boxes
+   * Build ComboBox items for the X-axis selector from the current available properties.
    */
-  public createTitlePanel(listParent: Node): Node {
+  private buildXComboBox(): ComboBox<PlottableProperty> {
     const xItems = this.availableProperties.map((prop) => ({
       value: prop,
       createNode: () =>
@@ -75,7 +84,7 @@ export default class GraphControlsPanel {
       tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
-    const xComboBox = new ComboBox(this.xPropertyProperty, xItems, listParent, {
+    return new ComboBox(this.xPropertyProperty, xItems, this.listParent!, {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
@@ -85,7 +94,12 @@ export default class GraphControlsPanel {
       listStroke: TrackLabColors.controlPanelStrokeProperty,
       highlightFill: TrackLabColors.controlPanelStrokeProperty,
     });
+  }
 
+  /**
+   * Build ComboBox items for the Y-axis selector from the current available properties.
+   */
+  private buildYComboBox(): ComboBox<PlottableProperty> {
     const yItems = this.availableProperties.map((prop) => ({
       value: prop,
       createNode: () =>
@@ -96,7 +110,7 @@ export default class GraphControlsPanel {
       tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
-    const yComboBox = new ComboBox(this.yPropertyProperty, yItems, listParent, {
+    return new ComboBox(this.yPropertyProperty, yItems, this.listParent!, {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
@@ -106,14 +120,26 @@ export default class GraphControlsPanel {
       listStroke: TrackLabColors.controlPanelStrokeProperty,
       highlightFill: TrackLabColors.controlPanelStrokeProperty,
     });
+  }
+
+  /**
+   * Create title panel with "(Y vs X)" format where Y and X are combo boxes.
+   * Stores internal references so that `rebuildComboBoxes` can update the panel
+   * in place when the set of available properties changes.
+   */
+  public createTitlePanel(listParent: Node): Node {
+    this.listParent = listParent;
+
+    this.xComboBox = this.buildXComboBox();
+    this.yComboBox = this.buildYComboBox();
 
     // Create title in format "(Y vs X)"
-    const leftParen = new Text("(", {
+    this.leftParenNode = new Text("(", {
       font: TITLE_FONT,
       fill: TrackLabColors.textProperty,
     });
 
-    const vsText = new Text(
+    this.vsTextNode = new Text(
       new DerivedProperty([StringManager.getInstance().getControls().graphVsStringProperty], (vs: string) => ` ${vs} `),
       {
         font: TITLE_FONT,
@@ -121,17 +147,61 @@ export default class GraphControlsPanel {
       },
     );
 
-    const rightParen = new Text(")", {
+    this.rightParenNode = new Text(")", {
       font: TITLE_FONT,
       fill: TrackLabColors.textProperty,
     });
 
     // Arrange in horizontal layout: (Y vs X)
-    return new HBox({
+    this.titleHBox = new HBox({
       spacing: TITLE_SPACING,
       align: "center",
-      children: [leftParen, yComboBox, vsText, xComboBox, rightParen],
+      children: [this.leftParenNode, this.yComboBox, this.vsTextNode, this.xComboBox, this.rightParenNode],
     });
+
+    return this.titleHBox;
+  }
+
+  /**
+   * Swap out the combo boxes to reflect a new set of available properties.
+   * The title HBox is updated in place — no parent-level re-parenting needed.
+   *
+   * Must be called after `createTitlePanel`.
+   */
+  public rebuildComboBoxes(newProperties: PlottableProperty[]): void {
+    if (!this.titleHBox || !this.xComboBox || !this.yComboBox) {
+      return;
+    }
+
+    this.availableProperties = newProperties;
+
+    const oldX = this.xComboBox;
+    const oldY = this.yComboBox;
+
+    this.xComboBox = this.buildXComboBox();
+    this.yComboBox = this.buildYComboBox();
+
+    // Update the HBox children with the new combo boxes, keeping the static text nodes.
+    this.titleHBox.children = [
+      this.leftParenNode!,
+      this.yComboBox,
+      this.vsTextNode!,
+      this.xComboBox,
+      this.rightParenNode!,
+    ];
+
+    // Dispose old combo boxes AFTER swapping children to avoid dangling references.
+    oldX.dispose();
+    oldY.dispose();
+  }
+
+  /**
+   * Dispose the combo boxes owned by this panel.
+   * Should be called when the parent ConfigurableGraph is disposed.
+   */
+  public dispose(): void {
+    this.xComboBox?.dispose();
+    this.yComboBox?.dispose();
   }
 
   /**

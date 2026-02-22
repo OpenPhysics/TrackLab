@@ -34,39 +34,59 @@ function createPlottableProperty(
 }
 
 /**
- * Build the ordered list of kinematics quantities available for axis selection.
- * Called once per `KinematicsGraphNode` instance; the result is passed directly
- * to `ConfigurableGraph`.
+ * Categorised groups of kinematics quantities available for axis selection.
+ * Each category can be independently included or excluded based on user preferences.
+ */
+export type KinematicsPlottableGroups = {
+  /** Time — always available */
+  time: PlottableProperty[];
+  /** Position components — always available */
+  position: PlottableProperty[];
+  /** Velocity components — shown when the "show velocity" preference is on */
+  velocity: PlottableProperty[];
+  /** Acceleration components — shown when the "show acceleration" preference is on */
+  acceleration: PlottableProperty[];
+};
+
+/**
+ * Build the categorised groups of kinematics quantities available for axis selection.
+ * Called once per `KinematicsGraphNode` instance.
  *
  * @param model - Provides the reactive unit-string properties so that axis
  *   labels update automatically when the user changes the calibration unit.
  */
-export function buildKinematicsPlottableProperties(model: SimModel): PlottableProperty[] {
-  return [
+export function buildKinematicsPlottableGroups(model: SimModel): KinematicsPlottableGroups {
+  return {
     // ── Time ──────────────────────────────────────────────────────────────
     // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("t", "s", (pt) => pt["t"] ?? 0),
+    time: [createPlottableProperty("t", "s", (pt) => pt["t"] ?? 0)],
 
     // ── Position ──────────────────────────────────────────────────────────
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("x", model.distanceUnitProperty, (pt) => pt["x"] ?? 0),
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("y", model.distanceUnitProperty, (pt) => pt["y"] ?? 0),
+    position: [
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("x", model.distanceUnitProperty, (pt) => pt["x"] ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("y", model.distanceUnitProperty, (pt) => pt["y"] ?? 0),
+    ],
 
     // ── Velocity ──────────────────────────────────────────────────────────
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("vx", model.velocityUnitProperty, (pt) => pt["vx"] ?? 0),
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("vy", model.velocityUnitProperty, (pt) => pt["vy"] ?? 0),
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("speed", model.velocityUnitProperty, (pt) => pt["speed"] ?? 0),
+    velocity: [
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("vx", model.velocityUnitProperty, (pt) => pt["vx"] ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("vy", model.velocityUnitProperty, (pt) => pt["vy"] ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("speed", model.velocityUnitProperty, (pt) => pt["speed"] ?? 0),
+    ],
 
     // ── Acceleration ──────────────────────────────────────────────────────
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("ax", model.accelerationUnitProperty, (pt) => pt["ax"] ?? 0),
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("ay", model.accelerationUnitProperty, (pt) => pt["ay"] ?? 0),
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-    createPlottableProperty("|a|", model.accelerationUnitProperty, (pt) => pt["aMag"] ?? 0),
-  ];
+    acceleration: [
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("ax", model.accelerationUnitProperty, (pt) => pt["ax"] ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("ay", model.accelerationUnitProperty, (pt) => pt["ay"] ?? 0),
+      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
+      createPlottableProperty("|a|", model.accelerationUnitProperty, (pt) => pt["aMag"] ?? 0),
+    ],
+  };
 }

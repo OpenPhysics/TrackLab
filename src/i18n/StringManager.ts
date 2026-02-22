@@ -190,12 +190,21 @@ export class StringManager {
     simulationStringProperty: ReadOnlyProperty<string>;
     enableAutoTrackingStringProperty: ReadOnlyProperty<string>;
     enableAutoTrackingDescriptionStringProperty: ReadOnlyProperty<string>;
+    showVelocityStringProperty: ReadOnlyProperty<string>;
+    showVelocityDescriptionStringProperty: ReadOnlyProperty<string>;
+    showAccelerationStringProperty: ReadOnlyProperty<string>;
+    showAccelerationDescriptionStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       simulationStringProperty: this.stringProperties.preferences.simulationStringProperty,
       enableAutoTrackingStringProperty: this.stringProperties.preferences.enableAutoTrackingStringProperty,
       enableAutoTrackingDescriptionStringProperty:
         this.stringProperties.preferences.enableAutoTrackingDescriptionStringProperty,
+      showVelocityStringProperty: this.stringProperties.preferences.showVelocityStringProperty,
+      showVelocityDescriptionStringProperty: this.stringProperties.preferences.showVelocityDescriptionStringProperty,
+      showAccelerationStringProperty: this.stringProperties.preferences.showAccelerationStringProperty,
+      showAccelerationDescriptionStringProperty:
+        this.stringProperties.preferences.showAccelerationDescriptionStringProperty,
     };
   }
 

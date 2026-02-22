@@ -94,7 +94,7 @@ export class SimScreenView extends ScreenView {
     this.addChild(resetAllButton);
 
     // ── Kinematics graph (bottom right, above reset all) ─────────────────
-    const kinematicsGraph = new KinematicsGraphNode(model, this);
+    const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
     this.addChild(kinematicsGraph);
     kinematicsGraph.right = this.layoutBounds.maxX + 45;
     kinematicsGraph.bottom = resetAllButton.top - 150;

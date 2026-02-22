@@ -2,7 +2,10 @@
  * TrackLabPreferencesNode - Custom preferences UI panel for the trackLab simulation.
  *
  * Renders the simulation-specific preferences content shown in the Preferences dialog.
- * Currently includes a checkbox to enable/disable the auto-tracking feature.
+ * Includes checkboxes to:
+ *   - Enable/disable the auto-tracking feature
+ *   - Show/hide velocity quantities on the kinematics graph
+ *   - Show/hide acceleration quantities on the kinematics graph
  */
 
 import { HStrut, Text, VBox } from "scenerystack/scenery";
@@ -46,10 +49,58 @@ export class TrackLabPreferencesNode extends VBox {
       },
     );
 
+    const showVelocityCheckbox = new Checkbox(
+      preferencesModel.showVelocityInGraphProperty,
+      new VBox({
+        align: "left",
+        spacing: 2,
+        children: [
+          new Text(prefStrings.showVelocityStringProperty, {
+            font: new PhetFont(14),
+            fill: TrackLabColors.preferencesTextProperty,
+          }),
+          new Text(prefStrings.showVelocityDescriptionStringProperty, {
+            font: new PhetFont(11),
+            fill: TrackLabColors.preferencesTextSecondaryProperty,
+            maxWidth: 500,
+          }),
+        ],
+      }),
+      {
+        checkboxColor: TrackLabColors.checkboxColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        spacing: 8,
+      },
+    );
+
+    const showAccelerationCheckbox = new Checkbox(
+      preferencesModel.showAccelerationInGraphProperty,
+      new VBox({
+        align: "left",
+        spacing: 2,
+        children: [
+          new Text(prefStrings.showAccelerationStringProperty, {
+            font: new PhetFont(14),
+            fill: TrackLabColors.preferencesTextProperty,
+          }),
+          new Text(prefStrings.showAccelerationDescriptionStringProperty, {
+            font: new PhetFont(11),
+            fill: TrackLabColors.preferencesTextSecondaryProperty,
+            maxWidth: 500,
+          }),
+        ],
+      }),
+      {
+        checkboxColor: TrackLabColors.checkboxColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        spacing: 8,
+      },
+    );
+
     super({
       align: "left",
       spacing: 12,
-      children: [header, new HStrut(600), enableAutoTrackingCheckbox],
+      children: [header, new HStrut(600), enableAutoTrackingCheckbox, showVelocityCheckbox, showAccelerationCheckbox],
     });
   }
 }

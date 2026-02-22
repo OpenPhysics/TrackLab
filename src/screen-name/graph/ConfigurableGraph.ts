@@ -119,6 +119,7 @@ export default class ConfigurableGraph extends Node {
   // Module instances
   private readonly dataManager: GraphDataManager;
   private readonly interactionHandler: GraphInteractionHandler;
+  private readonly controlsPanel: GraphControlsPanel;
 
   // Title panel with combo boxes (needs to be on top of header bar)
   private readonly titlePanel: Node;
@@ -300,12 +301,13 @@ export default class ConfigurableGraph extends Node {
     });
 
     // Create controls panel helper
-    const controlsPanel = new GraphControlsPanel(
+    this.controlsPanel = new GraphControlsPanel(
       availableProperties,
       this.xPropertyProperty,
       this.yPropertyProperty,
       this.graphWidth,
     );
+    const controlsPanel = this.controlsPanel;
 
     // Create title panel with combo boxes for axis selection
     // Note: titlePanel is added to 'this' (not graphContentNode) after headerBar
@@ -494,6 +496,7 @@ export default class ConfigurableGraph extends Node {
       this.graphVisibleProperty.unlink(graphVisibleListener);
       isDraggingProperty.unlink(isDraggingListener);
       isResizingProperty.unlink(isResizingListener);
+      this.controlsPanel.dispose();
       this.xPropertyProperty.dispose();
       this.yPropertyProperty.dispose();
       this.graphVisibleProperty.dispose();
@@ -652,6 +655,32 @@ export default class ConfigurableGraph extends Node {
    */
   public getGraphVisibleProperty(): BooleanProperty {
     return this.graphVisibleProperty;
+  }
+
+  /**
+   * Update the set of quantities available in the axis-selector combo boxes.
+   *
+   * If the currently selected X or Y property is no longer in the new list it
+   * is reset to the first available property before the combo boxes are rebuilt.
+   *
+   * @param newProperties - The replacement list of plottable properties.
+   */
+  public setAvailableProperties(newProperties: PlottableProperty[]): void {
+    if (newProperties.length === 0) {
+      return;
+    }
+
+    const first = newProperties[0]!;
+
+    // Reset selections that are no longer available.
+    if (!newProperties.includes(this.xPropertyProperty.value)) {
+      this.xPropertyProperty.value = first;
+    }
+    if (!newProperties.includes(this.yPropertyProperty.value)) {
+      this.yPropertyProperty.value = first;
+    }
+
+    this.controlsPanel.rebuildComboBoxes(newProperties);
   }
 
   public override dispose(): void {
