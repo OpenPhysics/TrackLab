@@ -1,0 +1,26 @@
+#!/bin/sh
+# Pre-push hook: run full lint and type-check before pushing.
+# Blocks the push if there are lint errors or type errors.
+
+echo "Running Biome lint check..."
+npx biome lint .
+LINT_STATUS=$?
+
+if [ $LINT_STATUS -ne 0 ]; then
+  echo ""
+  echo "Lint errors found. Run 'npm run fix' to auto-fix, then commit and push again."
+  exit 1
+fi
+
+echo "Running TypeScript type check..."
+npx tsc --noEmit
+TSC_STATUS=$?
+
+if [ $TSC_STATUS -ne 0 ]; then
+  echo ""
+  echo "TypeScript errors found. Fix the errors above before pushing."
+  exit 1
+fi
+
+echo "All checks passed."
+exit 0
