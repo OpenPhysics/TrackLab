@@ -1,6 +1,54 @@
 /**
- * Configurable graph that allows users to select which properties to plot on each axis.
- * This provides a flexible way to explore relationships between any two quantities.
+ * ConfigurableGraph — interactive X-Y plot panel for the kinematics graph subsystem.
+ *
+ * ## Subsystem overview
+ *
+ * The graph subsystem lives in `src/screen-name/graph/` and consists of five files:
+ *
+ * | File | Role |
+ * |------|------|
+ * | `ConfigurableGraph.ts` | Top-level SceneryStack node; owns the bamboo chart, axis labels, control buttons, and coordinates all sub-modules |
+ * | `GraphDataManager.ts` | Accumulates (x, y) data points, drives auto-scaling, and owns the tick-spacing algorithm |
+ * | `GraphInteractionHandler.ts` | All pointer/touch/keyboard gestures: pan, pinch-zoom, axis-drag, header-drag, corner-resize |
+ * | `GraphControlsPanel.ts` | Builds the axis-selector dropdowns and header bar UI |
+ * | `PlottableProperty.ts` | `PlottableProperty` union type — the interface any quantity must satisfy to appear in the axis selector |
+ * | `kinematics-plottable-properties.ts` | Canonical registry of all kinematics quantities; the sole place to add a new plottable quantity |
+ *
+ * ## Data flow
+ *
+ * ```
+ * KinematicsGraphNode          (view layer — owns track selection and wires model → graph)
+ *   └─ ConfigurableGraph       (graph node — layout, bamboo chart, buttons)
+ *        ├─ GraphDataManager   (data store, auto-scale, tick math)
+ *        ├─ GraphInteractionHandler
+ *        │    ├─ ZoomGestureHandler
+ *        │    ├─ PanGestureHandler
+ *        │    ├─ AxisGestureHandler
+ *        │    ├─ HeaderGestureHandler
+ *        │    └─ ResizeGestureHandler
+ *        └─ GraphControlsPanel (axis selector UI)
+ * ```
+ *
+ * ## Gesture coordination
+ *
+ * `GraphInteractionHandler` is the largest file (~930 lines).  It delegates to
+ * five single-responsibility sub-handlers, each in its own file.  Before adding
+ * new gesture logic, read the existing `zoom()` / `pan()` / `rescaleAxes()`
+ * helpers — many edge cases (pinch-centre preservation, manual-zoom locking,
+ * axis-specific gestures) are already handled there.
+ *
+ * ## Axis selection
+ *
+ * The two `Property<PlottableProperty>` values (`xPropertyProperty`,
+ * `yPropertyProperty`) drive everything: axis labels, data mapping, and the
+ * dropdown UI.  They are exposed via `getXPropertyProperty()` /
+ * `getYPropertyProperty()` so that `KinematicsGraphNode` can react to changes.
+ *
+ * ## Visibility
+ *
+ * `graphVisibleProperty` (initially `false`) gates the entire graph, header,
+ * title panel, and resize handles.  Set it to `true` after construction to
+ * show the graph; the ToolsControlPanel checkbox is the standard toggle.
  */
 
 import { BooleanProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";

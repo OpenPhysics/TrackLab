@@ -148,7 +148,7 @@ export class SimModel {
   //     Never write raw pixel coordinates or coordinates from a different MVT
   //     into this property.  All externally-sourced positions (digitizing
   //     clicks, auto-tracker output) must first be converted with
-  //     modelViewTransformProperty.value.inversePosition2() before storage.
+  //     pixelToModelCoords() before storage.
   public readonly tracksProperty = new Property<readonly Track[]>([]);
   public readonly activeTrackIdProperty = new Property<string | null>(null);
   public readonly canAddTrackProperty = new BooleanProperty(true);
@@ -230,9 +230,9 @@ export class SimModel {
    * Any code that writes to `tracksProperty` must store positions in the
    * coordinate system of the *current* MVT.  Positions coming from outside
    * (digitizing clicks, auto-tracker pixel output) must be converted with
-   * `modelViewTransformProperty.value.inversePosition2()` before storage.
-   * Writing raw pixel coordinates or stale model coordinates directly into
-   * `tracksProperty` will silently corrupt the track data.
+   * `pixelToModelCoords()` before storage.  Writing raw pixel coordinates or
+   * stale model coordinates directly into `tracksProperty` will silently
+   * corrupt the track data.
    */
   private retransformTrackPoints(prevMvt: Transform3, newMvt: Transform3): void {
     const tracks = this.tracksProperty.value;
@@ -286,6 +286,23 @@ export class SimModel {
       this.activeTrackIdProperty.value = null;
     }
     this.tracksProperty.value = this.tracksProperty.value.filter((t) => t.id !== id);
+  }
+
+  /**
+   * Convert a point from pixel/scene space to model coordinates using the
+   * current model-view transform.
+   *
+   * All externally-sourced positions (digitizing clicks, auto-tracker output)
+   * **must** go through this method before being stored in `tracksProperty`.
+   * Calling `modelViewTransformProperty.value.inversePosition2()` directly
+   * bypasses this contract and risks storing coordinates in the wrong space
+   * if the MVT is ever replaced by a subclass or indirection.
+   *
+   * @param pixelPoint - A point in scene/pixel coordinate space.
+   * @returns The equivalent position in model (real-world) coordinates.
+   */
+  public pixelToModelCoords(pixelPoint: Vector2): Vector2 {
+    return this.modelViewTransformProperty.value.inversePosition2(pixelPoint);
   }
 
   /**
