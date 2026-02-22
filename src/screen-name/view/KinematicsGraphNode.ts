@@ -5,26 +5,18 @@
  * Users can select which variables to plot on each axis (t, x, y, vx, vy, speed, ax, ay, |a|).
  */
 
-import { Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { Property } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
-import type { PlottableProperty } from "../graph/PlottableProperty.js";
+import { buildKinematicsPlottableProperties } from "../graph/kinematics-plottable-properties.js";
 import type { SimModel } from "../model/SimModel.js";
 
 // Graph dimensions
 const GRAPH_WIDTH = 300;
 const GRAPH_HEIGHT = 200;
 const MAX_DATA_POINTS = 5000;
-
-function createPlottableProperty(
-  name: string,
-  unit: string | TReadOnlyProperty<string>,
-  accessor: (point: Record<string, number>) => number,
-): PlottableProperty {
-  return { name, unit, accessor };
-}
 
 export class KinematicsGraphNode extends VBox {
   private readonly graph: ConfigurableGraph;
@@ -45,61 +37,9 @@ export class KinematicsGraphNode extends VBox {
     this.listParent = listParent;
     this.selectedTrackProperty = new Property<string | null>(null);
 
-    // Create plottable properties using unit properties from the model.
-    // Accessor functions return 0 for undefined values (filtered out later by NaN check).
-    // NOTE: Using bracket notation required by TypeScript's noUncheckedIndexedAccess
-    const plottableProperties: PlottableProperty[] = [
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("t", "s", (pt) => pt["t"] ?? 0),
-      createPlottableProperty(
-        "x",
-        model.distanceUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["x"] ?? 0,
-      ),
-      createPlottableProperty(
-        "y",
-        model.distanceUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["y"] ?? 0,
-      ),
-      createPlottableProperty(
-        "vx",
-        model.velocityUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["vx"] ?? 0,
-      ),
-      createPlottableProperty(
-        "vy",
-        model.velocityUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["vy"] ?? 0,
-      ),
-      createPlottableProperty(
-        "speed",
-        model.velocityUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["speed"] ?? 0,
-      ),
-      createPlottableProperty(
-        "ax",
-        model.accelerationUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["ax"] ?? 0,
-      ),
-      createPlottableProperty(
-        "ay",
-        model.accelerationUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["ay"] ?? 0,
-      ),
-      createPlottableProperty(
-        "|a|",
-        model.accelerationUnitProperty,
-        // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-        (pt) => pt["aMag"] ?? 0,
-      ),
-    ];
+    // Build the registry of plottable quantities from the canonical definition.
+    // To add a new quantity, edit kinematics-plottable-properties.ts — not here.
+    const plottableProperties = buildKinematicsPlottableProperties(model);
 
     // Default: plot y vs x (trajectory)
     const initialXProperty = plottableProperties[1];

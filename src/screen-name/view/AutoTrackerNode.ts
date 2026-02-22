@@ -1,7 +1,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { DragListener, Line, Node, Path, Rectangle, Text } from "scenerystack/scenery";
+import { DragListener, Line, Node, Path, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -50,6 +50,7 @@ export class AutoTrackerNode extends Node {
   private readonly recordedFrames = new Set<number>();
 
   private readonly hintText: Text;
+  private readonly errorText: Text;
   private readonly selectionRect: Rectangle;
   private readonly trailPath: Path;
   private readonly crosshairH: Line;
@@ -65,12 +66,7 @@ export class AutoTrackerNode extends Node {
   // previous drag from overwriting a more recent one.
   private initVersion = 0;
 
-  // Kept for removeEventListener / unlink in dispose()
-  private readonly boundVideoElement: HTMLVideoElement;
-  private readonly boundOnFrame: () => void;
-  private readonly boundClearRecordedFrames: () => void;
-  private readonly boundAutoTrackingShownProperty: TReadOnlyProperty<boolean>;
-  private readonly boundAutoTrackingShownListener: (shown: boolean) => void;
+  private readonly disposeAutoTrackerNode: () => void;
 
   /**
    * @param videoElement - The video element used both for pixel capture and frame events.
@@ -102,8 +98,22 @@ export class AutoTrackerNode extends Node {
       font: new PhetFont({ size: HINT_FONT_SIZE, weight: "bold" }),
       fill: TrackLabColors.trackerHintFillProperty,
     });
-    this.hintText.center = new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2);
-    this.addChild(this.hintText);
+
+    // ── Error text (shown when OpenCV fails to load or tracking init fails) ─
+    this.errorText = new Text("", {
+      font: new PhetFont({ size: HINT_FONT_SIZE, weight: "bold" }),
+      fill: TrackLabColors.trackerCrosshairStrokeProperty,
+      visible: false,
+    });
+
+    // Stack hint and error vertically so both are centred in the video area.
+    const centeredLabels = new VBox({
+      children: [this.hintText, this.errorText],
+      spacing: 8,
+      align: "center",
+      center: new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2),
+    });
+    this.addChild(centeredLabels);
 
     // ── Selection rectangle ───────────────────────────────────────────────
     this.selectionRect = new Rectangle(0, 0, 0, 0, {
@@ -155,6 +165,7 @@ export class AutoTrackerNode extends Node {
         this.trailPath.shape = null;
         this.trailPath.visible = false;
         this.hintText.visible = false;
+        this.errorText.visible = false;
 
         this.selStart = this.globalToLocalPoint(event.pointer.point);
         this.selecting = true;
@@ -231,8 +242,13 @@ export class AutoTrackerNode extends Node {
                 this.hintText.visible = true;
               }
             })
-            .catch((_err) => {
+            .catch((err: unknown) => {
+              console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
               if (this.initVersion === capturedVersion) {
+                const message =
+                  err instanceof Error ? err.message : "Tracking initialisation failed. Try again.";
+                this.errorText.string = message;
+                this.errorText.visible = true;
                 this.hintText.visible = true;
               }
             });
@@ -274,9 +290,9 @@ export class AutoTrackerNode extends Node {
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {
-          // Convert video-pixel coords to global coords, then to model coords.
+          // Convert video-pixel coords to global/scene coords, then to model coords.
           const globalPt = this.localToGlobalPoint(new Vector2(pt.x, pt.y));
-          const modelPt = model.modelViewTransformProperty.value.inversePosition2(globalPt);
+          const modelPt = model.pixelToModelCoords(globalPt);
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           this.recordedFrames.add(frame);
         }
@@ -285,16 +301,11 @@ export class AutoTrackerNode extends Node {
     videoElement.addEventListener("timeupdate", onFrame);
     videoElement.addEventListener("seeked", onFrame);
 
-    // Store refs so dispose() can remove the listeners.
-    this.boundVideoElement = videoElement;
-    this.boundOnFrame = onFrame;
-
     // Clear the recorded-frames set whenever the user switches to a different
     // track so frames from the previous track don't suppress recording on the
     // new one.
     const clearRecordedFrames = () => this.recordedFrames.clear();
     model.activeTrackIdProperty.lazyLink(clearRecordedFrames);
-    this.boundClearRecordedFrames = clearRecordedFrames;
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     const autoTrackingShownListener = (shown: boolean) => {
@@ -307,8 +318,15 @@ export class AutoTrackerNode extends Node {
       }
     };
     autoTrackingShownProperty.link(autoTrackingShownListener);
-    this.boundAutoTrackingShownProperty = autoTrackingShownProperty;
-    this.boundAutoTrackingShownListener = autoTrackingShownListener;
+
+    // ── Centralised cleanup (mirrors the disposeXxx pattern used elsewhere) ─
+    this.disposeAutoTrackerNode = () => {
+      videoElement.removeEventListener("timeupdate", onFrame);
+      videoElement.removeEventListener("seeked", onFrame);
+      model.activeTrackIdProperty.unlink(clearRecordedFrames);
+      autoTrackingShownProperty.unlink(autoTrackingShownListener);
+      this.model.tracker.dispose();
+    };
   }
 
   private setCrosshairVisible(visible: boolean): void {
@@ -339,7 +357,7 @@ export class AutoTrackerNode extends Node {
     this.hintText.visible = false;
   }
 
-  /** Clear tracking state (template, trail, visuals). */
+  /** Clear tracking state (template, trail, visuals, and any displayed error). */
   public reset(): void {
     this.model.tracker.dispose();
     this.trailHead = 0;
@@ -350,14 +368,11 @@ export class AutoTrackerNode extends Node {
     this.trailPath.shape = null;
     this.trailPath.visible = false;
     this.setCrosshairVisible(false);
+    this.errorText.visible = false;
   }
 
   public override dispose(): void {
-    this.boundVideoElement.removeEventListener("timeupdate", this.boundOnFrame);
-    this.boundVideoElement.removeEventListener("seeked", this.boundOnFrame);
-    this.model.activeTrackIdProperty.unlink(this.boundClearRecordedFrames);
-    this.boundAutoTrackingShownProperty.unlink(this.boundAutoTrackingShownListener);
-    this.model.tracker.dispose();
+    this.disposeAutoTrackerNode();
     super.dispose();
   }
 }

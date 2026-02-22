@@ -324,8 +324,7 @@ export class DigitizingOverlayNode extends Node {
           const time = model.currentTimeProperty.value;
           const frame = Math.round(time * model.frameRateProperty.value);
 
-          const mvt = model.modelViewTransformProperty.value;
-          const modelPt = mvt.inversePosition2(localPt);
+          const modelPt = model.pixelToModelCoords(localPt);
 
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           onPointAdded();

@@ -85,7 +85,8 @@ export class VideoPlayerNode extends Node {
     // ── Play / Pause ───────────────────────────────────────────────────────
     const isPlayingListener = (isPlaying: boolean) => {
       if (isPlaying) {
-        this.videoElement.play().catch(() => {
+        this.videoElement.play().catch((err: unknown) => {
+          console.error("Video playback failed:", err);
           model.isPlayingProperty.value = false;
         });
       } else {
