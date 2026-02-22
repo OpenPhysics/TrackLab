@@ -84,7 +84,10 @@ export default class GraphControlsPanel {
       tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
-    return new ComboBox(this.xPropertyProperty, xItems, this.listParent!, {
+    if (!this.listParent) {
+      throw new Error("buildXComboBox called before createTitlePanel");
+    }
+    return new ComboBox(this.xPropertyProperty, xItems, this.listParent, {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
@@ -110,7 +113,10 @@ export default class GraphControlsPanel {
       tandemName: `${this.sanitizeTandemName(prop.name)}Item`,
     }));
 
-    return new ComboBox(this.yPropertyProperty, yItems, this.listParent!, {
+    if (!this.listParent) {
+      throw new Error("buildYComboBox called before createTitlePanel");
+    }
+    return new ComboBox(this.yPropertyProperty, yItems, this.listParent, {
       cornerRadius: COMBO_BOX_CORNER_RADIUS,
       xMargin: COMBO_BOX_X_MARGIN,
       yMargin: COMBO_BOX_Y_MARGIN,
@@ -169,26 +175,21 @@ export default class GraphControlsPanel {
    * Must be called after `createTitlePanel`.
    */
   public rebuildComboBoxes(newProperties: PlottableProperty[]): void {
-    if (!this.titleHBox || !this.xComboBox || !this.yComboBox) {
+    const { titleHBox, xComboBox, yComboBox, leftParenNode, vsTextNode, rightParenNode } = this;
+    if (!(titleHBox && xComboBox && yComboBox && leftParenNode && vsTextNode && rightParenNode)) {
       return;
     }
 
     this.availableProperties = newProperties;
 
-    const oldX = this.xComboBox;
-    const oldY = this.yComboBox;
+    const oldX = xComboBox;
+    const oldY = yComboBox;
 
     this.xComboBox = this.buildXComboBox();
     this.yComboBox = this.buildYComboBox();
 
     // Update the HBox children with the new combo boxes, keeping the static text nodes.
-    this.titleHBox.children = [
-      this.leftParenNode!,
-      this.yComboBox,
-      this.vsTextNode!,
-      this.xComboBox,
-      this.rightParenNode!,
-    ];
+    titleHBox.children = [leftParenNode, this.yComboBox, vsTextNode, this.xComboBox, rightParenNode];
 
     // Dispose old combo boxes AFTER swapping children to avoid dangling references.
     oldX.dispose();

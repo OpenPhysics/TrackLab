@@ -670,7 +670,10 @@ export default class ConfigurableGraph extends Node {
       return;
     }
 
-    const first = newProperties[0]!;
+    const first = newProperties[0];
+    if (!first) {
+      return;
+    }
 
     // Reset selections that are no longer available.
     if (!newProperties.includes(this.xPropertyProperty.value)) {
