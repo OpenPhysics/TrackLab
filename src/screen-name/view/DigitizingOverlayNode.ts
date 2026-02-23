@@ -1,7 +1,15 @@
+/**
+ * DigitizingOverlayNode.ts
+ *
+ * Overlay UI for manual particle tracking. Provides a crosshair cursor and
+ * magnified view to help users precisely click on particle positions.
+ */
+
 import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { DOM, FireListener, Line, Node, Path, Rectangle } from "scenerystack/scenery";
+import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -9,6 +17,7 @@ import type { SimModel } from "../model/SimModel.js";
 const OUTER_R = 12;
 const INNER_R = 2;
 const CUR_LW = 1.5;
+const CUR_SHADOW_LW = 4; // wider shadow stroke for contrast on all backgrounds
 
 const MAG_SIZE = 100;
 const MAG_ZOOM = 4;
@@ -18,6 +27,11 @@ const MAG_CROSSHAIR_GAP = 2;
 const MAG_CROSSHAIR_LINE_WIDTH = 1;
 
 const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the video
+
+// Magnifier canvas box-shadow: "offsetX offsetY blur color"
+const MAG_SHADOW_OFFSET_X = 0; // px, horizontal shadow offset
+const MAG_SHADOW_OFFSET_Y = 2; // px, vertical shadow offset
+const MAG_SHADOW_BLUR = 8; // px, shadow blur radius
 
 /**
  * Manual digitizing overlay for placing track points on the video.
@@ -34,24 +48,25 @@ export class DigitizingOverlayNode extends Node {
     let magCrosshairColor = TrackLabColors.digitizingMagnifierCrosshairProperty.value.toCSS();
     let magShadowColor = TrackLabColors.digitizingMagnifierShadowProperty.value.toCSS();
 
-    // Custom cursor: large circle + 4 segments that stop at the empty centre
-    const cursorCircle = new Path(Shape.circle(0, 0, OUTER_R), {
-      stroke: TrackLabColors.digitizingCursorStrokeProperty,
-      lineWidth: CUR_LW,
+    // Custom cursor: circle + 4 crosshair segments that stop at an empty centre.
+    // Built as a single composite shape shared by both layers so positions are
+    // always in sync. The shadow layer (wider, dark stroke) renders first and
+    // gives the same dual-layer contrast used by CalibrationToolNode and
+    // CoordinateSystemNode — visible on both dark and light video backgrounds.
+    const cursorShape = new Shape();
+    cursorShape.circle(0, 0, OUTER_R);
+    cursorShape.moveTo(-OUTER_R, 0).lineTo(-INNER_R, 0);
+    cursorShape.moveTo(INNER_R, 0).lineTo(OUTER_R, 0);
+    cursorShape.moveTo(0, -OUTER_R).lineTo(0, -INNER_R);
+    cursorShape.moveTo(0, INNER_R).lineTo(0, OUTER_R);
+
+    // Shadow layer (rendered first, underneath) for contrast on all backgrounds
+    const cursorShadow = new Path(cursorShape, {
+      stroke: TrackLabColors.coordShadowStrokeProperty,
+      lineWidth: CUR_SHADOW_LW,
     });
-    const cursorLineLeft = new Line(-OUTER_R, 0, -INNER_R, 0, {
-      stroke: TrackLabColors.digitizingCursorStrokeProperty,
-      lineWidth: CUR_LW,
-    });
-    const cursorLineRight = new Line(INNER_R, 0, OUTER_R, 0, {
-      stroke: TrackLabColors.digitizingCursorStrokeProperty,
-      lineWidth: CUR_LW,
-    });
-    const cursorLineTop = new Line(0, -OUTER_R, 0, -INNER_R, {
-      stroke: TrackLabColors.digitizingCursorStrokeProperty,
-      lineWidth: CUR_LW,
-    });
-    const cursorLineBottom = new Line(0, INNER_R, 0, OUTER_R, {
+    // Main cursor stroke (rendered on top of shadow)
+    const cursorMain = new Path(cursorShape, {
       stroke: TrackLabColors.digitizingCursorStrokeProperty,
       lineWidth: CUR_LW,
     });
@@ -59,7 +74,7 @@ export class DigitizingOverlayNode extends Node {
     const cursorNode = new Node({
       visible: false,
       pickable: false,
-      children: [cursorCircle, cursorLineLeft, cursorLineRight, cursorLineTop, cursorLineBottom],
+      children: [cursorShadow, cursorMain],
     });
 
     // ── Magnifier (zoomed view near the cursor) ─────────────────────────────
@@ -72,7 +87,7 @@ export class DigitizingOverlayNode extends Node {
 
     // Update shadow style when color property changes
     const updateShadowStyle = () => {
-      magCanvas.style.boxShadow = `0 2px 8px ${magShadowColor}`;
+      magCanvas.style.boxShadow = `${MAG_SHADOW_OFFSET_X}px ${MAG_SHADOW_OFFSET_Y}px ${MAG_SHADOW_BLUR}px ${magShadowColor}`;
     };
     updateShadowStyle();
 
@@ -200,10 +215,14 @@ export class DigitizingOverlayNode extends Node {
       magCtx.stroke();
     };
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     const digitizingOverlay = new Rectangle(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT, {
       fill: "transparent",
       cursor: "none",
       visible: false,
+      tagName: "div",
+      accessibleName: a11yStrings.digitizingAreaStringProperty,
     });
     digitizingOverlay.addChild(cursorNode);
     digitizingOverlay.addChild(magnifierNode);

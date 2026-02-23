@@ -1,10 +1,21 @@
+/**
+ * PlaybackControlsNode.ts
+ *
+ * Controls for video playback including play/pause, frame stepping,
+ * scrubber, speed selection, and frame rate adjustment.
+ */
+
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
-import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
+import { ButtonNode, HSlider, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+
+const a11yStrings = StringManager.getInstance().getA11y();
+
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
@@ -19,6 +30,7 @@ const SCRUBBER_THUMB_WIDTH = 12;
 const SCRUBBER_THUMB_HEIGHT = 24;
 const INFO_DISPLAY_SPACING = 4; // gap between time label and frame counter
 const INFO_DISPLAY_WIDTH = 75; // fixed width to prevent layout shift when text changes
+const REWIND_BUTTON_ICON_SIZE = 16; // font size for the rewind button icon glyph
 
 /**
  * Playback controls including time control, scrubber, and time/frame display.
@@ -34,6 +46,8 @@ export class PlaybackControlsNode extends HBox {
     onStepForward: () => void,
   ) {
     super({ spacing: CONTROLS_SPACING, align: "center" });
+
+    const playbackStrings = StringManager.getInstance().getPlayback();
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     // timeSpeedProperty is view-local (the TimeSpeed enum is a scenery-phet type
@@ -82,14 +96,15 @@ export class PlaybackControlsNode extends HBox {
     });
 
     // ── Scrubber ───────────────────────────────────────────────────────────
-    const rangeProperty = new DerivedProperty(
-      [model.durationProperty],
-      (duration: number) => new Range(0, Math.max(duration, 1)),
-    );
+    // Create mutable range that will be updated when duration changes
+    const scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
 
-    const scrubber = new Slider(model.currentTimeProperty, rangeProperty, {
+    const scrubber = new HSlider(model.currentTimeProperty, scrubberRange, {
       trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
       thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
+      majorTickLength: 8,
+      majorTickStroke: TrackLabColors.textOnDarkProperty,
+      majorTickLineWidth: 1,
       startDrag: () => {
         this.isScrubbing = true;
       },
@@ -97,7 +112,37 @@ export class PlaybackControlsNode extends HBox {
         this.isScrubbing = false;
       },
       enabledProperty: model.videoLoadedProperty,
+      accessibleName: a11yStrings.videoScrubberStringProperty,
     });
+
+    // Function to update tick marks for each frame
+    const updateTickMarks = () => {
+      const duration = model.durationProperty.value;
+      const frameRate = model.frameRateProperty.value;
+
+      if (duration <= 0 || frameRate <= 0) {
+        return;
+      }
+
+      const totalFrames = Math.round(duration * frameRate);
+      for (let i = 0; i <= totalFrames; i++) {
+        scrubber.addMajorTick(i / frameRate);
+      }
+    };
+
+    // Update range and ticks when duration changes
+    const durationListener = (duration: number) => {
+      // Update scrubber range
+      scrubberRange.max = duration > 0 ? duration : 1;
+      // Update tick marks
+      updateTickMarks();
+    };
+    model.durationProperty.link(durationListener);
+
+    const frameRateListener = () => {
+      updateTickMarks();
+    };
+    model.frameRateProperty.link(frameRateListener);
 
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
@@ -109,9 +154,9 @@ export class PlaybackControlsNode extends HBox {
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
       if (!Number.isFinite(seconds) || seconds <= 0) {
-        return "0.00 s";
+        return playbackStrings.durationZeroStringProperty.value;
       }
-      return `${seconds.toFixed(2)} s`;
+      return `${seconds.toFixed(2)} ${playbackStrings.secondsUnitStringProperty.value}`;
     };
 
     const totalTimeTextProperty = new DerivedProperty([model.durationProperty], (duration: number) =>
@@ -152,7 +197,7 @@ export class PlaybackControlsNode extends HBox {
     // ── Rewind-to-zero button ──────────────────────────────────────────────
     const rewindButton = new RectangularPushButton({
       content: new Text("\u23EE", {
-        font: new PhetFont(16),
+        font: new PhetFont(REWIND_BUTTON_ICON_SIZE),
         fill: TrackLabColors.textOnDarkProperty,
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,
@@ -166,6 +211,7 @@ export class PlaybackControlsNode extends HBox {
       },
       enabledProperty: model.videoLoadedProperty,
       tandem: Tandem.OPT_OUT,
+      accessibleName: a11yStrings.rewindToStartStringProperty,
     });
 
     this.children = [timeControlNode, scrubber, rewindButton, infoDisplay];
@@ -174,10 +220,11 @@ export class PlaybackControlsNode extends HBox {
       timeSpeedProperty.unlink(onSpeedChange);
       model.playbackRateProperty.unlink(onRateChange);
       model.currentTimeProperty.unlink(onTimeChange);
+      model.durationProperty.unlink(durationListener);
+      model.frameRateProperty.unlink(frameRateListener);
       timeSpeedProperty.dispose();
-      rangeProperty.dispose();
       totalTimeTextProperty.dispose();
-      frameCountTextProperty.dispose(); // no longer observes frameDurationProperty
+      frameCountTextProperty.dispose();
     };
   }
 

@@ -1,3 +1,10 @@
+/**
+ * WebcamPanel.ts
+ *
+ * Dialog for recording videos from a connected webcam. Handles device selection,
+ * live preview, recording controls, and frame rate configuration.
+ */
+
 import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
@@ -13,7 +20,12 @@ import {
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
+import {
+  BUTTON_X_MARGIN,
+  BUTTON_Y_MARGIN,
+  WEBCAM_PREVIEW_HEIGHT,
+  WEBCAM_PREVIEW_WIDTH,
+} from "../../TrackLabConstants.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -33,6 +45,10 @@ const CAMERA_ROW_SPACING = 8; // HBox spacing between camera icon and select
 const FPS_CONTROL_SPACING = 6; // gap between "fps:" label and spinner
 const FPS_SPINNER_SCALE = 0.7;
 const FPS_SPINNER_MIN_WIDTH = 50;
+const CAMERA_SELECT_FONT = "14px sans-serif"; // CSS font for the native <select> element
+const CAMERA_SELECT_PADDING = "4px"; // CSS padding for the native <select> element
+const TIMER_INTERVAL_MS = 1000; // ms between recording-timer display updates
+const SECONDS_PER_MINUTE = 60; // conversion factor for mm:ss timer formatting
 
 /** Configuration passed to WebcamPanel at construction time. */
 type WebcamPanelOptions = {
@@ -74,11 +90,12 @@ export class WebcamPanel extends Node {
   public constructor(options: WebcamPanelOptions) {
     super();
     this.model = options.model;
+    this.webcamStrings = StringManager.getInstance().getWebcam();
 
     // ── Camera select ─────────────────────────────────────────────────────
     this.cameraSelect = document.createElement("select");
-    this.cameraSelect.style.font = "14px sans-serif";
-    this.cameraSelect.style.padding = "4px";
+    this.cameraSelect.style.font = CAMERA_SELECT_FONT;
+    this.cameraSelect.style.padding = CAMERA_SELECT_PADDING;
     const cameraSelectDom = new DOM(this.cameraSelect, { allowInput: true });
 
     this.cameraSelect.addEventListener("change", async () => {
@@ -129,7 +146,7 @@ export class WebcamPanel extends Node {
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       pathOptions: { stroke: TrackLabColors.textOnDarkProperty },
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Cancel",
+      accessibleName: this.webcamStrings.cancelStringProperty,
       listener: () => {
         this.cleanup();
         options.onCancel();
@@ -146,7 +163,7 @@ export class WebcamPanel extends Node {
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Start Recording",
+      accessibleName: this.webcamStrings.startRecordingStringProperty,
       listener: () => this.startRecording(),
     });
 
@@ -161,7 +178,7 @@ export class WebcamPanel extends Node {
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Stop Recording",
+      accessibleName: this.webcamStrings.stopRecordingStringProperty,
       listener: () => this.stopRecording(),
     });
 
@@ -171,7 +188,7 @@ export class WebcamPanel extends Node {
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       iconHeight: REFRESH_ICON_HEIGHT,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Re-record",
+      accessibleName: this.webcamStrings.reRecordStringProperty,
       listener: () => this.goToPreview(),
     });
 
@@ -186,7 +203,7 @@ export class WebcamPanel extends Node {
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Use Video",
+      accessibleName: this.webcamStrings.useVideoStringProperty,
       listener: () => this.useVideo(options.onVideoReady),
     });
 
@@ -222,7 +239,7 @@ export class WebcamPanel extends Node {
     const cameraIcon = new Path(cameraSolidShape, {
       scale: CAMERA_ICON_SCALE,
       fill: TrackLabColors.textMutedProperty,
-      accessibleName: "Camera",
+      accessibleName: this.webcamStrings.cameraStringProperty,
     });
     this.previewLayer = new VBox({
       children: [
@@ -264,7 +281,7 @@ export class WebcamPanel extends Node {
     const titleIcon = new Path(cameraSolidShape, {
       scale: TITLE_CAMERA_ICON_SCALE,
       fill: TrackLabColors.textOnDarkProperty,
-      accessibleName: "Record from Webcam",
+      accessibleName: this.webcamStrings.recordFromWebcamStringProperty,
     });
     const content = new VBox({
       children: [titleIcon, this.previewLayer, this.reviewLayer, this.statusText],
@@ -285,7 +302,6 @@ export class WebcamPanel extends Node {
     // keep button refs for toggling
     this._startButton = startButton;
     this._stopButton = stopButton;
-    this.webcamStrings = StringManager.getInstance().getWebcam();
   }
 
   private readonly _startButton: RectangularPushButton;
@@ -361,7 +377,8 @@ export class WebcamPanel extends Node {
     cameras.forEach((cam, i) => {
       const opt = document.createElement("option");
       opt.value = cam.deviceId;
-      opt.textContent = cam.label || `Camera ${i + 1}`;
+      opt.textContent =
+        cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
       this.cameraSelect.appendChild(opt);
     });
   }
@@ -392,7 +409,7 @@ export class WebcamPanel extends Node {
     this.reviewElement.src = URL.createObjectURL(this.recordedBlob);
 
     // Estimate FPS and update the display
-    this.setStatus("Estimating frame rate...");
+    this.setStatus(this.webcamStrings.estimatingFrameRateStringProperty.value);
     try {
       // Pass the pre-captured stream FPS if available
       if (streamFps && streamFps > 0) {
@@ -454,20 +471,28 @@ export class WebcamPanel extends Node {
 
     // Format the display string
     const confidenceText =
-      confidence === "high" ? "High confidence" : confidence === "medium" ? "Medium confidence" : "Low confidence";
+      confidence === "high"
+        ? this.webcamStrings.highConfidenceStringProperty.value
+        : confidence === "medium"
+          ? this.webcamStrings.mediumConfidenceStringProperty.value
+          : this.webcamStrings.lowConfidenceStringProperty.value;
 
-    this.fpsEstimateText.string = `Estimated: ${fps} fps ${confidenceSymbol} (${confidenceText}, ${method})`;
+    this.fpsEstimateText.string = this.webcamStrings.estimatedFpsStringProperty.value
+      .replace("{{fps}}", String(fps))
+      .replace("{{symbol}}", confidenceSymbol)
+      .replace("{{confidence}}", confidenceText)
+      .replace("{{method}}", method);
   }
 
   private startTimer(): void {
     this.timerInterval = setInterval(() => {
-      const secs = Math.floor((Date.now() - this.recordingStart) / 1000);
-      const m = Math.floor(secs / 60)
+      const secs = Math.floor((Date.now() - this.recordingStart) / TIMER_INTERVAL_MS);
+      const m = Math.floor(secs / SECONDS_PER_MINUTE)
         .toString()
         .padStart(2, "0");
-      const s = (secs % 60).toString().padStart(2, "0");
+      const s = (secs % SECONDS_PER_MINUTE).toString().padStart(2, "0");
       this.setStatus(this.webcamStrings.recordingStringProperty.value.replace("{{time}}", `${m}:${s}`));
-    }, 1000);
+    }, TIMER_INTERVAL_MS);
   }
 
   private stopTimer(): void {

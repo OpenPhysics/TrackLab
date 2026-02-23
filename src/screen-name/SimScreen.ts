@@ -1,3 +1,10 @@
+/**
+ * SimScreen.ts
+ *
+ * The sole simulation screen that wires together the model (SimModel) and view (SimScreenView)
+ * for the physics video analysis tool.
+ */
+
 import { Screen, type ScreenOptions } from "scenerystack/sim";
 import type { TrackLabPreferencesModel } from "../preferences/TrackLabPreferencesModel.js";
 import { SimModel } from "./model/SimModel.js";

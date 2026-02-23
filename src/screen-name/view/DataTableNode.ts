@@ -21,6 +21,13 @@ import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../Tra
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
+// ── Accessibility ─────────────────────────────────────────────────────────────
+// The HTML table gets a <caption> element for screen readers. The caption text
+// is supplied by the caller so it can be localized.
+type A11yLabels = {
+  tableCaption: string;
+};
+
 // ── Grid geometry ────────────────────────────────────────────────────────────
 const MAX_TABLE_WIDTH = 600; // Allow table to grow wider for more tracks
 const MIN_TABLE_HEIGHT = 100; // Minimum height when little data
@@ -30,6 +37,7 @@ const MAX_TABLE_HEIGHT = 400; // Maximum height before scrolling (increased from
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
 const TABLE_FONT_SIZE = 11; // HTML table font size in px
 const EXPORT_BUTTON_FONT_SIZE = 9;
+const DOWNLOAD_ICON_FONT_SIZE = 11; // font size for the ⬇ icon glyph
 
 // ── Precision ─────────────────────────────────────────────────────────────────
 // Both values are kept equal so exported CSV data matches what users see on screen.
@@ -43,6 +51,15 @@ const PANEL_Y_MARGIN = 10;
 const CONTENT_SPACING = 6; // gap between title row and table DOM node
 const TITLE_ROW_SPACING = 8; // gap between title label and export button
 const EXPORT_BUTTON_ICON_SPACING = 3;
+
+// ── HTML table CSS dimensions ─────────────────────────────────────────────────
+const TABLE_WRAPPER_BORDER_RADIUS = 3; // px, border-radius on the scroll wrapper
+const TABLE_HEADER_PADDING_Y = 4; // px, vertical padding in header cells
+const TABLE_HEADER_PADDING_X = 8; // px, horizontal padding in header cells
+const TABLE_EMPTY_CELL_PADDING_Y = 8; // px, vertical padding in the "no data" placeholder cell
+const TABLE_EMPTY_CELL_PADDING_X = 16; // px, horizontal padding in the "no data" placeholder cell
+const TABLE_CELL_PADDING_Y = 3; // px, vertical padding in data cells
+const TABLE_CELL_PADDING_X = 6; // px, horizontal padding in data cells
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -132,6 +149,7 @@ function buildHtmlTable(
   unit: string,
   colors: TableColors,
   labels: TableLabels,
+  a11y: A11yLabels,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -142,7 +160,7 @@ function buildHtmlTable(
     min-height: ${MIN_TABLE_HEIGHT}px;
     max-height: ${MAX_TABLE_HEIGHT}px;
     border: 1px solid ${colors.gridStroke};
-    border-radius: 3px;
+    border-radius: ${TABLE_WRAPPER_BORDER_RADIUS}px;
     background: ${colors.background};
   `;
 
@@ -154,6 +172,13 @@ function buildHtmlTable(
     white-space: nowrap;
   `;
 
+  // ── Accessible caption (visually hidden but read by screen readers) ────────
+  const caption = document.createElement("caption");
+  caption.textContent = a11y.tableCaption;
+  caption.style.cssText =
+    "position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;";
+  table.appendChild(caption);
+
   // ── Header row ─────────────────────────────────────────────────────────────
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
@@ -162,7 +187,7 @@ function buildHtmlTable(
     background: ${colors.headerBg};
     color: ${colors.headerText};
     font-weight: bold;
-    padding: 4px 8px;
+    padding: ${TABLE_HEADER_PADDING_Y}px ${TABLE_HEADER_PADDING_X}px;
     border: 1px solid ${colors.gridStroke};
     text-align: center;
     position: sticky;
@@ -170,12 +195,17 @@ function buildHtmlTable(
     z-index: 1;
   `;
 
-  const addHeaderCell = (content: string | HTMLElement) => {
+  const addHeaderCell = (content: string | HTMLElement, fullLabel?: string) => {
     const th = document.createElement("th");
+    th.scope = "col";
     if (typeof content === "string") {
       th.textContent = content;
     } else {
       th.appendChild(content);
+      // Provide a plain-text aria-label when the header content is HTML (colored symbol)
+      if (fullLabel) {
+        th.setAttribute("aria-label", fullLabel);
+      }
     }
     th.style.cssText = headerStyle;
     headerRow.appendChild(th);
@@ -214,8 +244,8 @@ function buildHtmlTable(
     addHeaderCell(`y (${unit})`);
   } else {
     for (const track of tracks) {
-      addHeaderCell(makeTrackHeader("x", track));
-      addHeaderCell(makeTrackHeader("y", track));
+      addHeaderCell(makeTrackHeader("x", track), `${track.symbol} x (${unit})`);
+      addHeaderCell(makeTrackHeader("y", track), `${track.symbol} y (${unit})`);
     }
   }
 
@@ -232,7 +262,7 @@ function buildHtmlTable(
     td.colSpan = Math.max(MIN_EMPTY_COL_COUNT, 2 + tracks.length * 2);
     td.textContent = labels.noData;
     td.style.cssText = `
-      padding: 8px 16px;
+      padding: ${TABLE_EMPTY_CELL_PADDING_Y}px ${TABLE_EMPTY_CELL_PADDING_X}px;
       text-align: center;
       color: ${colors.emptyText};
       font-style: italic;
@@ -249,7 +279,7 @@ function buildHtmlTable(
       tr.style.background = i % 2 === 0 ? colors.rowOdd : colors.rowEven;
 
       const cellStyle = `
-        padding: 3px 6px;
+        padding: ${TABLE_CELL_PADDING_Y}px ${TABLE_CELL_PADDING_X}px;
         border: 1px solid ${colors.gridStroke};
         text-align: center;
       `;
@@ -328,7 +358,7 @@ function buildSingleDataRow(
 function makeDownloadIcon(): Node {
   // Simple text-based icon
   return new Text("⬇", {
-    font: new PhetFont({ size: 11 }),
+    font: new PhetFont({ size: DOWNLOAD_ICON_FONT_SIZE }),
     fill: TrackLabColors.textOnDarkProperty,
   });
 }
@@ -354,11 +384,16 @@ export class DataTableNode extends Panel {
     unitProperty: TReadOnlyProperty<string>,
   ) {
     const dataTableStrings = StringManager.getInstance().getDataTable();
+    const a11yStrings = StringManager.getInstance().getA11y();
 
     const getLabels = (): TableLabels => ({
       frame: dataTableStrings.frameStringProperty.value,
       timeSeconds: dataTableStrings.timeSecondsStringProperty.value,
       noData: dataTableStrings.noDataStringProperty.value,
+    });
+
+    const getA11yLabels = (): A11yLabels => ({
+      tableCaption: a11yStrings.dataTableStringProperty.value,
     });
 
     // Helper to get current table colors from properties
@@ -374,7 +409,7 @@ export class DataTableNode extends Panel {
     });
 
     // ── Create scrollable HTML table ─────────────────────────────────────────
-    const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels());
+    const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels(), getA11yLabels());
     const tableDomNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
@@ -392,6 +427,7 @@ export class DataTableNode extends Panel {
         ],
         spacing: EXPORT_BUTTON_ICON_SPACING,
       }),
+      accessibleName: a11yStrings.exportCSVStringProperty,
       baseColor: TrackLabColors.exportButtonProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: BUTTON_X_MARGIN,
@@ -448,7 +484,7 @@ export class DataTableNode extends Panel {
     // Replaces the entire table DOM and refreshes cached references.
     const doFullRebuild = (tracks: readonly Track[], unit: string) => {
       const colors = getTableColors();
-      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels());
+      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels(), getA11yLabels());
 
       this.tableWrapper.innerHTML = "";
       if (newWrapper.firstChild) {
@@ -517,7 +553,7 @@ export class DataTableNode extends Panel {
       }
 
       const colors = getTableColors();
-      const cellStyle = `padding: 3px 6px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
+      const cellStyle = `padding: ${TABLE_CELL_PADDING_Y}px ${TABLE_CELL_PADDING_X}px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
 
       // Remove the "no data" placeholder row when the first real rows arrive.
       if (this.frameRowMap.size === 0 && dataRows.length > 0) {

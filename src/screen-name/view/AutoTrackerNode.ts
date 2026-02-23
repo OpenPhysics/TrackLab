@@ -1,3 +1,10 @@
+/**
+ * AutoTrackerNode.ts
+ *
+ * Overlay UI for the auto-tracking tool. Allows users to define a search region
+ * and template, then displays the tracked trail and tracking status.
+ */
+
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
@@ -18,6 +25,7 @@ const CROSSHAIR_LINE_WIDTH = 2;
 const CROSSHAIR_CIRCLE_RADIUS = 6; // small filled circle at crosshair centre
 const MIN_REGION_SIZE = 4; // minimum pixel width/height to begin tracking
 const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
+const LABELS_SPACING = 8; // vertical gap between hint text and error text
 
 /**
  * Transparent SceneryStack overlay that sits directly on top of the video element.
@@ -89,7 +97,7 @@ export class AutoTrackerNode extends Node {
       fill: "transparent",
       cursor: "crosshair",
       tagName: "div",
-      accessibleName: "Video tracking area — drag to select object to track",
+      accessibleName: autoTrackerStrings.videoTrackingAreaStringProperty,
     });
     this.addChild(hitArea);
 
@@ -109,7 +117,7 @@ export class AutoTrackerNode extends Node {
     // Stack hint and error vertically so both are centred in the video area.
     const centeredLabels = new VBox({
       children: [this.hintText, this.errorText],
-      spacing: 8,
+      spacing: LABELS_SPACING,
       align: "center",
       center: new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2),
     });
@@ -246,7 +254,8 @@ export class AutoTrackerNode extends Node {
               // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
               console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
               if (this.initVersion === capturedVersion) {
-                const message = err instanceof Error ? err.message : "Tracking initialisation failed. Try again.";
+                const message =
+                  err instanceof Error ? err.message : autoTrackerStrings.trackingInitFailedStringProperty.value;
                 this.errorText.string = message;
                 this.errorText.visible = true;
                 this.hintText.visible = true;

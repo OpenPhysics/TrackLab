@@ -1,3 +1,10 @@
+/**
+ * VideoPlayerNode.ts
+ *
+ * Main video display component. Hosts the video element and all interactive overlays
+ * (coordinate system, calibration, auto-tracker, digitizing).
+ */
+
 import { DerivedProperty } from "scenerystack/axon";
 import { Dimension2 } from "scenerystack/dot";
 import { DOM, Node, VBox } from "scenerystack/scenery";
@@ -7,6 +14,7 @@ import type { SimModel } from "../model/SimModel.js";
 
 const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
 
+import { StringManager } from "../../i18n/StringManager.js";
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
@@ -38,6 +46,8 @@ export class VideoPlayerNode extends Node {
     super();
     this.model = model;
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     // ── HTML video element ─────────────────────────────────────────────────
     this.videoElement = document.createElement("video");
     this.videoElement.width = VIDEO_WIDTH;
@@ -45,6 +55,7 @@ export class VideoPlayerNode extends Node {
     this.videoElement.preload = "metadata";
     this.videoElement.crossOrigin = "anonymous";
     this.videoElement.style.display = "block";
+    this.videoElement.setAttribute("aria-label", a11yStrings.videoPlayerStringProperty.value);
     const videoBackgroundListener = (c: import("scenerystack").Color) => {
       this.videoElement.style.background = c.toCSS();
     };

@@ -1,3 +1,10 @@
+/**
+ * CalibrationToolNode.ts
+ *
+ * Calibration UI for setting the real-world scale. Users measure a reference distance
+ * and specify its value in desired units to establish the model-to-pixel scale.
+ */
+
 import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";
@@ -7,8 +14,9 @@ import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
 import { ButtonNode, ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
@@ -54,6 +62,8 @@ export class CalibrationToolNode extends Node {
   public constructor(videoLoadedProperty: TReadOnlyProperty<boolean>, listParent: Node, model: SimModel) {
     super();
 
+    const calibrationStrings = StringManager.getInstance().getCalibration();
+
     // ── Connecting line with shadow for visibility on all backgrounds ────
     // Shadow layer (rendered first, underneath)
     const calibrationLineShadow = new Line(0, 0, 0, 0, {
@@ -87,7 +97,7 @@ export class CalibrationToolNode extends Node {
     this.addChild(endpoint2Shadow);
 
     // Main bright circles (rendered on top with interaction)
-    const makeEndpoint = (accessibleName: string) =>
+    const makeEndpoint = (accessibleName: TReadOnlyProperty<string>) =>
       new Circle(ENDPOINT_RADIUS, {
         fill: TrackLabColors.calibrationFillProperty,
         stroke: TrackLabColors.calibrationStrokeProperty,
@@ -97,8 +107,8 @@ export class CalibrationToolNode extends Node {
         focusable: true,
         accessibleName: accessibleName,
       });
-    const endpoint1 = makeEndpoint("Calibration Point 1");
-    const endpoint2 = makeEndpoint("Calibration Point 2");
+    const endpoint1 = makeEndpoint(calibrationStrings.calibrationPoint1StringProperty);
+    const endpoint2 = makeEndpoint(calibrationStrings.calibrationPoint2StringProperty);
     const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + ENDPOINT_TOUCH_DILATION);
     endpoint1.mouseArea = endpointTouchArea;
     endpoint1.touchArea = endpointTouchArea;
@@ -185,7 +195,7 @@ export class CalibrationToolNode extends Node {
 
     // ── Overlap warning text ──────────────────────────────────────────────
     // Shown when endpoints are too close together to produce a valid calibration.
-    const overlapWarning = new Text("Points too close — move apart to calibrate", {
+    const overlapWarning = new Text(calibrationStrings.pointsTooCloseStringProperty, {
       font: WARNING_FONT,
       fill: ENDPOINT_WARNING_COLOR,
       visible: false,
@@ -257,9 +267,20 @@ export class CalibrationToolNode extends Node {
     };
     videoLoadedProperty.link(onVideoLoaded);
 
+    // ── Lock out interaction while the user is manually digitizing ─────────
+    // Dimming + pickable:false signals that the tool is temporarily inactive
+    // so the user cannot accidentally move calibration points mid-session.
+    const onActiveTrackChange = (activeId: string | null) => {
+      const isDigitizing = activeId !== null;
+      this.pickable = !isDigitizing;
+      this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
+    };
+    model.activeTrackIdProperty.link(onActiveTrackChange);
+
     this.disposeCalibrationToolNode = () => {
       calibMultilink.dispose();
       videoLoadedProperty.unlink(onVideoLoaded);
+      model.activeTrackIdProperty.unlink(onActiveTrackChange);
       rangePatternProperty.dispose();
       buttonLabelProperty.dispose();
     };

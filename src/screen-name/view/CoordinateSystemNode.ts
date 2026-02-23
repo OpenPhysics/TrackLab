@@ -1,3 +1,10 @@
+/**
+ * CoordinateSystemNode.ts
+ *
+ * Draggable and rotatable coordinate system axes overlay for defining the origin
+ * and orientation of the real-world coordinate frame in the video.
+ */
+
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import type { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
@@ -6,6 +13,7 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import { DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
@@ -134,7 +142,7 @@ export class CoordinateSystemNode extends Node {
       cursor: "crosshair",
       tagName: "div",
       focusable: true,
-      accessibleName: "Rotation Handle",
+      accessibleName: coordStrings.rotationHandleStringProperty,
     });
     const handleTouchArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_TOUCH_DILATION);
     handleDisk.mouseArea = handleTouchArea;
@@ -159,7 +167,7 @@ export class CoordinateSystemNode extends Node {
       cursor: "move",
       tagName: "div",
       focusable: true,
-      accessibleName: "Coordinate System",
+      accessibleName: coordStrings.coordinateSystemStringProperty,
     });
     // Expand touch/mouse area for easier pickup (origin + axes region)
     positionNode.boundsProperty.lazyLink(() => {
@@ -183,10 +191,20 @@ export class CoordinateSystemNode extends Node {
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener(
       new RichDragListener({
-        positionProperty: model.coordOriginProperty,
+        dragListenerOptions: {
+          drag: (_event, listener) => {
+            const newPos = listener.parentPoint;
+            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+          },
+        },
         keyboardDragListenerOptions: {
           dragSpeed: TRANSLATE_DRAG_SPEED,
           shiftDragSpeed: TRANSLATE_SHIFT_DRAG_SPEED,
+          drag: (_event, listener) => {
+            const currentPos = model.coordOriginProperty.value;
+            const newPos = currentPos.plus(listener.modelDelta);
+            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+          },
         },
         tandem: Tandem.OPT_OUT,
       }),
@@ -221,10 +239,22 @@ export class CoordinateSystemNode extends Node {
     };
     videoLoadedProperty.link(onVideoLoaded);
 
+    // ── Lock out interaction while the user is manually digitizing ─────────
+    // Dimming + pickable:false signals that the coordinate system is temporarily
+    // inactive so the user cannot accidentally move or rotate the axes while
+    // placing track points.
+    const onActiveTrackChange = (activeId: string | null) => {
+      const isDigitizing = activeId !== null;
+      this.pickable = !isDigitizing;
+      this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
+    };
+    model.activeTrackIdProperty.link(onActiveTrackChange);
+
     this.disposeCoordinateSystemNode = () => {
       model.coordOriginProperty.unlink(onOriginChange);
       model.coordAngleProperty.unlink(onAngleChange);
       videoLoadedProperty.unlink(onVideoLoaded);
+      model.activeTrackIdProperty.unlink(onActiveTrackChange);
     };
   }
 

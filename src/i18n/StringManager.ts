@@ -215,9 +215,28 @@ export class StringManager {
    */
   public getAutoTracker(): {
     dragToSelectStringProperty: ReadOnlyProperty<string>;
+    videoTrackingAreaStringProperty: ReadOnlyProperty<string>;
+    trackingInitFailedStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       dragToSelectStringProperty: this.stringProperties.autoTracker.dragToSelectStringProperty,
+      videoTrackingAreaStringProperty: this.stringProperties.autoTracker.videoTrackingAreaStringProperty,
+      trackingInitFailedStringProperty: this.stringProperties.autoTracker.trackingInitFailedStringProperty,
+    };
+  }
+
+  /**
+   * Get calibration tool string properties
+   */
+  public getCalibration(): {
+    pointsTooCloseStringProperty: ReadOnlyProperty<string>;
+    calibrationPoint1StringProperty: ReadOnlyProperty<string>;
+    calibrationPoint2StringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      pointsTooCloseStringProperty: this.stringProperties.calibration.pointsTooCloseStringProperty,
+      calibrationPoint1StringProperty: this.stringProperties.calibration.calibrationPoint1StringProperty,
+      calibrationPoint2StringProperty: this.stringProperties.calibration.calibrationPoint2StringProperty,
     };
   }
 
@@ -278,10 +297,29 @@ export class StringManager {
   public getCoordSystem(): {
     xAxisLabelStringProperty: ReadOnlyProperty<string>;
     yAxisLabelStringProperty: ReadOnlyProperty<string>;
+    rotationHandleStringProperty: ReadOnlyProperty<string>;
+    coordinateSystemStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       xAxisLabelStringProperty: this.stringProperties.coordSystem.xAxisLabelStringProperty,
       yAxisLabelStringProperty: this.stringProperties.coordSystem.yAxisLabelStringProperty,
+      rotationHandleStringProperty: this.stringProperties.coordSystem.rotationHandleStringProperty,
+      coordinateSystemStringProperty: this.stringProperties.coordSystem.coordinateSystemStringProperty,
+    };
+  }
+
+  /**
+   * Get video source control string properties
+   */
+  public getVideoSource(): {
+    downloadVideoStringProperty: ReadOnlyProperty<string>;
+    openVideoFileStringProperty: ReadOnlyProperty<string>;
+    recordWebcamStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      downloadVideoStringProperty: this.stringProperties.videoSource.downloadVideoStringProperty,
+      openVideoFileStringProperty: this.stringProperties.videoSource.openVideoFileStringProperty,
+      recordWebcamStringProperty: this.stringProperties.videoSource.recordWebcamStringProperty,
     };
   }
 
@@ -294,6 +332,19 @@ export class StringManager {
     processingStringProperty: ReadOnlyProperty<string>;
     fixingMetadataStringProperty: ReadOnlyProperty<string>;
     recordingStringProperty: ReadOnlyProperty<string>;
+    cancelStringProperty: ReadOnlyProperty<string>;
+    startRecordingStringProperty: ReadOnlyProperty<string>;
+    stopRecordingStringProperty: ReadOnlyProperty<string>;
+    reRecordStringProperty: ReadOnlyProperty<string>;
+    useVideoStringProperty: ReadOnlyProperty<string>;
+    cameraStringProperty: ReadOnlyProperty<string>;
+    recordFromWebcamStringProperty: ReadOnlyProperty<string>;
+    estimatingFrameRateStringProperty: ReadOnlyProperty<string>;
+    highConfidenceStringProperty: ReadOnlyProperty<string>;
+    mediumConfidenceStringProperty: ReadOnlyProperty<string>;
+    lowConfidenceStringProperty: ReadOnlyProperty<string>;
+    estimatedFpsStringProperty: ReadOnlyProperty<string>;
+    cameraLabelStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       requestingAccessStringProperty: this.stringProperties.webcam.requestingAccessStringProperty,
@@ -301,6 +352,107 @@ export class StringManager {
       processingStringProperty: this.stringProperties.webcam.processingStringProperty,
       fixingMetadataStringProperty: this.stringProperties.webcam.fixingMetadataStringProperty,
       recordingStringProperty: this.stringProperties.webcam.recordingStringProperty,
+      cancelStringProperty: this.stringProperties.webcam.cancelStringProperty,
+      startRecordingStringProperty: this.stringProperties.webcam.startRecordingStringProperty,
+      stopRecordingStringProperty: this.stringProperties.webcam.stopRecordingStringProperty,
+      reRecordStringProperty: this.stringProperties.webcam.reRecordStringProperty,
+      useVideoStringProperty: this.stringProperties.webcam.useVideoStringProperty,
+      cameraStringProperty: this.stringProperties.webcam.cameraStringProperty,
+      recordFromWebcamStringProperty: this.stringProperties.webcam.recordFromWebcamStringProperty,
+      estimatingFrameRateStringProperty: this.stringProperties.webcam.estimatingFrameRateStringProperty,
+      highConfidenceStringProperty: this.stringProperties.webcam.highConfidenceStringProperty,
+      mediumConfidenceStringProperty: this.stringProperties.webcam.mediumConfidenceStringProperty,
+      lowConfidenceStringProperty: this.stringProperties.webcam.lowConfidenceStringProperty,
+      estimatedFpsStringProperty: this.stringProperties.webcam.estimatedFpsStringProperty,
+      cameraLabelStringProperty: this.stringProperties.webcam.cameraLabelStringProperty,
+    };
+  }
+
+  /**
+   * Get kinematics graph string properties
+   */
+  public getKinematicsGraph(): {
+    trackSelectorLabelStringProperty: ReadOnlyProperty<string>;
+    noTracksStringProperty: ReadOnlyProperty<string>;
+    trackItemStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      trackSelectorLabelStringProperty: this.stringProperties.kinematicsGraph.trackSelectorLabelStringProperty,
+      noTracksStringProperty: this.stringProperties.kinematicsGraph.noTracksStringProperty,
+      trackItemStringProperty: this.stringProperties.kinematicsGraph.trackItemStringProperty,
+    };
+  }
+
+  /**
+   * Get playback format string properties
+   */
+  public getPlayback(): {
+    secondsUnitStringProperty: ReadOnlyProperty<string>;
+    durationZeroStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      secondsUnitStringProperty: this.stringProperties.playback.secondsUnitStringProperty,
+      durationZeroStringProperty: this.stringProperties.playback.durationZeroStringProperty,
+    };
+  }
+
+  /**
+   * Get accessibility string properties
+   */
+  public getA11y(): {
+    videoPlayerStringProperty: ReadOnlyProperty<string>;
+    videoScrubberStringProperty: ReadOnlyProperty<string>;
+    rewindToStartStringProperty: ReadOnlyProperty<string>;
+    digitizingAreaStringProperty: ReadOnlyProperty<string>;
+    digitizeTrackStringProperty: ReadOnlyProperty<string>;
+    removeTrackStringProperty: ReadOnlyProperty<string>;
+    dataTableStringProperty: ReadOnlyProperty<string>;
+    exportCSVStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      videoPlayerStringProperty: this.stringProperties.a11y.videoPlayerStringProperty,
+      videoScrubberStringProperty: this.stringProperties.a11y.videoScrubberStringProperty,
+      rewindToStartStringProperty: this.stringProperties.a11y.rewindToStartStringProperty,
+      digitizingAreaStringProperty: this.stringProperties.a11y.digitizingAreaStringProperty,
+      digitizeTrackStringProperty: this.stringProperties.a11y.digitizeTrackStringProperty,
+      removeTrackStringProperty: this.stringProperties.a11y.removeTrackStringProperty,
+      dataTableStringProperty: this.stringProperties.a11y.dataTableStringProperty,
+      exportCSVStringProperty: this.stringProperties.a11y.exportCSVStringProperty,
+    };
+  }
+
+  /**
+   * Get info dialog string properties
+   */
+  public getInfoDialog(): {
+    titleStringProperty: ReadOnlyProperty<string>;
+    loadVideoTitleStringProperty: ReadOnlyProperty<string>;
+    loadVideoBodyStringProperty: ReadOnlyProperty<string>;
+    coordinateSystemTitleStringProperty: ReadOnlyProperty<string>;
+    coordinateSystemBodyStringProperty: ReadOnlyProperty<string>;
+    calibrationTitleStringProperty: ReadOnlyProperty<string>;
+    calibrationBodyStringProperty: ReadOnlyProperty<string>;
+    addTrackTitleStringProperty: ReadOnlyProperty<string>;
+    addTrackBodyStringProperty: ReadOnlyProperty<string>;
+    digitizeTitleStringProperty: ReadOnlyProperty<string>;
+    digitizeBodyStringProperty: ReadOnlyProperty<string>;
+    autoTrackTitleStringProperty: ReadOnlyProperty<string>;
+    autoTrackBodyStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      titleStringProperty: this.stringProperties.infoDialog.titleStringProperty,
+      loadVideoTitleStringProperty: this.stringProperties.infoDialog.loadVideoTitleStringProperty,
+      loadVideoBodyStringProperty: this.stringProperties.infoDialog.loadVideoBodyStringProperty,
+      coordinateSystemTitleStringProperty: this.stringProperties.infoDialog.coordinateSystemTitleStringProperty,
+      coordinateSystemBodyStringProperty: this.stringProperties.infoDialog.coordinateSystemBodyStringProperty,
+      calibrationTitleStringProperty: this.stringProperties.infoDialog.calibrationTitleStringProperty,
+      calibrationBodyStringProperty: this.stringProperties.infoDialog.calibrationBodyStringProperty,
+      addTrackTitleStringProperty: this.stringProperties.infoDialog.addTrackTitleStringProperty,
+      addTrackBodyStringProperty: this.stringProperties.infoDialog.addTrackBodyStringProperty,
+      digitizeTitleStringProperty: this.stringProperties.infoDialog.digitizeTitleStringProperty,
+      digitizeBodyStringProperty: this.stringProperties.infoDialog.digitizeBodyStringProperty,
+      autoTrackTitleStringProperty: this.stringProperties.infoDialog.autoTrackTitleStringProperty,
+      autoTrackBodyStringProperty: this.stringProperties.infoDialog.autoTrackBodyStringProperty,
     };
   }
 

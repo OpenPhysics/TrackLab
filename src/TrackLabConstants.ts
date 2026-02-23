@@ -17,16 +17,16 @@ const LAYOUT_WIDTH = 1024;
 // ── Video display dimensions ───────────────────────────────────────────────────
 // The video element is always rendered at this fixed pixel size.
 // Both the OpenCV tracker and all overlay nodes depend on these values.
-export const VIDEO_WIDTH = 640;
-export const VIDEO_HEIGHT = 360;
+export const VIDEO_WIDTH = 768;
+export const VIDEO_HEIGHT = 432;
 
 // ── Video position in screen (layout) coordinates ────────────────────────────
 // The video player VBox is top-anchored at y=10.  The source-control row
 // (~40 px) plus MAIN_CONTENT_SPACING (10 px) places the video top at ~60 px,
-// so the video centre sits at approximately y=240.
+// so the video centre sits at approximately y=276 (keeping same top position as before).
 export const VIDEO_PLAYER_Y_OFFSET = -20; // kept for reference; no longer used for positioning
 export const VIDEO_CENTER_X = LAYOUT_WIDTH / 2; // 512
-export const VIDEO_CENTER_Y = 240; // approximate video centre with top-anchored layout
+export const VIDEO_CENTER_Y = 276; // approximate video centre with top-anchored layout
 
 // ── Initial calibration tool geometry ─────────────────────────────────────────
 // Half-length of the default calibration segment (pixels from centre to each endpoint).
@@ -57,5 +57,10 @@ export const BUTTON_X_MARGIN = 8;
 export const BUTTON_Y_MARGIN = 6;
 
 // ── Webcam panel ──────────────────────────────────────────────────────────────
-export const WEBCAM_PREVIEW_WIDTH = 480; // width of the preview and review video elements
-export const WEBCAM_PREVIEW_HEIGHT = 270; // height of the preview and review video elements
+export const WEBCAM_PREVIEW_WIDTH = 576; // width of the preview and review video elements (20% bigger)
+export const WEBCAM_PREVIEW_HEIGHT = 324; // height of the preview and review video elements (20% bigger)
+
+// ── Overlay tool interaction ───────────────────────────────────────────────────
+// Opacity applied to coordinate system and calibration tool overlays while
+// the user is actively digitizing, signalling that those tools are locked out.
+export const DIGITIZING_DIM_OPACITY = 0.35;
