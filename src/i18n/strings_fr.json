@@ -57,7 +57,9 @@
     "showVelocity": "Afficher la vitesse",
     "showVelocityDescription": "Lorsque activ\u00e9, les composantes de vitesse (vx, vy, rapidit\u00e9) sont disponibles comme choix sur les axes du graphique cin\u00e9matique.",
     "showAcceleration": "Afficher l'acc\u00e9l\u00e9ration",
-    "showAccelerationDescription": "Lorsque activ\u00e9, les composantes d'acc\u00e9l\u00e9ration (ax, ay, |a|) sont disponibles comme choix sur les axes du graphique cin\u00e9matique."
+    "showAccelerationDescription": "Lorsque activ\u00e9, les composantes d'acc\u00e9l\u00e9ration (ax, ay, |a|) sont disponibles comme choix sur les axes du graphique cin\u00e9matique.",
+    "enableMeasurementTools": "Activer les outils de mesure",
+    "enableMeasurementToolsDescription": "Affiche un panneau avec un ruban de mesure et un rapporteur pour des mesures directes sur la vid\u00e9o."
   },
   "autoTracker": {
     "dragToSelect": "Faire glisser sur la vid\u00e9o pour s\u00e9lectionner l'objet \u00e0 suivre",

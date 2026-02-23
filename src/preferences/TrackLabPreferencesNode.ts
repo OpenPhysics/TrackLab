@@ -97,10 +97,41 @@ export class TrackLabPreferencesNode extends VBox {
       },
     );
 
+    const enableMeasurementToolsCheckbox = new Checkbox(
+      preferencesModel.enableMeasurementToolsProperty,
+      new VBox({
+        align: "left",
+        spacing: 2,
+        children: [
+          new Text(prefStrings.enableMeasurementToolsStringProperty, {
+            font: new PhetFont(14),
+            fill: TrackLabColors.preferencesTextProperty,
+          }),
+          new Text(prefStrings.enableMeasurementToolsDescriptionStringProperty, {
+            font: new PhetFont(11),
+            fill: TrackLabColors.preferencesTextSecondaryProperty,
+            maxWidth: 500,
+          }),
+        ],
+      }),
+      {
+        checkboxColor: TrackLabColors.checkboxPreferencesColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxPreferencesColorBackgroundProperty,
+        spacing: 8,
+      },
+    );
+
     super({
       align: "left",
       spacing: 12,
-      children: [header, new HStrut(600), enableAutoTrackingCheckbox, showVelocityCheckbox, showAccelerationCheckbox],
+      children: [
+        header,
+        new HStrut(600),
+        enableAutoTrackingCheckbox,
+        showVelocityCheckbox,
+        showAccelerationCheckbox,
+        enableMeasurementToolsCheckbox,
+      ],
     });
   }
 }

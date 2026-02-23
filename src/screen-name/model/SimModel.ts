@@ -46,6 +46,15 @@ const CALIB_CENTER_INITIAL = new Vector2(VIDEO_CENTER_X, VIDEO_CENTER_Y + VIDEO_
 const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
 const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
+// ── Initial measuring tape positions (view / pixel space) ─────────────────
+const TAPE_P1_INITIAL = new Vector2(VIDEO_CENTER_X - 90, VIDEO_CENTER_Y + 100);
+const TAPE_P2_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 100);
+
+// ── Initial angle tool positions (view / pixel space) ─────────────────────
+const ANGLE_VERTEX_INITIAL = new Vector2(VIDEO_CENTER_X, VIDEO_CENTER_Y + 80);
+const ANGLE_ARM1_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 20);
+const ANGLE_ARM2_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 140);
+
 // ── Bounds for clamping the coordinate-system origin ─────────────────────────
 // The origin must stay within the video area so the axes are always visible.
 // These are layout / pixel-space bounds, matching the view-layer video rectangle.
@@ -126,6 +135,19 @@ export class SimModel {
   // ── Future features (not yet implemented) ────────────────────────────
   public readonly magnifyVideoProperty = new BooleanProperty(false);
   public readonly autoTrackingProperty = new BooleanProperty(false);
+
+  // ── Measurement tools visibility ──────────────────────────────────────
+  public readonly measuringTapeVisibleProperty = new BooleanProperty(false);
+  public readonly angleToolVisibleProperty = new BooleanProperty(false);
+
+  // ── Measuring tape endpoint positions (view / pixel space) ────────────
+  public readonly tapPoint1Property = new Property<Vector2>(TAPE_P1_INITIAL.copy());
+  public readonly tapPoint2Property = new Property<Vector2>(TAPE_P2_INITIAL.copy());
+
+  // ── Angle tool positions (view / pixel space) ─────────────────────────
+  public readonly angleVertexProperty = new Property<Vector2>(ANGLE_VERTEX_INITIAL.copy());
+  public readonly angleArm1Property = new Property<Vector2>(ANGLE_ARM1_INITIAL.copy());
+  public readonly angleArm2Property = new Property<Vector2>(ANGLE_ARM2_INITIAL.copy());
 
   // ── Coordinate system tool state (view / pixel space) ─────────────────
   public readonly coordOriginProperty = new Property<Vector2>(COORD_ORIGIN_INITIAL.copy());
@@ -436,6 +458,13 @@ export class SimModel {
     this.calibrationVisibleProperty.reset();
     this.magnifyVideoProperty.reset();
     this.autoTrackingProperty.reset();
+    this.measuringTapeVisibleProperty.reset();
+    this.angleToolVisibleProperty.reset();
+    this.tapPoint1Property.reset();
+    this.tapPoint2Property.reset();
+    this.angleVertexProperty.reset();
+    this.angleArm1Property.reset();
+    this.angleArm2Property.reset();
     this.coordOriginProperty.reset();
     this.coordAngleProperty.reset();
     this.calibPoint1Property.reset();

@@ -196,6 +196,8 @@ export class StringManager {
     showVelocityDescriptionStringProperty: ReadOnlyProperty<string>;
     showAccelerationStringProperty: ReadOnlyProperty<string>;
     showAccelerationDescriptionStringProperty: ReadOnlyProperty<string>;
+    enableMeasurementToolsStringProperty: ReadOnlyProperty<string>;
+    enableMeasurementToolsDescriptionStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       simulationStringProperty: this.stringProperties.preferences.simulationStringProperty,
@@ -207,6 +209,9 @@ export class StringManager {
       showAccelerationStringProperty: this.stringProperties.preferences.showAccelerationStringProperty,
       showAccelerationDescriptionStringProperty:
         this.stringProperties.preferences.showAccelerationDescriptionStringProperty,
+      enableMeasurementToolsStringProperty: this.stringProperties.preferences.enableMeasurementToolsStringProperty,
+      enableMeasurementToolsDescriptionStringProperty:
+        this.stringProperties.preferences.enableMeasurementToolsDescriptionStringProperty,
     };
   }
 

@@ -14,12 +14,15 @@ import { Tandem } from "scenerystack/tandem";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
+import { AngleToolNode } from "./AngleToolNode.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { DataTableNode } from "./DataTableNode.js";
 import { InfoDialogNode } from "./InfoDialogNode.js";
 import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
+import { MeasurementToolsPanel } from "./MeasurementToolsPanel.js";
+import { MeasuringTapeNode } from "./MeasuringTapeNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
@@ -56,6 +59,14 @@ export class SimScreenView extends ScreenView {
       [model.videoLoadedProperty, model.calibrationVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
+    const measuringTapeShownProperty = new DerivedProperty(
+      [model.videoLoadedProperty, model.measuringTapeVisibleProperty],
+      (loaded, visible) => loaded && visible,
+    );
+    const angleToolShownProperty = new DerivedProperty(
+      [model.videoLoadedProperty, model.angleToolVisibleProperty],
+      (loaded, visible) => loaded && visible,
+    );
 
     // ── Control panel / tool checkboxes (upper left) ───────────────────────
     const controlPanel = new ControlPanel(model, trackLabPreferences);
@@ -90,6 +101,14 @@ export class SimScreenView extends ScreenView {
     // and model.calibUnitProperty.
     const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
     this.addChild(calibrationToolNode);
+
+    // ── Measuring tape overlay (above video) ──────────────────────────────
+    const measuringTapeNode = new MeasuringTapeNode(measuringTapeShownProperty, model);
+    this.addChild(measuringTapeNode);
+
+    // ── Angle tool overlay (above video) ─────────────────────────────────
+    const angleToolNode = new AngleToolNode(angleToolShownProperty, model);
+    this.addChild(angleToolNode);
 
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
@@ -132,6 +151,11 @@ export class SimScreenView extends ScreenView {
     });
     this.addChild(infoButton);
 
+    // ── Measurement tools panel (above the info button, preference-gated) ─
+    const measurementToolsPanel = new MeasurementToolsPanel(model);
+    measurementToolsPanel.visibleProperty = trackLabPreferences.enableMeasurementToolsProperty;
+    this.addChild(measurementToolsPanel);
+
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
     this.addChild(webcamPanel);
@@ -152,6 +176,10 @@ export class SimScreenView extends ScreenView {
       // Info button: lower-left corner, mirroring the reset button margin.
       infoButton.left = visibleBounds.minX + RESET_BUTTON_MARGIN;
       infoButton.centerY = resetAllButton.centerY;
+
+      // Measurement tools panel: above the info button, left-aligned with it.
+      measurementToolsPanel.left = infoButton.left;
+      measurementToolsPanel.bottom = infoButton.top - RESET_BUTTON_MARGIN;
 
       // Info dialog: centered horizontally, positioned just above the info button.
       infoDialogNode.centerX = this.layoutBounds.centerX;

@@ -26,6 +26,13 @@ export class TrackLabPreferencesModel {
    */
   public readonly showAccelerationInGraphProperty: BooleanProperty;
 
+  /**
+   * Whether the measurement tools panel (measuring tape + angle tool) is visible.
+   * When false, the panel is completely hidden.
+   * When true, the panel appears above the info button.
+   */
+  public readonly enableMeasurementToolsProperty: BooleanProperty;
+
   public constructor() {
     // By default, auto-tracking checkbox is hidden
     this.enableAutoTrackingProperty = new BooleanProperty(false);
@@ -33,11 +40,15 @@ export class TrackLabPreferencesModel {
     // By default, velocity and acceleration are shown on the graph
     this.showVelocityInGraphProperty = new BooleanProperty(true);
     this.showAccelerationInGraphProperty = new BooleanProperty(false);
+
+    // By default, measurement tools are hidden
+    this.enableMeasurementToolsProperty = new BooleanProperty(false);
   }
 
   public reset(): void {
     this.enableAutoTrackingProperty.reset();
     this.showVelocityInGraphProperty.reset();
     this.showAccelerationInGraphProperty.reset();
+    this.enableMeasurementToolsProperty.reset();
   }
 }
