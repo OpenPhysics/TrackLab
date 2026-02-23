@@ -7,14 +7,14 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
-import { Shape } from "scenerystack/kite";
-import { HBox, type Node, Path, Text } from "scenerystack/scenery";
+import { HBox, type Node, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
-import { ButtonNode, ComboBox, type ComboBoxItem, RectangularPushButton } from "scenerystack/sun";
+import { ButtonNode, ComboBox, type ComboBoxItem } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
@@ -22,7 +22,6 @@ const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
 const CONTROLS_SPACING = 12;
 const HEADER_VALUE_PREFIX = "__header:";
-const DOWNLOAD_ICON_FONT_SIZE = 11; // font size for the download arrow icon glyph
 
 // Bundled video files with known frame rates (labels resolved from StringManager)
 type VideoFile = {
@@ -293,17 +292,7 @@ export class VideoSourceControlNode extends HBox {
     model.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
 
     // ── Download button (visible for user-provided videos) ────────────────
-    const downloadIcon = new Text("\u2B07", {
-      font: new PhetFont({ size: DOWNLOAD_ICON_FONT_SIZE }),
-      fill: TrackLabColors.textOnDarkProperty,
-    });
-    const downloadButton = new RectangularPushButton({
-      content: downloadIcon,
-      baseColor: TrackLabColors.buttonBaseDarkProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      tandem: Tandem.OPT_OUT,
+    const downloadButton = createTrackLabButton(makeDownloadIcon(), {
       accessibleName: videoSourceStrings.downloadVideoStringProperty,
       listener: () => {
         const blob = model.currentWebcamBlobProperty.value;
@@ -357,26 +346,7 @@ export class VideoSourceControlNode extends HBox {
       fileInput.value = "";
     });
 
-    // Folder icon shape for the upload button
-    const folderShape = new Shape()
-      .moveTo(0, 3)
-      .lineTo(4, 3)
-      .lineTo(5.5, 0)
-      .lineTo(14, 0)
-      .lineTo(14, 10)
-      .lineTo(0, 10)
-      .close();
-    const uploadIcon = new Path(folderShape, {
-      fill: TrackLabColors.textOnDarkProperty,
-    });
-
-    const uploadButton = new RectangularPushButton({
-      content: uploadIcon,
-      baseColor: TrackLabColors.buttonBaseDarkProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      tandem: Tandem.OPT_OUT,
+    const uploadButton = createTrackLabButton(makeUploadIcon(), {
       accessibleName: videoSourceStrings.openVideoFileStringProperty,
       listener: () => {
         model.isPlayingProperty.value = false;
@@ -409,6 +379,10 @@ export class VideoSourceControlNode extends HBox {
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
+      touchAreaXDilation: TOUCH_AREA_DILATION,
+      touchAreaYDilation: TOUCH_AREA_DILATION,
+      mouseAreaXDilation: MOUSE_AREA_DILATION,
+      mouseAreaYDilation: MOUSE_AREA_DILATION,
       iconFill: TrackLabColors.textOnDarkProperty,
       tandem: Tandem.OPT_OUT,
       accessibleName: videoSourceStrings.recordWebcamStringProperty,

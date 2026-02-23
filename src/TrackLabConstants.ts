@@ -56,6 +56,18 @@ export const MIN_CALIB_DISTANCE = 1e-9; // minimum real-world calibration distan
 export const BUTTON_X_MARGIN = 8;
 export const BUTTON_Y_MARGIN = 6;
 
+// Minimum icon content area (width × height) guaranteed by HStrut/VStrut inside
+// the factory-created content wrapper.  This ensures every icon-only button is
+// the same size even when the icon glyph is smaller than this floor.
+export const BUTTON_MIN_CONTENT_SIZE = 18;
+
+// Extra touch-target padding beyond the rendered button bounds.  Helps users on
+// touch screens reliably tap small buttons without pixel-perfect precision.
+export const TOUCH_AREA_DILATION = 5;
+
+// Extra mouse-pointer hit area beyond the rendered button bounds.
+export const MOUSE_AREA_DILATION = 2;
+
 // ── Webcam panel ──────────────────────────────────────────────────────────────
 export const WEBCAM_PREVIEW_WIDTH = 480; // width of the preview and review video elements
 export const WEBCAM_PREVIEW_HEIGHT = 270; // height of the preview and review video elements

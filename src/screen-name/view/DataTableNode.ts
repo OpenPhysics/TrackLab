@@ -14,10 +14,11 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DOM, HBox, type Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
+import { Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
+import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -37,7 +38,6 @@ const MAX_TABLE_HEIGHT = 400; // Maximum height before scrolling (increased from
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
 const TABLE_FONT_SIZE = 11; // HTML table font size in px
 const EXPORT_BUTTON_FONT_SIZE = 9;
-const DOWNLOAD_ICON_FONT_SIZE = 11; // font size for the ⬇ icon glyph
 
 // ── Precision ─────────────────────────────────────────────────────────────────
 // Both values are kept equal so exported CSV data matches what users see on screen.
@@ -351,17 +351,6 @@ function buildSingleDataRow(
   return tr;
 }
 
-/**
- * Download icon (simple arrow pointing down).
- */
-function makeDownloadIcon(): Node {
-  // Simple text-based icon
-  return new Text("⬇", {
-    font: new PhetFont({ size: DOWNLOAD_ICON_FONT_SIZE }),
-    fill: TrackLabColors.textOnDarkProperty,
-  });
-}
-
 // ── Component ────────────────────────────────────────────────────────────────
 
 export class DataTableNode extends Panel {
@@ -412,8 +401,8 @@ export class DataTableNode extends Panel {
     const tableDomNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
-    const exportButton = new RectangularPushButton({
-      content: new HBox({
+    const exportButton = createTrackLabButton(
+      new HBox({
         children: [
           makeDownloadIcon(),
           new Text(dataTableStrings.csvStringProperty, {
@@ -426,28 +415,27 @@ export class DataTableNode extends Panel {
         ],
         spacing: EXPORT_BUTTON_ICON_SPACING,
       }),
-      accessibleName: a11yStrings.exportCSVStringProperty,
-      baseColor: TrackLabColors.exportButtonProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      listener: () => {
-        const tracks = model.tracksProperty.value;
-        const unit = unitProperty.value;
-        const csv = generateCsv(tracks, unit, getLabels());
+      {
+        accessibleName: a11yStrings.exportCSVStringProperty,
+        baseColor: TrackLabColors.exportButtonProperty,
+        listener: () => {
+          const tracks = model.tracksProperty.value;
+          const unit = unitProperty.value;
+          const csv = generateCsv(tracks, unit, getLabels());
 
-        // Create download — no DOM insertion needed in modern browsers.
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `export${this.exportCounter}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+          // Create download — no DOM insertion needed in modern browsers.
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `export${this.exportCounter}.csv`;
+          link.click();
+          URL.revokeObjectURL(url);
 
-        this.exportCounter++;
+          this.exportCounter++;
+        },
       },
-    });
+    );
 
     // ── Title row ────────────────────────────────────────────────────────────
     const titleLabel = new Text(dataTableStrings.titleStringProperty, {

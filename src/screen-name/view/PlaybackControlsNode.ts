@@ -9,12 +9,12 @@ import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
-import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
+import { Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 const a11yStrings = StringManager.getInstance().getA11y();
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -163,24 +163,21 @@ export class PlaybackControlsNode extends HBox {
     });
 
     // ── Rewind-to-zero button ──────────────────────────────────────────────
-    const rewindButton = new RectangularPushButton({
-      content: new Text("\u23EE", {
+    const rewindButton = createTrackLabButton(
+      new Text("\u23EE", {
         font: new PhetFont(REWIND_BUTTON_ICON_SIZE),
         fill: TrackLabColors.textOnDarkProperty,
       }),
-      baseColor: TrackLabColors.buttonBaseDarkProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      listener: () => {
-        model.isPlayingProperty.value = false;
-        model.currentTimeProperty.value = 0;
-        videoElement.currentTime = 0;
+      {
+        enabledProperty: model.videoLoadedProperty,
+        accessibleName: a11yStrings.rewindToStartStringProperty,
+        listener: () => {
+          model.isPlayingProperty.value = false;
+          model.currentTimeProperty.value = 0;
+          videoElement.currentTime = 0;
+        },
       },
-      enabledProperty: model.videoLoadedProperty,
-      tandem: Tandem.OPT_OUT,
-      accessibleName: a11yStrings.rewindToStartStringProperty,
-    });
+    );
 
     this.children = [timeControlNode, scrubber, rewindButton, infoDisplay];
 
