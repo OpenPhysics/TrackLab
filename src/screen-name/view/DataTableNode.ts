@@ -30,6 +30,7 @@ const MAX_TABLE_HEIGHT = 400; // Maximum height before scrolling (increased from
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
 const TABLE_FONT_SIZE = 11; // HTML table font size in px
 const EXPORT_BUTTON_FONT_SIZE = 9;
+const DOWNLOAD_ICON_FONT_SIZE = 11; // font size for the ⬇ icon glyph
 
 // ── Precision ─────────────────────────────────────────────────────────────────
 // Both values are kept equal so exported CSV data matches what users see on screen.
@@ -43,6 +44,15 @@ const PANEL_Y_MARGIN = 10;
 const CONTENT_SPACING = 6; // gap between title row and table DOM node
 const TITLE_ROW_SPACING = 8; // gap between title label and export button
 const EXPORT_BUTTON_ICON_SPACING = 3;
+
+// ── HTML table CSS dimensions ─────────────────────────────────────────────────
+const TABLE_WRAPPER_BORDER_RADIUS = 3; // px, border-radius on the scroll wrapper
+const TABLE_HEADER_PADDING_Y = 4; // px, vertical padding in header cells
+const TABLE_HEADER_PADDING_X = 8; // px, horizontal padding in header cells
+const TABLE_EMPTY_CELL_PADDING_Y = 8; // px, vertical padding in the "no data" placeholder cell
+const TABLE_EMPTY_CELL_PADDING_X = 16; // px, horizontal padding in the "no data" placeholder cell
+const TABLE_CELL_PADDING_Y = 3; // px, vertical padding in data cells
+const TABLE_CELL_PADDING_X = 6; // px, horizontal padding in data cells
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -142,7 +152,7 @@ function buildHtmlTable(
     min-height: ${MIN_TABLE_HEIGHT}px;
     max-height: ${MAX_TABLE_HEIGHT}px;
     border: 1px solid ${colors.gridStroke};
-    border-radius: 3px;
+    border-radius: ${TABLE_WRAPPER_BORDER_RADIUS}px;
     background: ${colors.background};
   `;
 
@@ -162,7 +172,7 @@ function buildHtmlTable(
     background: ${colors.headerBg};
     color: ${colors.headerText};
     font-weight: bold;
-    padding: 4px 8px;
+    padding: ${TABLE_HEADER_PADDING_Y}px ${TABLE_HEADER_PADDING_X}px;
     border: 1px solid ${colors.gridStroke};
     text-align: center;
     position: sticky;
@@ -232,7 +242,7 @@ function buildHtmlTable(
     td.colSpan = Math.max(MIN_EMPTY_COL_COUNT, 2 + tracks.length * 2);
     td.textContent = labels.noData;
     td.style.cssText = `
-      padding: 8px 16px;
+      padding: ${TABLE_EMPTY_CELL_PADDING_Y}px ${TABLE_EMPTY_CELL_PADDING_X}px;
       text-align: center;
       color: ${colors.emptyText};
       font-style: italic;
@@ -249,7 +259,7 @@ function buildHtmlTable(
       tr.style.background = i % 2 === 0 ? colors.rowOdd : colors.rowEven;
 
       const cellStyle = `
-        padding: 3px 6px;
+        padding: ${TABLE_CELL_PADDING_Y}px ${TABLE_CELL_PADDING_X}px;
         border: 1px solid ${colors.gridStroke};
         text-align: center;
       `;
@@ -328,7 +338,7 @@ function buildSingleDataRow(
 function makeDownloadIcon(): Node {
   // Simple text-based icon
   return new Text("⬇", {
-    font: new PhetFont({ size: 11 }),
+    font: new PhetFont({ size: DOWNLOAD_ICON_FONT_SIZE }),
     fill: TrackLabColors.textOnDarkProperty,
   });
 }
@@ -517,7 +527,7 @@ export class DataTableNode extends Panel {
       }
 
       const colors = getTableColors();
-      const cellStyle = `padding: 3px 6px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
+      const cellStyle = `padding: ${TABLE_CELL_PADDING_Y}px ${TABLE_CELL_PADDING_X}px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
 
       // Remove the "no data" placeholder row when the first real rows arrive.
       if (this.frameRowMap.size === 0 && dataRows.length > 0) {

@@ -60,7 +60,14 @@
     "showAccelerationDescription": "When enabled, acceleration components (ax, ay, |a|) are available as choices on the kinematics graph axes."
   },
   "autoTracker": {
-    "dragToSelect": "Drag on video to select object to track"
+    "dragToSelect": "Drag on video to select object to track",
+    "videoTrackingArea": "Video tracking area \u2014 drag to select object to track",
+    "trackingInitFailed": "Tracking initialisation failed. Try again."
+  },
+  "calibration": {
+    "pointsTooClose": "Points too close \u2014 move apart to calibrate",
+    "calibrationPoint1": "Calibration Point 1",
+    "calibrationPoint2": "Calibration Point 2"
   },
   "dataTable": {
     "title": "Data",
@@ -75,21 +82,50 @@
   },
   "ui": {
     "fps": "fps:",
-    "selectVideo": "— select a video —",
-    "sampleVideos": "── Sample Videos ──",
-    "myRecordings": "── My Recordings ──",
-    "uploadedVideos": "── Uploaded Videos ──"
+    "selectVideo": "\u2014 select a video \u2014",
+    "sampleVideos": "\u2500\u2500 Sample Videos \u2500\u2500",
+    "myRecordings": "\u2500\u2500 My Recordings \u2500\u2500",
+    "uploadedVideos": "\u2500\u2500 Uploaded Videos \u2500\u2500"
   },
   "coordSystem": {
     "xAxisLabel": "x",
-    "yAxisLabel": "y"
+    "yAxisLabel": "y",
+    "rotationHandle": "Rotation Handle",
+    "coordinateSystem": "Coordinate System"
+  },
+  "videoSource": {
+    "downloadVideo": "Download Video",
+    "openVideoFile": "Open Video File",
+    "recordWebcam": "Record Webcam"
   },
   "webcam": {
     "requestingAccess": "Requesting camera access\u2026",
     "accessDenied": "Camera access denied.",
     "processing": "Processing\u2026",
     "fixingMetadata": "Fixing video metadata\u2026",
-    "recording": "\u25CF Recording {{time}}"
+    "recording": "\u25CF Recording {{time}}",
+    "cancel": "Cancel",
+    "startRecording": "Start Recording",
+    "stopRecording": "Stop Recording",
+    "reRecord": "Re-record",
+    "useVideo": "Use Video",
+    "camera": "Camera",
+    "recordFromWebcam": "Record from Webcam",
+    "estimatingFrameRate": "Estimating frame rate\u2026",
+    "highConfidence": "High confidence",
+    "mediumConfidence": "Medium confidence",
+    "lowConfidence": "Low confidence",
+    "estimatedFps": "Estimated: {{fps}} fps {{symbol}} ({{confidence}}, {{method}})",
+    "cameraLabel": "Camera {{number}}"
+  },
+  "kinematicsGraph": {
+    "trackSelectorLabel": "Track:",
+    "noTracks": "No tracks",
+    "trackItem": "Track {{symbol}}"
+  },
+  "playback": {
+    "secondsUnit": "s",
+    "durationZero": "0.00 s"
   },
   "videoFiles": {
     "ballOil": "Ball in Oil",

@@ -27,6 +27,11 @@ const MAG_CROSSHAIR_LINE_WIDTH = 1;
 
 const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the video
 
+// Magnifier canvas box-shadow: "offsetX offsetY blur color"
+const MAG_SHADOW_OFFSET_X = 0; // px, horizontal shadow offset
+const MAG_SHADOW_OFFSET_Y = 2; // px, vertical shadow offset
+const MAG_SHADOW_BLUR = 8; // px, shadow blur radius
+
 /**
  * Manual digitizing overlay for placing track points on the video.
  * Renders a custom crosshair cursor and magnifier, and places dots on click.
@@ -81,7 +86,7 @@ export class DigitizingOverlayNode extends Node {
 
     // Update shadow style when color property changes
     const updateShadowStyle = () => {
-      magCanvas.style.boxShadow = `0 2px 8px ${magShadowColor}`;
+      magCanvas.style.boxShadow = `${MAG_SHADOW_OFFSET_X}px ${MAG_SHADOW_OFFSET_Y}px ${MAG_SHADOW_BLUR}px ${magShadowColor}`;
     };
     updateShadowStyle();
 

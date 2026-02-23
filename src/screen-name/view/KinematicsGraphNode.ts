@@ -10,6 +10,7 @@ import { Property } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
+import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
@@ -21,6 +22,13 @@ const GRAPH_WIDTH = 300;
 const GRAPH_HEIGHT = 200;
 const MAX_DATA_POINTS = 5000;
 
+// Track selector UI
+const VBOX_SPACING = 8; // vertical gap between track selector row and graph
+const TRACK_SELECTOR_FONT = new PhetFont(12); // font for track selector label and combo box items
+const TRACK_COMBO_X_MARGIN = 8; // horizontal margin inside track combo box
+const TRACK_COMBO_Y_MARGIN = 4; // vertical margin inside track combo box
+const TRACK_SELECTOR_SPACING = 8; // gap between "Track:" label and combo box
+
 export class KinematicsGraphNode extends VBox {
   private readonly graph: ConfigurableGraph;
   private readonly model: SimModel;
@@ -29,13 +37,15 @@ export class KinematicsGraphNode extends VBox {
   private readonly listParent: Node;
   private currentComboBox: ComboBox<string | null> | null = null;
   private readonly disposeKinematicsGraph: () => void;
+  private readonly kinematicsGraphStrings;
 
   public constructor(model: SimModel, listParent: Node, preferencesModel: TrackLabPreferencesModel) {
     super({
-      spacing: 8,
+      spacing: VBOX_SPACING,
       align: "left",
     });
 
+    this.kinematicsGraphStrings = StringManager.getInstance().getKinematicsGraph();
     this.model = model;
     this.listParent = listParent;
     this.selectedTrackProperty = new Property<string | null>(null);
@@ -172,18 +182,18 @@ export class KinematicsGraphNode extends VBox {
    * Note: The old combo box should be disposed before calling this method.
    */
   private rebuildTrackSelector(): void {
-    const trackSelectorLabel = new Text("Track:", {
-      font: new PhetFont(12),
+    const trackSelectorLabel = new Text(this.kinematicsGraphStrings.trackSelectorLabelStringProperty, {
+      font: TRACK_SELECTOR_FONT,
     });
 
     const trackComboBoxItems = this.createTrackComboBoxItems();
     this.currentComboBox = new ComboBox(this.selectedTrackProperty, trackComboBoxItems, this.listParent, {
-      xMargin: 8,
-      yMargin: 4,
+      xMargin: TRACK_COMBO_X_MARGIN,
+      yMargin: TRACK_COMBO_Y_MARGIN,
     });
 
     const trackSelector = new HBox({
-      spacing: 8,
+      spacing: TRACK_SELECTOR_SPACING,
       children: [trackSelectorLabel, this.currentComboBox],
     });
 
@@ -200,7 +210,7 @@ export class KinematicsGraphNode extends VBox {
       return [
         {
           value: null,
-          createNode: () => new Text("No tracks", { font: new PhetFont(12) }),
+          createNode: () => new Text(this.kinematicsGraphStrings.noTracksStringProperty, { font: TRACK_SELECTOR_FONT }),
           tandemName: "noTracksItem",
         },
       ];
@@ -209,8 +219,8 @@ export class KinematicsGraphNode extends VBox {
     return tracks.map((track) => ({
       value: track.id,
       createNode: () =>
-        new Text(`Track ${track.symbol}`, {
-          font: new PhetFont(12),
+        new Text(this.kinematicsGraphStrings.trackItemStringProperty.value.replace("{{symbol}}", track.symbol), {
+          font: TRACK_SELECTOR_FONT,
           fill: track.color,
         }),
       tandemName: `track${track.symbol}Item`,

@@ -59,3 +59,8 @@ export const BUTTON_Y_MARGIN = 6;
 // ── Webcam panel ──────────────────────────────────────────────────────────────
 export const WEBCAM_PREVIEW_WIDTH = 480; // width of the preview and review video elements
 export const WEBCAM_PREVIEW_HEIGHT = 270; // height of the preview and review video elements
+
+// ── Overlay tool interaction ───────────────────────────────────────────────────
+// Opacity applied to coordinate system and calibration tool overlays while
+// the user is actively digitizing, signalling that those tools are locked out.
+export const DIGITIZING_DIM_OPACITY = 0.35;

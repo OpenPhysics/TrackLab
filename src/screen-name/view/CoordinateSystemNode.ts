@@ -13,6 +13,7 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import { DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
@@ -141,7 +142,7 @@ export class CoordinateSystemNode extends Node {
       cursor: "crosshair",
       tagName: "div",
       focusable: true,
-      accessibleName: "Rotation Handle",
+      accessibleName: coordStrings.rotationHandleStringProperty,
     });
     const handleTouchArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_TOUCH_DILATION);
     handleDisk.mouseArea = handleTouchArea;
@@ -166,7 +167,7 @@ export class CoordinateSystemNode extends Node {
       cursor: "move",
       tagName: "div",
       focusable: true,
-      accessibleName: "Coordinate System",
+      accessibleName: coordStrings.coordinateSystemStringProperty,
     });
     // Expand touch/mouse area for easier pickup (origin + axes region)
     positionNode.boundsProperty.lazyLink(() => {
@@ -235,7 +236,7 @@ export class CoordinateSystemNode extends Node {
     const onActiveTrackChange = (activeId: string | null) => {
       const isDigitizing = activeId !== null;
       this.pickable = !isDigitizing;
-      this.opacity = isDigitizing ? 0.35 : 1;
+      this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
     };
     model.activeTrackIdProperty.link(onActiveTrackChange);
 

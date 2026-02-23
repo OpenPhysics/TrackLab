@@ -552,14 +552,12 @@ export default class ConfigurableGraph extends Node {
     this.chartTransform.setViewHeight(newHeight);
 
     // Update invisible interaction regions
-    const axisInteractionWidth = 60;
-    const axisInteractionHeight = 30;
-    this.yAxisInteractionRegion.setRect(-axisInteractionWidth, 0, axisInteractionWidth, newHeight);
-    this.xAxisInteractionRegion.setRect(0, newHeight, newWidth, axisInteractionHeight);
+    this.yAxisInteractionRegion.setRect(-Y_AXIS_INTERACTION_WIDTH, 0, Y_AXIS_INTERACTION_WIDTH, newHeight);
+    this.xAxisInteractionRegion.setRect(0, newHeight, newWidth, X_AXIS_INTERACTION_HEIGHT);
 
     // Update axis labels positions
     this.xAxisLabelNode.centerX = newWidth / 2;
-    this.xAxisLabelNode.top = newHeight + 35;
+    this.xAxisLabelNode.top = newHeight + AXIS_LABEL_OFFSET;
     this.yAxisLabelNode.centerY = newHeight / 2;
 
     // Update title panel position

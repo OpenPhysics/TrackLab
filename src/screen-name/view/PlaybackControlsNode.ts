@@ -11,6 +11,7 @@ import { HBox, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -26,6 +27,7 @@ const SCRUBBER_THUMB_WIDTH = 12;
 const SCRUBBER_THUMB_HEIGHT = 24;
 const INFO_DISPLAY_SPACING = 4; // gap between time label and frame counter
 const INFO_DISPLAY_WIDTH = 75; // fixed width to prevent layout shift when text changes
+const REWIND_BUTTON_ICON_SIZE = 16; // font size for the rewind button icon glyph
 
 /**
  * Playback controls including time control, scrubber, and time/frame display.
@@ -41,6 +43,8 @@ export class PlaybackControlsNode extends HBox {
     onStepForward: () => void,
   ) {
     super({ spacing: CONTROLS_SPACING, align: "center" });
+
+    const playbackStrings = StringManager.getInstance().getPlayback();
 
     // ── Playback rate via TimeSpeed ────────────────────────────────────────
     // timeSpeedProperty is view-local (the TimeSpeed enum is a scenery-phet type
@@ -116,9 +120,9 @@ export class PlaybackControlsNode extends HBox {
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
       if (!Number.isFinite(seconds) || seconds <= 0) {
-        return "0.00 s";
+        return playbackStrings.durationZeroStringProperty.value;
       }
-      return `${seconds.toFixed(2)} s`;
+      return `${seconds.toFixed(2)} ${playbackStrings.secondsUnitStringProperty.value}`;
     };
 
     const totalTimeTextProperty = new DerivedProperty([model.durationProperty], (duration: number) =>
@@ -159,7 +163,7 @@ export class PlaybackControlsNode extends HBox {
     // ── Rewind-to-zero button ──────────────────────────────────────────────
     const rewindButton = new RectangularPushButton({
       content: new Text("\u23EE", {
-        font: new PhetFont(16),
+        font: new PhetFont(REWIND_BUTTON_ICON_SIZE),
         fill: TrackLabColors.textOnDarkProperty,
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,

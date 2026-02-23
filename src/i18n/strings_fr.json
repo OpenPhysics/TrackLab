@@ -6,11 +6,11 @@
   "controls": {
     "play": "Lecture",
     "pause": "Pause",
-    "reset": "Réinitialiser",
+    "reset": "R\u00e9initialiser",
     "step": "Pas",
     "speed": "Vitesse",
     "record": "Enregistrer",
-    "stop": "Arrêter",
+    "stop": "Arr\u00eater",
     "graphVs": "vs"
   },
   "tracking": {
@@ -18,16 +18,16 @@
     "target": "Cible",
     "origin": "Origine",
     "calibrate": "Calibrer",
-    "scale": "Échelle",
+    "scale": "\u00c9chelle",
     "position": "Position",
     "velocity": "Vitesse",
-    "acceleration": "Accélération"
+    "acceleration": "Acc\u00e9l\u00e9ration"
   },
   "video": {
     "openFile": "Ouvrir un fichier",
     "frameRate": "Images par seconde",
     "currentFrame": "Image",
-    "duration": "Durée",
+    "duration": "Dur\u00e9e",
     "export": "Exporter"
   },
   "measurement": {
@@ -35,37 +35,44 @@
     "distance": "Distance",
     "angle": "Angle",
     "mass": "Masse",
-    "gravity": "Gravité"
+    "gravity": "Gravit\u00e9"
   },
   "keyboardShortcuts": {
     "title": "Raccourcis clavier",
-    "simulationControls": "Contrôles de simulation",
+    "simulationControls": "Contr\u00f4les de simulation",
     "graphInteractions": "Interactions avec le graphique",
     "playPauseSimulation": "Lecture/Pause de la simulation",
-    "resetSimulation": "Réinitialiser la simulation",
+    "resetSimulation": "R\u00e9initialiser la simulation",
     "stepBackward": "Reculer d'un pas",
     "stepForward": "Avancer d'un pas",
-    "rewindToStart": "Revenir au début",
-    "resetZoom": "Réinitialiser le zoom",
-    "zoomInOut": "Zoom avant/arrière",
-    "panView": "Déplacer la vue"
+    "rewindToStart": "Revenir au d\u00e9but",
+    "resetZoom": "R\u00e9initialiser le zoom",
+    "zoomInOut": "Zoom avant/arri\u00e8re",
+    "panView": "D\u00e9placer la vue"
   },
   "preferences": {
     "simulation": "Simulation",
     "enableAutoTracking": "Activer le suivi automatique",
-    "enableAutoTrackingDescription": "Lorsque activé, affiche la case à cocher du suivi automatique dans le panneau de contrôle, permettant le suivi automatique d'objets basé sur OpenCV. Lorsque désactivé, la case est cachée et seule la numérisation manuelle est disponible.",
+    "enableAutoTrackingDescription": "Lorsque activ\u00e9, affiche la case \u00e0 cocher du suivi automatique dans le panneau de contr\u00f4le, permettant le suivi automatique d'objets bas\u00e9 sur OpenCV. Lorsque d\u00e9sactiv\u00e9, la case est cach\u00e9e et seule la num\u00e9risation manuelle est disponible.",
     "showVelocity": "Afficher la vitesse",
-    "showVelocityDescription": "Lorsque activé, les composantes de vitesse (vx, vy, rapidité) sont disponibles comme choix sur les axes du graphique cinématique.",
-    "showAcceleration": "Afficher l'accélération",
-    "showAccelerationDescription": "Lorsque activé, les composantes d'accélération (ax, ay, |a|) sont disponibles comme choix sur les axes du graphique cinématique."
+    "showVelocityDescription": "Lorsque activ\u00e9, les composantes de vitesse (vx, vy, rapidit\u00e9) sont disponibles comme choix sur les axes du graphique cin\u00e9matique.",
+    "showAcceleration": "Afficher l'acc\u00e9l\u00e9ration",
+    "showAccelerationDescription": "Lorsque activ\u00e9, les composantes d'acc\u00e9l\u00e9ration (ax, ay, |a|) sont disponibles comme choix sur les axes du graphique cin\u00e9matique."
   },
   "autoTracker": {
-    "dragToSelect": "Faire glisser sur la vidéo pour sélectionner l'objet à suivre"
+    "dragToSelect": "Faire glisser sur la vid\u00e9o pour s\u00e9lectionner l'objet \u00e0 suivre",
+    "videoTrackingArea": "Zone de suivi vid\u00e9o \u2014 faire glisser pour s\u00e9lectionner l'objet \u00e0 suivre",
+    "trackingInitFailed": "\u00c9chec de l'initialisation du suivi. R\u00e9essayez."
+  },
+  "calibration": {
+    "pointsTooClose": "Points trop proches \u2014 les \u00e9carter pour calibrer",
+    "calibrationPoint1": "Point de calibration 1",
+    "calibrationPoint2": "Point de calibration 2"
   },
   "dataTable": {
-    "title": "Données",
+    "title": "Donn\u00e9es",
     "csv": "CSV",
-    "noData": "Aucun point numérisé",
+    "noData": "Aucun point num\u00e9ris\u00e9",
     "frame": "Image",
     "timeSeconds": "Temps (s)"
   },
@@ -74,22 +81,51 @@
     "tracks": "Pistes"
   },
   "ui": {
-    "fps": "ips :",
-    "selectVideo": "— sélectionner une vidéo —",
-    "sampleVideos": "── Vidéos exemples ──",
-    "myRecordings": "── Mes enregistrements ──",
-    "uploadedVideos": "── Vidéos importées ──"
+    "fps": "ips\u00a0:",
+    "selectVideo": "\u2014 s\u00e9lectionner une vid\u00e9o \u2014",
+    "sampleVideos": "\u2500\u2500 Vid\u00e9os exemples \u2500\u2500",
+    "myRecordings": "\u2500\u2500 Mes enregistrements \u2500\u2500",
+    "uploadedVideos": "\u2500\u2500 Vid\u00e9os import\u00e9es \u2500\u2500"
   },
   "coordSystem": {
     "xAxisLabel": "x",
-    "yAxisLabel": "y"
+    "yAxisLabel": "y",
+    "rotationHandle": "Poign\u00e9e de rotation",
+    "coordinateSystem": "Syst\u00e8me de coordonn\u00e9es"
+  },
+  "videoSource": {
+    "downloadVideo": "T\u00e9l\u00e9charger la vid\u00e9o",
+    "openVideoFile": "Ouvrir un fichier vid\u00e9o",
+    "recordWebcam": "Enregistrer avec la webcam"
   },
   "webcam": {
-    "requestingAccess": "Demande d'accès à la caméra\u2026",
-    "accessDenied": "Accès à la caméra refusé.",
+    "requestingAccess": "Demande d'acc\u00e8s \u00e0 la cam\u00e9ra\u2026",
+    "accessDenied": "Acc\u00e8s \u00e0 la cam\u00e9ra refus\u00e9.",
     "processing": "Traitement\u2026",
-    "fixingMetadata": "Correction des métadonnées vidéo\u2026",
-    "recording": "\u25CF Enregistrement {{time}}"
+    "fixingMetadata": "Correction des m\u00e9tadonn\u00e9es vid\u00e9o\u2026",
+    "recording": "\u25CF Enregistrement {{time}}",
+    "cancel": "Annuler",
+    "startRecording": "D\u00e9marrer l'enregistrement",
+    "stopRecording": "Arr\u00eater l'enregistrement",
+    "reRecord": "R\u00e9enregistrer",
+    "useVideo": "Utiliser la vid\u00e9o",
+    "camera": "Cam\u00e9ra",
+    "recordFromWebcam": "Enregistrer depuis la webcam",
+    "estimatingFrameRate": "Estimation de la fr\u00e9quence d'images\u2026",
+    "highConfidence": "Haute confiance",
+    "mediumConfidence": "Confiance moyenne",
+    "lowConfidence": "Faible confiance",
+    "estimatedFps": "Estim\u00e9\u00a0: {{fps}} ips {{symbol}} ({{confidence}}, {{method}})",
+    "cameraLabel": "Cam\u00e9ra {{number}}"
+  },
+  "kinematicsGraph": {
+    "trackSelectorLabel": "Piste\u00a0:",
+    "noTracks": "Aucune piste",
+    "trackItem": "Piste {{symbol}}"
+  },
+  "playback": {
+    "secondsUnit": "s",
+    "durationZero": "0,00 s"
   },
   "videoFiles": {
     "ballOil": "Balle dans l'huile",
