@@ -94,6 +94,7 @@ export class SimScreenView extends ScreenView {
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
+
     dataTableNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
@@ -101,8 +102,6 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         model.reset(); // resets all model state including tool positions
       },
-      right: this.layoutBounds.maxX - RESET_BUTTON_MARGIN,
-      bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
 
