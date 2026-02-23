@@ -137,5 +137,15 @@
     "pendulumDrag": "Pendule avec frottement",
     "pucksCollide": "Rondelles en collision",
     "springWars": "Guerres de ressorts"
+  },
+  "a11y": {
+    "videoPlayer": "Lecteur vid\u00e9o",
+    "videoScrubber": "Ligne de temps vid\u00e9o \u2014 glisser pour naviguer",
+    "rewindToStart": "Revenir au d\u00e9but",
+    "digitizingArea": "Zone de num\u00e9risation vid\u00e9o \u2014 cliquer pour enregistrer la position de la piste active",
+    "digitizeTrack": "Num\u00e9riser la piste {{symbol}}",
+    "removeTrack": "Supprimer la piste {{symbol}}",
+    "dataTable": "Donn\u00e9es de piste",
+    "exportCSV": "Exporter les donn\u00e9es de piste en fichier CSV"
   }
 }

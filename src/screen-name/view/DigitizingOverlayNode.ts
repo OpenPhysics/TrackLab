@@ -9,6 +9,7 @@ import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -214,10 +215,14 @@ export class DigitizingOverlayNode extends Node {
       magCtx.stroke();
     };
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     const digitizingOverlay = new Rectangle(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT, {
       fill: "transparent",
       cursor: "none",
       visible: false,
+      tagName: "div",
+      accessibleName: a11yStrings.digitizingAreaStringProperty,
     });
     digitizingOverlay.addChild(cursorNode);
     digitizingOverlay.addChild(magnifierNode);

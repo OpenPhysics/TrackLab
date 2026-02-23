@@ -397,6 +397,31 @@ export class StringManager {
   }
 
   /**
+   * Get accessibility string properties
+   */
+  public getA11y(): {
+    videoPlayerStringProperty: ReadOnlyProperty<string>;
+    videoScrubberStringProperty: ReadOnlyProperty<string>;
+    rewindToStartStringProperty: ReadOnlyProperty<string>;
+    digitizingAreaStringProperty: ReadOnlyProperty<string>;
+    digitizeTrackStringProperty: ReadOnlyProperty<string>;
+    removeTrackStringProperty: ReadOnlyProperty<string>;
+    dataTableStringProperty: ReadOnlyProperty<string>;
+    exportCSVStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      videoPlayerStringProperty: this.stringProperties.a11y.videoPlayerStringProperty,
+      videoScrubberStringProperty: this.stringProperties.a11y.videoScrubberStringProperty,
+      rewindToStartStringProperty: this.stringProperties.a11y.rewindToStartStringProperty,
+      digitizingAreaStringProperty: this.stringProperties.a11y.digitizingAreaStringProperty,
+      digitizeTrackStringProperty: this.stringProperties.a11y.digitizeTrackStringProperty,
+      removeTrackStringProperty: this.stringProperties.a11y.removeTrackStringProperty,
+      dataTableStringProperty: this.stringProperties.a11y.dataTableStringProperty,
+      exportCSVStringProperty: this.stringProperties.a11y.exportCSVStringProperty,
+    };
+  }
+
+  /**
    * Get video file label string properties
    */
   public getVideoFiles(): {

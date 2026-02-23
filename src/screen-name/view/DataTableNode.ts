@@ -21,6 +21,13 @@ import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../Tra
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
+// ── Accessibility ─────────────────────────────────────────────────────────────
+// The HTML table gets a <caption> element for screen readers. The caption text
+// is supplied by the caller so it can be localized.
+type A11yLabels = {
+  tableCaption: string;
+};
+
 // ── Grid geometry ────────────────────────────────────────────────────────────
 const MAX_TABLE_WIDTH = 600; // Allow table to grow wider for more tracks
 const MIN_TABLE_HEIGHT = 100; // Minimum height when little data
@@ -142,6 +149,7 @@ function buildHtmlTable(
   unit: string,
   colors: TableColors,
   labels: TableLabels,
+  a11y: A11yLabels,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -164,6 +172,12 @@ function buildHtmlTable(
     white-space: nowrap;
   `;
 
+  // ── Accessible caption (visually hidden but read by screen readers) ────────
+  const caption = document.createElement("caption");
+  caption.textContent = a11y.tableCaption;
+  caption.style.cssText = "position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;";
+  table.appendChild(caption);
+
   // ── Header row ─────────────────────────────────────────────────────────────
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
@@ -180,12 +194,17 @@ function buildHtmlTable(
     z-index: 1;
   `;
 
-  const addHeaderCell = (content: string | HTMLElement) => {
+  const addHeaderCell = (content: string | HTMLElement, fullLabel?: string) => {
     const th = document.createElement("th");
+    th.scope = "col";
     if (typeof content === "string") {
       th.textContent = content;
     } else {
       th.appendChild(content);
+      // Provide a plain-text aria-label when the header content is HTML (colored symbol)
+      if (fullLabel) {
+        th.setAttribute("aria-label", fullLabel);
+      }
     }
     th.style.cssText = headerStyle;
     headerRow.appendChild(th);
@@ -224,8 +243,8 @@ function buildHtmlTable(
     addHeaderCell(`y (${unit})`);
   } else {
     for (const track of tracks) {
-      addHeaderCell(makeTrackHeader("x", track));
-      addHeaderCell(makeTrackHeader("y", track));
+      addHeaderCell(makeTrackHeader("x", track), `${track.symbol} x (${unit})`);
+      addHeaderCell(makeTrackHeader("y", track), `${track.symbol} y (${unit})`);
     }
   }
 
@@ -364,11 +383,16 @@ export class DataTableNode extends Panel {
     unitProperty: TReadOnlyProperty<string>,
   ) {
     const dataTableStrings = StringManager.getInstance().getDataTable();
+    const a11yStrings = StringManager.getInstance().getA11y();
 
     const getLabels = (): TableLabels => ({
       frame: dataTableStrings.frameStringProperty.value,
       timeSeconds: dataTableStrings.timeSecondsStringProperty.value,
       noData: dataTableStrings.noDataStringProperty.value,
+    });
+
+    const getA11yLabels = (): A11yLabels => ({
+      tableCaption: a11yStrings.dataTableStringProperty.value,
     });
 
     // Helper to get current table colors from properties
@@ -384,7 +408,7 @@ export class DataTableNode extends Panel {
     });
 
     // ── Create scrollable HTML table ─────────────────────────────────────────
-    const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels());
+    const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels(), getA11yLabels());
     const tableDomNode = new DOM(tableWrapper, { allowInput: true });
 
     // ── Export button ────────────────────────────────────────────────────────
@@ -402,6 +426,7 @@ export class DataTableNode extends Panel {
         ],
         spacing: EXPORT_BUTTON_ICON_SPACING,
       }),
+      accessibleName: a11yStrings.exportCSVStringProperty,
       baseColor: TrackLabColors.exportButtonProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       xMargin: BUTTON_X_MARGIN,
@@ -458,7 +483,7 @@ export class DataTableNode extends Panel {
     // Replaces the entire table DOM and refreshes cached references.
     const doFullRebuild = (tracks: readonly Track[], unit: string) => {
       const colors = getTableColors();
-      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels());
+      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels(), getA11yLabels());
 
       this.tableWrapper.innerHTML = "";
       if (newWrapper.firstChild) {

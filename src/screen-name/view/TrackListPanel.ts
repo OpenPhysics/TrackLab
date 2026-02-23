@@ -21,6 +21,7 @@ import { ButtonNode, Checkbox, Panel, RectangularPushButton } from "scenerystack
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+const a11yStrings = StringManager.getInstance().getA11y();
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
@@ -140,6 +141,7 @@ class TrackRowNode extends Node {
     const checkbox = new Checkbox(isDigitizingProperty, new Rectangle(0, 0, 0, 0), {
       boxWidth: CHECKBOX_BOX_WIDTH,
       tandem: Tandem.OPT_OUT,
+      accessibleName: a11yStrings.digitizeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
     });
     checkbox.left = CHECKBOX_X;
     checkbox.centerY = ROW_CY;
@@ -153,6 +155,7 @@ class TrackRowNode extends Node {
       yMargin: BUTTON_Y_MARGIN,
       listener: () => model.removeTrack(track.id),
       tandem: Tandem.OPT_OUT,
+      accessibleName: a11yStrings.removeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
     });
     trashButton.centerY = ROW_CY;
     trashButton.right = PANEL_WIDTH - TRASH_BUTTON_RIGHT_OFFSET;
