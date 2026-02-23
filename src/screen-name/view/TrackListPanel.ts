@@ -17,14 +17,14 @@ import { Color } from "scenerystack";
 import { BooleanProperty, DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { Circle, Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { ButtonNode, Checkbox, Panel, RectangularPushButton } from "scenerystack/sun";
+import { Checkbox, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
-
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -149,14 +149,9 @@ class TrackRowNode extends Node {
     checkbox.centerY = ROW_CY;
 
     // ── Trash button (right side) ─────────────────────────────────────────
-    const trashButton = new RectangularPushButton({
-      content: makeTrashIcon(),
+    const trashButton = createTrackLabButton(makeTrashIcon(), {
       baseColor: TrackLabColors.trashButtonBaseProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
       listener: () => model.removeTrack(track.id),
-      tandem: Tandem.OPT_OUT,
       accessibleName: a11yStrings.removeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
     });
     trashButton.centerY = ROW_CY;
@@ -206,19 +201,16 @@ export class TrackListPanel extends Panel {
       (loaded, canAdd) => loaded && canAdd,
     );
 
-    const addButton = new RectangularPushButton({
-      content: new Text(trackListStrings.addTrackStringProperty, {
+    const addButton = createTrackLabButton(
+      new Text(trackListStrings.addTrackStringProperty, {
         font: LABEL_FONT,
         fill: TrackLabColors.textOnDarkProperty,
       }),
-      baseColor: TrackLabColors.buttonBaseDarkProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      enabledProperty: addButtonEnabledProperty,
-      listener: () => model.addTrack(),
-      tandem: Tandem.OPT_OUT,
-    });
+      {
+        enabledProperty: addButtonEnabledProperty,
+        listener: () => model.addTrack(),
+      },
+    );
 
     // ── Track list (rebuilt whenever tracks change) ───────────────────────
     const trackListVBox = new VBox({

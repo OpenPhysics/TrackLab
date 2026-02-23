@@ -9,23 +9,12 @@ import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
 import { CloseButton, PhetFont, RefreshButton, StopIconShape } from "scenerystack/scenery-phet";
-import {
-  ButtonNode,
-  cameraSolidShape,
-  checkSolidShape,
-  NumberSpinner,
-  Panel,
-  RectangularPushButton,
-} from "scenerystack/sun";
+import { ButtonNode, cameraSolidShape, checkSolidShape, NumberSpinner, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import {
-  BUTTON_X_MARGIN,
-  BUTTON_Y_MARGIN,
-  WEBCAM_PREVIEW_HEIGHT,
-  WEBCAM_PREVIEW_WIDTH,
-} from "../../TrackLabConstants.js";
+import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -156,13 +145,8 @@ export class WebcamPanel extends Node {
     const recordIcon = new Path(Shape.circle(0, 0, RECORD_ICON_RADIUS), {
       fill: TrackLabColors.textOnDarkProperty,
     });
-    const startButton = new RectangularPushButton({
-      content: recordIcon,
+    const startButton = createTrackLabButton(recordIcon, {
       baseColor: TrackLabColors.buttonRecordProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      tandem: Tandem.OPT_OUT,
       accessibleName: this.webcamStrings.startRecordingStringProperty,
       listener: () => this.startRecording(),
     });
@@ -170,14 +154,8 @@ export class WebcamPanel extends Node {
     const stopIcon = new Path(new StopIconShape(STOP_ICON_SIZE), {
       fill: TrackLabColors.textOnDarkProperty,
     });
-    stopIcon.translation = stopIcon.bounds.center.negated();
-    const stopButton = new RectangularPushButton({
-      content: stopIcon,
+    const stopButton = createTrackLabButton(stopIcon, {
       baseColor: TrackLabColors.buttonStopProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      tandem: Tandem.OPT_OUT,
       accessibleName: this.webcamStrings.stopRecordingStringProperty,
       listener: () => this.stopRecording(),
     });
@@ -196,13 +174,8 @@ export class WebcamPanel extends Node {
       scale: CHECK_ICON_SCALE,
       fill: TrackLabColors.textOnDarkProperty,
     });
-    const useVideoButton = new RectangularPushButton({
-      content: useVideoIcon,
+    const useVideoButton = createTrackLabButton(useVideoIcon, {
       baseColor: TrackLabColors.buttonSuccessProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN,
-      yMargin: BUTTON_Y_MARGIN,
-      tandem: Tandem.OPT_OUT,
       accessibleName: this.webcamStrings.useVideoStringProperty,
       listener: () => this.useVideo(options.onVideoReady),
     });
@@ -304,8 +277,8 @@ export class WebcamPanel extends Node {
     this._stopButton = stopButton;
   }
 
-  private readonly _startButton: RectangularPushButton;
-  private readonly _stopButton: RectangularPushButton;
+  private readonly _startButton: ReturnType<typeof createTrackLabButton>;
+  private readonly _stopButton: ReturnType<typeof createTrackLabButton>;
   private readonly webcamStrings: ReturnType<StringManager["getWebcam"]>;
 
   // ── Public ───────────────────────────────────────────────────────────────
