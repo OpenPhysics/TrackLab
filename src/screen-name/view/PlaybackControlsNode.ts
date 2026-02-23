@@ -5,6 +5,7 @@ import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet"
 import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -156,6 +157,8 @@ export class PlaybackControlsNode extends HBox {
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       listener: () => {
         model.isPlayingProperty.value = false;
         model.currentTimeProperty.value = 0;

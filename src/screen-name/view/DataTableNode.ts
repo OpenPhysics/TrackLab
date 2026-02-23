@@ -17,7 +17,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { ButtonNode, Panel, RectangularPushButton } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -42,8 +42,6 @@ const PANEL_X_MARGIN = 10;
 const PANEL_Y_MARGIN = 10;
 const CONTENT_SPACING = 6; // gap between title row and table DOM node
 const TITLE_ROW_SPACING = 8; // gap between title label and export button
-const EXPORT_BUTTON_X_MARGIN = 5;
-const EXPORT_BUTTON_Y_MARGIN = 3;
 const EXPORT_BUTTON_ICON_SPACING = 3;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -396,8 +394,8 @@ export class DataTableNode extends Panel {
       }),
       baseColor: TrackLabColors.exportButtonProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: EXPORT_BUTTON_X_MARGIN,
-      yMargin: EXPORT_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       listener: () => {
         const tracks = model.tracksProperty.value;
         const unit = unitProperty.value;

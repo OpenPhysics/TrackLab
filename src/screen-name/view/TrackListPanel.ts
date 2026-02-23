@@ -21,7 +21,7 @@ import { ButtonNode, Checkbox, Panel, RectangularPushButton } from "scenerystack
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -36,15 +36,11 @@ const ROW_BG_ALPHA = 0.15; // track colour fill alpha for row background
 const ROW_STROKE_ALPHA = 0.7; // track colour stroke alpha for row border
 const ROW_STROKE_WIDTH = 1.5;
 const CHECKBOX_BOX_WIDTH = 12; // reduced from 14
-const TRASH_BUTTON_X_MARGIN = 4; // reduced from 6
-const TRASH_BUTTON_Y_MARGIN = 4; // reduced from 6
 const TRASH_BUTTON_RIGHT_OFFSET = 2; // inset from PANEL_WIDTH right edge (reduced from 3)
 const TRACK_LIST_SPACING = 4; // gap between track rows (reduced from 6)
 const PANEL_CONTENT_SPACING = 6; // gap between header, add button, and track list (reduced from 8)
 const PANEL_X_MARGIN = 8; // reduced from 10
 const PANEL_Y_MARGIN = 8; // reduced from 10
-const ADD_BUTTON_X_MARGIN = 8; // reduced from 10
-const ADD_BUTTON_Y_MARGIN = 4; // reduced from 6
 
 const HEADER_FONT = new PhetFont({ size: 11, weight: "bold" }); // reduced from 13
 const SYMBOL_FONT = new PhetFont({ size: 12, weight: "bold" }); // reduced from 15
@@ -153,8 +149,8 @@ class TrackRowNode extends Node {
       content: makeTrashIcon(),
       baseColor: TrackLabColors.trashButtonBaseProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: TRASH_BUTTON_X_MARGIN,
-      yMargin: TRASH_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       listener: () => model.removeTrack(track.id),
       tandem: Tandem.OPT_OUT,
     });
@@ -212,8 +208,8 @@ export class TrackListPanel extends Panel {
       }),
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: ADD_BUTTON_X_MARGIN,
-      yMargin: ADD_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       enabledProperty: addButtonEnabledProperty,
       listener: () => model.addTrack(),
       tandem: Tandem.OPT_OUT,

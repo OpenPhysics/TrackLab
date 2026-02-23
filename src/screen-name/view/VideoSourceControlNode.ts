@@ -7,6 +7,7 @@ import { ButtonNode, ComboBox, type ComboBoxItem, RectangularPushButton } from "
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
@@ -291,6 +292,8 @@ export class VideoSourceControlNode extends HBox {
       content: downloadIcon,
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Download Video",
       listener: () => {
@@ -362,6 +365,8 @@ export class VideoSourceControlNode extends HBox {
       content: uploadIcon,
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Open Video File",
       listener: () => {
@@ -392,6 +397,9 @@ export class VideoSourceControlNode extends HBox {
 
     const webcamButton = new CameraButton({
       baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       iconFill: TrackLabColors.textOnDarkProperty,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Record Webcam",

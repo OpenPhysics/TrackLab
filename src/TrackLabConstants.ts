@@ -50,6 +50,12 @@ export const TRACK_SYMBOL_LAST_CODE = 90; // ASCII 'Z'
 export const MIN_PIXEL_DISTANCE = 1e-6; // minimum pixel distance between calibration points
 export const MIN_CALIB_DISTANCE = 1e-9; // minimum real-world calibration distance
 
+// ── Button sizing ──────────────────────────────────────────────────────────────
+// Shared margins applied to every RectangularPushButton (and TextPushButton) in
+// the application, so all rectangular push buttons have a uniform appearance.
+export const BUTTON_X_MARGIN = 8;
+export const BUTTON_Y_MARGIN = 6;
+
 // ── Webcam panel ──────────────────────────────────────────────────────────────
 export const WEBCAM_PREVIEW_WIDTH = 480; // width of the preview and review video elements
 export const WEBCAM_PREVIEW_HEIGHT = 270; // height of the preview and review video elements
