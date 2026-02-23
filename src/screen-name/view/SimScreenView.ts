@@ -121,12 +121,14 @@ export class SimScreenView extends ScreenView {
     this.addChild(kinematicsGraph);
 
     // ── Info dialog (explains digitizing workflow) ────────────────────────────
-    // Dialog manages its own scene-graph placement via the sim's popup layer.
     const infoDialogNode = new InfoDialogNode();
+    this.addChild(infoDialogNode);
 
     // ── Info button (lower-left corner, same vertical level as reset button) ─
     const infoButton = new InfoButton({
-      listener: () => infoDialogNode.show(),
+      listener: () => {
+        infoDialogNode.visible = !infoDialogNode.visible;
+      },
       tandem: Tandem.OPT_OUT,
     });
     this.addChild(infoButton);
@@ -154,6 +156,10 @@ export class SimScreenView extends ScreenView {
       // Info button: lower-left corner, mirroring the reset button margin.
       infoButton.left = visibleBounds.minX + RESET_BUTTON_MARGIN;
       infoButton.centerY = resetAllButton.centerY;
+
+      // Info dialog: centered horizontally, positioned just above the info button.
+      infoDialogNode.centerX = this.layoutBounds.centerX;
+      infoDialogNode.bottom = infoButton.top - RESET_BUTTON_MARGIN;
 
       // Data table: shift left by extraWidth so it stays within the layout area
       // and doesn't drift into the extra visible space claimed by the graph.

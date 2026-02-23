@@ -2,13 +2,13 @@
  * InfoDialogNode.ts
  *
  * Modal dialog explaining the main steps for digitizing a track in TrackLab.
- * Shown by the InfoButton in the lower-left corner of the screen.
+ * Toggled by the InfoButton in the lower-left corner of the screen.
  */
 
 import type { ReadOnlyProperty } from "scenerystack/axon";
 import { Node, RichText, Text, VBox } from "scenerystack/scenery";
-import { PhetFont } from "scenerystack/scenery-phet";
-import { Dialog } from "scenerystack/sun";
+import { CloseButton, PhetFont } from "scenerystack/scenery-phet";
+import { Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
@@ -16,12 +16,15 @@ import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const CONTENT_WIDTH = 370; // inner width of the content area
+const CONTENT_WIDTH = 370; // inner width of the panel content area
+const PANEL_X_MARGIN = 18;
+const PANEL_Y_MARGIN = 16;
 const TITLE_FONT = new PhetFont({ size: 15, weight: "bold" });
 const STEP_TITLE_FONT = new PhetFont({ size: 13, weight: "bold" });
 const STEP_BODY_FONT = new PhetFont(13);
 const STEPS_SPACING = 12; // vertical gap between steps
 const STEP_INNER_SPACING = 2; // gap between step title and body text
+const CLOSE_BUTTON_ICON_LENGTH = 10;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,25 +52,42 @@ function makeStep(titleProp: ReadOnlyProperty<string>, bodyProp: ReadOnlyPropert
 // ── InfoDialogNode ────────────────────────────────────────────────────────────
 
 /**
- * Modal dialog explaining how to digitize a track.
+ * Floating panel explaining how to digitize a track.
  *
- * Extends the standard Dialog from scenerystack/sun, which is shown and hidden
- * via show() / hide() and rendered in the sim's popup layer — no manual
- * scene-graph attachment needed.
+ * Hidden by default (`visible = false`). Show by setting `visible = true`;
+ * the internal close button hides it again.
  */
-export class InfoDialogNode extends Dialog {
+export class InfoDialogNode extends Node {
   public constructor() {
+    super({ visible: false });
+
     const strings = StringManager.getInstance().getInfoDialog();
 
-    // ── Title ─────────────────────────────────────────────────────────────
+    // ── Header: title + close button ─────────────────────────────────────────
     const titleText = new Text(strings.titleStringProperty, {
       font: TITLE_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
 
-    // ── Steps ────────────────────────────────────────────────────────────
+    const closeButton = new CloseButton({
+      listener: () => {
+        this.visible = false;
+      },
+      baseColor: TrackLabColors.buttonBaseDarkProperty,
+      iconLength: CLOSE_BUTTON_ICON_LENGTH,
+      tandem: Tandem.OPT_OUT,
+    });
+
+    // Lay out title and close button side-by-side, close button flush right.
+    const headerNode = new Node({ children: [titleText, closeButton] });
+    closeButton.right = CONTENT_WIDTH;
+    closeButton.centerY = titleText.centerY;
+    titleText.maxWidth = CONTENT_WIDTH - closeButton.width - 8;
+
+    // ── Steps ────────────────────────────────────────────────────────────────
     const content = new VBox({
       children: [
+        headerNode,
         makeStep(strings.loadVideoTitleStringProperty, strings.loadVideoBodyStringProperty),
         makeStep(strings.coordinateSystemTitleStringProperty, strings.coordinateSystemBodyStringProperty),
         makeStep(strings.calibrationTitleStringProperty, strings.calibrationBodyStringProperty),
@@ -79,15 +99,15 @@ export class InfoDialogNode extends Dialog {
       align: "left",
     });
 
-    super(content, {
-      title: titleText,
-      titleAlign: "left",
+    const panel = new Panel(content, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
       cornerRadius: PANEL_CORNER_RADIUS,
-      closeButtonColor: TrackLabColors.textOnDarkProperty,
-      tandem: Tandem.OPT_OUT,
+      xMargin: PANEL_X_MARGIN,
+      yMargin: PANEL_Y_MARGIN,
     });
+
+    this.addChild(panel);
   }
 }
 
