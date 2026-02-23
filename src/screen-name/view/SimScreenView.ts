@@ -82,7 +82,6 @@ export class SimScreenView extends ScreenView {
     // ── Data table (top, a bit to the left) ──────────────────────────────
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
-    dataTableNode.left = this.videoPlayerNode.right + 20;
     dataTableNode.top = this.layoutBounds.top + 10;
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
@@ -90,8 +89,6 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         model.reset(); // resets all model state including tool positions
       },
-      right: this.layoutBounds.maxX - RESET_BUTTON_MARGIN,
-      bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
 
@@ -99,7 +96,6 @@ export class SimScreenView extends ScreenView {
     const playbackControlsNode = this.videoPlayerNode.playbackControlsNode;
     this.addChild(playbackControlsNode);
     playbackControlsNode.centerX = this.videoPlayerNode.centerX;
-    playbackControlsNode.centerY = resetAllButton.centerY;
     playbackControlsNode.boundsProperty.lazyLink(() => {
       playbackControlsNode.centerX = this.videoPlayerNode.centerX;
       playbackControlsNode.centerY = resetAllButton.centerY;
@@ -108,8 +104,29 @@ export class SimScreenView extends ScreenView {
     // ── Kinematics graph (bottom right, above reset all) ─────────────────
     const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
     this.addChild(kinematicsGraph);
-    kinematicsGraph.right = this.layoutBounds.maxX + 45;
-    kinematicsGraph.bottom = resetAllButton.top - 150;
+
+    // ── Reactive right-edge positioning ──────────────────────────────────
+    // When the browser window is wider than layoutBounds, visibleBoundsProperty
+    // extends beyond layoutBounds on both sides.  The three elements below are
+    // anchored to the right edge of the screen and must follow it dynamically.
+    this.visibleBoundsProperty.link((visibleBounds) => {
+      const extraWidth = Math.max(0, visibleBounds.maxX - this.layoutBounds.maxX);
+
+      // Data display: shift right in proportion to the extra visible width.
+      dataTableNode.left = this.videoPlayerNode.right + 20 + extraWidth;
+
+      // Reset button: stays pinned to the visible bottom-right corner.
+      resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
+      resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
+
+      // Playback controls align vertically with the reset button.
+      playbackControlsNode.centerY = resetAllButton.centerY;
+
+      // Kinematics graph (grasp): tracks the visible right edge with the same
+      // fixed overhang that lets the user pull it onto the screen.
+      kinematicsGraph.right = visibleBounds.maxX + 45;
+      kinematicsGraph.bottom = resetAllButton.top - 150;
+    });
 
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
