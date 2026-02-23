@@ -79,8 +79,7 @@ export class PlaybackControlsNode extends HBox {
       timeSpeeds: [TimeSpeed.NORMAL, TimeSpeed.SLOW],
       enabledProperty: model.videoLoadedProperty,
       tandem: Tandem.OPT_OUT,
-      playPauseStep
-      Options: {
+      playPauseStepButtonOptions: {
         includeStepBackwardButton: true,
         stepBackwardButtonOptions: {
           listener: onStepBackward,

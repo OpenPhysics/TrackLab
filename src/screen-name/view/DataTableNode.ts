@@ -12,7 +12,7 @@
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { DOM, HBox, type Node, Text, VBox } from "scenerystack/scenery";
+import { DOM, HBox, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";

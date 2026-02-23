@@ -9,13 +9,7 @@ import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
 import { CloseButton, PhetFont, RefreshButton, StopIconShape } from "scenerystack/scenery-phet";
-import {
-  ButtonNode,
-  cameraSolidShape,
-  checkSolidShape,
-  NumberSpinner,
-  Panel,
-} from "scenerystack/sun";
+import { ButtonNode, cameraSolidShape, checkSolidShape, NumberSpinner, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
