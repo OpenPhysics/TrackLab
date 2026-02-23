@@ -137,5 +137,15 @@
     "pendulumDrag": "Pendulum Drag",
     "pucksCollide": "Pucks Collide",
     "springWars": "Spring Wars"
+  },
+  "a11y": {
+    "videoPlayer": "Video player",
+    "videoScrubber": "Video timeline — drag to seek",
+    "rewindToStart": "Rewind to start",
+    "digitizingArea": "Video digitizing area — click to record the position of the active track",
+    "digitizeTrack": "Digitize track {{symbol}}",
+    "removeTrack": "Remove track {{symbol}}",
+    "dataTable": "Track data",
+    "exportCSV": "Export track data as CSV file"
   }
 }
