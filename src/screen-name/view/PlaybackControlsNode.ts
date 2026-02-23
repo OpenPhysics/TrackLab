@@ -110,6 +110,9 @@ export class PlaybackControlsNode extends HBox {
         majorTickLength: 8,
         majorTickStroke: TrackLabColors.textOnDarkProperty,
         majorTickLineWidth: 1,
+        minorTickLength: 4,
+        minorTickStroke: TrackLabColors.textOnDarkProperty,
+        minorTickLineWidth: 1,
         startDrag: () => {
           this.isScrubbing = true;
         },
@@ -126,8 +129,21 @@ export class PlaybackControlsNode extends HBox {
 
       if (duration > 0 && frameRate > 0) {
         const totalFrames = Math.round(duration * frameRate);
-        for (let i = 0; i <= totalFrames; i++) {
-          newScrubber.addMajorTick(i / frameRate);
+
+        if (totalFrames > 100) {
+          // Many frames: use major ticks every 10 frames, minor ticks for others
+          for (let i = 0; i <= totalFrames; i++) {
+            if (i % 10 === 0) {
+              newScrubber.addMajorTick(i / frameRate);
+            } else {
+              newScrubber.addMinorTick(i / frameRate);
+            }
+          }
+        } else {
+          // Few frames: use major ticks for all frames
+          for (let i = 0; i <= totalFrames; i++) {
+            newScrubber.addMajorTick(i / frameRate);
+          }
         }
       }
 
