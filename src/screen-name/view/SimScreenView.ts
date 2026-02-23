@@ -21,6 +21,12 @@ import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
+// ── Layout constants ──────────────────────────────────────────────────────────
+const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
+const VIDEO_PLAYER_LEFT_SPACING = 20; // gap between control panel right and video player left
+const DATA_TABLE_LEFT_SPACING = 20; // gap between video player right and data table left
+const KINEMATICS_GRAPH_BOTTOM_MARGIN = 150; // gap between kinematics graph bottom and reset button top
+
 /**
  * Root layout for the simulation screen.
  *
@@ -53,7 +59,7 @@ export class SimScreenView extends ScreenView {
     // ── Control panel / tool checkboxes (upper left) ───────────────────────
     const controlPanel = new ControlPanel(model, trackLabPreferences);
     controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
-    controlPanel.top = this.layoutBounds.top + 10;
+    controlPanel.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(controlPanel);
 
     // ── Track list panel (beneath control panel) ─────────────────────────
@@ -69,8 +75,8 @@ export class SimScreenView extends ScreenView {
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
-    this.videoPlayerNode.left = controlPanel.right + 20;
-    this.videoPlayerNode.top = this.layoutBounds.top + 10;
+    this.videoPlayerNode.left = controlPanel.right + VIDEO_PLAYER_LEFT_SPACING;
+    this.videoPlayerNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(this.videoPlayerNode);
 
     // ── Coordinate system overlay (above video, below camera modal) ─────────
@@ -87,7 +93,7 @@ export class SimScreenView extends ScreenView {
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
-    dataTableNode.top = this.layoutBounds.top + 10;
+    dataTableNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
     const resetAllButton = new ResetAllButton({
@@ -134,14 +140,14 @@ export class SimScreenView extends ScreenView {
 
       // Data table: shift left by extraWidth so it stays within the layout area
       // and doesn't drift into the extra visible space claimed by the graph.
-      dataTableNode.left = this.videoPlayerNode.right + 20 - extraWidth;
+      dataTableNode.left = this.videoPlayerNode.right + DATA_TABLE_LEFT_SPACING - extraWidth;
 
       // Kinematics graph: right edge tracks the visible right boundary.
       kinematicsGraph.right = visibleBounds.maxX;
 
       // Both of these depend on resetAllButton's final position (set above),
       // so they are wired here inside the same link.
-      kinematicsGraph.bottom = resetAllButton.top - 150;
+      kinematicsGraph.bottom = resetAllButton.top - KINEMATICS_GRAPH_BOTTOM_MARGIN;
       playbackControlsNode.centerY = resetAllButton.centerY;
     });
 

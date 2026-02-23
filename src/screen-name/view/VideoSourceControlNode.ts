@@ -22,6 +22,7 @@ const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
 const CONTROLS_SPACING = 12;
 const HEADER_VALUE_PREFIX = "__header:";
+const DOWNLOAD_ICON_FONT_SIZE = 11; // font size for the download arrow icon glyph
 
 // Bundled video files with known frame rates (labels resolved from StringManager)
 type VideoFile = {
@@ -52,6 +53,7 @@ export class VideoSourceControlNode extends HBox {
 
     const uiStrings = StringManager.getInstance().getUI();
     const videoFileStrings = StringManager.getInstance().getVideoFiles();
+    const videoSourceStrings = StringManager.getInstance().getVideoSource();
 
     const VIDEO_FILES: VideoFile[] = [
       {
@@ -292,7 +294,7 @@ export class VideoSourceControlNode extends HBox {
 
     // ── Download button (visible for user-provided videos) ────────────────
     const downloadIcon = new Text("\u2B07", {
-      font: new PhetFont({ size: 11 }),
+      font: new PhetFont({ size: DOWNLOAD_ICON_FONT_SIZE }),
       fill: TrackLabColors.textOnDarkProperty,
     });
     const downloadButton = new RectangularPushButton({
@@ -302,7 +304,7 @@ export class VideoSourceControlNode extends HBox {
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Download Video",
+      accessibleName: videoSourceStrings.downloadVideoStringProperty,
       listener: () => {
         const blob = model.currentWebcamBlobProperty.value;
         if (!blob) {
@@ -375,7 +377,7 @@ export class VideoSourceControlNode extends HBox {
       xMargin: BUTTON_X_MARGIN,
       yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Open Video File",
+      accessibleName: videoSourceStrings.openVideoFileStringProperty,
       listener: () => {
         model.isPlayingProperty.value = false;
         fileInput.click();
@@ -409,7 +411,7 @@ export class VideoSourceControlNode extends HBox {
       yMargin: BUTTON_Y_MARGIN,
       iconFill: TrackLabColors.textOnDarkProperty,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Record Webcam",
+      accessibleName: videoSourceStrings.recordWebcamStringProperty,
       listener: async () => {
         model.isPlayingProperty.value = false;
         this.webcamPanel.visible = true;
