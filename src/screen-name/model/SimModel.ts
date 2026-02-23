@@ -221,27 +221,22 @@ export class SimModel {
   private nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
 
   public constructor() {
-    // ── Clamp coord origin to the video area ────────────────────────────────
-    // Validation lives here rather than in the view so that any writer of
-    // coordOriginProperty (drag listener, programmatic reset, etc.) benefits
-    // from the constraint without needing per-call clamping logic.
-    // The guard `if (clampedX !== pos.x || clampedY !== pos.y)` prevents
-    // infinite recursion: after the clamped value is written, the listener
-    // fires again but finds the condition false and exits.
-    this.coordOriginProperty.lazyLink((pos) => {
-      const clampedX = Math.max(COORD_ORIGIN_BOUNDS_MIN_X, Math.min(COORD_ORIGIN_BOUNDS_MAX_X, pos.x));
-      const clampedY = Math.max(COORD_ORIGIN_BOUNDS_MIN_Y, Math.min(COORD_ORIGIN_BOUNDS_MAX_Y, pos.y));
-      if (clampedX !== pos.x || clampedY !== pos.y) {
-        this.coordOriginProperty.value = pos.copy().setXY(clampedX, clampedY);
-      }
-    });
-
     this.modelViewTransformProperty.lazyLink((newMvt) => {
       if (this.prevModelViewTransform !== null) {
         this.retransformTrackPoints(this.prevModelViewTransform, newMvt);
       }
       this.prevModelViewTransform = newMvt;
     });
+  }
+
+  /**
+   * Clamps a position to keep the coordinate system origin within video bounds.
+   * Used by drag listeners to constrain the origin to the visible video area.
+   */
+  public clampCoordOrigin(pos: Vector2): Vector2 {
+    const clampedX = Math.max(COORD_ORIGIN_BOUNDS_MIN_X, Math.min(COORD_ORIGIN_BOUNDS_MAX_X, pos.x));
+    const clampedY = Math.max(COORD_ORIGIN_BOUNDS_MIN_Y, Math.min(COORD_ORIGIN_BOUNDS_MAX_Y, pos.y));
+    return new Vector2(clampedX, clampedY);
   }
 
   /**

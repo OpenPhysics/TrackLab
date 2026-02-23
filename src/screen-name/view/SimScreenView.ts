@@ -8,8 +8,9 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { DragListener } from "scenerystack/scenery";
-import { ResetAllButton } from "scenerystack/scenery-phet";
+import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
+import { Tandem } from "scenerystack/tandem";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -17,15 +18,15 @@ import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { DataTableNode } from "./DataTableNode.js";
+import { InfoDialogNode } from "./InfoDialogNode.js";
 import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
-const VIDEO_PLAYER_LEFT_SPACING = 20; // gap between control panel right and video player left
-const DATA_TABLE_LEFT_SPACING = 20; // gap between video player right and data table left
-const KINEMATICS_GRAPH_BOTTOM_MARGIN = 150; // gap between kinematics graph bottom and reset button top
+const VIDEO_PLAYER_LEFT_SPACING = 60; // gap between control panel right and video player left
+const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph bottom and reset button top
 
 /**
  * Root layout for the simulation screen.
@@ -93,6 +94,7 @@ export class SimScreenView extends ScreenView {
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
+
     dataTableNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
@@ -100,8 +102,6 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         model.reset(); // resets all model state including tool positions
       },
-      right: this.layoutBounds.maxX - RESET_BUTTON_MARGIN,
-      bottom: this.layoutBounds.maxY - RESET_BUTTON_MARGIN,
     });
     this.addChild(resetAllButton);
 
@@ -118,6 +118,19 @@ export class SimScreenView extends ScreenView {
     const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
     this.addChild(kinematicsGraph);
 
+    // ── Info dialog (explains digitizing workflow) ────────────────────────────
+    const infoDialogNode = new InfoDialogNode();
+    this.addChild(infoDialogNode);
+
+    // ── Info button (lower-left corner, same vertical level as reset button) ─
+    const infoButton = new InfoButton({
+      listener: () => {
+        infoDialogNode.visible = !infoDialogNode.visible;
+      },
+      tandem: Tandem.OPT_OUT,
+    });
+    this.addChild(infoButton);
+
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
     this.addChild(webcamPanel);
@@ -131,16 +144,20 @@ export class SimScreenView extends ScreenView {
     // is wider/taller than the default layout. All right-edge anchors are linked
     // here so they track the actual visible edge rather than the fixed layoutBounds.
     this.visibleBoundsProperty.link((visibleBounds) => {
-      // Extra pixels the visible area extends to the right of layoutBounds.
-      const extraWidth = Math.max(0, visibleBounds.maxX - this.layoutBounds.maxX);
-
       // Reset button: anchor to the actual visible bottom-right corner.
       resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
       resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
 
-      // Data table: shift left by extraWidth so it stays within the layout area
-      // and doesn't drift into the extra visible space claimed by the graph.
-      dataTableNode.left = this.videoPlayerNode.right + DATA_TABLE_LEFT_SPACING - extraWidth;
+      // Info button: lower-left corner, mirroring the reset button margin.
+      infoButton.left = visibleBounds.minX + RESET_BUTTON_MARGIN;
+      infoButton.centerY = resetAllButton.centerY;
+
+      // Info dialog: centered horizontally, positioned just above the info button.
+      infoDialogNode.centerX = this.layoutBounds.centerX;
+      infoDialogNode.bottom = infoButton.top - RESET_BUTTON_MARGIN;
+
+      // Data table: anchor to the right with fixed margin from visible edge
+      dataTableNode.right = visibleBounds.maxX - RESET_BUTTON_MARGIN - 20;
 
       // Kinematics graph: right edge tracks the visible right boundary.
       kinematicsGraph.right = visibleBounds.maxX;

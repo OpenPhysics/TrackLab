@@ -175,7 +175,8 @@ function buildHtmlTable(
   // ── Accessible caption (visually hidden but read by screen readers) ────────
   const caption = document.createElement("caption");
   caption.textContent = a11y.tableCaption;
-  caption.style.cssText = "position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;";
+  caption.style.cssText =
+    "position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;";
   table.appendChild(caption);
 
   // ── Header row ─────────────────────────────────────────────────────────────

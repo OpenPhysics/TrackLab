@@ -84,7 +84,8 @@ const securityHeaders = {
   "Content-Security-Policy": [
     "default-src 'self'",
     // 'wasm-unsafe-eval' is required for FFmpeg/OpenCV WASM modules
-    "script-src 'self' 'wasm-unsafe-eval'",
+    // 'unsafe-eval' is required for SceneryStack query parameter parsing
+    "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
     // FFmpeg and OpenCV spin up blob: workers
     "worker-src blob: 'self'",
     // Inline styles are set via element.style / cssText throughout the UI layer

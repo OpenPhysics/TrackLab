@@ -22,6 +22,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
+
 const a11yStrings = StringManager.getInstance().getA11y();
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";

@@ -356,7 +356,8 @@ export class WebcamPanel extends Node {
     cameras.forEach((cam, i) => {
       const opt = document.createElement("option");
       opt.value = cam.deviceId;
-      opt.textContent = cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
+      opt.textContent =
+        cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
       this.cameraSelect.appendChild(opt);
     });
   }

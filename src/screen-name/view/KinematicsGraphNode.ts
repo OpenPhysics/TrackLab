@@ -43,6 +43,7 @@ export class KinematicsGraphNode extends VBox {
     super({
       spacing: VBOX_SPACING,
       align: "left",
+      visible: false,
     });
 
     this.kinematicsGraphStrings = StringManager.getInstance().getKinematicsGraph();
@@ -90,7 +91,7 @@ export class KinematicsGraphNode extends VBox {
       this, // dragTargetNode - move this VBox when dragging
     );
 
-    // Make the graph visible by default
+    // Make the graph visible by default (the VBox visibility controls when it appears)
     this.graph.getGraphVisibleProperty().value = true;
 
     // Container for the track selector (will be rebuilt when tracks change)
@@ -154,6 +155,12 @@ export class KinematicsGraphNode extends VBox {
     // Layout
     this.children = [this.trackSelectorContainer, this.graph];
 
+    // Make graph visible when video is loaded (like DataTableNode)
+    const videoLoadedListener = (loaded: boolean) => {
+      this.visible = loaded;
+    };
+    model.videoLoadedProperty.link(videoLoadedListener);
+
     // Store cleanup function
     this.disposeKinematicsGraph = () => {
       model.tracksProperty.unlink(tracksListener);
@@ -164,6 +171,7 @@ export class KinematicsGraphNode extends VBox {
       model.distanceUnitProperty.unlink(distanceUnitListener);
       preferencesModel.showVelocityInGraphProperty.unlink(velocityPrefListener);
       preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
+      model.videoLoadedProperty.unlink(videoLoadedListener);
       if (this.currentComboBox) {
         this.currentComboBox.dispose();
       }

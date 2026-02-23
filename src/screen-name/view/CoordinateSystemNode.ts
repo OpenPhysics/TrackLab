@@ -191,10 +191,20 @@ export class CoordinateSystemNode extends Node {
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener(
       new RichDragListener({
-        positionProperty: model.coordOriginProperty,
+        dragListenerOptions: {
+          drag: (_event, listener) => {
+            const newPos = listener.parentPoint;
+            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+          },
+        },
         keyboardDragListenerOptions: {
           dragSpeed: TRANSLATE_DRAG_SPEED,
           shiftDragSpeed: TRANSLATE_SHIFT_DRAG_SPEED,
+          drag: (_event, listener) => {
+            const currentPos = model.coordOriginProperty.value;
+            const newPos = currentPos.plus(listener.modelDelta);
+            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+          },
         },
         tandem: Tandem.OPT_OUT,
       }),
