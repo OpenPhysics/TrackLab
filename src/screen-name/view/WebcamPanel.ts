@@ -9,7 +9,7 @@ import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
 import { CloseButton, PhetFont, RefreshButton, StopIconShape } from "scenerystack/scenery-phet";
-import { ButtonNode, cameraSolidShape, checkSolidShape, NumberSpinner, Panel } from "scenerystack/sun";
+import { ButtonNode, cameraSolidShape, checkSolidShape, NumberPicker, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
@@ -31,9 +31,8 @@ const PANEL_X_MARGIN = 20;
 const PANEL_Y_MARGIN = 15;
 const LAYER_SPACING = 10; // VBox spacing between elements within each layer
 const CAMERA_ROW_SPACING = 8; // HBox spacing between camera icon and select
-const FPS_CONTROL_SPACING = 6; // gap between "fps:" label and spinner
-const FPS_SPINNER_SCALE = 0.7;
-const FPS_SPINNER_MIN_WIDTH = 50;
+const FPS_CONTROL_SPACING = 6; // gap between "fps:" label and picker
+const FPS_PICKER_SCALE = 0.7;
 const CAMERA_SELECT_FONT = "14px sans-serif"; // CSS font for the native <select> element
 const CAMERA_SELECT_PADDING = "4px"; // CSS padding for the native <select> element
 const TIMER_INTERVAL_MS = 1000; // ms between recording-timer display updates
@@ -187,23 +186,16 @@ export class WebcamPanel extends Node {
       fill: TrackLabColors.textMutedProperty,
     });
 
-    const fpsSpinner = new NumberSpinner(this.model.frameRateProperty, new Property(FRAME_RATE_RANGE), {
-      deltaValue: 1,
-      numberDisplayOptions: {
-        decimalPlaces: 0,
-        textOptions: { font: SMALL_FONT },
-        minBackgroundWidth: FPS_SPINNER_MIN_WIDTH,
-      },
-      arrowsPosition: "leftRight",
-      arrowButtonOptions: {
-        scale: FPS_SPINNER_SCALE,
-        buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      },
+    const fpsPicker = new NumberPicker(this.model.frameRateProperty, new Property(FRAME_RATE_RANGE), {
+      font: SMALL_FONT,
+      scale: FPS_PICKER_SCALE,
+      touchAreaXDilation: 10,
+      touchAreaYDilation: 5,
       tandem: Tandem.OPT_OUT,
     });
 
     const fpsControl = new HBox({
-      children: [fpsLabel, fpsSpinner],
+      children: [fpsLabel, fpsPicker],
       spacing: FPS_CONTROL_SPACING,
       align: "center",
     });
