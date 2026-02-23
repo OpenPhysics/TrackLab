@@ -77,7 +77,8 @@
     "fps": "ips :",
     "selectVideo": "— sélectionner une vidéo —",
     "sampleVideos": "── Vidéos exemples ──",
-    "myRecordings": "── Mes enregistrements ──"
+    "myRecordings": "── Mes enregistrements ──",
+    "uploadedVideos": "── Vidéos importées ──"
   },
   "coordSystem": {
     "xAxisLabel": "x",

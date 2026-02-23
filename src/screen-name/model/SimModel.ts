@@ -57,6 +57,16 @@ export type WebcamRecording = {
   timestamp: number;
 };
 
+// ── Uploaded video entry ─────────────────────────────────────────────────
+export type UploadedVideo = {
+  id: string;
+  blob: Blob;
+  label: string;
+  duration: number;
+  fps: number;
+  timestamp: number;
+};
+
 export class SimModel {
   public readonly isPlayingProperty = new BooleanProperty(false);
   public readonly currentTimeProperty = new NumberProperty(0, {
@@ -76,6 +86,10 @@ export class SimModel {
   public readonly webcamRecordingsProperty = new Property<readonly WebcamRecording[]>([]);
   public readonly currentWebcamBlobProperty = new Property<Blob | null>(null);
   private nextRecordingNumber = 1;
+
+  // ── Uploaded videos storage ────────────────────────────────────────────
+  public readonly uploadedVideosProperty = new Property<readonly UploadedVideo[]>([]);
+  private nextUploadNumber = 1;
 
   // ── Playback speed multiplier (1 = normal, 0.5 = slow, 2 = fast) ────────
   // The view maps its TimeSpeed enum to this value; the model stays free of
@@ -380,6 +394,28 @@ export class SimModel {
     return recording;
   }
 
+  public addUploadedVideo(blob: Blob, name: string, duration: number): UploadedVideo {
+    const num = this.nextUploadNumber;
+    this.nextUploadNumber++;
+    // Strip extension and truncate long names for the dropdown label
+    const baseName = name.replace(/\.[^.]+$/, "");
+    const displayName = baseName.length > 25 ? `${baseName.substring(0, 22)}...` : baseName;
+    const totalSec = Math.round(duration);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const durationStr = `${m}:${s.toString().padStart(2, "0")}`;
+    const upload: UploadedVideo = {
+      id: `upload-${num}`,
+      blob,
+      label: `${displayName}  (${durationStr})`,
+      duration,
+      fps: DEFAULT_FRAME_RATE,
+      timestamp: Date.now(),
+    };
+    this.uploadedVideosProperty.value = [...this.uploadedVideosProperty.value, upload];
+    return upload;
+  }
+
   public reset(): void {
     this.prevModelViewTransform = null;
     this.kinematicsCache.clear();
@@ -391,6 +427,8 @@ export class SimModel {
     this.webcamRecordingsProperty.value = [];
     this.currentWebcamBlobProperty.value = null;
     this.nextRecordingNumber = 1;
+    this.uploadedVideosProperty.value = [];
+    this.nextUploadNumber = 1;
     this.playbackRateProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();

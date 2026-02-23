@@ -1,12 +1,13 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
-import { HBox, type Node, Text } from "scenerystack/scenery";
+import { Shape } from "scenerystack/kite";
+import { HBox, type Node, Path, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
 import { ButtonNode, ComboBox, type ComboBoxItem, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { DEFAULT_FRAME_RATE, type SimModel, type WebcamRecording } from "../model/SimModel.js";
+import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -27,8 +28,8 @@ export type WebcamReadyCallback = (blob: Blob, duration: number) => void;
 
 /**
  * Video source selection controls: combo box for bundled videos (with optional
- * "My Recordings" section), a download button (visible for webcam recordings),
- * and a webcam-record button.
+ * "My Recordings" and "Uploaded Videos" sections), a download button (visible
+ * for user-provided videos), an upload button, and a webcam-record button.
  */
 export class VideoSourceControlNode extends HBox {
   public readonly webcamPanel: WebcamPanel;
@@ -105,7 +106,7 @@ export class VideoSourceControlNode extends HBox {
     const selectedVideoProperty = new Property<string | null>(null);
     let lastLoadedValue: string | null = null;
 
-    // ── Selection handler for both bundled videos and recordings ───────────
+    // ── Selection handler for bundled videos, recordings, and uploads ──────
     selectedVideoProperty.lazyLink((value) => {
       // Revert section-header selections immediately
       if (value?.startsWith(HEADER_VALUE_PREFIX)) {
@@ -122,7 +123,7 @@ export class VideoSourceControlNode extends HBox {
         return;
       }
 
-      // Check webcam recordings first
+      // Check webcam recordings
       const recording = model.webcamRecordingsProperty.value.find((r) => r.id === value);
       if (recording) {
         lastLoadedValue = value;
@@ -130,6 +131,17 @@ export class VideoSourceControlNode extends HBox {
         model.frameRateProperty.value = recording.fps;
         model.currentWebcamBlobProperty.value = recording.blob;
         onWebcamReady(recording.blob, recording.duration);
+        return;
+      }
+
+      // Check uploaded videos
+      const upload = model.uploadedVideosProperty.value.find((u) => u.id === value);
+      if (upload) {
+        lastLoadedValue = value;
+        model.isWebcamVideoProperty.value = true;
+        model.frameRateProperty.value = upload.fps;
+        model.currentWebcamBlobProperty.value = upload.blob;
+        onWebcamReady(upload.blob, upload.duration);
         return;
       }
 
@@ -143,11 +155,14 @@ export class VideoSourceControlNode extends HBox {
       }
     });
 
-    // ── Combo box (rebuilt when recordings change) ─────────────────────────
+    // ── Combo box (rebuilt when recordings or uploads change) ──────────────
     let videoComboBox: ComboBox<string | null> | null = null;
 
-    const buildComboBox = (recordings: readonly WebcamRecording[]): ComboBox<string | null> => {
-      const hasRecordings = recordings.length > 0;
+    const buildComboBox = (
+      recordings: readonly WebcamRecording[],
+      uploads: readonly UploadedVideo[],
+    ): ComboBox<string | null> => {
+      const hasUserVideos = recordings.length > 0 || uploads.length > 0;
       const items: ComboBoxItem<string | null>[] = [];
 
       // Placeholder item
@@ -161,8 +176,8 @@ export class VideoSourceControlNode extends HBox {
         tandemName: "selectVideoItem",
       });
 
-      // Sample videos header (only shown when recordings exist to separate sections)
-      if (hasRecordings) {
+      // Sample videos header (only when user videos exist to separate sections)
+      if (hasUserVideos) {
         items.push({
           value: `${HEADER_VALUE_PREFIX}samples`,
           createNode: () =>
@@ -188,7 +203,7 @@ export class VideoSourceControlNode extends HBox {
       }
 
       // My Recordings section
-      if (hasRecordings) {
+      if (recordings.length > 0) {
         items.push({
           value: `${HEADER_VALUE_PREFIX}recordings`,
           createNode: () =>
@@ -212,6 +227,31 @@ export class VideoSourceControlNode extends HBox {
         }
       }
 
+      // Uploaded Videos section
+      if (uploads.length > 0) {
+        items.push({
+          value: `${HEADER_VALUE_PREFIX}uploads`,
+          createNode: () =>
+            new Text(uiStrings.uploadedVideosStringProperty, {
+              font: HEADER_FONT,
+              fill: TrackLabColors.textMutedProperty,
+            }),
+          tandemName: "uploadedVideosHeader",
+        });
+
+        for (const upl of uploads) {
+          items.push({
+            value: upl.id,
+            createNode: () =>
+              new Text(upl.label, {
+                font: LABEL_FONT,
+                fill: TrackLabColors.textOnDarkProperty,
+              }),
+            tandemName: upl.id.replace("-", ""),
+          });
+        }
+      }
+
       return new ComboBox(selectedVideoProperty, items, listParent, {
         buttonFill: TrackLabColors.comboBoxButtonFillProperty,
         listFill: TrackLabColors.comboBoxListFillProperty,
@@ -219,9 +259,11 @@ export class VideoSourceControlNode extends HBox {
       });
     };
 
-    const rebuildComboBox = (recordings: readonly WebcamRecording[]): void => {
+    const rebuildComboBox = (): void => {
+      const recordings = model.webcamRecordingsProperty.value;
+      const uploads = model.uploadedVideosProperty.value;
       const oldBox = videoComboBox;
-      videoComboBox = buildComboBox(recordings);
+      videoComboBox = buildComboBox(recordings, uploads);
 
       if (oldBox) {
         const idx = this.children.indexOf(oldBox);
@@ -233,15 +275,14 @@ export class VideoSourceControlNode extends HBox {
       }
     };
 
-    // Build the initial ComboBox (no recordings yet)
-    videoComboBox = buildComboBox([]);
+    // Build the initial ComboBox (no recordings or uploads yet)
+    videoComboBox = buildComboBox([], []);
 
-    // Rebuild when recordings change
-    model.webcamRecordingsProperty.lazyLink((recordings) => {
-      rebuildComboBox(recordings);
-    });
+    // Rebuild when either list changes
+    model.webcamRecordingsProperty.lazyLink(() => rebuildComboBox());
+    model.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
 
-    // ── Download button (visible only for webcam recordings) ──────────────
+    // ── Download button (visible for user-provided videos) ────────────────
     const downloadIcon = new Text("\u2B07", {
       font: new PhetFont({ size: 11 }),
       fill: TrackLabColors.textOnDarkProperty,
@@ -251,7 +292,7 @@ export class VideoSourceControlNode extends HBox {
       baseColor: TrackLabColors.buttonBaseDarkProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
       tandem: Tandem.OPT_OUT,
-      accessibleName: "Download Recording",
+      accessibleName: "Download Video",
       listener: () => {
         const blob = model.currentWebcamBlobProperty.value;
         if (!blob) {
@@ -261,14 +302,72 @@ export class VideoSourceControlNode extends HBox {
         const a = document.createElement("a");
         a.href = url;
         const ext = blob.type.includes("webm") ? "webm" : "mp4";
-        a.download = `recording.${ext}`;
+        a.download = `video.${ext}`;
         a.click();
         URL.revokeObjectURL(url);
       },
     });
     downloadButton.visible = false;
-    model.isWebcamVideoProperty.link((isWebcam) => {
-      downloadButton.visible = isWebcam;
+    model.isWebcamVideoProperty.link((isUserVideo) => {
+      downloadButton.visible = isUserVideo;
+    });
+
+    // ── Upload button (opens file picker for local video files) ───────────
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "video/*";
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (!file) {
+        return;
+      }
+      // Read duration via a temporary video element, then store and load
+      const blob: Blob = file;
+      const tempUrl = URL.createObjectURL(blob);
+      const tempVideo = document.createElement("video");
+      tempVideo.preload = "metadata";
+      tempVideo.src = tempUrl;
+      tempVideo.addEventListener("loadedmetadata", () => {
+        const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
+        URL.revokeObjectURL(tempUrl);
+
+        const upload = model.addUploadedVideo(blob, file.name, duration);
+        model.currentWebcamBlobProperty.value = blob;
+        lastLoadedValue = upload.id;
+        selectedVideoProperty.value = upload.id;
+        model.isWebcamVideoProperty.value = true;
+        onWebcamReady(blob, duration);
+      });
+      // Reset so selecting the same file again still triggers "change"
+      fileInput.value = "";
+    });
+
+    // Folder icon shape for the upload button
+    const folderShape = new Shape()
+      .moveTo(0, 3)
+      .lineTo(4, 3)
+      .lineTo(5.5, 0)
+      .lineTo(14, 0)
+      .lineTo(14, 10)
+      .lineTo(0, 10)
+      .close();
+    const uploadIcon = new Path(folderShape, {
+      fill: TrackLabColors.textOnDarkProperty,
+    });
+
+    const uploadButton = new RectangularPushButton({
+      content: uploadIcon,
+      baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      tandem: Tandem.OPT_OUT,
+      accessibleName: "Open Video File",
+      listener: () => {
+        model.isPlayingProperty.value = false;
+        fileInput.click();
+      },
     });
 
     // ── Webcam panel and button ───────────────────────────────────────────
@@ -303,6 +402,6 @@ export class VideoSourceControlNode extends HBox {
       },
     });
 
-    this.children = [videoComboBox, downloadButton, webcamButton];
+    this.children = [videoComboBox, downloadButton, uploadButton, webcamButton];
   }
 }

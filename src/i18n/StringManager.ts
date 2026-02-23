@@ -261,12 +261,14 @@ export class StringManager {
     selectVideoStringProperty: ReadOnlyProperty<string>;
     sampleVideosStringProperty: ReadOnlyProperty<string>;
     myRecordingsStringProperty: ReadOnlyProperty<string>;
+    uploadedVideosStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       fpsStringProperty: this.stringProperties.ui.fpsStringProperty,
       selectVideoStringProperty: this.stringProperties.ui.selectVideoStringProperty,
       sampleVideosStringProperty: this.stringProperties.ui.sampleVideosStringProperty,
       myRecordingsStringProperty: this.stringProperties.ui.myRecordingsStringProperty,
+      uploadedVideosStringProperty: this.stringProperties.ui.uploadedVideosStringProperty,
     };
   }
 
