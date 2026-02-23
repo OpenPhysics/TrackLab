@@ -7,15 +7,16 @@
  */
 
 import { Property } from "scenerystack/axon";
-import { HBox, Node, Text, VBox } from "scenerystack/scenery";
+import { Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { ComboBox, type ComboBoxItem } from "scenerystack/sun";
-import { StringManager } from "../../i18n/StringManager.js";
+import { Checkbox } from "scenerystack/sun";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
+import TrackLabColors from "../../TrackLabColors.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
 import type { PlottableProperty } from "../graph/PlottableProperty.js";
 import type { SimModel } from "../model/SimModel.js";
+import type { Track } from "../model/Track.js";
 
 // Graph dimensions
 const GRAPH_WIDTH = 300;
@@ -23,33 +24,22 @@ const GRAPH_HEIGHT = 200;
 const MAX_DATA_POINTS = 5000;
 
 // Track selector UI
-const VBOX_SPACING = 8; // vertical gap between track selector row and graph
-const TRACK_SELECTOR_FONT = new PhetFont(12); // font for track selector label and combo box items
-const TRACK_COMBO_X_MARGIN = 8; // horizontal margin inside track combo box
-const TRACK_COMBO_Y_MARGIN = 4; // vertical margin inside track combo box
-const TRACK_SELECTOR_SPACING = 8; // gap between "Track:" label and combo box
+const TRACK_CHECKBOX_FONT = new PhetFont(11);
+const TRACK_CHECKBOX_SPACING = 6;
 
-export class KinematicsGraphNode extends VBox {
+export class KinematicsGraphNode extends Node {
   private readonly graph: ConfigurableGraph;
   private readonly model: SimModel;
-  private readonly selectedTrackProperty: Property<string | null>;
-  private readonly trackSelectorContainer: Node;
-  private readonly listParent: Node;
-  private currentComboBox: ComboBox<string | null> | null = null;
+  private readonly selectedTracksProperty: Property<Set<string>>;
+  private readonly trackCheckboxPanel: Node;
+  private readonly trackCheckboxes: Map<string, { checkbox: Checkbox; property: Property<boolean> }> = new Map();
   private readonly disposeKinematicsGraph: () => void;
-  private readonly kinematicsGraphStrings;
 
   public constructor(model: SimModel, listParent: Node, preferencesModel: TrackLabPreferencesModel) {
-    super({
-      spacing: VBOX_SPACING,
-      align: "left",
-      visible: false,
-    });
+    super({ visible: false });
 
-    this.kinematicsGraphStrings = StringManager.getInstance().getKinematicsGraph();
     this.model = model;
-    this.listParent = listParent;
-    this.selectedTrackProperty = new Property<string | null>(null);
+    this.selectedTracksProperty = new Property<Set<string>>(new Set());
 
     // Build the categorised groups of plottable quantities.
     // Object references are stable — the same PlottableProperty instances are
@@ -88,41 +78,52 @@ export class KinematicsGraphNode extends VBox {
       GRAPH_HEIGHT,
       MAX_DATA_POINTS,
       listParent,
-      this, // dragTargetNode - move this VBox when dragging
+      this, // dragTargetNode - move this Node when dragging
     );
 
-    // Make the graph visible by default (the VBox visibility controls when it appears)
+    // Make the graph visible by default (the Node visibility controls when it appears)
     this.graph.getGraphVisibleProperty().value = true;
 
-    // Container for the track selector (will be rebuilt when tracks change)
-    this.trackSelectorContainer = new Node();
+    // Container for the track checkboxes (upper right of graph)
+    this.trackCheckboxPanel = new Node();
 
-    // Update combo box when tracks change (link fires immediately, building initial selector)
-    const tracksListener = (tracks: readonly import("../model/Track.js").Track[]) => {
-      // Dispose old combo box FIRST to disconnect it from the property
-      // (prevents assertion error when property value changes)
-      if (this.currentComboBox) {
-        this.currentComboBox.dispose();
-        this.currentComboBox = null;
+    this.addChild(this.graph);
+    // Add checkboxes to the graph so they move/resize with it
+    this.graph.addChild(this.trackCheckboxPanel);
+
+    // Update checkboxes when tracks change (link fires immediately, building initial checkboxes)
+    const tracksListener = (tracks: readonly Track[]) => {
+      // Dispose old checkboxes
+      for (const [, { checkbox, property }] of this.trackCheckboxes) {
+        checkbox.dispose();
+        property.dispose();
+      }
+      this.trackCheckboxes.clear();
+
+      // Update selection to remove tracks that no longer exist
+      const currentSelection = this.selectedTracksProperty.value;
+      const newSelection = new Set<string>();
+      for (const trackId of currentSelection) {
+        if (tracks.some((t) => t.id === trackId)) {
+          newSelection.add(trackId);
+        }
       }
 
-      // Now update selection to match new tracks
-      const currentId = this.selectedTrackProperty.value;
-      const firstTrack = tracks[0];
-      if (tracks.length === 0 || !firstTrack) {
-        this.selectedTrackProperty.value = null;
-      } else if (currentId === null || !tracks.some((t) => t.id === currentId)) {
-        this.selectedTrackProperty.value = firstTrack.id;
+      // Auto-select first track if none selected
+      if (newSelection.size === 0 && tracks.length > 0 && tracks[0]) {
+        newSelection.add(tracks[0].id);
       }
 
-      // Build new combo box with updated items
-      this.rebuildTrackSelector();
+      this.selectedTracksProperty.value = newSelection;
+
+      // Build new checkbox panel with updated tracks
+      this.rebuildTrackCheckboxes();
     };
     model.tracksProperty.link(tracksListener);
 
-    // Update graph when selected track changes or kinematics update
-    const selectedTrackListener = () => this.updateGraph();
-    this.selectedTrackProperty.link(selectedTrackListener);
+    // Update graph when selected tracks change or kinematics update
+    const selectedTracksListener = () => this.updateGraph();
+    this.selectedTracksProperty.link(selectedTracksListener);
 
     const kinematicsListener = () => this.updateGraph();
     model.trackKinematicsProperty.link(kinematicsListener);
@@ -152,19 +153,22 @@ export class KinematicsGraphNode extends VBox {
     };
     preferencesModel.showAccelerationInGraphProperty.lazyLink(accelerationPrefListener);
 
-    // Layout
-    this.children = [this.trackSelectorContainer, this.graph];
-
     // Make graph visible when video is loaded (like DataTableNode)
     const videoLoadedListener = (loaded: boolean) => {
       this.visible = loaded;
     };
     model.videoLoadedProperty.link(videoLoadedListener);
 
+    // Update checkbox positions when graph bounds change (e.g., after resize)
+    const graphBoundsListener = () => {
+      this.updateCheckboxPositions();
+    };
+    this.graph.localBoundsProperty.lazyLink(graphBoundsListener);
+
     // Store cleanup function
     this.disposeKinematicsGraph = () => {
       model.tracksProperty.unlink(tracksListener);
-      this.selectedTrackProperty.unlink(selectedTrackListener);
+      this.selectedTracksProperty.unlink(selectedTracksListener);
       model.trackKinematicsProperty.unlink(kinematicsListener);
       this.graph.getXPropertyProperty().unlink(xPropertyListener);
       this.graph.getYPropertyProperty().unlink(yPropertyListener);
@@ -172,10 +176,13 @@ export class KinematicsGraphNode extends VBox {
       preferencesModel.showVelocityInGraphProperty.unlink(velocityPrefListener);
       preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
       model.videoLoadedProperty.unlink(videoLoadedListener);
-      if (this.currentComboBox) {
-        this.currentComboBox.dispose();
+      this.graph.localBoundsProperty.unlink(graphBoundsListener);
+      for (const [, { checkbox, property }] of this.trackCheckboxes) {
+        checkbox.dispose();
+        property.dispose();
       }
-      this.selectedTrackProperty.dispose();
+      this.trackCheckboxes.clear();
+      this.selectedTracksProperty.dispose();
       this.graph.dispose();
     };
   }
@@ -186,87 +193,118 @@ export class KinematicsGraphNode extends VBox {
   }
 
   /**
-   * Rebuilds the track selector combo box with current tracks.
-   * Note: The old combo box should be disposed before calling this method.
+   * Rebuilds the track checkbox panel with current tracks.
+   * Positions it in the upper right corner of the graph.
    */
-  private rebuildTrackSelector(): void {
-    const trackSelectorLabel = new Text(this.kinematicsGraphStrings.trackSelectorLabelStringProperty, {
-      font: TRACK_SELECTOR_FONT,
-    });
-
-    const trackComboBoxItems = this.createTrackComboBoxItems();
-    this.currentComboBox = new ComboBox(this.selectedTrackProperty, trackComboBoxItems, this.listParent, {
-      xMargin: TRACK_COMBO_X_MARGIN,
-      yMargin: TRACK_COMBO_Y_MARGIN,
-    });
-
-    const trackSelector = new HBox({
-      spacing: TRACK_SELECTOR_SPACING,
-      children: [trackSelectorLabel, this.currentComboBox],
-    });
-
-    this.trackSelectorContainer.children = [trackSelector];
-  }
-
-  /**
-   * Creates combo box items for track selection.
-   */
-  private createTrackComboBoxItems(): ComboBoxItem<string | null>[] {
+  private rebuildTrackCheckboxes(): void {
     const tracks = this.model.tracksProperty.value;
 
     if (tracks.length === 0) {
-      return [
-        {
-          value: null,
-          createNode: () => new Text(this.kinematicsGraphStrings.noTracksStringProperty, { font: TRACK_SELECTOR_FONT }),
-          tandemName: "noTracksItem",
-        },
-      ];
+      this.trackCheckboxPanel.children = [];
+      return;
     }
 
-    return tracks.map((track) => ({
-      value: track.id,
-      createNode: () =>
-        new Text(this.kinematicsGraphStrings.trackItemStringProperty.value.replace("{{symbol}}", track.symbol), {
-          font: TRACK_SELECTOR_FONT,
-          fill: track.color,
-        }),
-      tandemName: `track${track.symbol}Item`,
-    }));
+    const checkboxNodes: Node[] = [];
+
+    for (const track of tracks) {
+      // Create a property for this checkbox
+      const checkboxProperty = new Property<boolean>(this.selectedTracksProperty.value.has(track.id));
+
+      // When checkbox changes, update the selected tracks set
+      checkboxProperty.link((checked) => {
+        const newSelection = new Set(this.selectedTracksProperty.value);
+        if (checked) {
+          newSelection.add(track.id);
+        } else {
+          newSelection.delete(track.id);
+        }
+        this.selectedTracksProperty.value = newSelection;
+      });
+
+      // Create label with track symbol in track color
+      const label = new Text(track.symbol, {
+        font: TRACK_CHECKBOX_FONT,
+        fill: track.color,
+      });
+
+      // Create checkbox
+      const checkbox = new Checkbox(checkboxProperty, label, {
+        checkboxColor: TrackLabColors.checkboxColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        spacing: 4,
+      });
+
+      // Store for later disposal
+      this.trackCheckboxes.set(track.id, { checkbox, property: checkboxProperty });
+
+      checkboxNodes.push(checkbox);
+    }
+
+    // Arrange checkboxes vertically
+    const checkboxContainer = new VBox({
+      children: checkboxNodes,
+      spacing: TRACK_CHECKBOX_SPACING,
+      align: "left",
+    });
+
+    this.trackCheckboxPanel.children = [checkboxContainer];
+    this.updateCheckboxPositions();
   }
 
   /**
-   * Updates the graph with data from the selected track.
+   * Updates checkbox positions to stay in upper right corner of graph.
+   * Called when checkboxes are rebuilt or when graph is resized.
+   */
+  private updateCheckboxPositions(): void {
+    if (this.trackCheckboxPanel.children.length === 0) {
+      return;
+    }
+
+    const checkboxContainer = this.trackCheckboxPanel.children[0];
+    if (checkboxContainer) {
+      // Position relative to graph's current dimensions
+      checkboxContainer.right = this.graph.getGraphWidth() - 8;
+      checkboxContainer.top = 8;
+    }
+  }
+
+  /**
+   * Updates the graph with data from all selected tracks.
+   * Each track gets its own curve with its own color.
    */
   private updateGraph(): void {
-    this.graph.clearData();
+    // Clear all tracks first
+    this.graph.clearAllTracks();
 
-    const selectedId = this.selectedTrackProperty.value;
-    if (selectedId === null) {
+    const selectedIds = this.selectedTracksProperty.value;
+    if (selectedIds.size === 0) {
       return;
     }
 
     const kinematics = this.model.trackKinematicsProperty.value;
-    const trackData = kinematics.find((tk) => tk.id === selectedId);
+    const tracks = this.model.tracksProperty.value;
 
-    if (!trackData || trackData.points.length === 0) {
-      return;
-    }
+    // Plot each selected track separately with its own color
+    for (const trackId of selectedIds) {
+      const trackData = kinematics.find((tk) => tk.id === trackId);
+      const track = tracks.find((t) => t.id === trackId);
 
-    const dataPoints = trackData.points.map((pt) => ({
-      t: pt.time,
-      x: pt.x,
-      y: pt.y,
-      vx: pt.vx ?? Number.NaN,
-      vy: pt.vy ?? Number.NaN,
-      speed: pt.speed ?? Number.NaN,
-      ax: pt.ax ?? Number.NaN,
-      ay: pt.ay ?? Number.NaN,
-      aMag: pt.accelerationMagnitude ?? Number.NaN,
-    }));
+      if (trackData && track && trackData.points.length > 0) {
+        const dataPoints = trackData.points.map((pt) => ({
+          t: pt.time,
+          x: pt.x,
+          y: pt.y,
+          vx: pt.vx ?? Number.NaN,
+          vy: pt.vy ?? Number.NaN,
+          speed: pt.speed ?? Number.NaN,
+          ax: pt.ax ?? Number.NaN,
+          ay: pt.ay ?? Number.NaN,
+          aMag: pt.accelerationMagnitude ?? Number.NaN,
+        }));
 
-    if (dataPoints.length > 0) {
-      this.graph.addDataPoints(dataPoints);
+        // Set track data with the track's color
+        this.graph.setTrackData(trackId, track.color, dataPoints);
+      }
     }
   }
 }

@@ -104,6 +104,10 @@ export default class ConfigurableGraph extends Node {
   // Clipped data container for line plot and trail
   private readonly clippedDataContainer: Node;
 
+  // Multi-track support: map of trackId -> {linePlot, dataManager}
+  private readonly trackPlots: Map<string, { linePlot: LinePlot; dataManager: GraphDataManager }> = new Map();
+  private readonly maxDataPoints: number;
+
   // Visibility control
   private readonly graphVisibleProperty: BooleanProperty;
   private readonly graphContentNode: Node;
@@ -120,6 +124,9 @@ export default class ConfigurableGraph extends Node {
   private readonly dataManager: GraphDataManager;
   private readonly interactionHandler: GraphInteractionHandler;
   private readonly controlsPanel: GraphControlsPanel;
+
+  // Grid and tick components (shared across all tracks)
+  private readonly gridConfig: import("./GraphDataManager.js").GridVisualizationConfig;
 
   // Title panel with combo boxes (needs to be on top of header bar)
   private readonly titlePanel: Node;
@@ -157,6 +164,7 @@ export default class ConfigurableGraph extends Node {
     this.graphHeight = height;
     this.initialWidth = width;
     this.initialHeight = height;
+    this.maxDataPoints = maxDataPoints;
 
     // Properties to track current axis selections
     this.xPropertyProperty = new Property(initialXProperty);
@@ -290,15 +298,18 @@ export default class ConfigurableGraph extends Node {
     });
     this.graphContentNode.addChild(this.yAxisLabelNode);
 
-    // Initialize data manager
-    this.dataManager = new GraphDataManager(this.chartTransform, linePlot, maxDataPoints, {
+    // Store grid config for creating track-specific data managers
+    this.gridConfig = {
       verticalGridLineSet,
       horizontalGridLineSet,
       xTickMarkSet,
       yTickMarkSet,
       xTickLabelSet,
       yTickLabelSet,
-    });
+    };
+
+    // Initialize data manager
+    this.dataManager = new GraphDataManager(this.chartTransform, linePlot, maxDataPoints, this.gridConfig);
 
     // Create controls panel helper
     this.controlsPanel = new GraphControlsPanel(
@@ -656,6 +667,20 @@ export default class ConfigurableGraph extends Node {
   }
 
   /**
+   * Get the current graph width
+   */
+  public getGraphWidth(): number {
+    return this.graphWidth;
+  }
+
+  /**
+   * Get the current graph height
+   */
+  public getGraphHeight(): number {
+    return this.graphHeight;
+  }
+
+  /**
    * Update the set of quantities available in the axis-selector combo boxes.
    *
    * If the currently selected X or Y property is no longer in the new list it
@@ -703,6 +728,81 @@ export default class ConfigurableGraph extends Node {
 
     // Clear all data
     this.clearData();
+    this.clearAllTracks();
+  }
+
+  // ── Multi-track support ─────────────────────────────────────────────────────
+
+  /**
+   * Add or update a track's plot with new data.
+   * @param trackId - Unique identifier for the track
+   * @param trackColor - Color for the track's line plot
+   * @param dataPoints - Array of data points for this track
+   */
+  public setTrackData(
+    trackId: string,
+    trackColor: import("scenerystack/scenery").TColor,
+    dataPoints: Array<Record<string, number>>,
+  ): void {
+    // Create a new plot if this track doesn't exist yet
+    if (!this.trackPlots.has(trackId)) {
+      const linePlot = new LinePlot(this.chartTransform, [], {
+        stroke: trackColor,
+        lineWidth: PLOT_LINE_WIDTH,
+      });
+
+      // Create a data manager for this track using the shared grid config
+      const dataManager = new GraphDataManager(this.chartTransform, linePlot, this.maxDataPoints, this.gridConfig);
+
+      this.trackPlots.set(trackId, { linePlot, dataManager });
+      this.clippedDataContainer.addChild(linePlot);
+    }
+
+    // Get the track's data manager
+    const trackPlot = this.trackPlots.get(trackId);
+    if (!trackPlot) {
+      return;
+    }
+
+    // Map the data points to x,y coordinates using the current axis properties
+    const xProperty = this.xPropertyProperty.value;
+    const yProperty = this.yPropertyProperty.value;
+
+    const mappedPoints: Array<{ x: number; y: number }> = [];
+    for (const point of dataPoints) {
+      const x = "accessor" in xProperty ? xProperty.accessor(point) : 0;
+      const y = "accessor" in yProperty ? yProperty.accessor(point) : 0;
+      if (!(Number.isNaN(x) || Number.isNaN(y))) {
+        mappedPoints.push({ x, y });
+      }
+    }
+
+    // Clear and update this track's data
+    trackPlot.dataManager.clearData();
+    if (mappedPoints.length > 0) {
+      trackPlot.dataManager.addDataPoints(mappedPoints);
+    }
+  }
+
+  /**
+   * Remove a track's plot from the graph.
+   * @param trackId - Unique identifier for the track to remove
+   */
+  public removeTrack(trackId: string): void {
+    const trackPlot = this.trackPlots.get(trackId);
+    if (trackPlot) {
+      this.clippedDataContainer.removeChild(trackPlot.linePlot);
+      this.trackPlots.delete(trackId);
+    }
+  }
+
+  /**
+   * Clear all track plots from the graph.
+   */
+  public clearAllTracks(): void {
+    for (const [trackId] of this.trackPlots) {
+      this.removeTrack(trackId);
+    }
   }
 }
 
