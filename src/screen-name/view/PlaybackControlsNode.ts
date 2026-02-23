@@ -7,7 +7,7 @@
 
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
-import { HBox, Text, VBox } from "scenerystack/scenery";
+import { HBox, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { HSlider } from "scenerystack/sun";
 
@@ -236,13 +236,36 @@ export class PlaybackControlsNode extends HBox {
       },
     );
 
-    const totalTimeLabel = new Text(totalTimeTextProperty, {
+    const totalTimeText = new Text(totalTimeTextProperty, {
       font: LABEL_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
-    const frameCountLabel = new Text(frameCountTextProperty, {
+    // Width enforcer to prevent layout shift when text changes
+    const totalTimeStrut = new Rectangle(0, 0, INFO_DISPLAY_WIDTH, 1, {
+      fill: null,
+      stroke: null,
+      pickable: false,
+    });
+    const totalTimeLabel = new HBox({
+      children: [totalTimeStrut, totalTimeText],
+      spacing: 0,
+      align: "left",
+    });
+
+    const frameCountText = new Text(frameCountTextProperty, {
       font: LABEL_FONT,
       fill: TrackLabColors.textOnDarkProperty,
+    });
+    // Width enforcer to prevent layout shift when text changes
+    const frameCountStrut = new Rectangle(0, 0, INFO_DISPLAY_WIDTH, 1, {
+      fill: null,
+      stroke: null,
+      pickable: false,
+    });
+    const frameCountLabel = new HBox({
+      children: [frameCountStrut, frameCountText],
+      spacing: 0,
+      align: "left",
     });
 
     const infoDisplay = new VBox({
