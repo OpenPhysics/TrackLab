@@ -249,7 +249,7 @@ export class PlaybackControlsNode extends HBox {
     const totalTimeLabel = new HBox({
       children: [totalTimeStrut, totalTimeText],
       spacing: 0,
-      align: "left",
+      align: "center",
     });
 
     const frameCountText = new Text(frameCountTextProperty, {
@@ -265,7 +265,7 @@ export class PlaybackControlsNode extends HBox {
     const frameCountLabel = new HBox({
       children: [frameCountStrut, frameCountText],
       spacing: 0,
-      align: "left",
+      align: "center",
     });
 
     const infoDisplay = new VBox({
