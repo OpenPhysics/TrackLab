@@ -25,9 +25,9 @@ import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
-const VIDEO_PLAYER_LEFT_SPACING = 20; // gap between control panel right and video player left
+const VIDEO_PLAYER_LEFT_SPACING = 60; // gap between control panel right and video player left
 const DATA_TABLE_LEFT_SPACING = 20; // gap between video player right and data table left
-const KINEMATICS_GRAPH_BOTTOM_MARGIN = 150; // gap between kinematics graph bottom and reset button top
+const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph bottom and reset button top
 
 /**
  * Root layout for the simulation screen.
@@ -146,9 +146,6 @@ export class SimScreenView extends ScreenView {
     // is wider/taller than the default layout. All right-edge anchors are linked
     // here so they track the actual visible edge rather than the fixed layoutBounds.
     this.visibleBoundsProperty.link((visibleBounds) => {
-      // Extra pixels the visible area extends to the right of layoutBounds.
-      const extraWidth = Math.max(0, visibleBounds.maxX - this.layoutBounds.maxX);
-
       // Reset button: anchor to the actual visible bottom-right corner.
       resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
       resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
@@ -161,9 +158,8 @@ export class SimScreenView extends ScreenView {
       infoDialogNode.centerX = this.layoutBounds.centerX;
       infoDialogNode.bottom = infoButton.top - RESET_BUTTON_MARGIN;
 
-      // Data table: shift left by extraWidth so it stays within the layout area
-      // and doesn't drift into the extra visible space claimed by the graph.
-      dataTableNode.left = this.videoPlayerNode.right + DATA_TABLE_LEFT_SPACING - extraWidth;
+      // Data table: anchor to the right with fixed margin from visible edge
+      dataTableNode.right = visibleBounds.maxX - RESET_BUTTON_MARGIN - 20;
 
       // Kinematics graph: right edge tracks the visible right boundary.
       kinematicsGraph.right = visibleBounds.maxX;
