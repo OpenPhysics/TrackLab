@@ -228,10 +228,22 @@ export class CoordinateSystemNode extends Node {
     };
     videoLoadedProperty.link(onVideoLoaded);
 
+    // ── Lock out interaction while the user is manually digitizing ─────────
+    // Dimming + pickable:false signals that the coordinate system is temporarily
+    // inactive so the user cannot accidentally move or rotate the axes while
+    // placing track points.
+    const onActiveTrackChange = (activeId: string | null) => {
+      const isDigitizing = activeId !== null;
+      this.pickable = !isDigitizing;
+      this.opacity = isDigitizing ? 0.35 : 1;
+    };
+    model.activeTrackIdProperty.link(onActiveTrackChange);
+
     this.disposeCoordinateSystemNode = () => {
       model.coordOriginProperty.unlink(onOriginChange);
       model.coordAngleProperty.unlink(onAngleChange);
       videoLoadedProperty.unlink(onVideoLoaded);
+      model.activeTrackIdProperty.unlink(onActiveTrackChange);
     };
   }
 
