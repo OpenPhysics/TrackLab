@@ -6,14 +6,12 @@
  */
 
 import { DerivedProperty } from "scenerystack/axon";
+import { Vector2 } from "scenerystack/dot";
+import { DragListener } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
-import {
-  CONTROL_PANEL_LEFT_MARGIN,
-  DATA_TABLE_TOP_SPACING,
-  RESET_BUTTON_MARGIN,
-} from "../../TrackLabConstants.js";
+import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
@@ -86,10 +84,9 @@ export class SimScreenView extends ScreenView {
     const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
     this.addChild(calibrationToolNode);
 
-    // ── Data table (top, a bit to the left) ──────────────────────────────
+    // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
     this.addChild(dataTableNode);
-    dataTableNode.left = this.videoPlayerNode.right + 20;
     dataTableNode.top = this.layoutBounds.top + 10;
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
@@ -106,7 +103,6 @@ export class SimScreenView extends ScreenView {
     const playbackControlsNode = this.videoPlayerNode.playbackControlsNode;
     this.addChild(playbackControlsNode);
     playbackControlsNode.centerX = this.videoPlayerNode.centerX;
-    playbackControlsNode.centerY = resetAllButton.centerY;
     playbackControlsNode.boundsProperty.lazyLink(() => {
       playbackControlsNode.centerX = this.videoPlayerNode.centerX;
       playbackControlsNode.centerY = resetAllButton.centerY;
@@ -115,8 +111,6 @@ export class SimScreenView extends ScreenView {
     // ── Kinematics graph (bottom right, above reset all) ─────────────────
     const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
     this.addChild(kinematicsGraph);
-    kinematicsGraph.right = this.layoutBounds.maxX + 45;
-    kinematicsGraph.bottom = resetAllButton.top - 150;
 
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
@@ -125,5 +119,56 @@ export class SimScreenView extends ScreenView {
       webcamPanel.centerX = this.videoPlayerNode.centerX;
       webcamPanel.centerY = this.videoPlayerNode.centerY;
     });
+
+    // ── Reactive visible-bounds layout ───────────────────────────────────────
+    // visibleBoundsProperty extends beyond layoutBounds when the browser window
+    // is wider/taller than the default layout. All right-edge anchors are linked
+    // here so they track the actual visible edge rather than the fixed layoutBounds.
+    this.visibleBoundsProperty.link((visibleBounds) => {
+      // Extra pixels the visible area extends to the right of layoutBounds.
+      const extraWidth = Math.max(0, visibleBounds.maxX - this.layoutBounds.maxX);
+
+      // Reset button: anchor to the actual visible bottom-right corner.
+      resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
+      resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
+
+      // Data table: shift left by extraWidth so it stays within the layout area
+      // and doesn't drift into the extra visible space claimed by the graph.
+      dataTableNode.left = this.videoPlayerNode.right + 20 - extraWidth;
+
+      // Kinematics graph: right edge tracks the visible right boundary.
+      kinematicsGraph.right = visibleBounds.maxX;
+
+      // Both of these depend on resetAllButton's final position (set above),
+      // so they are wired here inside the same link.
+      kinematicsGraph.bottom = resetAllButton.top - 150;
+      playbackControlsNode.centerY = resetAllButton.centerY;
+    });
+
+    // ── Data table drag ───────────────────────────────────────────────────
+    // Lets the user freely reposition the data table panel by dragging it.
+    let dragStartPosition: Vector2 | null = null;
+    let dragStartPointerPoint: Vector2 | null = null;
+    dataTableNode.cursor = "grab";
+    dataTableNode.addInputListener(
+      new DragListener({
+        start: (event) => {
+          dragStartPosition = new Vector2(dataTableNode.x, dataTableNode.y);
+          dragStartPointerPoint = event.pointer.point.copy();
+        },
+        drag: (event) => {
+          if (!(dragStartPosition && dragStartPointerPoint)) {
+            return;
+          }
+          const delta = event.pointer.point.minus(dragStartPointerPoint);
+          dataTableNode.x = dragStartPosition.x + delta.x;
+          dataTableNode.y = dragStartPosition.y + delta.y;
+        },
+        end: () => {
+          dragStartPosition = null;
+          dragStartPointerPoint = null;
+        },
+      }),
+    );
   }
 }
