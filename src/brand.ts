@@ -1,3 +1,10 @@
+/**
+ * brand.ts
+ *
+ * Configures and registers the brand settings for the TrackLab simulation.
+ * Defines application metadata, logos, and links for the About dialog.
+ */
+
 // Load init.ts/assert.ts/splash.ts before we load brand information (especially since it includes images).
 import "./splash.js";
 

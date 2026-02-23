@@ -1,3 +1,10 @@
+/**
+ * main.ts
+ *
+ * Entry point for the TrackLab application. Initializes the simulation,
+ * creates the screen, and starts the main event loop.
+ */
+
 // NOTE: brand.js needs to be the first import. This is because SceneryStack for sims needs a very specific loading
 // order: init.ts => assert.ts => splash.ts => brand.ts => everything else (here)
 import "./brand.js";

@@ -1,3 +1,10 @@
+/**
+ * AutoTrackerNode.ts
+ *
+ * Overlay UI for the auto-tracking tool. Allows users to define a search region
+ * and template, then displays the tracked trail and tracking status.
+ */
+
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";

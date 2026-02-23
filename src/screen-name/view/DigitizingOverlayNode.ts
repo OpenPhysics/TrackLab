@@ -1,3 +1,10 @@
+/**
+ * DigitizingOverlayNode.ts
+ *
+ * Overlay UI for manual particle tracking. Provides a crosshair cursor and
+ * magnified view to help users precisely click on particle positions.
+ */
+
 import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Line, Node, Path, Rectangle } from "scenerystack/scenery";

@@ -1,3 +1,10 @@
+/**
+ * SimModel.ts
+ *
+ * Holds all reactive state for the physics video analysis simulation including
+ * video playback, coordinate system, calibration, tracks, and auto-tracking configuration.
+ */
+
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Dimension2, Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";

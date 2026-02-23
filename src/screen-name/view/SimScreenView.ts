@@ -1,3 +1,10 @@
+/**
+ * SimScreenView.ts
+ *
+ * Root layout for the simulation screen, composing all UI components and computing
+ * the model-view transform between real-world and video-pixel coordinates.
+ */
+
 import { DerivedProperty } from "scenerystack/axon";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";

@@ -1,4 +1,10 @@
-// init.ts should be run before assertions are enabled, since the assert import needs the init information first.
+/**
+ * assert.ts
+ *
+ * Enables SceneryStack assertions for development debugging.
+ * Must run after init.ts to ensure initialization is complete.
+ */
+
 import "./init.js";
 import { enableAssert } from "scenerystack/assert";
 

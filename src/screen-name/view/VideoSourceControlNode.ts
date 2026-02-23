@@ -1,3 +1,10 @@
+/**
+ * VideoSourceControlNode.ts
+ *
+ * Controls for selecting video source (upload, webcam, or sample videos) and
+ * accessing the webcam recording dialog.
+ */
+
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
