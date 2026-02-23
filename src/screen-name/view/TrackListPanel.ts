@@ -24,6 +24,7 @@ import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
+
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
@@ -47,7 +48,25 @@ const PANEL_Y_MARGIN = 8; // reduced from 10
 
 const HEADER_FONT = new PhetFont({ size: 11, weight: "bold" }); // reduced from 13
 const SYMBOL_FONT = new PhetFont({ size: 12, weight: "bold" }); // reduced from 15
-const LABEL_FONT = new PhetFont(10); // reduced from 12
+
+// ── Plus icon ───────────────────────────────────────────────────────────────
+
+function makePlusIcon(): Node {
+  const size = 12; // size of the plus icon
+  const lw = 2; // line width
+  const half = size / 2;
+
+  const horizontal = new Line(-half, 0, half, 0, {
+    stroke: TrackLabColors.textOnDarkProperty,
+    lineWidth: lw,
+  });
+  const vertical = new Line(0, -half, 0, half, {
+    stroke: TrackLabColors.textOnDarkProperty,
+    lineWidth: lw,
+  });
+
+  return new Node({ children: [horizontal, vertical] });
+}
 
 // ── Trash-can icon ──────────────────────────────────────────────────────────
 
@@ -201,16 +220,11 @@ export class TrackListPanel extends Panel {
       (loaded, canAdd) => loaded && canAdd,
     );
 
-    const addButton = createTrackLabButton(
-      new Text(trackListStrings.addTrackStringProperty, {
-        font: LABEL_FONT,
-        fill: TrackLabColors.textOnDarkProperty,
-      }),
-      {
-        enabledProperty: addButtonEnabledProperty,
-        listener: () => model.addTrack(),
-      },
-    );
+    const addButton = createTrackLabButton(makePlusIcon(), {
+      enabledProperty: addButtonEnabledProperty,
+      listener: () => model.addTrack(),
+      accessibleName: trackListStrings.addTrackStringProperty,
+    });
 
     // ── Track list (rebuilt whenever tracks change) ───────────────────────
     const trackListVBox = new VBox({
