@@ -1,3 +1,10 @@
+/**
+ * init.ts
+ *
+ * Initializes core SceneryStack configuration including name, version, brand, locale,
+ * and color profiles. Must run first in the module dependency chain.
+ */
+
 import { init, madeWithSceneryStackSplashDataURI } from "scenerystack/init";
 
 // Initialize values that will be used at import-time by other modules.

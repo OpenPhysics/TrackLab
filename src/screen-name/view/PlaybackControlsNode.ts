@@ -1,3 +1,10 @@
+/**
+ * PlaybackControlsNode.ts
+ *
+ * Controls for video playback including play/pause, frame stepping,
+ * scrubber, speed selection, and frame rate adjustment.
+ */
+
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";

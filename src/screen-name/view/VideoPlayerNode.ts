@@ -1,3 +1,10 @@
+/**
+ * VideoPlayerNode.ts
+ *
+ * Main video display component. Hosts the video element and all interactive overlays
+ * (coordinate system, calibration, auto-tracker, digitizing).
+ */
+
 import { DerivedProperty } from "scenerystack/axon";
 import { Dimension2 } from "scenerystack/dot";
 import { DOM, Node, VBox } from "scenerystack/scenery";

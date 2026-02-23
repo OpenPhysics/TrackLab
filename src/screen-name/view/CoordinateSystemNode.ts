@@ -1,3 +1,10 @@
+/**
+ * CoordinateSystemNode.ts
+ *
+ * Draggable and rotatable coordinate system axes overlay for defining the origin
+ * and orientation of the real-world coordinate frame in the video.
+ */
+
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import type { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";

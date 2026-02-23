@@ -1,3 +1,10 @@
+/**
+ * CalibrationToolNode.ts
+ *
+ * Calibration UI for setting the real-world scale. Users measure a reference distance
+ * and specify its value in desired units to establish the model-to-pixel scale.
+ */
+
 import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";

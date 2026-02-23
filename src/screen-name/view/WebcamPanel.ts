@@ -1,3 +1,10 @@
+/**
+ * WebcamPanel.ts
+ *
+ * Dialog for recording videos from a connected webcam. Handles device selection,
+ * live preview, recording controls, and frame rate configuration.
+ */
+
 import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";

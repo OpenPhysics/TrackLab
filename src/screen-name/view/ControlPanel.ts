@@ -1,3 +1,10 @@
+/**
+ * ControlPanel.ts
+ *
+ * Left-side collapsible panel containing toggles for overlay tools
+ * (coordinate system, calibration, auto-tracker, digitizing).
+ */
+
 import { Circle, Line, Node, VBox } from "scenerystack/scenery";
 import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
