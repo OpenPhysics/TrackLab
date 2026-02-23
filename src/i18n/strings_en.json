@@ -138,6 +138,21 @@
     "pucksCollide": "Pucks Collide",
     "springWars": "Spring Wars"
   },
+  "infoDialog": {
+    "title": "How to Digitize a Track",
+    "loadVideoTitle": "1. Load a Video",
+    "loadVideoBody": "Select a video from the dropdown at the top \u2014 choose a sample clip, a webcam recording, or an uploaded file.",
+    "coordinateSystemTitle": "2. Set Up the Coordinate System",
+    "coordinateSystemBody": "Enable Axes in the control panel. Drag the origin to set the (0, 0) point, then rotate the axes to align with your scene.",
+    "calibrationTitle": "3. Calibrate the Scale",
+    "calibrationBody": "Enable Calibration in the control panel. Drag the two endpoints onto a known reference distance in the video, then enter the real-world length.",
+    "addTrackTitle": "4. Add a Track",
+    "addTrackBody": "In the Tracks panel, click \u201c+ Add Track\u201d to create a new track labelled A, B, C, \u2026",
+    "digitizeTitle": "5. Digitize Frame by Frame",
+    "digitizeBody": "Select a track and click on the object\u2019s position in the video. The video advances one frame automatically after each click.",
+    "autoTrackTitle": "6. Auto-Track (optional)",
+    "autoTrackBody": "Enable Auto-Tracking in the control panel, then drag a selection box around the object. TrackLab will track it across the remaining frames."
+  },
   "a11y": {
     "videoPlayer": "Video player",
     "videoScrubber": "Video timeline — drag to seek",

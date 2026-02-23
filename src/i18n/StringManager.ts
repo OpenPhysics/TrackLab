@@ -422,6 +422,41 @@ export class StringManager {
   }
 
   /**
+   * Get info dialog string properties
+   */
+  public getInfoDialog(): {
+    titleStringProperty: ReadOnlyProperty<string>;
+    loadVideoTitleStringProperty: ReadOnlyProperty<string>;
+    loadVideoBodyStringProperty: ReadOnlyProperty<string>;
+    coordinateSystemTitleStringProperty: ReadOnlyProperty<string>;
+    coordinateSystemBodyStringProperty: ReadOnlyProperty<string>;
+    calibrationTitleStringProperty: ReadOnlyProperty<string>;
+    calibrationBodyStringProperty: ReadOnlyProperty<string>;
+    addTrackTitleStringProperty: ReadOnlyProperty<string>;
+    addTrackBodyStringProperty: ReadOnlyProperty<string>;
+    digitizeTitleStringProperty: ReadOnlyProperty<string>;
+    digitizeBodyStringProperty: ReadOnlyProperty<string>;
+    autoTrackTitleStringProperty: ReadOnlyProperty<string>;
+    autoTrackBodyStringProperty: ReadOnlyProperty<string>;
+  } {
+    return {
+      titleStringProperty: this.stringProperties.infoDialog.titleStringProperty,
+      loadVideoTitleStringProperty: this.stringProperties.infoDialog.loadVideoTitleStringProperty,
+      loadVideoBodyStringProperty: this.stringProperties.infoDialog.loadVideoBodyStringProperty,
+      coordinateSystemTitleStringProperty: this.stringProperties.infoDialog.coordinateSystemTitleStringProperty,
+      coordinateSystemBodyStringProperty: this.stringProperties.infoDialog.coordinateSystemBodyStringProperty,
+      calibrationTitleStringProperty: this.stringProperties.infoDialog.calibrationTitleStringProperty,
+      calibrationBodyStringProperty: this.stringProperties.infoDialog.calibrationBodyStringProperty,
+      addTrackTitleStringProperty: this.stringProperties.infoDialog.addTrackTitleStringProperty,
+      addTrackBodyStringProperty: this.stringProperties.infoDialog.addTrackBodyStringProperty,
+      digitizeTitleStringProperty: this.stringProperties.infoDialog.digitizeTitleStringProperty,
+      digitizeBodyStringProperty: this.stringProperties.infoDialog.digitizeBodyStringProperty,
+      autoTrackTitleStringProperty: this.stringProperties.infoDialog.autoTrackTitleStringProperty,
+      autoTrackBodyStringProperty: this.stringProperties.infoDialog.autoTrackBodyStringProperty,
+    };
+  }
+
+  /**
    * Get video file label string properties
    */
   public getVideoFiles(): {
