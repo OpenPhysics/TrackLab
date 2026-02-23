@@ -234,15 +234,24 @@ export class PlaybackControlsNode extends HBox {
 
   /**
    * Replace the current scrubber with a new one.
-   * Disposes the old scrubber and updates the children array.
+   * Disposes the old scrubber and updates the children array using proper Node methods
+   * to avoid memory leaks.
    */
   private replaceScrubber(newScrubber: HSlider): void {
     const oldScrubber = this.scrubber;
     const scrubberIndex = this.children.indexOf(oldScrubber);
 
     if (scrubberIndex !== -1) {
+      // Remove old scrubber from scene graph first
+      this.removeChild(oldScrubber);
+
+      // Update reference
       this.scrubber = newScrubber;
-      this.children[scrubberIndex] = newScrubber;
+
+      // Insert new scrubber at the same position
+      this.insertChild(scrubberIndex, newScrubber);
+
+      // Dispose old scrubber after it's removed from scene graph
       oldScrubber.dispose();
     }
   }
