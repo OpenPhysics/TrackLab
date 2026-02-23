@@ -13,7 +13,7 @@ import {
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -25,8 +25,6 @@ const CHECK_ICON_SCALE = 0.35;
 const CAMERA_ICON_SCALE = 0.4; // camera icon next to the select dropdown
 const TITLE_CAMERA_ICON_SCALE = 0.6; // larger camera icon in the panel title
 const RECORD_ICON_RADIUS = 8; // circle radius for the record button icon
-const ACTION_BUTTON_X_MARGIN = 8; // xMargin for start/stop/use-video buttons
-const ACTION_BUTTON_Y_MARGIN = 6;
 const PANEL_CORNER_RADIUS = 10;
 const PANEL_X_MARGIN = 20;
 const PANEL_Y_MARGIN = 15;
@@ -145,8 +143,8 @@ export class WebcamPanel extends Node {
       content: recordIcon,
       baseColor: TrackLabColors.buttonRecordProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: ACTION_BUTTON_X_MARGIN,
-      yMargin: ACTION_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Start Recording",
       listener: () => this.startRecording(),
@@ -160,8 +158,8 @@ export class WebcamPanel extends Node {
       content: stopIcon,
       baseColor: TrackLabColors.buttonStopProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: ACTION_BUTTON_X_MARGIN,
-      yMargin: ACTION_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Stop Recording",
       listener: () => this.stopRecording(),
@@ -185,8 +183,8 @@ export class WebcamPanel extends Node {
       content: useVideoIcon,
       baseColor: TrackLabColors.buttonSuccessProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: ACTION_BUTTON_X_MARGIN,
-      yMargin: ACTION_BUTTON_Y_MARGIN,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Use Video",
       listener: () => this.useVideo(options.onVideoReady),

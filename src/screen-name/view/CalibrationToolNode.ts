@@ -8,6 +8,7 @@ import { KeypadDialog } from "scenerystack/sim";
 import { ButtonNode, ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
+import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
@@ -130,6 +131,8 @@ export class CalibrationToolNode extends Node {
       font: FONT,
       baseColor: TrackLabColors.buttonBaseDarkerProperty,
       buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       textFill: TrackLabColors.textOnDarkProperty,
       listener: () => {
         keypadDialog.beginEdit(
