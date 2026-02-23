@@ -259,10 +259,14 @@ export class StringManager {
   public getUI(): {
     fpsStringProperty: ReadOnlyProperty<string>;
     selectVideoStringProperty: ReadOnlyProperty<string>;
+    sampleVideosStringProperty: ReadOnlyProperty<string>;
+    myRecordingsStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       fpsStringProperty: this.stringProperties.ui.fpsStringProperty,
       selectVideoStringProperty: this.stringProperties.ui.selectVideoStringProperty,
+      sampleVideosStringProperty: this.stringProperties.ui.sampleVideosStringProperty,
+      myRecordingsStringProperty: this.stringProperties.ui.myRecordingsStringProperty,
     };
   }
 

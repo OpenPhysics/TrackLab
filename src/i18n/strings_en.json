@@ -75,7 +75,9 @@
   },
   "ui": {
     "fps": "fps:",
-    "selectVideo": "— select a video —"
+    "selectVideo": "— select a video —",
+    "sampleVideos": "── Sample Videos ──",
+    "myRecordings": "── My Recordings ──"
   },
   "coordSystem": {
     "xAxisLabel": "x",
