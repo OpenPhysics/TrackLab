@@ -53,7 +53,7 @@
   "preferences": {
     "simulation": "Simulation",
     "enableAutoTracking": "Activer le suivi automatique",
-    "enableAutoTrackingDescription": "Lorsque activ\u00e9, affiche la case \u00e0 cocher du suivi automatique dans le panneau de contr\u00f4le, permettant le suivi automatique d'objets bas\u00e9 sur OpenCV. Lorsque d\u00e9sactiv\u00e9, la case est cach\u00e9e et seule la num\u00e9risation manuelle est disponible.",
+    "enableAutoTrackingDescription": "Affiche la case \u00e0 cocher du suivi automatique bas\u00e9 sur OpenCV dans le panneau de contr\u00f4le.",
     "showVelocity": "Afficher la vitesse",
     "showVelocityDescription": "Lorsque activ\u00e9, les composantes de vitesse (vx, vy, rapidit\u00e9) sont disponibles comme choix sur les axes du graphique cin\u00e9matique.",
     "showAcceleration": "Afficher l'acc\u00e9l\u00e9ration",

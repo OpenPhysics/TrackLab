@@ -145,11 +145,22 @@ const TrackLabColors = {
 
   // Control panel icons
   iconGrayProperty: profileColor("iconGray", new Color(187, 187, 187), new Color(100, 100, 100)),
-  checkboxColorProperty: profileColor("checkboxColor", new Color(221, 221, 221), new Color(140, 140, 140)),
+  checkboxColorProperty: profileColor("checkboxColor", new Color(255, 255, 255), new Color(40, 40, 40)),
   checkboxColorBackgroundProperty: profileColor(
     "checkboxColorBackground",
-    new Color(255, 255, 255, 0.1),
-    new Color(255, 255, 255, 0.15),
+    new Color(80, 80, 100, 0.4),
+    new Color(200, 200, 220, 0.5),
+  ),
+  // Preferences checkboxes (fixed appearance, don't change with profile)
+  checkboxPreferencesColorProperty: profileColor(
+    "checkboxPreferencesColor",
+    new Color(40, 40, 40),
+    new Color(40, 40, 40),
+  ),
+  checkboxPreferencesColorBackgroundProperty: profileColor(
+    "checkboxPreferencesColorBackground",
+    new Color(200, 200, 220, 0.5),
+    new Color(200, 200, 220, 0.5),
   ),
 
   // Coordinate system - semi-transparent origin for better positioning

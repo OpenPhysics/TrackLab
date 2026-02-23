@@ -127,6 +127,7 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         infoDialogNode.visible = !infoDialogNode.visible;
       },
+      scale: 0.5,
       tandem: Tandem.OPT_OUT,
     });
     this.addChild(infoButton);

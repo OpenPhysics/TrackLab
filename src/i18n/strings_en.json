@@ -53,7 +53,7 @@
   "preferences": {
     "simulation": "Simulation",
     "enableAutoTracking": "Enable Auto-Tracking",
-    "enableAutoTrackingDescription": "When enabled, shows the auto-tracking checkbox in the control panel, allowing OpenCV-based automatic object tracking. When disabled, the checkbox is hidden and only manual digitizing is available.",
+    "enableAutoTrackingDescription": "Shows the auto-tracking checkbox in the control panel for OpenCV-based automatic object tracking.",
     "showVelocity": "Show Velocity",
     "showVelocityDescription": "When enabled, velocity components (vx, vy, speed) are available as choices on the kinematics graph axes.",
     "showAcceleration": "Show Acceleration",

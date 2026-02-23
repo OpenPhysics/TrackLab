@@ -43,8 +43,8 @@ export class TrackLabPreferencesNode extends VBox {
         ],
       }),
       {
-        checkboxColor: TrackLabColors.checkboxColorProperty,
-        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        checkboxColor: TrackLabColors.checkboxPreferencesColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxPreferencesColorBackgroundProperty,
         spacing: 8,
       },
     );
@@ -67,8 +67,8 @@ export class TrackLabPreferencesNode extends VBox {
         ],
       }),
       {
-        checkboxColor: TrackLabColors.checkboxColorProperty,
-        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        checkboxColor: TrackLabColors.checkboxPreferencesColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxPreferencesColorBackgroundProperty,
         spacing: 8,
       },
     );
@@ -91,8 +91,8 @@ export class TrackLabPreferencesNode extends VBox {
         ],
       }),
       {
-        checkboxColor: TrackLabColors.checkboxColorProperty,
-        checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+        checkboxColor: TrackLabColors.checkboxPreferencesColorProperty,
+        checkboxColorBackground: TrackLabColors.checkboxPreferencesColorBackgroundProperty,
         spacing: 8,
       },
     );
