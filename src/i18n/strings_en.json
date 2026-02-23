@@ -57,7 +57,9 @@
     "showVelocity": "Show Velocity",
     "showVelocityDescription": "When enabled, velocity components (vx, vy, speed) are available as choices on the kinematics graph axes.",
     "showAcceleration": "Show Acceleration",
-    "showAccelerationDescription": "When enabled, acceleration components (ax, ay, |a|) are available as choices on the kinematics graph axes."
+    "showAccelerationDescription": "When enabled, acceleration components (ax, ay, |a|) are available as choices on the kinematics graph axes.",
+    "enableMeasurementTools": "Enable Measurement Tools",
+    "enableMeasurementToolsDescription": "Shows a measuring tape and angle tool panel for direct measurements on the video."
   },
   "autoTracker": {
     "dragToSelect": "Drag on video to select object to track",
