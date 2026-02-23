@@ -102,6 +102,41 @@ export class PlaybackControlsNode extends HBox {
     // Create mutable range that will be updated when duration changes
     this.scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
 
+    /**
+     * Calculate a "nice" tick interval for the scrubber based on total frames.
+     * Targets approximately 10-20 major ticks maximum.
+     */
+    const calculateTickInterval = (totalFrames: number): { majorInterval: number; minorInterval: number } => {
+      // Target roughly 10-20 major ticks
+      const targetMajorTicks = 15;
+      const rawInterval = totalFrames / targetMajorTicks;
+
+      // Find the nearest "nice" number: 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, etc.
+      const magnitude = 10 ** Math.floor(Math.log10(rawInterval));
+      const normalized = rawInterval / magnitude;
+
+      let majorInterval: number;
+      if (normalized <= 1.5) {
+        majorInterval = magnitude;
+      } else if (normalized <= 3) {
+        majorInterval = 2 * magnitude;
+      } else if (normalized <= 7) {
+        majorInterval = 5 * magnitude;
+      } else {
+        majorInterval = 10 * magnitude;
+      }
+
+      // Calculate minor interval (5 minor ticks between major ticks when practical)
+      let minorInterval = 0;
+      if (majorInterval >= 10) {
+        minorInterval = majorInterval / 5;
+      } else if (majorInterval >= 5) {
+        minorInterval = 1;
+      }
+
+      return { majorInterval, minorInterval };
+    };
+
     // Helper to create/recreate the scrubber with tick marks
     const createScrubber = (): HSlider => {
       const newScrubber = new HSlider(model.currentTimeProperty, this.scrubberRange, {
@@ -123,26 +158,26 @@ export class PlaybackControlsNode extends HBox {
         accessibleName: a11yStrings.videoScrubberStringProperty,
       });
 
-      // Add tick marks for each frame
+      // Add tick marks based on calculated intervals
       const duration = model.durationProperty.value;
       const frameRate = model.frameRateProperty.value;
 
       if (duration > 0 && frameRate > 0) {
         const totalFrames = Math.round(duration * frameRate);
+        const { majorInterval, minorInterval } = calculateTickInterval(totalFrames);
 
-        if (totalFrames > 100) {
-          // Many frames: use major ticks every 10 frames, minor ticks for others
-          for (let i = 0; i <= totalFrames; i++) {
-            if (i % 10 === 0) {
-              newScrubber.addMajorTick(i / frameRate);
-            } else {
+        // Add major ticks
+        for (let i = 0; i <= totalFrames; i += majorInterval) {
+          newScrubber.addMajorTick(i / frameRate);
+        }
+
+        // Add minor ticks if interval is defined
+        if (minorInterval > 0) {
+          for (let i = 0; i <= totalFrames; i += minorInterval) {
+            // Skip if this is already a major tick
+            if (i % majorInterval !== 0) {
               newScrubber.addMinorTick(i / frameRate);
             }
-          }
-        } else {
-          // Few frames: use major ticks for all frames
-          for (let i = 0; i <= totalFrames; i++) {
-            newScrubber.addMajorTick(i / frameRate);
           }
         }
       }
