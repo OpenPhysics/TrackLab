@@ -20,7 +20,12 @@ import {
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
+import {
+  BUTTON_X_MARGIN,
+  BUTTON_Y_MARGIN,
+  WEBCAM_PREVIEW_HEIGHT,
+  WEBCAM_PREVIEW_WIDTH,
+} from "../../TrackLabConstants.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -372,7 +377,8 @@ export class WebcamPanel extends Node {
     cameras.forEach((cam, i) => {
       const opt = document.createElement("option");
       opt.value = cam.deviceId;
-      opt.textContent = cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
+      opt.textContent =
+        cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
       this.cameraSelect.appendChild(opt);
     });
   }

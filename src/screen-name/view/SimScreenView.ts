@@ -8,8 +8,9 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { DragListener } from "scenerystack/scenery";
-import { ResetAllButton } from "scenerystack/scenery-phet";
+import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
+import { Tandem } from "scenerystack/tandem";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -17,6 +18,7 @@ import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
 import { CoordinateSystemNode } from "./CoordinateSystemNode.js";
 import { DataTableNode } from "./DataTableNode.js";
+import { InfoDialogNode } from "./InfoDialogNode.js";
 import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
@@ -118,6 +120,19 @@ export class SimScreenView extends ScreenView {
     const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
     this.addChild(kinematicsGraph);
 
+    // ── Info dialog (explains digitizing workflow) ────────────────────────────
+    const infoDialogNode = new InfoDialogNode();
+    this.addChild(infoDialogNode);
+
+    // ── Info button (lower-left corner, same vertical level as reset button) ─
+    const infoButton = new InfoButton({
+      listener: () => {
+        infoDialogNode.visible = !infoDialogNode.visible;
+      },
+      tandem: Tandem.OPT_OUT,
+    });
+    this.addChild(infoButton);
+
     // ── Webcam panel (topmost when visible, above coord/calibration overlays) ─
     const webcamPanel = this.videoPlayerNode.webcamPanel;
     this.addChild(webcamPanel);
@@ -137,6 +152,14 @@ export class SimScreenView extends ScreenView {
       // Reset button: anchor to the actual visible bottom-right corner.
       resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
       resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
+
+      // Info button: lower-left corner, mirroring the reset button margin.
+      infoButton.left = visibleBounds.minX + RESET_BUTTON_MARGIN;
+      infoButton.centerY = resetAllButton.centerY;
+
+      // Info dialog: centered horizontally, positioned just above the info button.
+      infoDialogNode.centerX = this.layoutBounds.centerX;
+      infoDialogNode.bottom = infoButton.top - RESET_BUTTON_MARGIN;
 
       // Data table: shift left by extraWidth so it stays within the layout area
       // and doesn't drift into the extra visible space claimed by the graph.

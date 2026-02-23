@@ -138,6 +138,21 @@
     "pucksCollide": "Rondelles en collision",
     "springWars": "Guerres de ressorts"
   },
+  "infoDialog": {
+    "title": "Comment num\u00e9riser une piste",
+    "loadVideoTitle": "1. Charger une vid\u00e9o",
+    "loadVideoBody": "S\u00e9lectionnez une vid\u00e9o dans le menu d\u00e9roulant en haut \u2014 choisissez un exemple, un enregistrement webcam ou un fichier import\u00e9.",
+    "coordinateSystemTitle": "2. Configurer le syst\u00e8me de coordonn\u00e9es",
+    "coordinateSystemBody": "Activez les Axes dans le panneau de contr\u00f4le. Faites glisser l\u2019origine pour d\u00e9finir le point (0,\u00a00), puis faites pivoter les axes pour les aligner sur votre sc\u00e8ne.",
+    "calibrationTitle": "3. Calibrer l\u2019\u00e9chelle",
+    "calibrationBody": "Activez la Calibration dans le panneau de contr\u00f4le. Faites glisser les deux extr\u00e9mit\u00e9s sur une distance de r\u00e9f\u00e9rence connue dans la vid\u00e9o, puis entrez la longueur r\u00e9elle.",
+    "addTrackTitle": "4. Ajouter une piste",
+    "addTrackBody": "Dans le panneau Pistes, cliquez sur \u00ab\u00a0+ Ajouter une piste\u00a0\u00bb pour cr\u00e9er une nouvelle piste \u00e9tiquet\u00e9e A, B, C, \u2026",
+    "digitizeTitle": "5. Num\u00e9riser image par image",
+    "digitizeBody": "S\u00e9lectionnez une piste et cliquez sur la position de l\u2019objet dans la vid\u00e9o. La vid\u00e9o avance automatiquement d\u2019une image apr\u00e8s chaque clic.",
+    "autoTrackTitle": "6. Suivi automatique (optionnel)",
+    "autoTrackBody": "Activez le Suivi automatique dans le panneau de contr\u00f4le, puis faites glisser un cadre de s\u00e9lection autour de l\u2019objet. TrackLab le suivra sur les images restantes."
+  },
   "a11y": {
     "videoPlayer": "Lecteur vid\u00e9o",
     "videoScrubber": "Ligne de temps vid\u00e9o \u2014 glisser pour naviguer",

@@ -21,7 +21,9 @@ import { ButtonNode, Checkbox, Panel, RectangularPushButton } from "scenerystack
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+
 const a11yStrings = StringManager.getInstance().getA11y();
+
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";

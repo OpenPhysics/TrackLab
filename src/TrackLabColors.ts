@@ -90,16 +90,8 @@ const TrackLabColors = {
   ),
 
   // Axes (X red, Y green)
-  axisXColorProperty: profileColor(
-    "axisX",
-    new Color(255, 68, 68, 0.85),
-    new Color(238, 51, 51, 0.85),
-  ),
-  axisYColorProperty: profileColor(
-    "axisY",
-    new Color(68, 204, 68, 0.85),
-    new Color(51, 187, 51, 0.85),
-  ),
+  axisXColorProperty: profileColor("axisX", new Color(255, 68, 68, 0.85), new Color(238, 51, 51, 0.85)),
+  axisYColorProperty: profileColor("axisY", new Color(68, 204, 68, 0.85), new Color(51, 187, 51, 0.85)),
 
   // Calibration tool (bright colors with shadows for visibility on all backgrounds)
   calibrationFillProperty: profileColor(
