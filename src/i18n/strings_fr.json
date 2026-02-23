@@ -75,7 +75,9 @@
   },
   "ui": {
     "fps": "ips :",
-    "selectVideo": "— sélectionner une vidéo —"
+    "selectVideo": "— sélectionner une vidéo —",
+    "sampleVideos": "── Vidéos exemples ──",
+    "myRecordings": "── Mes enregistrements ──"
   },
   "coordSystem": {
     "xAxisLabel": "x",
