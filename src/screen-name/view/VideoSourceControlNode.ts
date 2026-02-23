@@ -397,6 +397,9 @@ export class VideoSourceControlNode extends HBox {
 
     const webcamButton = new CameraButton({
       baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
       iconFill: TrackLabColors.textOnDarkProperty,
       tandem: Tandem.OPT_OUT,
       accessibleName: "Record Webcam",
