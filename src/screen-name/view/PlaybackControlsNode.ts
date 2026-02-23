@@ -96,8 +96,9 @@ export class PlaybackControlsNode extends HBox {
     });
 
     // ── Scrubber ───────────────────────────────────────────────────────────
-    // Create scrubber with initial range (will be updated when duration changes)
-    const scrubberRange = new Range(0, model.durationProperty.value || 1);
+    // Create mutable range that will be updated when duration changes
+    const scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
+
     const scrubber = new HSlider(model.currentTimeProperty, scrubberRange, {
       trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
       thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
@@ -129,9 +130,11 @@ export class PlaybackControlsNode extends HBox {
       }
     };
 
-    // Update scrubber range and ticks when duration or frame rate changes
+    // Update range and ticks when duration changes
     const durationListener = (duration: number) => {
+      // Update scrubber range
       scrubberRange.max = duration > 0 ? duration : 1;
+      // Update tick marks
       updateTickMarks();
     };
     model.durationProperty.link(durationListener);
