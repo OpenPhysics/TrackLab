@@ -192,7 +192,7 @@ export class CoordinateSystemNode extends Node {
     positionNode.addInputListener(
       new RichDragListener({
         dragListenerOptions: {
-          drag: (event, listener) => {
+          drag: (_event, listener) => {
             const newPos = listener.parentPoint;
             model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
           },

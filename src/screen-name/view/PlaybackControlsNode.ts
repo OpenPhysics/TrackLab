@@ -9,7 +9,7 @@ import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
-import { ButtonNode, RectangularPushButton, Slider } from "scenerystack/sun";
+import { ButtonNode, HSlider, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
@@ -96,14 +96,14 @@ export class PlaybackControlsNode extends HBox {
     });
 
     // ── Scrubber ───────────────────────────────────────────────────────────
-    const rangeProperty = new DerivedProperty(
-      [model.durationProperty],
-      (duration: number) => new Range(0, Math.max(duration, 1)),
-    );
-
-    const scrubber = new Slider(model.currentTimeProperty, rangeProperty, {
+    // Create scrubber with initial range (will be updated when duration changes)
+    const scrubberRange = new Range(0, model.durationProperty.value || 1);
+    const scrubber = new HSlider(model.currentTimeProperty, scrubberRange, {
       trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
       thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
+      majorTickLength: 8,
+      majorTickStroke: TrackLabColors.textOnDarkProperty,
+      majorTickLineWidth: 1,
       startDrag: () => {
         this.isScrubbing = true;
       },
@@ -113,6 +113,33 @@ export class PlaybackControlsNode extends HBox {
       enabledProperty: model.videoLoadedProperty,
       accessibleName: a11yStrings.videoScrubberStringProperty,
     });
+
+    // Function to update tick marks for each frame
+    const updateTickMarks = () => {
+      const duration = model.durationProperty.value;
+      const frameRate = model.frameRateProperty.value;
+
+      if (duration <= 0 || frameRate <= 0) {
+        return;
+      }
+
+      const totalFrames = Math.round(duration * frameRate);
+      for (let i = 0; i <= totalFrames; i++) {
+        scrubber.addMajorTick(i / frameRate);
+      }
+    };
+
+    // Update scrubber range and ticks when duration or frame rate changes
+    const durationListener = (duration: number) => {
+      scrubberRange.max = duration > 0 ? duration : 1;
+      updateTickMarks();
+    };
+    model.durationProperty.link(durationListener);
+
+    const frameRateListener = () => {
+      updateTickMarks();
+    };
+    model.frameRateProperty.link(frameRateListener);
 
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
@@ -190,10 +217,11 @@ export class PlaybackControlsNode extends HBox {
       timeSpeedProperty.unlink(onSpeedChange);
       model.playbackRateProperty.unlink(onRateChange);
       model.currentTimeProperty.unlink(onTimeChange);
+      model.durationProperty.unlink(durationListener);
+      model.frameRateProperty.unlink(frameRateListener);
       timeSpeedProperty.dispose();
-      rangeProperty.dispose();
       totalTimeTextProperty.dispose();
-      frameCountTextProperty.dispose(); // no longer observes frameDurationProperty
+      frameCountTextProperty.dispose();
     };
   }
 

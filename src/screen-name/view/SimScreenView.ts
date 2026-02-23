@@ -26,7 +26,6 @@ import { VideoPlayerNode } from "./VideoPlayerNode.js";
 // ── Layout constants ──────────────────────────────────────────────────────────
 const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
 const VIDEO_PLAYER_LEFT_SPACING = 60; // gap between control panel right and video player left
-const DATA_TABLE_LEFT_SPACING = 20; // gap between video player right and data table left
 const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph bottom and reset button top
 
 /**
