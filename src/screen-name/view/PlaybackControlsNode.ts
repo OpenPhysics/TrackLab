@@ -17,6 +17,7 @@ import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
+
 import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -37,6 +38,8 @@ const REWIND_BUTTON_ICON_SIZE = 16; // font size for the rewind button icon glyp
  */
 export class PlaybackControlsNode extends HBox {
   private isScrubbing = false;
+  private scrubber: HSlider;
+  private scrubberRange: Range;
   private readonly disposePlaybackControlsNode: () => void;
 
   public constructor(
@@ -97,52 +100,56 @@ export class PlaybackControlsNode extends HBox {
 
     // ── Scrubber ───────────────────────────────────────────────────────────
     // Create mutable range that will be updated when duration changes
-    const scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
+    this.scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
 
-    const scrubber = new HSlider(model.currentTimeProperty, scrubberRange, {
-      trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
-      thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
-      majorTickLength: 8,
-      majorTickStroke: TrackLabColors.textOnDarkProperty,
-      majorTickLineWidth: 1,
-      startDrag: () => {
-        this.isScrubbing = true;
-      },
-      endDrag: () => {
-        this.isScrubbing = false;
-      },
-      enabledProperty: model.videoLoadedProperty,
-      accessibleName: a11yStrings.videoScrubberStringProperty,
-    });
+    // Helper to create/recreate the scrubber with tick marks
+    const createScrubber = (): HSlider => {
+      const newScrubber = new HSlider(model.currentTimeProperty, this.scrubberRange, {
+        trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
+        thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
+        majorTickLength: 8,
+        majorTickStroke: TrackLabColors.textOnDarkProperty,
+        majorTickLineWidth: 1,
+        startDrag: () => {
+          this.isScrubbing = true;
+        },
+        endDrag: () => {
+          this.isScrubbing = false;
+        },
+        enabledProperty: model.videoLoadedProperty,
+        accessibleName: a11yStrings.videoScrubberStringProperty,
+      });
 
-    // Function to update tick marks for each frame
-    const updateTickMarks = () => {
+      // Add tick marks for each frame
       const duration = model.durationProperty.value;
       const frameRate = model.frameRateProperty.value;
 
-      if (duration <= 0 || frameRate <= 0) {
-        return;
+      if (duration > 0 && frameRate > 0) {
+        const totalFrames = Math.round(duration * frameRate);
+        for (let i = 0; i <= totalFrames; i++) {
+          newScrubber.addMajorTick(i / frameRate);
+        }
       }
 
-      const totalFrames = Math.round(duration * frameRate);
-      for (let i = 0; i <= totalFrames; i++) {
-        scrubber.addMajorTick(i / frameRate);
-      }
+      return newScrubber;
     };
+
+    this.scrubber = createScrubber();
 
     // Update range and ticks when duration changes
     const durationListener = (duration: number) => {
       // Update scrubber range
-      scrubberRange.max = duration > 0 ? duration : 1;
-      // Update tick marks
-      updateTickMarks();
+      this.scrubberRange.max = duration > 0 ? duration : 1;
+      // Recreate scrubber with new tick marks
+      this.replaceScrubber(createScrubber());
     };
     model.durationProperty.link(durationListener);
 
+    // Recreate scrubber when frame rate changes
     const frameRateListener = () => {
-      updateTickMarks();
+      this.replaceScrubber(createScrubber());
     };
-    model.frameRateProperty.link(frameRateListener);
+    model.frameRateProperty.lazyLink(frameRateListener);
 
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
@@ -211,7 +218,7 @@ export class PlaybackControlsNode extends HBox {
       },
     );
 
-    this.children = [timeControlNode, scrubber, rewindButton, infoDisplay];
+    this.children = [timeControlNode, this.scrubber, rewindButton, infoDisplay];
 
     this.disposePlaybackControlsNode = () => {
       timeSpeedProperty.unlink(onSpeedChange);
@@ -225,12 +232,28 @@ export class PlaybackControlsNode extends HBox {
     };
   }
 
+  /**
+   * Replace the current scrubber with a new one.
+   * Disposes the old scrubber and updates the children array.
+   */
+  private replaceScrubber(newScrubber: HSlider): void {
+    const oldScrubber = this.scrubber;
+    const scrubberIndex = this.children.indexOf(oldScrubber);
+
+    if (scrubberIndex !== -1) {
+      this.scrubber = newScrubber;
+      this.children[scrubberIndex] = newScrubber;
+      oldScrubber.dispose();
+    }
+  }
+
   public get scrubbing(): boolean {
     return this.isScrubbing;
   }
 
   public override dispose(): void {
     this.disposePlaybackControlsNode();
+    this.scrubber.dispose();
     super.dispose();
   }
 }
