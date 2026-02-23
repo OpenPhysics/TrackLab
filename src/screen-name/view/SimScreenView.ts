@@ -7,14 +7,12 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
-import { DragListener, Text } from "scenerystack/scenery";
-import { PhetFont, ResetAllButton } from "scenerystack/scenery-phet";
-import { ButtonNode, RectangularPushButton } from "scenerystack/sun";
+import { DragListener } from "scenerystack/scenery";
+import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
-import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
+import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
@@ -123,25 +121,13 @@ export class SimScreenView extends ScreenView {
     this.addChild(kinematicsGraph);
 
     // ── Info dialog (explains digitizing workflow) ────────────────────────────
+    // Dialog manages its own scene-graph placement via the sim's popup layer.
     const infoDialogNode = new InfoDialogNode();
-    this.addChild(infoDialogNode);
 
     // ── Info button (lower-left corner, same vertical level as reset button) ─
-    const infoButton = new RectangularPushButton({
-      content: new Text("?", {
-        font: new PhetFont({ size: 16, weight: "bold" }),
-        fill: TrackLabColors.textOnDarkProperty,
-      }),
-      baseColor: TrackLabColors.buttonBaseDarkProperty,
-      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-      xMargin: BUTTON_X_MARGIN + 2,
-      yMargin: BUTTON_Y_MARGIN,
-      cornerRadius: 14,
+    const infoButton = new InfoButton({
+      listener: () => infoDialogNode.show(),
       tandem: Tandem.OPT_OUT,
-      accessibleName: "How to use TrackLab",
-      listener: () => {
-        infoDialogNode.visible = !infoDialogNode.visible;
-      },
     });
     this.addChild(infoButton);
 
@@ -168,10 +154,6 @@ export class SimScreenView extends ScreenView {
       // Info button: lower-left corner, mirroring the reset button margin.
       infoButton.left = visibleBounds.minX + RESET_BUTTON_MARGIN;
       infoButton.centerY = resetAllButton.centerY;
-
-      // Info dialog: centered horizontally, positioned just above the info button.
-      infoDialogNode.centerX = this.layoutBounds.centerX;
-      infoDialogNode.bottom = infoButton.top - RESET_BUTTON_MARGIN;
 
       // Data table: shift left by extraWidth so it stays within the layout area
       // and doesn't drift into the extra visible space claimed by the graph.
