@@ -1,3 +1,13 @@
+/**
+ * bouncingBallToSVG.ts
+ *
+ * Generates an SVG of a bouncing ball for use as an icon.
+ * 
+ * The bouncing ball is a simple parabolic motion with a restitution coefficient.
+ * The ball is drawn as a series of circles, one for each snapshot.
+ * The floor is drawn as a line.
+ */
+
 import * as fs from "node:fs";
 
 // ── Magic numbers ─────────────────────────────────────────────────
@@ -8,16 +18,18 @@ const FLOOR_Y = 57; // px from top where the floor sits
 
 const INITIAL_HEIGHT = 48; // px — height of first bounce above floor
 const RESTITUTION = 0.6; // energy retention per bounce (0–1)
-const NUM_BOUNCES = 4; // number of parabolic arcs
+const NUM_BOUNCES = 3; // number of parabolic arcs
 
-const TOTAL_SNAPSHOTS = 60; // total number of ball positions (equal Δt)
+const TOTAL_SNAPSHOTS = 30; // total number of ball positions (equal Δt)
 
 const X_START = 2; // px — x of first floor contact
 const X_END = 58; // px — x of last floor contact
 
-const BALL_RADIUS = 1; // px
-const BALL_COLOR = "#1a4fcc";
-const BALL_OPACITY = 0.85;
+const BALL_RADIUS = 2; // px
+const BALL_FILL = "#3b82f6"; // bright blue fill
+const BALL_STROKE = "#1e3a5f"; // dark blue stroke for contrast
+const BALL_STROKE_WIDTH = 0.8; // px
+const BALL_OPACITY = 0.9;
 
 const FLOOR_COLOR = "#444";
 const FLOOR_WIDTH = 0.8; // stroke-width
@@ -81,8 +93,8 @@ function computeSnapshots(): Point[] {
     const xRight = xContacts[bounceIdx + 1];
     const x = xLeft + tLocal * (xRight - xLeft);
 
-    // svg y increases downward
-    const y = FLOOR_Y - heightAboveFloor;
+    // svg y increases downward; offset by ball radius so ball sits on floor
+    const y = FLOOR_Y - BALL_RADIUS - heightAboveFloor;
 
     points.push({ x: +x.toFixed(2), y: +y.toFixed(2) });
   }
@@ -92,7 +104,12 @@ function computeSnapshots(): Point[] {
 
 function buildSvg(snapshots: Point[]): string {
   const circles = snapshots
-    .map((p) => `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" fill="${BALL_COLOR}" opacity="${BALL_OPACITY}"/>`)
+    .map(
+      (p) =>
+        `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" ` +
+        `fill="${BALL_FILL}" stroke="${BALL_STROKE}" stroke-width="${BALL_STROKE_WIDTH}" ` +
+        `opacity="${BALL_OPACITY}"/>`
+    )
     .join("\n");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" \
