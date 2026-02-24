@@ -39,7 +39,7 @@ export default class GraphDataManager {
 
   private readonly maxDataPoints: number;
   private readonly chartTransform: ChartTransform;
-  private readonly linePlot: LinePlot;
+  private readonly linePlot: LinePlot | null;
   private isManuallyZoomed = false;
 
   // Grid and tick components
@@ -52,7 +52,7 @@ export default class GraphDataManager {
 
   public constructor(
     chartTransform: ChartTransform,
-    linePlot: LinePlot,
+    linePlot: LinePlot | null,
     maxDataPoints: number,
     gridConfig: GridVisualizationConfig,
   ) {
@@ -186,7 +186,7 @@ export default class GraphDataManager {
     const evicted = this.writePoint(xValue, yValue);
     this.updateMinMaxIncremental(xValue, yValue, evicted);
 
-    this.linePlot.setDataSet(this.getOrderedPoints());
+    this.linePlot?.setDataSet(this.getOrderedPoints());
 
     if (this.dataSize > 1 && !this.isManuallyZoomed) {
       this.applyAxisRangesFromExtremes();
@@ -233,7 +233,7 @@ export default class GraphDataManager {
       this.recomputeMinMax();
     }
 
-    this.linePlot.setDataSet(this.getOrderedPoints());
+    this.linePlot?.setDataSet(this.getOrderedPoints());
 
     if (this.dataSize > 1 && !this.isManuallyZoomed) {
       this.applyAxisRangesFromExtremes();
@@ -250,7 +250,7 @@ export default class GraphDataManager {
     this.xMax = -Infinity;
     this.yMin = Infinity;
     this.yMax = -Infinity;
-    this.linePlot.setDataSet([]);
+    this.linePlot?.setDataSet([]);
 
     const defaultRange = new Range(-10, 10);
     this.chartTransform.setModelXRange(defaultRange);
