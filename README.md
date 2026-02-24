@@ -9,9 +9,11 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 - **Calibration tool** — Define a known reference distance to convert pixel measurements to real-world units (mm, cm, m, km, in, ft)
 - **Auto-tracking** — Select any object and track it across frames using OpenCV template matching
 - **Manual digitizing** — Add multiple tracks (A, B, C…) and place points frame-by-frame with a crosshair cursor and magnifier
+- **Measurement tools** — Draggable measuring tape (real-world distance) and three-handle angle tool, enabled via preferences
 - **Kinematics graph** — Configurable X-Y plot of any two kinematic quantities (position, velocity, acceleration, speed) for any track
 - **Data table** — Spreadsheet view of all track data with CSV export
 - **Webcam recording** — Capture live video directly in the browser and use it as the analysis source
+- **Help dialog** — In-app guide explaining the digitizing workflow, accessible via the info button
 - **Configurable frame rate** — Set video frame rate (15–60 fps) for accurate time calculations
 - **Bilingual UI** — English and French interface support
 - **Color profiles** — Default and projector modes for classroom presentation
@@ -118,6 +120,7 @@ src/
 ├── splash.ts                # Splash screen
 ├── brand.ts                 # Branding metadata
 ├── assert.ts                # Assertion utilities
+├── TrackLabButton.ts        # Factory for consistently styled push buttons
 ├── TrackLabColors.ts        # Centralized color properties (default + projector)
 ├── TrackLabConstants.ts     # Layout and validation constants
 ├── TrackLabNamespace.ts     # SceneryStack namespace registration
@@ -127,34 +130,46 @@ src/
 │   ├── strings_en.json      # English strings
 │   └── strings_fr.json      # French strings
 ├── preferences/
-│   ├── TrackLabPreferencesModel.ts  # User preferences (color profile, etc.)
+│   ├── TrackLabPreferencesModel.ts  # User preferences (auto-tracking, graph quantities, measurement tools)
 │   └── TrackLabPreferencesNode.ts   # Preferences UI
 ├── screen-name/
 │   ├── SimScreen.ts         # Screen wiring (model + view)
 │   ├── model/
-│   │   ├── SimModel.ts      # Application state (Axon Properties)
-│   │   └── Track.ts         # Track model (points, label, color)
-│   └── view/
-│       ├── SimScreenView.ts        # Root view, layout, MVT computation
-│       ├── VideoPlayerNode.ts      # Video element, hosts overlays
-│       ├── VideoSourceControlNode.ts  # Video dropdown + Record button
-│       ├── PlaybackControlsNode.ts    # Play, scrubber, frame step, frame rate
-│       ├── CoordinateSystemNode.ts   # Draggable/rotatable axes overlay
-│       ├── CalibrationToolNode.ts    # Reference distance tool
-│       ├── ControlPanel.ts          # Left-side toggle panel
-│       ├── AutoTrackerNode.ts       # Auto-tracking overlay and trail
-│       ├── DigitizingOverlayNode.ts # Manual digitizing crosshair + magnifier
-│       ├── DataTableNode.ts         # Spreadsheet of track data, CSV export
-│       ├── KinematicsGraphNode.ts   # Configurable kinematics graph (wraps graph/)
-│       ├── TrackListPanel.ts        # Add/remove tracks for digitizing
-│       ├── WebcamPanel.ts           # Webcam recording dialog
-│       └── KeyboardShortcutsNode.ts
-├── graph/
-│   ├── ConfigurableGraph.ts         # Top-level graph node; axis selectors, chart layout, zoom/reset
-│   ├── GraphDataManager.ts          # Data points, auto-scaling, tick spacing
-│   ├── GraphInteractionHandler.ts   # Pan, pinch-zoom, axis drag, resize, header drag gestures
-│   ├── GraphControlsPanel.ts        # Axis property selector dropdowns
-│   └── PlottableProperty.ts         # Interface for quantities that appear in the axis selector
+│   │   ├── SimModel.ts             # Application state (Axon Properties)
+│   │   ├── Track.ts                # Track model (points, label, color)
+│   │   ├── KinematicsComputer.ts   # Velocity and acceleration via finite differences
+│   │   └── ModelViewTransformFactory.ts  # Builds Transform3 from coord-system + calibration
+│   ├── view/
+│   │   ├── SimScreenView.ts        # Root view, layout, MVT computation
+│   │   ├── VideoPlayerNode.ts      # Video element, hosts overlays
+│   │   ├── VideoSourceControlNode.ts  # Video dropdown + Record button
+│   │   ├── PlaybackControlsNode.ts    # Play, scrubber, frame step, frame rate
+│   │   ├── CoordinateSystemNode.ts    # Draggable/rotatable axes overlay
+│   │   ├── CalibrationToolNode.ts     # Reference distance tool
+│   │   ├── ControlPanel.ts            # Left-side toggle panel
+│   │   ├── AutoTrackerNode.ts         # Auto-tracking overlay and trail
+│   │   ├── DigitizingOverlayNode.ts   # Manual digitizing crosshair + magnifier
+│   │   ├── DataTableNode.ts           # Spreadsheet of track data, CSV export
+│   │   ├── KinematicsGraphNode.ts     # Configurable kinematics graph (wraps graph/)
+│   │   ├── TrackListPanel.ts          # Add/remove tracks for digitizing
+│   │   ├── MeasurementToolsPanel.ts   # Checkboxes for measuring tape and angle tool
+│   │   ├── MeasuringTapeNode.ts       # Draggable tape overlay with real-world distance label
+│   │   ├── AngleToolNode.ts           # Three-handle angle overlay with degree label
+│   │   ├── InfoDialogNode.ts          # Modal help dialog for digitizing workflow
+│   │   ├── WebcamPanel.ts             # Webcam recording dialog
+│   │   └── KeyboardShortcutsNode.ts
+│   └── graph/
+│       ├── ConfigurableGraph.ts              # Top-level graph node; axis selectors, chart layout, zoom/reset
+│       ├── GraphDataManager.ts               # Data points, auto-scaling, tick spacing
+│       ├── GraphInteractionHandler.ts        # Orchestrates gesture handlers; shared chart config
+│       ├── PanGestureHandler.ts              # Chart-area drag to pan both axes
+│       ├── ZoomGestureHandler.ts             # Mouse-wheel and pinch zoom; double-click to reset
+│       ├── AxisGestureHandler.ts             # Single-axis pan and zoom on axis labels
+│       ├── ResizeGestureHandler.ts           # Corner drag handles for graph panel resize
+│       ├── HeaderDragHandler.ts              # Header drag to reposition floating graph panel
+│       ├── GraphControlsPanel.ts             # Axis property selector dropdowns
+│       ├── PlottableProperty.ts              # Interface for quantities in the axis selector
+│       └── kinematics-plottable-properties.ts  # Registry of all plottable quantities
 └── tracking/
     └── OpenCVTracker.ts     # OpenCV template matching (TM_CCOEFF_NORMED)
 ```
@@ -165,7 +180,7 @@ State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon)
 
 ### Model-view transform
 
-`SimScreenView` derives a `modelViewTransformProperty` from the coordinate system's position/rotation and the calibration tool's endpoints and distance. This transform maps real-world coordinates (e.g., meters) to video pixel coordinates and back.
+`ModelViewTransformFactory` builds a `Transform3` from the coordinate system's position/rotation and the calibration tool's endpoints and distance. `SimScreenView` wraps this in a reactive `modelViewTransformProperty`. The transform maps real-world coordinates (e.g., meters) to video pixel coordinates and back.
 
 ### Tracking pipeline
 
