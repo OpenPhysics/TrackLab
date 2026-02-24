@@ -140,14 +140,6 @@ type TableColors = {
   background: string;
 };
 
-// Callback for deleting a point from a track
-type OnDeletePoint = (trackId: string, frame: number) => void;
-
-// ── Trash icon constants ─────────────────────────────────────────────────────
-const TRASH_ICON_SIZE = 12; // px, size of the trash icon
-const TRASH_ICON_OPACITY = 0.4; // default opacity
-const TRASH_ICON_HOVER_OPACITY = 1; // opacity on hover
-
 /**
  * Build an HTML table element for the data.
  * Height adjusts based on row count, with min/max constraints.
@@ -158,7 +150,6 @@ function buildHtmlTable(
   colors: TableColors,
   labels: TableLabels,
   a11y: A11yLabels,
-  onDelete?: OnDeletePoint,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -307,52 +298,7 @@ function buildHtmlTable(
         const val = row.values.get(track.id);
         if (val) {
           addCell(val.x.toFixed(CELL_DECIMAL_PLACES));
-          // Y cell with trash button
-          const yTd = document.createElement("td");
-          yTd.style.cssText = cellStyle;
-
-          const yWrapper = document.createElement("span");
-          yWrapper.style.cssText = "display: inline-flex; align-items: center; gap: 4px;";
-
-          const yText = document.createElement("span");
-          yText.textContent = val.y.toFixed(CELL_DECIMAL_PLACES);
-          yWrapper.appendChild(yText);
-
-          if (onDelete) {
-            const trashBtn = document.createElement("button");
-            trashBtn.type = "button";
-            trashBtn.title = `Delete point for track ${track.symbol} at frame ${row.frame}`;
-            trashBtn.setAttribute("aria-label", `Delete point for track ${track.symbol} at frame ${row.frame}`);
-            trashBtn.style.cssText = `
-              background: none;
-              border: none;
-              cursor: pointer;
-              padding: 0;
-              opacity: ${TRASH_ICON_OPACITY};
-              transition: opacity 0.15s;
-              display: inline-flex;
-              align-items: center;
-              vertical-align: middle;
-            `;
-            trashBtn.innerHTML = `<svg width="${TRASH_ICON_SIZE}" height="${TRASH_ICON_SIZE}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>`;
-            trashBtn.onmouseenter = () => {
-              trashBtn.style.opacity = String(TRASH_ICON_HOVER_OPACITY);
-            };
-            trashBtn.onmouseleave = () => {
-              trashBtn.style.opacity = String(TRASH_ICON_OPACITY);
-            };
-            trashBtn.onclick = (e) => {
-              e.stopPropagation();
-              onDelete(track.id, row.frame);
-            };
-            yWrapper.appendChild(trashBtn);
-          }
-
-          yTd.appendChild(yWrapper);
-          tr.appendChild(yTd);
+          addCell(val.y.toFixed(CELL_DECIMAL_PLACES));
         } else {
           addCell("—");
           addCell("—");
@@ -379,7 +325,6 @@ function buildSingleDataRow(
   cellStyle: string,
   isEven: boolean,
   colors: TableColors,
-  onDelete?: OnDeletePoint,
 ): HTMLTableRowElement {
   const tr = document.createElement("tr");
   tr.style.background = isEven ? colors.rowEven : colors.rowOdd;
@@ -397,52 +342,7 @@ function buildSingleDataRow(
     const val = row.values.get(track.id);
     if (val) {
       addCell(val.x.toFixed(CELL_DECIMAL_PLACES));
-      // Y cell with trash button
-      const yTd = document.createElement("td");
-      yTd.style.cssText = cellStyle;
-
-      const yWrapper = document.createElement("span");
-      yWrapper.style.cssText = "display: inline-flex; align-items: center; gap: 4px;";
-
-      const yText = document.createElement("span");
-      yText.textContent = val.y.toFixed(CELL_DECIMAL_PLACES);
-      yWrapper.appendChild(yText);
-
-      if (onDelete) {
-        const trashBtn = document.createElement("button");
-        trashBtn.type = "button";
-        trashBtn.title = `Delete point for track ${track.symbol} at frame ${row.frame}`;
-        trashBtn.setAttribute("aria-label", `Delete point for track ${track.symbol} at frame ${row.frame}`);
-        trashBtn.style.cssText = `
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          opacity: ${TRASH_ICON_OPACITY};
-          transition: opacity 0.15s;
-          display: inline-flex;
-          align-items: center;
-          vertical-align: middle;
-        `;
-        trashBtn.innerHTML = `<svg width="${TRASH_ICON_SIZE}" height="${TRASH_ICON_SIZE}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-        </svg>`;
-        trashBtn.onmouseenter = () => {
-          trashBtn.style.opacity = String(TRASH_ICON_HOVER_OPACITY);
-        };
-        trashBtn.onmouseleave = () => {
-          trashBtn.style.opacity = String(TRASH_ICON_OPACITY);
-        };
-        trashBtn.onclick = (e) => {
-          e.stopPropagation();
-          onDelete(track.id, row.frame);
-        };
-        yWrapper.appendChild(trashBtn);
-      }
-
-      yTd.appendChild(yWrapper);
-      tr.appendChild(yTd);
+      addCell(val.y.toFixed(CELL_DECIMAL_PLACES));
     } else {
       addCell("—");
       addCell("—");
@@ -568,16 +468,11 @@ export class DataTableNode extends Panel {
 
     this.tableWrapper = tableWrapper;
 
-    // ── Delete point callback ────────────────────────────────────────────────
-    const onDeletePoint: OnDeletePoint = (trackId, frame) => {
-      model.removePointFromTrack(trackId, frame);
-    };
-
     // ── Full rebuild helper ──────────────────────────────────────────────────
     // Replaces the entire table DOM and refreshes cached references.
     const doFullRebuild = (tracks: readonly Track[], unit: string) => {
       const colors = getTableColors();
-      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels(), getA11yLabels(), onDeletePoint);
+      const newWrapper = buildHtmlTable(tracks, unit, colors, getLabels(), getA11yLabels());
 
       this.tableWrapper.innerHTML = "";
       if (newWrapper.firstChild) {
@@ -680,7 +575,6 @@ export class DataTableNode extends Panel {
             cellStyle,
             rowIndex % 2 !== 0, // isEven flag: index 0 → rowOdd, index 1 → rowEven, …
             colors,
-            onDeletePoint,
           );
           this.tableBodyRef.appendChild(newRow);
           this.frameRowMap.set(row.frame, newRow);

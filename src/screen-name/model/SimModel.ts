@@ -22,9 +22,6 @@ import { computeTrackKinematics } from "./KinematicsComputer.js";
 import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
 import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 
-// ── Selected point type (for delete operations) ────────────────────────────
-export type SelectedPoint = { trackId: string; frame: number } | null;
-
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
 export type CalibrationUnit = (typeof CALIBRATION_UNITS)[number];
@@ -219,9 +216,6 @@ export class SimModel {
   public readonly activeTrackIdProperty = new Property<string | null>(null);
   public readonly canAddTrackProperty = new BooleanProperty(true);
 
-  // ── Selected point for deletion ────────────────────────────────────────
-  public readonly selectedPointProperty = new Property<SelectedPoint>(null);
-
   // ── Derived kinematics for all tracks ───────────────────────────────────
   // Cache keyed by track ID; only recomputes kinematics for tracks whose
   // point array reference has changed since the last derivation.  Because
@@ -343,15 +337,11 @@ export class SimModel {
 
   /**
    * Remove the track with the given `id`. If that track is currently active,
-   * `activeTrackIdProperty` is cleared to null first. Also clears any selected
-   * point belonging to the removed track.
+   * `activeTrackIdProperty` is cleared to null first.
    */
   public removeTrack(id: string): void {
     if (this.activeTrackIdProperty.value === id) {
       this.activeTrackIdProperty.value = null;
-    }
-    if (this.selectedPointProperty.value?.trackId === id) {
-      this.selectedPointProperty.value = null;
     }
     this.tracksProperty.value = this.tracksProperty.value.filter((t) => t.id !== id);
   }
@@ -405,26 +395,6 @@ export class SimModel {
       const point: TrackPoint = { frame, time, x, y };
       const updated: Track = { ...track, points: [...track.points, point] };
       return updated;
-    });
-    this.tracksProperty.value = tracks;
-  }
-
-  /**
-   * Remove a single digitized point from a track.
-   *
-   * @param id - ID of the target track.
-   * @param frame - Integer frame index of the point to remove.
-   */
-  public removePointFromTrack(id: string, frame: number): void {
-    const tracks = this.tracksProperty.value.map((track) => {
-      if (track.id !== id) {
-        return track;
-      }
-      const filteredPoints = track.points.filter((p) => p.frame !== frame);
-      if (filteredPoints.length === track.points.length) {
-        return track; // No point matched; return unchanged track
-      }
-      return { ...track, points: filteredPoints };
     });
     this.tracksProperty.value = tracks;
   }
@@ -503,7 +473,6 @@ export class SimModel {
     this.calibUnitProperty.reset();
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
-    this.selectedPointProperty.value = null;
     this.canAddTrackProperty.value = true;
     this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
     this.tracker.dispose();

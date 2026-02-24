@@ -194,21 +194,13 @@ export class VideoPlayerNode extends Node {
     this.webcamPanel = videoSourceControlNode.webcamPanel;
     this.addChild(mainContent);
 
-    // ── Keyboard shortcuts ─────────────────────────────────────────────────
+    // ── Home key → rewind to start ────────────────────────────────────────
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-      // Home key → rewind to start
       if (e.key === "Home" && model.videoLoadedProperty.value) {
         this.rewindToStart();
-      }
-      // Delete/Backspace → remove selected point
-      if ((e.key === "Delete" || e.key === "Backspace") && model.selectedPointProperty.value !== null) {
-        const { trackId, frame } = model.selectedPointProperty.value;
-        model.removePointFromTrack(trackId, frame);
-        model.selectedPointProperty.value = null;
-        e.preventDefault();
       }
     };
     document.addEventListener("keydown", onKeyDown);
