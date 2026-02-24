@@ -120,6 +120,7 @@ export class SimScreenView extends ScreenView {
     const resetAllButton = new ResetAllButton({
       listener: () => {
         model.reset(); // resets all model state including tool positions
+        this.videoPlayerNode.reset(); // reset video source selection to "none"
       },
     });
     this.addChild(resetAllButton);

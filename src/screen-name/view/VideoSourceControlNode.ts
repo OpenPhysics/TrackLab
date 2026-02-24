@@ -41,6 +41,8 @@ export type WebcamReadyCallback = (blob: Blob, duration: number) => void;
  */
 export class VideoSourceControlNode extends HBox {
   public readonly webcamPanel: WebcamPanel;
+  private readonly selectedVideoProperty: Property<string | null>;
+  private lastLoadedValue: string | null = null;
 
   public constructor(
     model: SimModel,
@@ -112,19 +114,19 @@ export class VideoSourceControlNode extends HBox {
     ];
 
     // ── Shared selection state (survives combo box rebuilds) ───────────────
-    const selectedVideoProperty = new Property<string | null>(null);
-    let lastLoadedValue: string | null = null;
+    this.selectedVideoProperty = new Property<string | null>(null);
+    const selectedVideoProperty = this.selectedVideoProperty; // local alias for callbacks
 
     // ── Selection handler for bundled videos, recordings, and uploads ──────
     selectedVideoProperty.lazyLink((value) => {
       // Revert section-header selections immediately
       if (value?.startsWith(HEADER_VALUE_PREFIX)) {
-        selectedVideoProperty.value = lastLoadedValue;
+        selectedVideoProperty.value = this.lastLoadedValue;
         return;
       }
 
       // Skip if same video is reselected (e.g. after a header revert)
-      if (value === lastLoadedValue) {
+      if (value === this.lastLoadedValue) {
         return;
       }
 
@@ -135,7 +137,7 @@ export class VideoSourceControlNode extends HBox {
       // Check webcam recordings
       const recording = model.webcamRecordingsProperty.value.find((r) => r.id === value);
       if (recording) {
-        lastLoadedValue = value;
+        this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = recording.fps;
         model.currentWebcamBlobProperty.value = recording.blob;
@@ -146,7 +148,7 @@ export class VideoSourceControlNode extends HBox {
       // Check uploaded videos
       const upload = model.uploadedVideosProperty.value.find((u) => u.id === value);
       if (upload) {
-        lastLoadedValue = value;
+        this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = upload.fps;
         model.currentWebcamBlobProperty.value = upload.blob;
@@ -157,7 +159,7 @@ export class VideoSourceControlNode extends HBox {
       // Bundled video
       const videoInfo = VIDEO_FILES.find((v) => v.filename === value);
       if (videoInfo) {
-        lastLoadedValue = value;
+        this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = false;
         model.currentWebcamBlobProperty.value = null;
         onVideoSelected(`./videos/${value}`, videoInfo.fps);
@@ -337,7 +339,7 @@ export class VideoSourceControlNode extends HBox {
 
         const upload = model.addUploadedVideo(blob, file.name, duration);
         model.currentWebcamBlobProperty.value = blob;
-        lastLoadedValue = upload.id;
+        this.lastLoadedValue = upload.id;
         selectedVideoProperty.value = upload.id;
         model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
@@ -363,7 +365,7 @@ export class VideoSourceControlNode extends HBox {
         const recording = model.addWebcamRecording(blob, duration, model.frameRateProperty.value);
         model.currentWebcamBlobProperty.value = blob;
         // Select the new recording — the lazyLink handler loads it into the player
-        lastLoadedValue = recording.id;
+        this.lastLoadedValue = recording.id;
         selectedVideoProperty.value = recording.id;
         model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
@@ -394,5 +396,13 @@ export class VideoSourceControlNode extends HBox {
     });
 
     this.children = [videoComboBox, downloadButton, uploadButton, webcamButton];
+  }
+
+  /**
+   * Reset the video source selection to the initial "none" state.
+   */
+  public reset(): void {
+    this.lastLoadedValue = null;
+    this.selectedVideoProperty.value = null;
   }
 }

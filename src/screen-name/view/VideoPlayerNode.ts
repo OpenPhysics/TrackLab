@@ -37,6 +37,8 @@ export class VideoPlayerNode extends Node {
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
   private currentBlobUrl: string | null = null;
+  /** Video source control node for reset functionality. */
+  private readonly videoSourceControlNode: VideoSourceControlNode;
 
   /**
    * @param model - Simulation model providing reactive playback and track state.
@@ -158,7 +160,7 @@ export class VideoPlayerNode extends Node {
     this.videoElement.addEventListener("timeupdate", onTimeUpdate);
 
     // ── Video source controls (webcam panel is added to SimScreenView for z-order) ─
-    const videoSourceControlNode = new VideoSourceControlNode(
+    this.videoSourceControlNode = new VideoSourceControlNode(
       model,
       listParent,
       (url, fps) => {
@@ -186,12 +188,12 @@ export class VideoPlayerNode extends Node {
 
     // ── Layout ─────────────────────────────────────────────────────────────
     const mainContent = new VBox({
-      children: [videoSourceControlNode, videoLayer],
+      children: [this.videoSourceControlNode, videoLayer],
       spacing: MAIN_CONTENT_SPACING,
       align: "center",
     });
 
-    this.webcamPanel = videoSourceControlNode.webcamPanel;
+    this.webcamPanel = this.videoSourceControlNode.webcamPanel;
     this.addChild(mainContent);
 
     // ── Home key → rewind to start ────────────────────────────────────────
@@ -222,7 +224,7 @@ export class VideoPlayerNode extends Node {
       }
       autoTrackerNode.dispose();
       this.playbackControlsNode.dispose();
-      videoSourceControlNode.dispose();
+      this.videoSourceControlNode.dispose();
       autoTrackingShownProperty.dispose();
     };
   }
@@ -230,6 +232,14 @@ export class VideoPlayerNode extends Node {
   public override dispose(): void {
     this.disposeVideoPlayer();
     super.dispose();
+  }
+
+  /** Reset the video source selection to the initial state. */
+  public reset(): void {
+    this.videoSourceControlNode.reset();
+    // Clear the video element
+    this.videoElement.removeAttribute("src");
+    this.videoElement.load();
   }
 
   /** Pause playback and seek to the very beginning of the video. */
