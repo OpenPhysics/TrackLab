@@ -267,15 +267,8 @@ export default class ConfigurableGraph extends Node {
     });
     this.graphContentNode.addChild(this.xAxisInteractionRegion);
 
-    // Create line plot
-    const linePlot = new LinePlot(this.chartTransform, [], {
-      stroke: TrackLabColors.plot1Property,
-      lineWidth: PLOT_LINE_WIDTH,
-    });
-
-    // Wrap line plot in a clipped container to prevent overflow beyond the grid
+    // Clipped container for all track line plots; prevents overflow beyond the grid.
     this.clippedDataContainer = new Node({
-      children: [linePlot],
       clipArea: Shape.rect(0, 0, width, height),
     });
     this.graphContentNode.addChild(this.clippedDataContainer);
@@ -308,8 +301,9 @@ export default class ConfigurableGraph extends Node {
       yTickLabelSet,
     };
 
-    // Initialize data manager
-    this.dataManager = new GraphDataManager(this.chartTransform, linePlot, maxDataPoints, this.gridConfig);
+    // Coordinator for tick spacing, axis reset, and zoom-flag state shared by
+    // gesture handlers.  No LinePlot: track plots are managed via setTrackData().
+    this.dataManager = new GraphDataManager(this.chartTransform, null, maxDataPoints, this.gridConfig);
 
     // Create controls panel helper
     this.controlsPanel = new GraphControlsPanel(
@@ -584,43 +578,6 @@ export default class ConfigurableGraph extends Node {
    */
   public clearData(): void {
     this.dataManager.clearData();
-  }
-
-  /**
-   * Add data points from a record array, mapping each record to the selected axes.
-   */
-  public addDataPoints(dataPoints: Array<Record<string, number>>): void {
-    if (dataPoints.length === 0) {
-      return;
-    }
-
-    const xProperty = this.xPropertyProperty.value;
-    const yProperty = this.yPropertyProperty.value;
-
-    const mappedPoints: Array<{ x: number; y: number }> = [];
-    for (const point of dataPoints) {
-      const x = this.getValueForAxis(xProperty, point);
-      const y = this.getValueForAxis(yProperty, point);
-      if (x !== null && y !== null && Number.isFinite(x) && Number.isFinite(y)) {
-        mappedPoints.push({ x, y });
-      }
-    }
-
-    if (mappedPoints.length > 0) {
-      this.dataManager.addDataPoints(mappedPoints);
-    }
-  }
-
-  /**
-   * Get the value for a specific axis from a data point record.
-   * Dispatches on the PlottableProperty variant: RecordPlottable uses an
-   * accessor function; LivePlottable reads from a reactive property.
-   */
-  private getValueForAxis(axisProperty: PlottableProperty, point: Record<string, number>): number | null {
-    if ("accessor" in axisProperty) {
-      return axisProperty.accessor(point);
-    }
-    return axisProperty.property.value;
   }
 
   /**
