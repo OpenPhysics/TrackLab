@@ -95,7 +95,8 @@ const securityHeaders = {
     // blob: for webcam recordings and loaded video files
     "media-src 'self' blob:",
     // blob: for fetch inside workers; 'self' for local video middleware
-    "connect-src 'self' blob:",
+    // data: required for @techstark/opencv-js which loads its WASM as a base64 data URI
+    "connect-src 'self' blob: data:",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

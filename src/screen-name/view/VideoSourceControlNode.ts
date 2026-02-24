@@ -196,7 +196,7 @@ export class VideoSourceControlNode extends HBox {
               font: HEADER_FONT,
               fill: TrackLabColors.textMutedProperty,
             }),
-          tandemName: "sampleVideosHeader",
+          tandemName: "sampleVideosHeaderItem",
         });
       }
 
@@ -222,7 +222,7 @@ export class VideoSourceControlNode extends HBox {
               font: HEADER_FONT,
               fill: TrackLabColors.textMutedProperty,
             }),
-          tandemName: "myRecordingsHeader",
+          tandemName: "myRecordingsHeaderItem",
         });
 
         for (const rec of recordings) {
@@ -233,7 +233,7 @@ export class VideoSourceControlNode extends HBox {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),
-            tandemName: rec.id.replace("-", ""),
+            tandemName: `${rec.id.replace("-", "")}Item`,
           });
         }
       }
@@ -247,7 +247,7 @@ export class VideoSourceControlNode extends HBox {
               font: HEADER_FONT,
               fill: TrackLabColors.textMutedProperty,
             }),
-          tandemName: "uploadedVideosHeader",
+          tandemName: "uploadedVideosHeaderItem",
         });
 
         for (const upl of uploads) {
@@ -258,7 +258,7 @@ export class VideoSourceControlNode extends HBox {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),
-            tandemName: upl.id.replace("-", ""),
+            tandemName: `${upl.id.replace("-", "")}Item`,
           });
         }
       }
@@ -391,7 +391,11 @@ export class VideoSourceControlNode extends HBox {
       listener: async () => {
         model.isPlayingProperty.value = false;
         this.webcamPanel.visible = true;
-        await this.webcamPanel.open();
+        try {
+          await this.webcamPanel.open();
+        } catch {
+          this.webcamPanel.visible = false;
+        }
       },
     });
 

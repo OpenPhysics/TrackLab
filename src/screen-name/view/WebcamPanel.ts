@@ -400,8 +400,12 @@ export class WebcamPanel extends Node {
   private async goToPreview(): Promise<void> {
     this.resetPreviewUI();
     this._startButton.enabled = false;
-    await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
-    this._startButton.enabled = true;
+    try {
+      await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
+      this._startButton.enabled = true;
+    } catch {
+      this.setStatus(this.webcamStrings.accessDeniedStringProperty.value);
+    }
   }
 
   private async useVideo(cb: (blob: Blob, duration: number) => void): Promise<void> {
@@ -414,9 +418,13 @@ export class WebcamPanel extends Node {
     let duration = 0;
 
     if (blob.type.includes("webm")) {
-      const fixed = await fixWebmDuration(blob);
-      blob = fixed.blob;
-      duration = fixed.duration;
+      try {
+        const fixed = await fixWebmDuration(blob);
+        blob = fixed.blob;
+        duration = fixed.duration;
+      } catch {
+        // Fall back to the raw blob with unknown duration
+      }
     }
 
     this.cleanup();

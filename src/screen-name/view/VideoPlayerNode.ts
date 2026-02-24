@@ -102,6 +102,19 @@ export class VideoPlayerNode extends Node {
     const isPlayingListener = (isPlaying: boolean) => {
       if (isPlaying) {
         this.videoElement.play().catch((err: unknown) => {
+          if (err instanceof DOMException) {
+            if (err.name === "AbortError") {
+              // play() was interrupted by pause() or a new load — element is
+              // already paused/loading, no recovery needed.
+              return;
+            }
+            if (err.name === "NotAllowedError") {
+              // Autoplay blocked (no user gesture). Silently reset so the UI
+              // stays consistent; expected during fuzz testing.
+              model.isPlayingProperty.value = false;
+              return;
+            }
+          }
           // biome-ignore lint/suspicious/noConsole: error logging for video playback failure
           console.error("Video playback failed:", err);
           model.isPlayingProperty.value = false;
@@ -256,9 +269,13 @@ export class VideoPlayerNode extends Node {
 
   private seekByFrames(direction: number): void {
     this.model.isPlayingProperty.value = false;
+    const duration = this.videoElement.duration;
+    if (!Number.isFinite(duration)) {
+      return;
+    }
     const frameDuration = this.model.frameDurationProperty.value;
     const raw = this.videoElement.currentTime + direction * frameDuration;
-    const clamped = Math.max(0, Math.min(raw, this.videoElement.duration));
+    const clamped = Math.max(0, Math.min(raw, duration));
     this.videoElement.currentTime = clamped;
     this.model.currentTimeProperty.value = clamped;
   }
