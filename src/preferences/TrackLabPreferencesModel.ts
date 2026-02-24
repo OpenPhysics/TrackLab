@@ -7,6 +7,7 @@
  */
 
 import { BooleanProperty } from "scenerystack/axon";
+import trackLabQueryParameters from "./trackLabQueryParameters.js";
 
 export class TrackLabPreferencesModel {
   /**
@@ -34,15 +35,13 @@ export class TrackLabPreferencesModel {
   public readonly enableMeasurementToolsProperty: BooleanProperty;
 
   public constructor() {
-    // By default, auto-tracking checkbox is hidden
-    this.enableAutoTrackingProperty = new BooleanProperty(false);
+    // Query-parameter controlled startup defaults.
+    this.enableAutoTrackingProperty = new BooleanProperty(trackLabQueryParameters.enableAutoTracking);
 
-    // By default, velocity and acceleration are shown on the graph
-    this.showVelocityInGraphProperty = new BooleanProperty(true);
-    this.showAccelerationInGraphProperty = new BooleanProperty(false);
+    this.showVelocityInGraphProperty = new BooleanProperty(trackLabQueryParameters.showVelocityInGraph);
+    this.showAccelerationInGraphProperty = new BooleanProperty(trackLabQueryParameters.showAccelerationInGraph);
 
-    // By default, measurement tools are hidden
-    this.enableMeasurementToolsProperty = new BooleanProperty(false);
+    this.enableMeasurementToolsProperty = new BooleanProperty(trackLabQueryParameters.enableMeasurementTools);
   }
 
   public reset(): void {
