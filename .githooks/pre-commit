@@ -10,14 +10,8 @@ fi
 
 echo "Running Biome fix on staged files..."
 
-# Run biome fix on staged files only (using node_modules binary so npm scripts are not needed)
-BIOME="./node_modules/.bin/biome"
-if [ ! -x "$BIOME" ]; then
-  echo "Biome not found in node_modules. Run 'npm install' first."
-  exit 1
-fi
-
-echo "$STAGED" | xargs "$BIOME" check --write --no-errors-on-unmatched
+# Run biome fix using npm (works better in MINGW64/Git Bash on Windows)
+npm run fix --silent -- --no-errors-on-unmatched
 
 STATUS=$?
 
