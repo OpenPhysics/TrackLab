@@ -5,8 +5,7 @@
  * connected by a tape-styled line; a label at the midpoint displays the
  * real-world distance computed via the current model-view transform.
  *
- * The reel endpoint (endpoint 1) is slightly larger and has a centre dot to
- * visually distinguish it from the tip (endpoint 2).
+ * Both endpoints are intentionally symmetric in appearance and interaction.
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
@@ -26,8 +25,7 @@ const TAPE_LINE_WIDTH = 4;
 const TAPE_SHADOW_WIDTH = 7;
 const TAPE_DASH: number[] = [10, 5];
 
-const REEL_RADIUS = 7;
-const TIP_RADIUS = 5;
+const ENDPOINT_RADIUS = 7;
 const TOUCH_DILATION = 12;
 
 const FONT = new PhetFont({ size: 12, weight: "bold" });
@@ -37,9 +35,8 @@ const DRAG_SPEED = 200;
 const SHIFT_DRAG_SPEED = 40;
 
 /**
- * Two-endpoint measuring tape overlay. The reel (endpoint 1) and tip (endpoint 2)
- * are each independently draggable. A real-world distance label sits above the
- * midpoint of the tape.
+ * Two-endpoint measuring tape overlay. Both endpoints are independently draggable.
+ * A real-world distance label sits above the midpoint of the tape.
  */
 export class MeasuringTapeNode extends Node {
   private readonly disposeMeasuringTapeNode: () => void;
@@ -62,37 +59,31 @@ export class MeasuringTapeNode extends Node {
     });
     this.addChild(tapeLine);
 
-    // ── Reel endpoint (base of tape) ──────────────────────────────────────
-    const reelCircle = new Circle(REEL_RADIUS, {
-      fill: TAPE_COLOR,
-      stroke: "rgba(0, 0, 0, 0.65)",
-      lineWidth: 1.5,
-      cursor: "grab",
-      tagName: "div",
-      focusable: true,
-      accessibleName: "Measuring tape base",
-    });
-    const reelDot = new Circle(2.5, { fill: "rgba(0, 0, 0, 0.65)" });
-    const reelNode = new Node({ children: [reelCircle, reelDot] });
-    const reelTouchArea = Shape.circle(0, 0, REEL_RADIUS + TOUCH_DILATION);
-    reelCircle.mouseArea = reelTouchArea;
-    reelCircle.touchArea = reelTouchArea;
-    this.addChild(reelNode);
+    const makeEndpoint = (accessibleName: string) => {
+      const endpointCircle = new Circle(ENDPOINT_RADIUS, {
+        fill: TAPE_COLOR,
+        stroke: "rgba(0, 0, 0, 0.65)",
+        lineWidth: 1.5,
+      });
+      const endpointDot = new Circle(2.5, { fill: "rgba(0, 0, 0, 0.65)" });
+      const endpointNode = new Node({
+        children: [endpointCircle, endpointDot],
+        cursor: "grab",
+        tagName: "div",
+        focusable: true,
+        accessibleName,
+      });
+      const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + TOUCH_DILATION);
+      endpointNode.mouseArea = endpointTouchArea;
+      endpointNode.touchArea = endpointTouchArea;
+      return endpointNode;
+    };
 
-    // ── Tip endpoint ──────────────────────────────────────────────────────
-    const tipNode = new Circle(TIP_RADIUS, {
-      fill: TAPE_COLOR,
-      stroke: "rgba(0, 0, 0, 0.65)",
-      lineWidth: 1.5,
-      cursor: "crosshair",
-      tagName: "div",
-      focusable: true,
-      accessibleName: "Measuring tape tip",
-    });
-    const tipTouchArea = Shape.circle(0, 0, TIP_RADIUS + TOUCH_DILATION);
-    tipNode.mouseArea = tipTouchArea;
-    tipNode.touchArea = tipTouchArea;
-    this.addChild(tipNode);
+    // ── Symmetric endpoints ────────────────────────────────────────────────
+    const endpoint1Node = makeEndpoint("Measuring tape base");
+    const endpoint2Node = makeEndpoint("Measuring tape tip");
+    this.addChild(endpoint1Node);
+    this.addChild(endpoint2Node);
 
     // ── Distance label ────────────────────────────────────────────────────
     const distanceText = new Text("---", {
@@ -113,8 +104,8 @@ export class MeasuringTapeNode extends Node {
     const geometryMultilink = Multilink.multilink([model.tapPoint1Property, model.tapPoint2Property], (p1, p2) => {
       shadowLine.setLine(p1.x, p1.y, p2.x, p2.y);
       tapeLine.setLine(p1.x, p1.y, p2.x, p2.y);
-      reelNode.translation = p1;
-      tipNode.translation = p2;
+      endpoint1Node.translation = p1;
+      endpoint2Node.translation = p2;
       const mid = p1.blend(p2, 0.5);
       labelPanel.centerX = mid.x;
       labelPanel.bottom = mid.y - LABEL_Y_OFFSET;
@@ -130,14 +121,14 @@ export class MeasuringTapeNode extends Node {
     );
 
     // ── Drag listeners ────────────────────────────────────────────────────
-    reelCircle.addInputListener(
+    endpoint1Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint1Property,
         keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );
-    tipNode.addInputListener(
+    endpoint2Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint2Property,
         keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
