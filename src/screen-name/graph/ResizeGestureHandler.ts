@@ -137,13 +137,13 @@ export default class ResizeGestureHandler {
         switch (cornerIndex) {
           case 0: // Top-left
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width - delta.x);
-            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height + delta.y);
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height - delta.y);
             deltaX = dragStartGraphBounds.width - newWidth;
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 1: // Top-right
             newWidth = Math.max(MIN_WIDTH, dragStartGraphBounds.width + delta.x);
-            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height + delta.y);
+            newHeight = Math.max(MIN_HEIGHT, dragStartGraphBounds.height - delta.y);
             deltaY = dragStartGraphBounds.height - newHeight;
             break;
           case 2: // Bottom-left
