@@ -7,12 +7,13 @@
 
 import { type Dimension2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
+import { Circle, Color, DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
+import type { SelectedPoint } from "../model/SimModel.js";
 
 const OUTER_R = 12;
 const INNER_R = 2;
@@ -27,6 +28,9 @@ const MAG_CROSSHAIR_GAP = 2;
 const MAG_CROSSHAIR_LINE_WIDTH = 1;
 
 const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the video
+const MARK_HIT_RADIUS = 10; // enlarged hit area for clicking dots
+const SELECTION_RING_RADIUS = 6; // radius of the selection ring
+const SELECTION_RING_LINE_WIDTH = 2; // stroke width of selection ring
 
 // Magnifier canvas box-shadow: "offsetX offsetY blur color"
 const MAG_SHADOW_OFFSET_X = 0; // px, horizontal shadow offset
@@ -261,43 +265,129 @@ export class DigitizingOverlayNode extends Node {
     });
 
     // ── Mark dots layer ─────────────────────────────────────────────────────
-    // One Path per track is reused across rebuilds.  This avoids allocating
-    // and discarding SceneryStack nodes on every video frame (~30 Hz during
-    // playback), which caused significant GC pressure with many track points.
-    const marksLayer = new Node({ pickable: false });
-    const trackPaths = new Map<string, Path>(); // track id → Path
+    // Each point gets its own node group: selection ring + visible dot + hit area.
+    // This enables clicking on individual points for selection and deletion.
+    const marksLayer = new Node({ pickable: true });
+
+    // Map of pointKey ("trackId:frame") → Node containing ring, dot, and hit area
+    type PointNodeInfo = {
+      container: Node;
+      ring: Circle;
+      trackId: string;
+      frame: number;
+    };
+    const pointNodes = new Map<string, PointNodeInfo>();
+
+    // Helper to create a unique key for a point
+    const makePointKey = (trackId: string, frame: number) => `${trackId}:${frame}`;
+
+    // Update selection ring visibility based on selectedPointProperty
+    const updateSelectionRings = (selected: SelectedPoint) => {
+      for (const info of pointNodes.values()) {
+        const isSelected = selected !== null && info.trackId === selected.trackId && info.frame === selected.frame;
+        info.ring.visible = isSelected;
+      }
+    };
+
+    const selectedPointListener = (selected: SelectedPoint) => {
+      updateSelectionRings(selected);
+    };
+    model.selectedPointProperty.link(selectedPointListener);
 
     const rebuildMarks = () => {
       const frameDuration = model.frameDurationProperty.value;
       const currentFrame = Math.round(model.currentTimeProperty.value / frameDuration);
       const mvt = model.modelViewTransformProperty.value;
       const tracks = model.tracksProperty.value;
-      const activeTrackIds = new Set(tracks.map((t) => t.id));
+      const selected = model.selectedPointProperty.value;
 
-      // Update or create one Path per track.
+      // Build set of keys for points that should be visible
+      const visibleKeys = new Set<string>();
       for (const track of tracks) {
-        let path = trackPaths.get(track.id);
-        if (!path) {
-          path = new Path(null, { fill: track.color, pickable: false });
-          trackPaths.set(track.id, path);
-          marksLayer.addChild(path);
-        }
-        const shape = new Shape();
         for (const point of track.points) {
           if (point.frame <= currentFrame) {
-            const localPt = mvt.transformPosition2(new Vector2(point.x, point.y));
-            shape.circle(localPt.x, localPt.y, MARK_DOT_RADIUS);
+            visibleKeys.add(makePointKey(track.id, point.frame));
           }
         }
-        path.shape = shape;
       }
 
-      // Remove paths for tracks that have been deleted.
-      for (const [id, path] of trackPaths) {
-        if (!activeTrackIds.has(id)) {
-          marksLayer.removeChild(path);
-          path.dispose();
-          trackPaths.delete(id);
+      // Remove nodes for points that are no longer visible
+      for (const [key, info] of pointNodes) {
+        if (!visibleKeys.has(key)) {
+          marksLayer.removeChild(info.container);
+          info.container.dispose();
+          pointNodes.delete(key);
+        }
+      }
+
+      // Update or create nodes for visible points
+      for (const track of tracks) {
+        const trackColor = new Color(track.color);
+        for (const point of track.points) {
+          if (point.frame <= currentFrame) {
+            const key = makePointKey(track.id, point.frame);
+            const localPt = mvt.transformPosition2(new Vector2(point.x, point.y));
+
+            let info = pointNodes.get(key);
+            if (!info) {
+              // Create new point node group
+              const container = new Node({ cursor: "pointer" });
+
+              // Selection ring (initially hidden)
+              const ring = new Circle(SELECTION_RING_RADIUS, {
+                stroke: trackColor,
+                lineWidth: SELECTION_RING_LINE_WIDTH,
+                fill: null,
+                visible: false,
+                pickable: false,
+              });
+
+              // Visible dot
+              const dot = new Circle(MARK_DOT_RADIUS, {
+                fill: trackColor,
+                pickable: false,
+              });
+
+              // Invisible hit area for easier clicking
+              const hitArea = new Circle(MARK_HIT_RADIUS, {
+                fill: "transparent",
+                cursor: "pointer",
+              });
+
+              // Click handler to select this point
+              const trackId = track.id;
+              const frame = point.frame;
+              hitArea.addInputListener(
+                new FireListener({
+                  fire: () => {
+                    const currentSelected = model.selectedPointProperty.value;
+                    // Toggle selection: if already selected, deselect; otherwise select
+                    if (currentSelected?.trackId === trackId && currentSelected?.frame === frame) {
+                      model.selectedPointProperty.value = null;
+                    } else {
+                      model.selectedPointProperty.value = { trackId, frame };
+                    }
+                  },
+                  tandem: Tandem.OPT_OUT,
+                }),
+              );
+
+              container.addChild(ring);
+              container.addChild(dot);
+              container.addChild(hitArea);
+
+              info = { container, ring, trackId: track.id, frame: point.frame };
+              pointNodes.set(key, info);
+              marksLayer.addChild(container);
+            }
+
+            // Update position
+            info.container.translation = localPt;
+
+            // Update selection ring visibility
+            const isSelected = selected !== null && track.id === selected.trackId && point.frame === selected.frame;
+            info.ring.visible = isSelected;
+          }
         }
       }
     };
@@ -337,6 +427,8 @@ export class DigitizingOverlayNode extends Node {
           }
           const activeId = model.activeTrackIdProperty.value;
           if (!activeId) {
+            // No active track, but still clear selection on background click
+            model.selectedPointProperty.value = null;
             return;
           }
 
@@ -344,6 +436,9 @@ export class DigitizingOverlayNode extends Node {
           if (!track) {
             return;
           }
+
+          // Clear any selection when digitizing a new point
+          model.selectedPointProperty.value = null;
 
           const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
 
@@ -375,10 +470,11 @@ export class DigitizingOverlayNode extends Node {
       model.frameRateProperty.unlink(frameRateListener);
       model.activeTrackIdProperty.unlink(activeTrackListener);
       model.magnifyVideoProperty.unlink(magnifyListener);
-      for (const path of trackPaths.values()) {
-        path.dispose();
+      model.selectedPointProperty.unlink(selectedPointListener);
+      for (const info of pointNodes.values()) {
+        info.container.dispose();
       }
-      trackPaths.clear();
+      pointNodes.clear();
     };
   }
 
