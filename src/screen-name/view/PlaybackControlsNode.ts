@@ -80,6 +80,7 @@ export class PlaybackControlsNode extends HBox {
     const timeControlNode = new TimeControlNode(model.isPlayingProperty, {
       timeSpeedProperty: timeSpeedProperty,
       timeSpeeds: [TimeSpeed.NORMAL, TimeSpeed.SLOW],
+      speedRadioButtonGroupPlacement: "left",
       enabledProperty: model.videoLoadedProperty,
       tandem: Tandem.OPT_OUT,
       playPauseStepButtonOptions: {
@@ -142,6 +143,10 @@ export class PlaybackControlsNode extends HBox {
       const newScrubber = new HSlider(model.currentTimeProperty, this.scrubberRange, {
         trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
         thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
+        thumbTouchAreaXDilation: 6,
+        thumbTouchAreaYDilation: 6,
+        thumbMouseAreaXDilation: 4,
+        thumbMouseAreaYDilation: 4,
         majorTickLength: 8,
         majorTickStroke: TrackLabColors.textOnDarkProperty,
         majorTickLineWidth: 1,

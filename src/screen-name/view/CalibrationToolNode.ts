@@ -23,7 +23,8 @@ import { CALIBRATION_UNITS } from "../model/SimModel.js";
 const FONT = new PhetFont(14);
 const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
 const ENDPOINT_RADIUS = 4;
-const ENDPOINT_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
+const ENDPOINT_TOUCH_DILATION = 10;
+const ENDPOINT_MOUSE_DILATION = 4;
 const LINE_WIDTH = 3; // Increased for better visibility
 const LINE_DASH: number[] = [8, 4];
 const SHADOW_LINE_WIDTH = 6; // Wider shadow stroke for contrast
@@ -110,10 +111,11 @@ export class CalibrationToolNode extends Node {
     const endpoint1 = makeEndpoint(calibrationStrings.calibrationPoint1StringProperty);
     const endpoint2 = makeEndpoint(calibrationStrings.calibrationPoint2StringProperty);
     const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + ENDPOINT_TOUCH_DILATION);
-    endpoint1.mouseArea = endpointTouchArea;
+    const endpointMouseArea = Shape.circle(0, 0, ENDPOINT_RADIUS + ENDPOINT_MOUSE_DILATION);
     endpoint1.touchArea = endpointTouchArea;
-    endpoint2.mouseArea = endpointTouchArea;
+    endpoint1.mouseArea = endpointMouseArea;
     endpoint2.touchArea = endpointTouchArea;
+    endpoint2.mouseArea = endpointMouseArea;
     this.addChild(endpoint1);
     this.addChild(endpoint2);
 

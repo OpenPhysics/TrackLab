@@ -30,11 +30,15 @@ const LABEL_OFFSET_X = 6; // gap between arrow tip and axis label
 const LABEL_OFFSET_Y = 4; // gap between arrow tip and axis label
 const LABEL_STROKE_WIDTH = 0.6; // outline width for axis label text
 const HANDLE_RADIUS = 8; // rotation handle disk radius
-const HANDLE_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
+const HANDLE_TOUCH_DILATION = 10;
+const HANDLE_MOUSE_DILATION = 4;
 const HANDLE_LINE_WIDTH = 1.5;
 const ORIGIN_RADIUS = 5; // origin marker circle radius
 const ORIGIN_SHADOW_LINE_WIDTH = 4; // wider outline for contrast
-const ORIGIN_TOUCH_DILATION = 12; // extra pixels for easier pickup (mouseArea/touchArea)
+const ORIGIN_TOUCH_DILATION = 10;
+const ORIGIN_MOUSE_DILATION = 4;
+const AXIS_TOUCH_WIDTH = 16; // half-width of the touch area along axes
+const AXIS_MOUSE_WIDTH = 8; // half-width of the mouse area along axes
 const ORIGIN_LINE_WIDTH = 1;
 const TRANSLATE_DRAG_SPEED = 300; // pixels/s for normal keyboard drag
 const TRANSLATE_SHIFT_DRAG_SPEED = 50; // pixels/s for shift-key keyboard drag
@@ -144,9 +148,8 @@ export class CoordinateSystemNode extends Node {
       focusable: true,
       accessibleName: coordStrings.rotationHandleStringProperty,
     });
-    const handleTouchArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_TOUCH_DILATION);
-    handleDisk.mouseArea = handleTouchArea;
-    handleDisk.touchArea = handleTouchArea;
+    handleDisk.touchArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_TOUCH_DILATION);
+    handleDisk.mouseArea = Shape.circle(0, 0, HANDLE_RADIUS + HANDLE_MOUSE_DILATION);
     rotatingNode.addChild(handleDisk);
 
     // ── Origin marker with shadow outline for contrast ──────────────────
@@ -169,12 +172,22 @@ export class CoordinateSystemNode extends Node {
       focusable: true,
       accessibleName: coordStrings.coordinateSystemStringProperty,
     });
-    // Expand touch/mouse area for easier pickup (origin + axes region)
-    positionNode.boundsProperty.lazyLink(() => {
-      const dilated = positionNode.localBounds.dilatedXY(ORIGIN_TOUCH_DILATION, ORIGIN_TOUCH_DILATION);
-      positionNode.mouseArea = dilated;
-      positionNode.touchArea = dilated;
-    });
+
+    // Create a cross-shaped hit area that follows the axes rather than a huge rectangle.
+    // This ensures the user must be close to an axis or the origin to drag.
+    const createAxisHitArea = (halfWidth: number, originDilation: number): Shape => {
+      const shape = new Shape();
+      // Origin circle
+      shape.circle(0, 0, ORIGIN_RADIUS + originDilation);
+      // X axis rectangle (from origin to arrow tip)
+      shape.rect(-halfWidth, -halfWidth, ARROW_LENGTH + halfWidth * 2, halfWidth * 2);
+      // Y axis rectangle (from origin upward to arrow tip)
+      shape.rect(-halfWidth, -ARROW_LENGTH - halfWidth, halfWidth * 2, ARROW_LENGTH + halfWidth * 2);
+      return shape;
+    };
+
+    positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH, ORIGIN_TOUCH_DILATION);
+    positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH, ORIGIN_MOUSE_DILATION);
     this.addChild(positionNode);
 
     // ── Property → scene-graph linkage ────────────────────────────────────

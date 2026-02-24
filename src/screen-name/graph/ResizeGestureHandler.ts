@@ -17,6 +17,8 @@ import type { GraphDimensions } from "./GraphInteractionHandler.js";
 
 const HANDLE_SIZE = 12;
 const HANDLE_OFFSET = -6; // centers the 12px handle on each corner
+const TOUCH_AREA_DILATION = 6;
+const MOUSE_AREA_DILATION = 4;
 const MIN_WIDTH = 200;
 const MIN_HEIGHT = 150;
 
@@ -73,6 +75,9 @@ export default class ResizeGestureHandler {
         cursor: corner.cursor,
       });
 
+      handle.touchArea = handle.localBounds.dilated(TOUCH_AREA_DILATION);
+      handle.mouseArea = handle.localBounds.dilated(MOUSE_AREA_DILATION);
+
       this.handles.push(handle);
       this.attachDragListener(handle, index);
     });
@@ -96,6 +101,8 @@ export default class ResizeGestureHandler {
       const corner = corners[index];
       if (corner) {
         handle.setRect(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE);
+        handle.touchArea = handle.localBounds.dilated(TOUCH_AREA_DILATION);
+        handle.mouseArea = handle.localBounds.dilated(MOUSE_AREA_DILATION);
       }
     });
   }
