@@ -6,8 +6,8 @@
  */
 
 import { DerivedProperty } from "scenerystack/axon";
-import { Dimension2 } from "scenerystack/dot";
-import { DOM, Node, VBox } from "scenerystack/scenery";
+import { Bounds2, Dimension2 } from "scenerystack/dot";
+import { DOM, Node } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -33,6 +33,14 @@ export class VideoPlayerNode extends Node {
   public readonly webcamPanel: WebcamPanel;
   /** Playback controls bar; positioned by SimScreenView at the bottom of the screen. */
   public readonly playbackControlsNode: PlaybackControlsNode;
+  /**
+   * Video content layer containing the video element and all overlays (auto-tracker,
+   * digitizing, coordinate system, calibration, measurement tools). All children
+   * share video-local coordinates (0,0 = top-left of video). SimScreenView adds
+   * additional overlay nodes as children. The videoTransformProperty is applied to
+   * this layer so the video and overlays can be dragged/magnified as a unit.
+   */
+  public readonly videoContentLayer: Node;
   private readonly model: SimModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
@@ -94,8 +102,12 @@ export class VideoPlayerNode extends Node {
     // ── Manual digitizing overlay ─────────────────────────────────────────
     const digitizingOverlayNode = new DigitizingOverlayNode(this.videoElement, model, () => this.stepForward());
 
-    const videoLayer = new Node({
+    this.videoContentLayer = new Node({
       children: [videoNode, autoTrackerNode, digitizingOverlayNode],
+      // Explicit bounds prevent overlay children (coordinate system arrows,
+      // calibration tool, etc.) from inflating the layer's bounds and
+      // disrupting the parent layout.
+      localBounds: new Bounds2(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT),
     });
 
     // ── Play / Pause ───────────────────────────────────────────────────────
@@ -159,6 +171,9 @@ export class VideoPlayerNode extends Node {
       this.videoElement.width = displayW;
       this.videoElement.height = displayH;
       model.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
+      // Keep content layer bounds in sync so layout doesn't shift.
+      this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
+      this.videoSourceControlNode.centerX = displayW / 2;
       this.playbackControlsNode.preferredWidth = displayW;
       model.tracker.resize(displayW, displayH);
     };
@@ -200,14 +215,24 @@ export class VideoPlayerNode extends Node {
     );
 
     // ── Layout ─────────────────────────────────────────────────────────────
-    const mainContent = new VBox({
-      children: [this.videoSourceControlNode, videoLayer],
-      spacing: MAIN_CONTENT_SPACING,
-      align: "center",
-    });
+    // Manual positioning replaces the VBox so that overlay nodes added to
+    // videoContentLayer (by SimScreenView) don't affect the centering of
+    // the source control row.
+    this.videoContentLayer.top = 0;
+    this.addChild(this.videoContentLayer);
+
+    this.videoSourceControlNode.centerX = this.videoContentLayer.width / 2;
+    this.videoSourceControlNode.bottom = -MAIN_CONTENT_SPACING;
+    this.addChild(this.videoSourceControlNode);
 
     this.webcamPanel = this.videoSourceControlNode.webcamPanel;
-    this.addChild(mainContent);
+
+    // ── Apply video transform (translate + uniform scale) ────────────────
+    // Driven by the model so the video and all overlays move/zoom together.
+    const videoTransformListener = (matrix: import("scenerystack/dot").Matrix3) => {
+      this.videoContentLayer.matrix = matrix;
+    };
+    model.videoTransformProperty.link(videoTransformListener);
 
     // ── Home key → rewind to start ────────────────────────────────────────
     const onKeyDown = (e: KeyboardEvent) => {
@@ -226,6 +251,7 @@ export class VideoPlayerNode extends Node {
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       model.isPlayingProperty.unlink(isPlayingListener);
       model.playbackRateProperty.unlink(playbackRateListener);
+      model.videoTransformProperty.unlink(videoTransformListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
       this.videoElement.removeEventListener("loadedmetadata", onDimensionsLoaded);
       this.videoElement.removeEventListener("durationchange", updateDuration);

@@ -10,23 +10,12 @@
 // Shared corner radius used by the main side panels.
 export const PANEL_CORNER_RADIUS = 8;
 
-// ── Screen layout bounds ───────────────────────────────────────────────────────
-// SceneryStack's ScreenView.DEFAULT_LAYOUT_BOUNDS = Bounds2(0, 0, 1024, 618).
-const LAYOUT_WIDTH = 1024;
-
 // ── Video display dimensions ───────────────────────────────────────────────────
-// The video element is always rendered at this fixed pixel size.
+// Maximum display dimensions for the video element. The actual rendered size
+// may be smaller to preserve the source video's aspect ratio.
 // Both the OpenCV tracker and all overlay nodes depend on these values.
 export const VIDEO_WIDTH = 768;
 export const VIDEO_HEIGHT = 432;
-
-// ── Video position in screen (layout) coordinates ────────────────────────────
-// The video player VBox is top-anchored at y=10.  The source-control row
-// (~40 px) plus MAIN_CONTENT_SPACING (10 px) places the video top at ~60 px,
-// so the video centre sits at approximately y=276 (keeping same top position as before).
-export const VIDEO_PLAYER_Y_OFFSET = -20; // kept for reference; no longer used for positioning
-export const VIDEO_CENTER_X = LAYOUT_WIDTH / 2; // 512
-export const VIDEO_CENTER_Y = 276; // approximate video centre with top-anchored layout
 
 // ── Initial calibration tool geometry ─────────────────────────────────────────
 // Half-length of the default calibration segment (pixels from centre to each endpoint).

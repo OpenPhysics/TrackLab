@@ -306,9 +306,9 @@ export class AutoTrackerNode extends Node {
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {
-          // Convert video-pixel coords to global/scene coords, then to model coords.
-          const globalPt = this.localToGlobalPoint(new Vector2(pt.x, pt.y));
-          const modelPt = model.pixelToModelCoords(globalPt);
+          // Convert video-local pixel coords directly to model coords.
+          // The MVT operates in video-local space, matching these coordinates.
+          const modelPt = model.pixelToModelCoords(new Vector2(pt.x, pt.y));
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           this.recordedFrames.add(frame);
         }
