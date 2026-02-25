@@ -6,7 +6,7 @@
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import type { Vector2 } from "scenerystack/dot";
+import { Matrix3, type Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
@@ -186,8 +186,6 @@ export class CoordinateSystemNode extends Node {
       return shape;
     };
 
-    positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH, ORIGIN_TOUCH_DILATION);
-    positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH, ORIGIN_MOUSE_DILATION);
     this.addChild(positionNode);
 
     // ── Property → scene-graph linkage ────────────────────────────────────
@@ -198,6 +196,11 @@ export class CoordinateSystemNode extends Node {
 
     const onAngleChange = (angle: number) => {
       rotatingNode.rotation = angle;
+      // Rotate the hit areas to match the visual axes so the user cannot grab
+      // a "phantom" axis at its original unrotated position.
+      const m = Matrix3.rotation2(angle);
+      positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH, ORIGIN_TOUCH_DILATION).transformed(m);
+      positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH, ORIGIN_MOUSE_DILATION).transformed(m);
     };
     model.coordAngleProperty.link(onAngleChange);
 
