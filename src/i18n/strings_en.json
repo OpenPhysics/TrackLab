@@ -138,7 +138,11 @@
     "pendulum": "Pendulum",
     "pendulumDrag": "Pendulum Drag",
     "pucksCollide": "Pucks Collide",
-    "springWars": "Spring Wars"
+    "springWars": "Spring Wars",
+    "collisionOne": "Collision One",
+    "collisionTwo": "Collision Two",
+    "oscillatingCar": "Oscillating Car",
+    "verticalToss": "Vertical Toss"
   },
   "infoDialog": {
     "title": "How to Digitize a Track",
