@@ -30,9 +30,12 @@ type A11yLabels = {
 };
 
 // ── Grid geometry ────────────────────────────────────────────────────────────
-const MAX_TABLE_WIDTH = 600; // Allow table to grow wider for more tracks
+// Scroll kicks in once the table exceeds these dimensions:
+//   width  → beyond track B columns (Frame, Time, x(A), y(A), x(B), y(B))
+//   height → beyond 10 data rows
+const MAX_TABLE_WIDTH = 400; // px — approx. 6 columns before horizontal scroll
 const MIN_TABLE_HEIGHT = 100; // Minimum height when little data
-const MAX_TABLE_HEIGHT = 400; // Maximum height before scrolling (increased from 200)
+const MAX_TABLE_HEIGHT = 220; // px — approx. 10 rows before vertical scroll
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
 const TITLE_FONT = new PhetFont({ size: 12, weight: "bold" });
