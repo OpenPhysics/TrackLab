@@ -44,6 +44,10 @@ export const RESET_BUTTON_MARGIN = 10; // reset button inset from layout right/b
 export const TRACK_SYMBOL_FIRST_CODE = 65; // ASCII 'A'
 export const TRACK_SYMBOL_LAST_CODE = 90; // ASCII 'Z'
 
+// Maximum number of simultaneous tracks a user may have active.
+// Symbols are never reused: removing track B and adding a new one yields E, not B.
+export const MAX_TRACKS = 4;
+
 // ── Model-view transform precision thresholds ─────────────────────────────────
 // Guards against degenerate (zero-length) calibration or pixel distances that
 // would produce a singular transform matrix.

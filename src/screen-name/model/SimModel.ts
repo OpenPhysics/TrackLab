@@ -10,6 +10,7 @@ import { Dimension2, Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
+  MAX_TRACKS,
   TRACK_SYMBOL_FIRST_CODE,
   TRACK_SYMBOL_LAST_CODE,
   VIDEO_CENTER_X,
@@ -214,7 +215,10 @@ export class SimModel {
   //     pixelToModelCoords() before storage.
   public readonly tracksProperty = new Property<readonly Track[]>([]);
   public readonly activeTrackIdProperty = new Property<string | null>(null);
-  public readonly canAddTrackProperty = new BooleanProperty(true);
+  public readonly canAddTrackProperty: TReadOnlyProperty<boolean> = new DerivedProperty(
+    [this.tracksProperty],
+    (tracks) => tracks.length < MAX_TRACKS,
+  );
 
   // ── Derived kinematics for all tracks ───────────────────────────────────
   // Cache keyed by track ID; only recomputes kinematics for tracks whose
@@ -310,18 +314,17 @@ export class SimModel {
 
   /**
    * Create a new track labelled with the next available letter (A–Z) and a
-   * unique color. Does nothing once all 26 letter slots are exhausted.
+   * unique color. Does nothing if the track limit or symbol limit is reached.
    */
   public addTrack(): void {
-    if (this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) {
-      return; // 'Z' is the last allowed symbol
+    if (this.tracksProperty.value.length >= MAX_TRACKS || this.nextSymbolCode > TRACK_SYMBOL_LAST_CODE) {
+      return;
     }
     const symbol = String.fromCharCode(this.nextSymbolCode);
     const colorIndex = (this.nextSymbolCode - TRACK_SYMBOL_FIRST_CODE) % TRACK_COLORS.length;
     const trackColor = TRACK_COLORS[colorIndex];
     const color = trackColor ? trackColor.toCSS() : "#000000";
     this.nextSymbolCode++;
-    this.canAddTrackProperty.value = this.nextSymbolCode <= TRACK_SYMBOL_LAST_CODE;
 
     const track: Track = {
       id: `track-${symbol}`,
@@ -473,7 +476,6 @@ export class SimModel {
     this.calibUnitProperty.reset();
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
-    this.canAddTrackProperty.value = true;
     this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
     this.tracker.dispose();
   }
