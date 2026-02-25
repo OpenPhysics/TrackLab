@@ -413,6 +413,26 @@ export class StringManager {
     removeTrackStringProperty: ReadOnlyProperty<string>;
     dataTableStringProperty: ReadOnlyProperty<string>;
     exportCSVStringProperty: ReadOnlyProperty<string>;
+    measuringTapeBaseStringProperty: ReadOnlyProperty<string>;
+    measuringTapeTipStringProperty: ReadOnlyProperty<string>;
+    angleToolVertexStringProperty: ReadOnlyProperty<string>;
+    angleArm1StringProperty: ReadOnlyProperty<string>;
+    angleArm2StringProperty: ReadOnlyProperty<string>;
+    toggleAxesStringProperty: ReadOnlyProperty<string>;
+    toggleCalibrationStringProperty: ReadOnlyProperty<string>;
+    toggleMagnifierStringProperty: ReadOnlyProperty<string>;
+    toggleAutoTrackingStringProperty: ReadOnlyProperty<string>;
+    toggleMeasuringTapeStringProperty: ReadOnlyProperty<string>;
+    toggleAngleToolStringProperty: ReadOnlyProperty<string>;
+    graphRescaleStringProperty: ReadOnlyProperty<string>;
+    graphZoomInStringProperty: ReadOnlyProperty<string>;
+    graphZoomOutStringProperty: ReadOnlyProperty<string>;
+    graphPanLeftStringProperty: ReadOnlyProperty<string>;
+    graphPanRightStringProperty: ReadOnlyProperty<string>;
+    graphPanUpStringProperty: ReadOnlyProperty<string>;
+    graphPanDownStringProperty: ReadOnlyProperty<string>;
+    kinematicsGraphStringProperty: ReadOnlyProperty<string>;
+    selectTrackForGraphStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       videoPlayerStringProperty: this.stringProperties.a11y.videoPlayerStringProperty,
@@ -423,6 +443,26 @@ export class StringManager {
       removeTrackStringProperty: this.stringProperties.a11y.removeTrackStringProperty,
       dataTableStringProperty: this.stringProperties.a11y.dataTableStringProperty,
       exportCSVStringProperty: this.stringProperties.a11y.exportCSVStringProperty,
+      measuringTapeBaseStringProperty: this.stringProperties.a11y.measuringTapeBaseStringProperty,
+      measuringTapeTipStringProperty: this.stringProperties.a11y.measuringTapeTipStringProperty,
+      angleToolVertexStringProperty: this.stringProperties.a11y.angleToolVertexStringProperty,
+      angleArm1StringProperty: this.stringProperties.a11y.angleArm1StringProperty,
+      angleArm2StringProperty: this.stringProperties.a11y.angleArm2StringProperty,
+      toggleAxesStringProperty: this.stringProperties.a11y.toggleAxesStringProperty,
+      toggleCalibrationStringProperty: this.stringProperties.a11y.toggleCalibrationStringProperty,
+      toggleMagnifierStringProperty: this.stringProperties.a11y.toggleMagnifierStringProperty,
+      toggleAutoTrackingStringProperty: this.stringProperties.a11y.toggleAutoTrackingStringProperty,
+      toggleMeasuringTapeStringProperty: this.stringProperties.a11y.toggleMeasuringTapeStringProperty,
+      toggleAngleToolStringProperty: this.stringProperties.a11y.toggleAngleToolStringProperty,
+      graphRescaleStringProperty: this.stringProperties.a11y.graphRescaleStringProperty,
+      graphZoomInStringProperty: this.stringProperties.a11y.graphZoomInStringProperty,
+      graphZoomOutStringProperty: this.stringProperties.a11y.graphZoomOutStringProperty,
+      graphPanLeftStringProperty: this.stringProperties.a11y.graphPanLeftStringProperty,
+      graphPanRightStringProperty: this.stringProperties.a11y.graphPanRightStringProperty,
+      graphPanUpStringProperty: this.stringProperties.a11y.graphPanUpStringProperty,
+      graphPanDownStringProperty: this.stringProperties.a11y.graphPanDownStringProperty,
+      kinematicsGraphStringProperty: this.stringProperties.a11y.kinematicsGraphStringProperty,
+      selectTrackForGraphStringProperty: this.stringProperties.a11y.selectTrackForGraphStringProperty,
     };
   }
 

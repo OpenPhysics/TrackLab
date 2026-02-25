@@ -76,3 +76,26 @@ export const WEBCAM_PREVIEW_HEIGHT = 324; // height of the preview and review vi
 // Opacity applied to coordinate system and calibration tool overlays while
 // the user is actively digitizing, signalling that those tools are locked out.
 export const DIGITIZING_DIM_OPACITY = 0.35;
+
+// ── Shared overlay drag speeds ────────────────────────────────────────────────
+// Keyboard drag speeds in pixels/second used by all draggable overlays
+// (measuring tape, angle tool, calibration tool, coordinate system).
+export const OVERLAY_DRAG_SPEED = 200; // normal keyboard drag
+export const OVERLAY_SHIFT_DRAG_SPEED = 40; // shift-key fine adjustment
+
+// ── Shared overlay label panel styling ────────────────────────────────────────
+// Label panels that float near the measuring tape midpoint and angle tool vertex.
+export const LABEL_PANEL_CORNER_RADIUS = 4;
+export const LABEL_PANEL_X_MARGIN = 6;
+export const LABEL_PANEL_Y_MARGIN = 3;
+export const LABEL_PANEL_SCALE = 0.8;
+
+// ── Shared overlay endpoint touch dilation ────────────────────────────────────
+export const OVERLAY_TOUCH_DILATION = 12;
+
+// ── Control panel icon and layout ─────────────────────────────────────────────
+// Shared by ControlPanel, MeasurementToolsPanel, and InfoDialogNode.
+export const CONTROL_ICON_SIZE = 20;
+export const CONTROL_PANEL_ROWS_SPACING = 12;
+export const CONTROL_PANEL_X_MARGIN = 12;
+export const CONTROL_PANEL_Y_MARGIN = 12;

@@ -10,6 +10,7 @@ import { Property } from "scenerystack/axon";
 import { Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
+import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
@@ -36,7 +37,12 @@ export class KinematicsGraphNode extends Node {
   private readonly disposeKinematicsGraph: () => void;
 
   public constructor(model: SimModel, listParent: Node, preferencesModel: TrackLabPreferencesModel) {
-    super({ visible: false });
+    const a11yStrings = StringManager.getInstance().getA11y();
+    super({
+      visible: false,
+      tagName: "div",
+      accessibleName: a11yStrings.kinematicsGraphStringProperty,
+    });
 
     this.model = model;
     this.selectedTracksProperty = new Property<Set<string>>(new Set());
@@ -227,11 +233,13 @@ export class KinematicsGraphNode extends Node {
         fill: track.color,
       });
 
-      // Create checkbox
+      // Create checkbox with accessibility label
+      const kinematicsGraphStrings = StringManager.getInstance().getKinematicsGraph();
       const checkbox = new Checkbox(checkboxProperty, label, {
         checkboxColor: TrackLabColors.checkboxColorProperty,
         checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
         spacing: 4,
+        accessibleName: kinematicsGraphStrings.trackItemStringProperty.value.replace("{{symbol}}", track.symbol),
       });
 
       // Store for later disposal
@@ -263,8 +271,9 @@ export class KinematicsGraphNode extends Node {
     const checkboxContainer = this.trackCheckboxPanel.children[0];
     if (checkboxContainer) {
       // Position relative to graph's current dimensions
-      checkboxContainer.right = this.graph.getGraphWidth() - 8;
-      checkboxContainer.top = 8;
+      const CHECKBOX_INSET = 8;
+      checkboxContainer.right = this.graph.getGraphWidth() - CHECKBOX_INSET;
+      checkboxContainer.top = CHECKBOX_INSET;
     }
   }
 

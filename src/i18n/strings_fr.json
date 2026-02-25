@@ -163,6 +163,26 @@
     "digitizeTrack": "Num\u00e9riser la piste {{symbol}}",
     "removeTrack": "Supprimer la piste {{symbol}}",
     "dataTable": "Donn\u00e9es de piste",
-    "exportCSV": "Exporter les donn\u00e9es de piste en fichier CSV"
+    "exportCSV": "Exporter les donn\u00e9es de piste en fichier CSV",
+    "measuringTapeBase": "Extr\u00e9mit\u00e9 de base du ruban de mesure",
+    "measuringTapeTip": "Extr\u00e9mit\u00e9 du ruban de mesure",
+    "angleToolVertex": "Sommet du rapporteur",
+    "angleArm1": "Extr\u00e9mit\u00e9 du bras 1 du rapporteur",
+    "angleArm2": "Extr\u00e9mit\u00e9 du bras 2 du rapporteur",
+    "toggleAxes": "Basculer les axes de coordonn\u00e9es",
+    "toggleCalibration": "Basculer l'outil de calibration",
+    "toggleMagnifier": "Basculer la loupe de num\u00e9risation",
+    "toggleAutoTracking": "Basculer le suivi automatique",
+    "toggleMeasuringTape": "Basculer le ruban de mesure",
+    "toggleAngleTool": "Basculer le rapporteur",
+    "graphRescale": "Redimensionner le graphique pour ajuster les donn\u00e9es",
+    "graphZoomIn": "Zoom avant sur le graphique",
+    "graphZoomOut": "Zoom arri\u00e8re sur le graphique",
+    "graphPanLeft": "D\u00e9placer le graphique vers la gauche",
+    "graphPanRight": "D\u00e9placer le graphique vers la droite",
+    "graphPanUp": "D\u00e9placer le graphique vers le haut",
+    "graphPanDown": "D\u00e9placer le graphique vers le bas",
+    "kinematicsGraph": "Graphique cin\u00e9matique",
+    "selectTrackForGraph": "S\u00e9lectionner la piste \u00e0 afficher sur le graphique"
   }
 }

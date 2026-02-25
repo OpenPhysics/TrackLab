@@ -5,7 +5,6 @@
  * and specify its value in desired units to establish the model-to-pixel scale.
  */
 
-import { Color } from "scenerystack";
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
@@ -16,7 +15,13 @@ import { ButtonNode, ComboBox, type ComboBoxItem, Panel, TextPushButton } from "
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
+import {
+  BUTTON_X_MARGIN,
+  BUTTON_Y_MARGIN,
+  DIGITIZING_DIM_OPACITY,
+  OVERLAY_DRAG_SPEED,
+  OVERLAY_SHIFT_DRAG_SPEED,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/SimModel.js";
 
@@ -37,11 +42,9 @@ const MIDPOINT_PANEL_X_MARGIN = 8;
 const MIDPOINT_PANEL_Y_MARGIN = 6;
 const MIDPOINT_PANEL_SPACING = 8;
 const MIDPOINT_Y_OFFSET = 12; // pixels above midpoint where the panel sits
-const ENDPOINT_DRAG_SPEED = 200; // pixels/s for normal keyboard drag
-const ENDPOINT_SHIFT_DRAG_SPEED = 40; // pixels/s for shift-key keyboard drag
 // Pixel distance below which endpoints are considered overlapping and a warning is shown.
 const OVERLAP_WARNING_DISTANCE = 10;
-const ENDPOINT_WARNING_COLOR = new Color(255, 60, 60);
+const CALIBRATION_DECIMAL_PLACES = 2;
 
 /**
  * Two-endpoint calibration ruler overlay for setting the real-world scale.
@@ -136,7 +139,7 @@ export class CalibrationToolNode extends Node {
     // Button showing current value + unit; clicking it opens the keypad.
     const buttonLabelProperty = new DerivedProperty(
       [model.calibDistanceProperty, model.calibUnitProperty],
-      (dist, unit) => `${dist.toFixed(2)} ${unit}`,
+      (dist, unit) => `${dist.toFixed(CALIBRATION_DECIMAL_PLACES)} ${unit}`,
     );
 
     const distanceButton = new TextPushButton(buttonLabelProperty, {
@@ -199,7 +202,7 @@ export class CalibrationToolNode extends Node {
     // Shown when endpoints are too close together to produce a valid calibration.
     const overlapWarning = new Text(calibrationStrings.pointsTooCloseStringProperty, {
       font: WARNING_FONT,
-      fill: ENDPOINT_WARNING_COLOR,
+      fill: TrackLabColors.calibrationWarningColorProperty,
       visible: false,
     });
     this.addChild(overlapWarning);
@@ -227,7 +230,9 @@ export class CalibrationToolNode extends Node {
 
       // Show warning and highlight endpoints when too close to be useful.
       const tooClose = p1.distance(p2) < OVERLAP_WARNING_DISTANCE;
-      const endpointFill = tooClose ? ENDPOINT_WARNING_COLOR : TrackLabColors.calibrationFillProperty.value;
+      const endpointFill = tooClose
+        ? TrackLabColors.calibrationWarningColorProperty.value
+        : TrackLabColors.calibrationFillProperty.value;
       endpoint1.fill = endpointFill;
       endpoint2.fill = endpointFill;
       overlapWarning.visible = tooClose;
@@ -246,8 +251,8 @@ export class CalibrationToolNode extends Node {
       new RichDragListener({
         positionProperty: model.calibPoint1Property,
         keyboardDragListenerOptions: {
-          dragSpeed: ENDPOINT_DRAG_SPEED,
-          shiftDragSpeed: ENDPOINT_SHIFT_DRAG_SPEED,
+          dragSpeed: OVERLAY_DRAG_SPEED,
+          shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
         },
         tandem: Tandem.OPT_OUT,
       }),
@@ -256,8 +261,8 @@ export class CalibrationToolNode extends Node {
       new RichDragListener({
         positionProperty: model.calibPoint2Property,
         keyboardDragListenerOptions: {
-          dragSpeed: ENDPOINT_DRAG_SPEED,
-          shiftDragSpeed: ENDPOINT_SHIFT_DRAG_SPEED,
+          dragSpeed: OVERLAY_DRAG_SPEED,
+          shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
         },
         tandem: Tandem.OPT_OUT,
       }),

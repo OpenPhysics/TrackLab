@@ -90,6 +90,20 @@ npm run fix        # fix lint + format issues together
 - **Frame rate**: `SimModel.frameRateProperty` (default 30 fps) drives `frameDurationProperty`. The user can change frame rate via `PlaybackControlsNode`; frame stepping and time display use this value.
 - **SceneryStack layout**: use `HBox` / `VBox` for rows and columns. Prefer `align: 'center'` and explicit `spacing` values. Do not set absolute pixel positions unless absolutely necessary.
 
+## Constants and colors
+
+- **Colors**: All UI colors live in `TrackLabColors.ts` as `ProfileColorProperty` instances for automatic dark/light theme switching. When adding a new color, create it there — never hardcode `rgb(…)` or hex strings in view files.
+- **Layout constants**: Shared numeric constants (panel margins, drag speeds, touch dilation) live in `TrackLabConstants.ts`. File-local constants that are used only within a single view file can remain local, but any constant duplicated across two or more files should be hoisted to `TrackLabConstants.ts`.
+- **Overlay constants**: Draggable overlays (measuring tape, angle tool, calibration tool, coordinate system) share `OVERLAY_DRAG_SPEED`, `OVERLAY_SHIFT_DRAG_SPEED`, `OVERLAY_TOUCH_DILATION`, and label panel styling constants (`LABEL_PANEL_*`) from `TrackLabConstants.ts`.
+- **Control panel constants**: `CONTROL_ICON_SIZE`, `CONTROL_PANEL_ROWS_SPACING`, `CONTROL_PANEL_X_MARGIN`, `CONTROL_PANEL_Y_MARGIN` are shared across `ControlPanel.ts`, `MeasurementToolsPanel.ts`, and `InfoDialogNode.ts`.
+
+## Accessibility
+
+- **Localized a11y strings**: All accessibility text lives in `StringManager.getA11y()` backed by the `a11y` section in `strings_en.json` / `strings_fr.json`. Never hardcode English strings for `accessibleName` or `aria-label`.
+- **Interactive elements**: Every interactive SceneryStack node (button, checkbox, draggable handle) must have an `accessibleName` sourced from the a11y string properties.
+- **Canvas overlays**: Non-interactive overlay containers that wrap a Canvas or DOM element should have `tagName: "div"` and an `accessibleName` so screen readers can identify them.
+- **HTML tables**: Use `<caption>` (visually hidden) and `aria-label` on `<th>` elements for data tables.
+
 ## Testing
 
 There is currently **no test suite**, and none should be added at this stage. The codebase is evolving rapidly — APIs, model structure, and UI components change frequently enough that maintaining tests would cost more than they save right now. Do not install a test framework or create test files.

@@ -15,24 +15,29 @@ import { Circle, Line, Node, RichDragListener, Text } from "scenerystack/scenery
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import {
+  LABEL_PANEL_CORNER_RADIUS,
+  LABEL_PANEL_SCALE,
+  LABEL_PANEL_X_MARGIN,
+  LABEL_PANEL_Y_MARGIN,
+  OVERLAY_DRAG_SPEED,
+  OVERLAY_SHIFT_DRAG_SPEED,
+  OVERLAY_TOUCH_DILATION,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 // ── Visual constants ──────────────────────────────────────────────────────────
-const TAPE_COLOR = "rgb(240, 185, 55)";
-const TAPE_SHADOW_COLOR = "rgba(0, 0, 0, 0.45)";
 const TAPE_LINE_WIDTH = 4;
 const TAPE_SHADOW_WIDTH = 7;
 const TAPE_DASH: number[] = [10, 5];
-
 const ENDPOINT_RADIUS = 7;
-const TOUCH_DILATION = 12;
-
+const ENDPOINT_DOT_RADIUS = 2.5;
+const ENDPOINT_OUTLINE_WIDTH = 1.5;
 const FONT = new PhetFont({ size: 12, weight: "bold" });
 const LABEL_Y_OFFSET = 16; // pixels above the midpoint
-
-const DRAG_SPEED = 200;
-const SHIFT_DRAG_SPEED = 40;
+const DISTANCE_DECIMAL_PLACES = 2;
 
 /**
  * Two-endpoint measuring tape overlay. Both endpoints are independently draggable.
@@ -44,28 +49,32 @@ export class MeasuringTapeNode extends Node {
   public constructor(visibleProperty: TReadOnlyProperty<boolean>, model: SimModel) {
     super();
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     // ── Shadow line (contrast on any background) ──────────────────────────
     const shadowLine = new Line(0, 0, 0, 0, {
-      stroke: TAPE_SHADOW_COLOR,
+      stroke: TrackLabColors.measuringTapeShadowProperty,
       lineWidth: TAPE_SHADOW_WIDTH,
     });
     this.addChild(shadowLine);
 
     // ── Main tape line ────────────────────────────────────────────────────
     const tapeLine = new Line(0, 0, 0, 0, {
-      stroke: TAPE_COLOR,
+      stroke: TrackLabColors.measuringTapeColorProperty,
       lineWidth: TAPE_LINE_WIDTH,
       lineDash: TAPE_DASH,
     });
     this.addChild(tapeLine);
 
-    const makeEndpoint = (accessibleName: string) => {
+    const makeEndpoint = (accessibleName: TReadOnlyProperty<string>) => {
       const endpointCircle = new Circle(ENDPOINT_RADIUS, {
-        fill: TAPE_COLOR,
-        stroke: "rgba(0, 0, 0, 0.65)",
-        lineWidth: 1.5,
+        fill: TrackLabColors.measuringTapeColorProperty,
+        stroke: TrackLabColors.overlayHandleOutlineProperty,
+        lineWidth: ENDPOINT_OUTLINE_WIDTH,
       });
-      const endpointDot = new Circle(2.5, { fill: "rgba(0, 0, 0, 0.65)" });
+      const endpointDot = new Circle(ENDPOINT_DOT_RADIUS, {
+        fill: TrackLabColors.overlayHandleOutlineProperty,
+      });
       const endpointNode = new Node({
         children: [endpointCircle, endpointDot],
         cursor: "grab",
@@ -73,31 +82,31 @@ export class MeasuringTapeNode extends Node {
         focusable: true,
         accessibleName,
       });
-      const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + TOUCH_DILATION);
+      const endpointTouchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + OVERLAY_TOUCH_DILATION);
       endpointNode.mouseArea = endpointTouchArea;
       endpointNode.touchArea = endpointTouchArea;
       return endpointNode;
     };
 
     // ── Symmetric endpoints ────────────────────────────────────────────────
-    const endpoint1Node = makeEndpoint("Measuring tape base");
-    const endpoint2Node = makeEndpoint("Measuring tape tip");
+    const endpoint1Node = makeEndpoint(a11yStrings.measuringTapeBaseStringProperty);
+    const endpoint2Node = makeEndpoint(a11yStrings.measuringTapeTipStringProperty);
     this.addChild(endpoint1Node);
     this.addChild(endpoint2Node);
 
     // ── Distance label ────────────────────────────────────────────────────
-    const distanceText = new Text("---", {
+    const distanceText = new Text("", {
       font: FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
     const labelPanel = new Panel(distanceText, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
-      cornerRadius: 4,
-      xMargin: 6,
-      yMargin: 3,
+      cornerRadius: LABEL_PANEL_CORNER_RADIUS,
+      xMargin: LABEL_PANEL_X_MARGIN,
+      yMargin: LABEL_PANEL_Y_MARGIN,
     });
-    labelPanel.setScaleMagnitude(0.8);
+    labelPanel.setScaleMagnitude(LABEL_PANEL_SCALE);
     this.addChild(labelPanel);
 
     // ── Geometry + label multilinks ───────────────────────────────────────
@@ -116,7 +125,7 @@ export class MeasuringTapeNode extends Node {
       (p1, p2, mvt, unit) => {
         const m1 = mvt.inversePosition2(p1);
         const m2 = mvt.inversePosition2(p2);
-        distanceText.string = `${m1.distance(m2).toFixed(2)} ${unit}`;
+        distanceText.string = `${m1.distance(m2).toFixed(DISTANCE_DECIMAL_PLACES)} ${unit}`;
       },
     );
 
@@ -124,14 +133,14 @@ export class MeasuringTapeNode extends Node {
     endpoint1Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint1Property,
-        keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
+        keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );
     endpoint2Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint2Property,
-        keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
+        keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );
