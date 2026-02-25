@@ -72,6 +72,39 @@ function serveVideos() {
 }
 
 /**
+ * Vite plugin that serves the pre-built OpenCV.js directly from node_modules
+ * during development and copies it to dist/ on build.
+ *
+ * This avoids running the 11 MB Emscripten output through Rollup, which
+ * externalises Node-only imports (fs, path, crypto) and produces a
+ * content-hashed chunk that breaks across deployments when the browser or
+ * service worker caches the old index chunk but the server has new assets.
+ */
+function serveOpenCV() {
+  const opencvSrc = path.resolve("node_modules/@techstark/opencv-js/dist/opencv.js");
+  return {
+    name: "serve-opencv",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split("?")[0] !== "/opencv.js") {
+          return next();
+        }
+        const stat = fs.statSync(opencvSrc);
+        res.writeHead(200, {
+          "Content-Type": "application/javascript",
+          "Content-Length": stat.size,
+          "Cross-Origin-Resource-Policy": "same-origin",
+        });
+        fs.createReadStream(opencvSrc).pipe(res);
+      });
+    },
+    closeBundle() {
+      fs.copyFileSync(opencvSrc, path.resolve("dist", "opencv.js"));
+    },
+  };
+}
+
+/**
  * Security headers required for:
  *  - COOP/COEP: SharedArrayBuffer (FFmpeg WASM)
  *  - CSP: restrict resource loading to same-origin + known blob/data exceptions
@@ -118,6 +151,7 @@ export default defineConfig({
   },
   plugins: [
     serveVideos(),
+    serveOpenCV(),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
@@ -153,6 +187,10 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        // opencv.js (≈11 MB) is loaded on-demand; skip precaching to speed up
+        // the initial service-worker install.  It is still cached at runtime by
+        // the CacheFirst strategy below.
+        globIgnores: ["opencv.js"],
         runtimeCaching: [
           {
             urlPattern: /\.(?:js|css)$/,

@@ -69,47 +69,76 @@ function isCvReady(v: unknown): v is Cv {
   return typeof (v as Record<string, unknown>)["Mat"] === "function";
 }
 
+/**
+ * Load OpenCV by injecting a plain `<script>` tag that points at the pre-built
+ * `opencv.js` served from the project root (copied from node_modules by the
+ * `serveOpenCV` Vite plugin).
+ *
+ * This avoids running the 11 MB Emscripten output through Rollup, which
+ * creates a content-hashed chunk that can break across deployments when the
+ * browser or service worker caches stale asset names.
+ */
 function loadCv(): Promise<Cv> {
   if (!cvPromise) {
-    cvPromise = import("@techstark/opencv-js").then(async (mod) => {
-      // The package ships no TypeScript typings so `mod` is `any`. Extract the
-      // runtime object as `unknown` and validate before use.
-      let cv: unknown = mod.default ?? mod;
-
-      // The default export may itself be a Promise (v4.12.0+).
-      if (cv instanceof Promise) {
-        cv = await cv;
+    cvPromise = new Promise<Cv>((resolve, reject) => {
+      // Already loaded by a previous call (e.g. retry after partial init).
+      // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
+      const existing: unknown = (globalThis as Record<string, unknown>)["cv"];
+      if (existing) {
+        resolveFromCv(existing, resolve, reject);
+        return;
       }
 
-      // WASM may already be ready (e.g. in test environments).
-      if (isCvReady(cv)) {
-        return cv;
-      }
-
-      // Wait for the Emscripten runtime to initialise, with a timeout so we
-      // never hang indefinitely.
-      return new Promise<Cv>((resolve, reject) => {
-        const timer = setTimeout(() => {
-          reject(new Error("OpenCV WASM initialisation timed out"));
-        }, CV_LOAD_TIMEOUT_MS);
-
-        (cv as { onRuntimeInitialized?: () => void }).onRuntimeInitialized = () => {
-          clearTimeout(timer);
-          if (isCvReady(cv)) {
-            resolve(cv);
-          } else {
-            reject(new Error("OpenCV module did not initialise correctly"));
-          }
-        };
-      });
+      const script = document.createElement("script");
+      script.src = "./opencv.js";
+      script.onerror = () => reject(new Error("Failed to load OpenCV script"));
+      script.onload = () => {
+        // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
+        const cv: unknown = (globalThis as Record<string, unknown>)["cv"];
+        if (!cv) {
+          reject(new Error("OpenCV script loaded but window.cv is not defined"));
+          return;
+        }
+        resolveFromCv(cv, resolve, reject);
+      };
+      document.head.appendChild(script);
     });
 
-    // If loading fails, clear the cached promise so the next attempt can retry.
     cvPromise.catch(() => {
       cvPromise = null;
     });
   }
   return cvPromise;
+}
+
+/**
+ * Resolve the cv object from `window.cv`, which may be a Promise (v4.12.0+),
+ * an already-initialised module, or a module still waiting for WASM init.
+ */
+function resolveFromCv(raw: unknown, resolve: (cv: Cv) => void, reject: (reason: Error) => void): void {
+  if (raw instanceof Promise) {
+    raw.then((resolved: unknown) => resolveFromCv(resolved, resolve, reject)).catch(reject);
+    return;
+  }
+
+  if (isCvReady(raw)) {
+    resolve(raw);
+    return;
+  }
+
+  // WASM not ready yet — wait for the Emscripten callback.
+  const timer = setTimeout(() => {
+    reject(new Error("OpenCV WASM initialisation timed out"));
+  }, CV_LOAD_TIMEOUT_MS);
+
+  (raw as { onRuntimeInitialized?: () => void }).onRuntimeInitialized = () => {
+    clearTimeout(timer);
+    if (isCvReady(raw)) {
+      resolve(raw);
+    } else {
+      reject(new Error("OpenCV module did not initialise correctly"));
+    }
+  };
 }
 
 export type TrackerRegion = { x: number; y: number; w: number; h: number };
