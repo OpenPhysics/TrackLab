@@ -116,6 +116,10 @@ export class DigitizingOverlayNode extends Node {
     magnifierNode.visible = false;
     magnifierNode.pickable = false;
 
+    // Track the last known cursor position so the magnifier can be redrawn
+    // when the video frame changes without mouse movement.
+    let lastLocalPt: Vector2 | null = null;
+
     /**
      * Computes the rendered video bounds within the display element,
      * accounting for letterboxing/pillarboxing when aspect ratios differ.
@@ -233,9 +237,22 @@ export class DigitizingOverlayNode extends Node {
     };
     model.videoDimensionsProperty.link(videoDimensionsListener);
 
+    const updateMagnifierAtLastPt = () => {
+      if (!(lastLocalPt && magnifierNode.visible)) {
+        return;
+      }
+      const { width: overlayW, height: overlayH } = model.videoDimensionsProperty.value;
+      const magX = Math.max(0, Math.min(lastLocalPt.x - MAG_SIZE / 2, overlayW - MAG_SIZE));
+      const magY = Math.max(0, Math.min(lastLocalPt.y - MAG_SIZE / 2, overlayH - MAG_SIZE));
+      const crosshairX = lastLocalPt.x - magX;
+      const crosshairY = lastLocalPt.y - magY;
+      updateMagnifier(lastLocalPt.x, lastLocalPt.y, crosshairX, crosshairY);
+    };
+
     digitizingOverlay.addInputListener({
       move: (event) => {
         const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
+        lastLocalPt = localPt;
         cursorNode.translation = localPt;
         cursorNode.visible = true;
 
@@ -302,7 +319,10 @@ export class DigitizingOverlayNode extends Node {
       }
     };
 
-    const currentTimeListener = () => rebuildMarks();
+    const currentTimeListener = () => {
+      rebuildMarks();
+      updateMagnifierAtLastPt();
+    };
     model.currentTimeProperty.link(currentTimeListener);
 
     const tracksListener = () => rebuildMarks();
