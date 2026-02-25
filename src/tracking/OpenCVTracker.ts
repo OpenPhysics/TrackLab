@@ -82,17 +82,19 @@ function loadCv(): Promise<Cv> {
   if (!cvPromise) {
     cvPromise = new Promise<Cv>((resolve, reject) => {
       // Already loaded by a previous call (e.g. retry after partial init).
-      const existing: unknown = (globalThis as Record<string, unknown>).cv;
+      // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
+      const existing: unknown = (globalThis as Record<string, unknown>)["cv"];
       if (existing) {
         resolveFromCv(existing, resolve, reject);
         return;
       }
 
       const script = document.createElement("script");
-      script.src = `${import.meta.env.BASE_URL}opencv.js`;
+      script.src = "./opencv.js";
       script.onerror = () => reject(new Error("Failed to load OpenCV script"));
       script.onload = () => {
-        const cv: unknown = (globalThis as Record<string, unknown>).cv;
+        // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
+        const cv: unknown = (globalThis as Record<string, unknown>)["cv"];
         if (!cv) {
           reject(new Error("OpenCV script loaded but window.cv is not defined"));
           return;
