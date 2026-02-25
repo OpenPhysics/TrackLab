@@ -4,7 +4,7 @@
  * Panel displaying an Excel-like spreadsheet of all digitized track data.
  *
  * Layout: Grid with columns:
- *   Frame | Time | x(A) | y(A) | x(B) | y(B) | ...
+ *   Frame | Time | x_A(m) | y_A(m) | x_B(m) | y_B(m) | ...
  *
  * Features:
  *   - Scrollable both horizontally and vertically using DOM-based scrolling
@@ -216,13 +216,17 @@ function buildHtmlTable(
   };
 
   /**
-   * Create a header cell with colored track symbol.
-   * Format: "A x(m)" where A is colored with the track color
+   * Create a header cell with colored track symbol as a subscript.
+   * Format: "x_A(m)" where _A is rendered as a <sub> colored with the track color.
    */
   const makeTrackHeader = (varName: string, track: Track): HTMLElement => {
     const span = document.createElement("span");
 
-    // Colored symbol first
+    // Variable name first
+    span.appendChild(document.createTextNode(varName));
+
+    // Colored subscript symbol
+    const sub = document.createElement("sub");
     const symbolSpan = document.createElement("span");
     symbolSpan.textContent = track.symbol;
     symbolSpan.style.cssText = `
@@ -230,11 +234,11 @@ function buildHtmlTable(
       font-weight: bold;
       text-shadow: 0 0 2px ${colors.symbolShadow};
     `;
-    span.appendChild(symbolSpan);
+    sub.appendChild(symbolSpan);
+    span.appendChild(sub);
 
-    // Variable name and unit
-    const varText = document.createTextNode(` ${varName}(${unit})`);
-    span.appendChild(varText);
+    // Unit
+    span.appendChild(document.createTextNode(`(${unit})`));
 
     return span;
   };
@@ -248,8 +252,8 @@ function buildHtmlTable(
     addHeaderCell(`y (${unit})`);
   } else {
     for (const track of tracks) {
-      addHeaderCell(makeTrackHeader("x", track), `${track.symbol} x (${unit})`);
-      addHeaderCell(makeTrackHeader("y", track), `${track.symbol} y (${unit})`);
+      addHeaderCell(makeTrackHeader("x", track), `x_${track.symbol} (${unit})`);
+      addHeaderCell(makeTrackHeader("y", track), `y_${track.symbol} (${unit})`);
     }
   }
 

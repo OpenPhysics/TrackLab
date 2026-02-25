@@ -187,6 +187,9 @@ const TrackLabColors = {
     new Color(51, 51, 102),
     new Color(220, 220, 235), // Much lighter for projector mode
   ),
+  // Matches scenery-phet's default ColorConstants.LIGHT_BLUE used by the
+  // play/pause and step buttons inside TimeControlNode.
+  playbackButtonBaseProperty: profileColor("playbackButtonBase", new Color(153, 206, 255), new Color(153, 206, 255)),
   buttonBaseDarkerProperty: profileColor("buttonBaseDarker", new Color(51, 51, 68), new Color(68, 68, 102)),
   buttonRecordProperty: profileColor("buttonRecord", new Color(204, 0, 0), new Color(238, 0, 0)),
   buttonStopProperty: profileColor("buttonStop", new Color(136, 0, 0), new Color(170, 0, 0)),
@@ -280,8 +283,8 @@ const TrackLabColors = {
   ),
 
   // Track list panel
-  trashIconProperty: profileColor("trashIcon", new Color(255, 102, 102), new Color(220, 80, 80)),
-  trashButtonBaseProperty: profileColor("trashButtonBase", new Color(60, 20, 20, 0.5), new Color(80, 30, 30, 0.6)),
+  trashIconProperty: profileColor("trashIcon", new Color(255, 200, 200), new Color(255, 255, 255)),
+  trashButtonBaseProperty: profileColor("trashButtonBase", new Color(160, 40, 40), new Color(190, 50, 50)),
   trackSymbolTextProperty: profileColor("trackSymbolText", WHITE, WHITE),
 
   // Preferences dialog

@@ -19,7 +19,7 @@ const INNER_R = 2;
 const CUR_LW = 1.5;
 const CUR_SHADOW_LW = 4; // wider shadow stroke for contrast on all backgrounds
 
-const MAG_SIZE = 100;
+const MAG_SIZE = 175;
 const MAG_ZOOM = 4;
 const MAG_BORDER_WIDTH = 2;
 const MAG_CROSSHAIR_RADIUS = 8;

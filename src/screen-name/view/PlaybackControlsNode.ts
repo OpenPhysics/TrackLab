@@ -284,9 +284,15 @@ export class PlaybackControlsNode extends HBox {
     const rewindButton = createTrackLabButton(
       new Text("\u23EE", {
         font: new PhetFont(REWIND_BUTTON_ICON_SIZE),
-        fill: TrackLabColors.textOnDarkProperty,
+        fill: "black",
       }),
       {
+        baseColor: TrackLabColors.playbackButtonBaseProperty,
+        // Dim the whole button (background + icon) when disabled so the light-blue
+        // base colour doesn't stay fully saturated and look "washed out".
+        enabledAppearanceStrategy: (enabled: boolean, button: import("scenerystack/scenery").Node) => {
+          button.opacity = enabled ? 1 : 0.45;
+        },
         enabledProperty: model.videoLoadedProperty,
         accessibleName: a11yStrings.rewindToStartStringProperty,
         listener: () => {
