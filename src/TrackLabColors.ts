@@ -254,6 +254,31 @@ const TrackLabColors = {
     new Color(0, 150, 180),
   ),
 
+  // Measuring tape overlay
+  measuringTapeColorProperty: profileColor("measuringTapeColor", new Color(240, 185, 55), new Color(220, 170, 40)),
+  measuringTapeShadowProperty: profileColor("measuringTapeShadow", new Color(0, 0, 0, 0.45), new Color(0, 0, 0, 0.45)),
+
+  // Angle tool overlay
+  angleToolColorProperty: profileColor("angleToolColor", new Color(170, 100, 255), new Color(150, 80, 230)),
+  angleToolShadowProperty: profileColor("angleToolShadow", new Color(0, 0, 0, 0.45), new Color(0, 0, 0, 0.45)),
+
+  // Shared overlay handle outline (used by measuring tape and angle tool endpoints)
+  overlayHandleOutlineProperty: profileColor(
+    "overlayHandleOutline",
+    new Color(0, 0, 0, 0.65),
+    new Color(0, 0, 0, 0.65),
+  ),
+
+  // Shared overlay icon shadow (used by measurement tool panel icons)
+  iconShadowProperty: profileColor("iconShadow", new Color(0, 0, 0, 0.5), new Color(0, 0, 0, 0.5)),
+
+  // Calibration tool warning (endpoints too close)
+  calibrationWarningColorProperty: profileColor(
+    "calibrationWarningColor",
+    new Color(255, 60, 60),
+    new Color(255, 60, 60),
+  ),
+
   // Track list panel
   trashIconProperty: profileColor("trashIcon", new Color(255, 102, 102), new Color(220, 80, 80)),
   trashButtonBaseProperty: profileColor("trashButtonBase", new Color(60, 20, 20, 0.5), new Color(80, 30, 30, 0.6)),

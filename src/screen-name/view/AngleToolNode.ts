@@ -16,12 +16,20 @@ import { Circle, Line, Node, Path, RichDragListener, Text } from "scenerystack/s
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
+import {
+  LABEL_PANEL_CORNER_RADIUS,
+  LABEL_PANEL_SCALE,
+  LABEL_PANEL_X_MARGIN,
+  LABEL_PANEL_Y_MARGIN,
+  OVERLAY_DRAG_SPEED,
+  OVERLAY_SHIFT_DRAG_SPEED,
+  OVERLAY_TOUCH_DILATION,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
 // ── Visual constants ──────────────────────────────────────────────────────────
-const ARM_COLOR = "rgb(170, 100, 255)";
-const ARM_SHADOW_COLOR = "rgba(0, 0, 0, 0.45)";
 const ARM_LINE_WIDTH = 2.5;
 const ARM_SHADOW_WIDTH = 5;
 const ARM_DASH: number[] = [8, 4];
@@ -31,17 +39,16 @@ const ARC_LINE_WIDTH = 2;
 
 const VERTEX_RADIUS = 7;
 const ENDPOINT_RADIUS = 5;
-const TOUCH_DILATION = 12;
+const VERTEX_OUTLINE_WIDTH = 1.5;
+const ARM_ENDPOINT_LINE_WIDTH = 2;
 
 const FONT = new PhetFont({ size: 12, weight: "bold" });
 const LABEL_OFFSET = ARC_RADIUS + 20; // distance from vertex to label centre
 
-const DRAG_SPEED = 200;
-const SHIFT_DRAG_SPEED = 40;
-
 // Minimum arm length below which the arc and label are hidden to avoid
 // degenerate geometry (zero-length arm → atan2 is undefined).
 const MIN_ARM_LENGTH = 5;
+const ANGLE_DECIMAL_PLACES = 1;
 
 /**
  * Three-handle angle tool. Drag the vertex to reposition the whole tool's
@@ -53,13 +60,15 @@ export class AngleToolNode extends Node {
   public constructor(visibleProperty: TReadOnlyProperty<boolean>, model: SimModel) {
     super();
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     // ── Arm shadow lines ──────────────────────────────────────────────────
     const shadow1 = new Line(0, 0, 0, 0, {
-      stroke: ARM_SHADOW_COLOR,
+      stroke: TrackLabColors.angleToolShadowProperty,
       lineWidth: ARM_SHADOW_WIDTH,
     });
     const shadow2 = new Line(0, 0, 0, 0, {
-      stroke: ARM_SHADOW_COLOR,
+      stroke: TrackLabColors.angleToolShadowProperty,
       lineWidth: ARM_SHADOW_WIDTH,
     });
     this.addChild(shadow1);
@@ -67,12 +76,12 @@ export class AngleToolNode extends Node {
 
     // ── Arm lines ─────────────────────────────────────────────────────────
     const arm1Line = new Line(0, 0, 0, 0, {
-      stroke: ARM_COLOR,
+      stroke: TrackLabColors.angleToolColorProperty,
       lineWidth: ARM_LINE_WIDTH,
       lineDash: ARM_DASH,
     });
     const arm2Line = new Line(0, 0, 0, 0, {
-      stroke: ARM_COLOR,
+      stroke: TrackLabColors.angleToolColorProperty,
       lineWidth: ARM_LINE_WIDTH,
       lineDash: ARM_DASH,
     });
@@ -81,60 +90,60 @@ export class AngleToolNode extends Node {
 
     // ── Arc at vertex ─────────────────────────────────────────────────────
     const arcPath = new Path(null, {
-      stroke: ARM_COLOR,
+      stroke: TrackLabColors.angleToolColorProperty,
       lineWidth: ARC_LINE_WIDTH,
     });
     this.addChild(arcPath);
 
     // ── Vertex handle ─────────────────────────────────────────────────────
     const vertexNode = new Circle(VERTEX_RADIUS, {
-      fill: ARM_COLOR,
-      stroke: "rgba(0, 0, 0, 0.65)",
-      lineWidth: 1.5,
+      fill: TrackLabColors.angleToolColorProperty,
+      stroke: TrackLabColors.overlayHandleOutlineProperty,
+      lineWidth: VERTEX_OUTLINE_WIDTH,
       cursor: "grab",
       tagName: "div",
       focusable: true,
-      accessibleName: "Angle tool vertex",
+      accessibleName: a11yStrings.angleToolVertexStringProperty,
     });
-    const vertexTouchArea = Shape.circle(0, 0, VERTEX_RADIUS + TOUCH_DILATION);
+    const vertexTouchArea = Shape.circle(0, 0, VERTEX_RADIUS + OVERLAY_TOUCH_DILATION);
     vertexNode.mouseArea = vertexTouchArea;
     vertexNode.touchArea = vertexTouchArea;
     this.addChild(vertexNode);
 
     // ── Arm endpoint handles ──────────────────────────────────────────────
-    const makeArmEndpoint = (accessibleName: string) => {
+    const makeArmEndpoint = (accessibleName: TReadOnlyProperty<string>) => {
       const node = new Circle(ENDPOINT_RADIUS, {
         fill: "transparent",
-        stroke: ARM_COLOR,
-        lineWidth: 2,
+        stroke: TrackLabColors.angleToolColorProperty,
+        lineWidth: ARM_ENDPOINT_LINE_WIDTH,
         cursor: "crosshair",
         tagName: "div",
         focusable: true,
         accessibleName,
       });
-      const touchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + TOUCH_DILATION);
+      const touchArea = Shape.circle(0, 0, ENDPOINT_RADIUS + OVERLAY_TOUCH_DILATION);
       node.mouseArea = touchArea;
       node.touchArea = touchArea;
       return node;
     };
-    const arm1Node = makeArmEndpoint("Angle arm 1");
-    const arm2Node = makeArmEndpoint("Angle arm 2");
+    const arm1Node = makeArmEndpoint(a11yStrings.angleArm1StringProperty);
+    const arm2Node = makeArmEndpoint(a11yStrings.angleArm2StringProperty);
     this.addChild(arm1Node);
     this.addChild(arm2Node);
 
     // ── Angle label ───────────────────────────────────────────────────────
-    const angleText = new Text("---", {
+    const angleText = new Text("", {
       font: FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
     const labelPanel = new Panel(angleText, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
-      cornerRadius: 4,
-      xMargin: 6,
-      yMargin: 3,
+      cornerRadius: LABEL_PANEL_CORNER_RADIUS,
+      xMargin: LABEL_PANEL_X_MARGIN,
+      yMargin: LABEL_PANEL_Y_MARGIN,
     });
-    labelPanel.setScaleMagnitude(0.8);
+    labelPanel.setScaleMagnitude(LABEL_PANEL_SCALE);
     this.addChild(labelPanel);
 
     // ── Geometry multilink ────────────────────────────────────────────────
@@ -183,7 +192,7 @@ export class AngleToolNode extends Node {
 
         // Angle value
         const angleDeg = (Math.abs(diff) * 180) / Math.PI;
-        angleText.string = `${angleDeg.toFixed(1)}\u00b0`;
+        angleText.string = `${angleDeg.toFixed(ANGLE_DECIMAL_PLACES)}\u00b0`;
 
         // Label along the bisector, outside the arc
         const bisectorAngle = a1 + diff / 2;
@@ -196,21 +205,21 @@ export class AngleToolNode extends Node {
     vertexNode.addInputListener(
       new RichDragListener({
         positionProperty: model.angleVertexProperty,
-        keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
+        keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );
     arm1Node.addInputListener(
       new RichDragListener({
         positionProperty: model.angleArm1Property,
-        keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
+        keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );
     arm2Node.addInputListener(
       new RichDragListener({
         positionProperty: model.angleArm2Property,
-        keyboardDragListenerOptions: { dragSpeed: DRAG_SPEED, shiftDragSpeed: SHIFT_DRAG_SPEED },
+        keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
     );

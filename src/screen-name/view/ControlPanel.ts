@@ -8,12 +8,18 @@
 import { Circle, Line, Node, VBox } from "scenerystack/scenery";
 import { ArrowNode } from "scenerystack/scenery-phet";
 import { Checkbox, Panel } from "scenerystack/sun";
+import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import {
+  CONTROL_ICON_SIZE,
+  CONTROL_PANEL_ROWS_SPACING,
+  CONTROL_PANEL_X_MARGIN,
+  CONTROL_PANEL_Y_MARGIN,
+  PANEL_CORNER_RADIUS,
+} from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
-const ICON_SIZE = 20; // bounding box each icon targets
 const ICON_ARROW_HEAD_SIZE = 5; // headWidth and headHeight for icon arrows
 const ICON_ARROW_TAIL_WIDTH = 1.5;
 const ICON_LINE_WIDTH_THICK = 1.5;
@@ -22,36 +28,55 @@ const ICON_LINE_WIDTH_MAGNIFIER = 2; // handle line in magnifier icon
 const ICON_DOT_RADIUS = 3; // calibration endpoint dots
 const ICON_CENTER_DOT_RADIUS = 2; // centre dot in tracking icon
 const ICON_LINE_DASH: number[] = [3, 2];
-const PANEL_ROWS_SPACING = 12;
-const PANEL_X_MARGIN = 12;
-const PANEL_Y_MARGIN = 12;
+
+// ── Icon layout fractions ─────────────────────────────────────────────────────
+const ICON_ORIGIN_FRACTION = 0.7; // where axes originate (fraction of CONTROL_ICON_SIZE)
+const ICON_X_ARROW_END_FRACTION = 0.85;
+const ICON_Y_ARROW_END_FRACTION = 0.05;
+const ICON_HALF_FRACTION = 0.4;
+const ICON_CENTER_FRACTION = 0.5;
+const ICON_MAGNIFIER_RADIUS_FRACTION = 0.32;
+const ICON_TRACKING_RADIUS_FRACTION = 0.35;
+const ICON_TRACKING_GAP_FRACTION = 0.15;
 
 // ── Icons ─────────────────────────────────────────────────────────────────
 
 /** Two small XY arrows. */
 function axesIcon(): Node {
-  const xArrow = new ArrowNode(0, ICON_SIZE * 0.7, ICON_SIZE * 0.85, ICON_SIZE * 0.7, {
-    fill: TrackLabColors.axisXColorProperty,
-    stroke: null,
-    headWidth: ICON_ARROW_HEAD_SIZE,
-    headHeight: ICON_ARROW_HEAD_SIZE,
-    tailWidth: ICON_ARROW_TAIL_WIDTH,
-  });
-  const yArrow = new ArrowNode(0, ICON_SIZE * 0.7, 0, ICON_SIZE * 0.05, {
-    fill: TrackLabColors.axisYColorProperty,
-    stroke: null,
-    headWidth: ICON_ARROW_HEAD_SIZE,
-    headHeight: ICON_ARROW_HEAD_SIZE,
-    tailWidth: ICON_ARROW_TAIL_WIDTH,
-  });
+  const xArrow = new ArrowNode(
+    0,
+    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
+    CONTROL_ICON_SIZE * ICON_X_ARROW_END_FRACTION,
+    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
+    {
+      fill: TrackLabColors.axisXColorProperty,
+      stroke: null,
+      headWidth: ICON_ARROW_HEAD_SIZE,
+      headHeight: ICON_ARROW_HEAD_SIZE,
+      tailWidth: ICON_ARROW_TAIL_WIDTH,
+    },
+  );
+  const yArrow = new ArrowNode(
+    0,
+    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
+    0,
+    CONTROL_ICON_SIZE * ICON_Y_ARROW_END_FRACTION,
+    {
+      fill: TrackLabColors.axisYColorProperty,
+      stroke: null,
+      headWidth: ICON_ARROW_HEAD_SIZE,
+      headHeight: ICON_ARROW_HEAD_SIZE,
+      tailWidth: ICON_ARROW_TAIL_WIDTH,
+    },
+  );
   return new Node({ children: [xArrow, yArrow] });
 }
 
 /** Two endpoint dots joined by a dashed line. */
 function calibrationIcon(): Node {
-  const cx = ICON_SIZE * 0.5;
-  const cy = ICON_SIZE * 0.5;
-  const half = ICON_SIZE * 0.4;
+  const cx = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
+  const cy = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
+  const half = CONTROL_ICON_SIZE * ICON_HALF_FRACTION;
   const calColor = TrackLabColors.calibrationFillProperty;
   return new Node({
     children: [
@@ -68,7 +93,7 @@ function calibrationIcon(): Node {
 
 /** Circle with a diagonal handle — magnifying glass silhouette. */
 function magnifyIcon(): Node {
-  const r = ICON_SIZE * 0.32;
+  const r = CONTROL_ICON_SIZE * ICON_MAGNIFIER_RADIUS_FRACTION;
   const cx = r + 1;
   const cy = r + 1;
   const gray = TrackLabColors.iconGrayProperty;
@@ -81,20 +106,26 @@ function magnifyIcon(): Node {
         x: cx,
         y: cy,
       }),
-      new Line(cx + r * 0.7, cy + r * 0.7, ICON_SIZE - 1, ICON_SIZE - 1, {
-        stroke: gray,
-        lineWidth: ICON_LINE_WIDTH_MAGNIFIER,
-      }),
+      new Line(
+        cx + r * ICON_ORIGIN_FRACTION,
+        cy + r * ICON_ORIGIN_FRACTION,
+        CONTROL_ICON_SIZE - 1,
+        CONTROL_ICON_SIZE - 1,
+        {
+          stroke: gray,
+          lineWidth: ICON_LINE_WIDTH_MAGNIFIER,
+        },
+      ),
     ],
   });
 }
 
 /** Crosshair with a small centre dot — tracking target. */
 function trackingIcon(): Node {
-  const cx = ICON_SIZE * 0.5;
-  const cy = ICON_SIZE * 0.5;
-  const r = ICON_SIZE * 0.35;
-  const gap = ICON_SIZE * 0.15;
+  const cx = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
+  const cy = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
+  const r = CONTROL_ICON_SIZE * ICON_TRACKING_RADIUS_FRACTION;
+  const gap = CONTROL_ICON_SIZE * ICON_TRACKING_GAP_FRACTION;
   const gray = TrackLabColors.iconGrayProperty;
   return new Node({
     children: [
@@ -128,10 +159,11 @@ function trackingIcon(): Node {
 
 // ── Helper ────────────────────────────────────────────────────────────────
 
-function makeRow(icon: Node, property: SimModel["axesVisibleProperty"]): Checkbox {
+function makeRow(icon: Node, property: SimModel["axesVisibleProperty"], accessibleName: string): Checkbox {
   return new Checkbox(property, icon, {
     checkboxColor: TrackLabColors.checkboxColorProperty,
     checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
+    accessibleName,
   });
 }
 
@@ -148,19 +180,25 @@ export class ControlPanel extends Panel {
    * @param trackLabPreferences - Determines whether the auto-tracking checkbox is shown.
    */
   public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel) {
-    const autoTrackingCheckbox = makeRow(trackingIcon(), model.autoTrackingProperty);
+    const a11yStrings = StringManager.getInstance().getA11y();
+
+    const autoTrackingCheckbox = makeRow(
+      trackingIcon(),
+      model.autoTrackingProperty,
+      a11yStrings.toggleAutoTrackingStringProperty.value,
+    );
     // The auto-tracking checkbox is only visible if the preference allows it.
     // When the preference is disabled, the checkbox is completely hidden from the panel.
     autoTrackingCheckbox.visibleProperty = trackLabPreferences.enableAutoTrackingProperty;
 
     const rows = new VBox({
       children: [
-        makeRow(axesIcon(), model.axesVisibleProperty),
-        makeRow(calibrationIcon(), model.calibrationVisibleProperty),
-        makeRow(magnifyIcon(), model.magnifyVideoProperty),
+        makeRow(axesIcon(), model.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
+        makeRow(calibrationIcon(), model.calibrationVisibleProperty, a11yStrings.toggleCalibrationStringProperty.value),
+        makeRow(magnifyIcon(), model.magnifyVideoProperty, a11yStrings.toggleMagnifierStringProperty.value),
         autoTrackingCheckbox,
       ],
-      spacing: PANEL_ROWS_SPACING,
+      spacing: CONTROL_PANEL_ROWS_SPACING,
       align: "left",
     });
 
@@ -168,8 +206,8 @@ export class ControlPanel extends Panel {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
       cornerRadius: PANEL_CORNER_RADIUS,
-      xMargin: PANEL_X_MARGIN,
-      yMargin: PANEL_Y_MARGIN,
+      xMargin: CONTROL_PANEL_X_MARGIN,
+      yMargin: CONTROL_PANEL_Y_MARGIN,
     });
   }
 }

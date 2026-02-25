@@ -58,6 +58,7 @@ import { Shape } from "scenerystack/kite";
 import { Orientation } from "scenerystack/phet-core";
 import { FireListener, HBox, Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
+import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import trackLab from "../../TrackLabNamespace.js";
 import GraphControlsPanel from "./GraphControlsPanel.js";
@@ -326,8 +327,10 @@ export default class ConfigurableGraph extends Node {
     const buttonPadding = BUTTON_PADDING;
     const buttonSpacing = BUTTON_SPACING;
 
+    const a11yStrings = StringManager.getInstance().getA11y();
+
     // Helper function to create a button
-    const createButton = (label: string, onClick: () => void): Node => {
+    const createButton = (label: string, onClick: () => void, accessibleName?: TReadOnlyProperty<string>): Node => {
       const buttonText = new Text(label, {
         font: BUTTON_FONT,
         fill: TrackLabColors.controlPanelStrokeProperty,
@@ -341,6 +344,8 @@ export default class ConfigurableGraph extends Node {
 
       const button = new Node({
         children: [buttonBackground, buttonText],
+        tagName: "button",
+        ...(accessibleName && { accessibleName }),
       });
 
       // Center the text in the button
@@ -367,37 +372,65 @@ export default class ConfigurableGraph extends Node {
     };
 
     // Create rescale button
-    const rescaleButton = createButton("↻", () => {
-      // Reset manual zoom flag and rescale to fit data
-      this.dataManager.setManuallyZoomed(false);
-      this.dataManager.updateAxisRanges();
-    });
+    const rescaleButton = createButton(
+      "↻",
+      () => {
+        // Reset manual zoom flag and rescale to fit data
+        this.dataManager.setManuallyZoomed(false);
+        this.dataManager.updateAxisRanges();
+      },
+      a11yStrings.graphRescaleStringProperty,
+    );
 
-    // Create zoom buttons (will be wired up after interactionHandler is created)
-    const zoomInButton = createButton("+", () => {
-      this.interactionHandler.zoomIn();
-    });
+    // Create zoom buttons
+    const zoomInButton = createButton(
+      "+",
+      () => {
+        this.interactionHandler.zoomIn();
+      },
+      a11yStrings.graphZoomInStringProperty,
+    );
 
-    const zoomOutButton = createButton("−", () => {
-      this.interactionHandler.zoomOut();
-    });
+    const zoomOutButton = createButton(
+      "−",
+      () => {
+        this.interactionHandler.zoomOut();
+      },
+      a11yStrings.graphZoomOutStringProperty,
+    );
 
-    // Create pan buttons (will be wired up after interactionHandler is created)
-    const panLeftButton = createButton("←", () => {
-      this.interactionHandler.pan("left");
-    });
+    // Create pan buttons
+    const panLeftButton = createButton(
+      "←",
+      () => {
+        this.interactionHandler.pan("left");
+      },
+      a11yStrings.graphPanLeftStringProperty,
+    );
 
-    const panRightButton = createButton("→", () => {
-      this.interactionHandler.pan("right");
-    });
+    const panRightButton = createButton(
+      "→",
+      () => {
+        this.interactionHandler.pan("right");
+      },
+      a11yStrings.graphPanRightStringProperty,
+    );
 
-    const panUpButton = createButton("↑", () => {
-      this.interactionHandler.pan("up");
-    });
+    const panUpButton = createButton(
+      "↑",
+      () => {
+        this.interactionHandler.pan("up");
+      },
+      a11yStrings.graphPanUpStringProperty,
+    );
 
-    const panDownButton = createButton("↓", () => {
-      this.interactionHandler.pan("down");
-    });
+    const panDownButton = createButton(
+      "↓",
+      () => {
+        this.interactionHandler.pan("down");
+      },
+      a11yStrings.graphPanDownStringProperty,
+    );
 
     // Create HBox to hold all buttons
     const controlButtonsPanel = new HBox({
