@@ -7,7 +7,7 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
-import { DragListener } from "scenerystack/scenery";
+import { DragListener, Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
@@ -197,6 +197,35 @@ export class SimScreenView extends ScreenView {
       kinematicsGraph.bottom = resetAllButton.top - KINEMATICS_GRAPH_BOTTOM_MARGIN;
       playbackControlsNode.centerY = resetAllButton.centerY;
     });
+
+    // ── PDOM order for keyboard tab navigation ────────────────────────────
+    // The visual z-order (addChild sequence) doesn't match the logical tab
+    // flow. ScreenView forbids setting pdomOrder on itself, so we add a
+    // lightweight wrapper Node whose pdomOrder "borrows" every interactive
+    // node and presents them in a sensible sequence:
+    //   left sidebar → main video area → overlays (workflow order)
+    //   → analysis panels → utility buttons → modals
+    this.addChild(
+      new Node({
+        pdomOrder: [
+          controlPanel,
+          trackListPanel,
+          this.videoPlayerNode,
+          playbackControlsNode,
+          coordinateSystemNode,
+          calibrationToolNode,
+          measuringTapeNode,
+          angleToolNode,
+          dataTableNode,
+          kinematicsGraph,
+          measurementToolsPanel,
+          infoButton,
+          resetAllButton,
+          infoDialogNode,
+          webcamPanel,
+        ],
+      }),
+    );
 
     // ── Data table drag ───────────────────────────────────────────────────
     // Lets the user freely reposition the data table panel by dragging it.

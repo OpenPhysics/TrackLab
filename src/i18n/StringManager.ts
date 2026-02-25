@@ -513,7 +513,6 @@ export class StringManager {
     pendulumStringProperty: ReadOnlyProperty<string>;
     pendulumDragStringProperty: ReadOnlyProperty<string>;
     pucksCollideStringProperty: ReadOnlyProperty<string>;
-    springWarsStringProperty: ReadOnlyProperty<string>;
     collisionOneStringProperty: ReadOnlyProperty<string>;
     collisionTwoStringProperty: ReadOnlyProperty<string>;
     oscillatingCarStringProperty: ReadOnlyProperty<string>;
@@ -528,7 +527,6 @@ export class StringManager {
       pendulumStringProperty: this.stringProperties.videoFiles.pendulumStringProperty,
       pendulumDragStringProperty: this.stringProperties.videoFiles.pendulumDragStringProperty,
       pucksCollideStringProperty: this.stringProperties.videoFiles.pucksCollideStringProperty,
-      springWarsStringProperty: this.stringProperties.videoFiles.springWarsStringProperty,
       collisionOneStringProperty: this.stringProperties.videoFiles.collisionOneStringProperty,
       collisionTwoStringProperty: this.stringProperties.videoFiles.collisionTwoStringProperty,
       oscillatingCarStringProperty: this.stringProperties.videoFiles.oscillatingCarStringProperty,

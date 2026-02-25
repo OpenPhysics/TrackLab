@@ -1,69 +1,52 @@
 /**
- * Keyboard shortcuts help content for TrackLab simulations.
- * Displays available keyboard shortcuts in a two-column layout.
+ * KeyboardShortcutsNode.ts
+ *
+ * Keyboard help content for TrackLab, displayed inside the keyboard shortcuts dialog.
+ * Uses SceneryStack's pre-built help sections so that every row is backed by the
+ * actual HotkeyData / interaction model of the underlying component — not hand-written
+ * key names that could drift from the real bindings.
+ *
+ * Left column
+ *  • TimeControlsKeyboardHelpSection  — Space to play/pause (PlayControlButton hotkey)
+ *  • SliderControlsKeyboardHelpSection — Left/Right arrows on the scrubber (HSlider)
+ *
+ * Right column
+ *  • MoveDraggableItemsKeyboardHelpSection — Arrow keys on draggable overlays
+ *                                            (coordinate system, calibration, tape, angle)
+ *  • BasicActionsKeyboardHelpSection       — Tab, press buttons, toggle checkboxes,
+ *                                            Reset All, Escape
  */
 
 import {
-  KeyboardHelpSection,
-  KeyboardHelpSectionRow,
-  TextKeyNode,
+  ArrowKeyIconDisplay,
+  BasicActionsKeyboardHelpSection,
+  MoveDraggableItemsKeyboardHelpSection,
+  SliderControlsKeyboardHelpSection,
+  TimeControlsKeyboardHelpSection,
   TwoColumnKeyboardHelpContent,
 } from "scenerystack/scenery-phet";
-import { StringManager } from "../../i18n/StringManager.js";
 import trackLab from "../../TrackLabNamespace.js";
 
 export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
   public constructor() {
-    const stringManager = StringManager.getInstance();
-    const keyboardShortcutsStrings = stringManager.getKeyboardShortcutsStrings();
-
-    // Create sections for simulation controls
-    const simulationControlsSection = new KeyboardHelpSection(
-      keyboardShortcutsStrings.simulationControlsStringProperty,
+    super(
       [
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.playPauseSimulationStringProperty,
-          TextKeyNode.space(),
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.resetSimulationStringProperty,
-          new TextKeyNode("R"),
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.stepBackwardStringProperty,
-          new TextKeyNode("\u2190"), // Left arrow
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.stepForwardStringProperty,
-          new TextKeyNode("\u2192"), // Right arrow
-        ),
-        KeyboardHelpSectionRow.labelWithIcon(
-          keyboardShortcutsStrings.rewindToStartStringProperty,
-          new TextKeyNode("Home"),
-        ),
+        new TimeControlsKeyboardHelpSection(),
+        // Scrubber is a horizontal HSlider — only left/right arrows apply.
+        new SliderControlsKeyboardHelpSection({
+          arrowKeyIconDisplay: ArrowKeyIconDisplay.LEFT_RIGHT,
+        }),
+      ],
+      [
+        // Coordinate system, calibration tool, measuring tape, angle tool are all
+        // draggable via RichDragListener (arrow keys + Shift for smaller steps).
+        new MoveDraggableItemsKeyboardHelpSection(),
+        // Covers Tab/Shift-Tab navigation, Space/Enter to press buttons,
+        // Space to toggle checkboxes, Reset All hotkey, and Escape.
+        new BasicActionsKeyboardHelpSection({ withCheckboxContent: true }),
       ],
     );
-
-    // Create sections for graph interactions
-    const graphInteractionsSection = new KeyboardHelpSection(keyboardShortcutsStrings.graphInteractionsStringProperty, [
-      KeyboardHelpSectionRow.labelWithIcon(
-        keyboardShortcutsStrings.resetZoomStringProperty,
-        new TextKeyNode("Double-click"),
-      ),
-      KeyboardHelpSectionRow.labelWithIcon(
-        keyboardShortcutsStrings.zoomInOutStringProperty,
-        new TextKeyNode("Mouse wheel"),
-      ),
-      KeyboardHelpSectionRow.labelWithIcon(keyboardShortcutsStrings.panViewStringProperty, new TextKeyNode("Drag")),
-    ]);
-
-    // Left column has simulation controls, right column has graph interactions
-    super([simulationControlsSection], [graphInteractionsSection], {
-      columnSpacing: 20,
-      sectionSpacing: 15,
-    });
   }
 }
 
-// Register with namespace for debugging accessibility
 trackLab.register("KeyboardShortcutsNode", KeyboardShortcutsNode);

@@ -33,7 +33,6 @@ The following physics scenarios are included:
 | `Pendulum.mp4` | Simple pendulum |
 | `pendulum_drag.mp4` | Pendulum with drag |
 | `PucksCollide.mp4` | Air puck collision |
-| `spring_wars.mp4` | Spring force interactions |
 
 ## Tech Stack
 

@@ -106,12 +106,6 @@ export class VideoSourceControlNode extends HBox {
         tandemName: "pucksCollideItem",
       },
       {
-        labelProperty: videoFileStrings.springWarsStringProperty,
-        filename: "springWars.mp4",
-        fps: DEFAULT_FRAME_RATE,
-        tandemName: "springWarsItem",
-      },
-      {
         labelProperty: videoFileStrings.collisionOneStringProperty,
         filename: "collisionOne.webm",
         fps: DEFAULT_FRAME_RATE,

@@ -7,7 +7,7 @@
 
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
 import { Dimension2, Range } from "scenerystack/dot";
-import { HBox, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { HBox, HStrut, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { HSlider } from "scenerystack/sun";
 
@@ -245,39 +245,21 @@ export class PlaybackControlsNode extends HBox {
       font: LABEL_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
-    // Width enforcer to prevent layout shift when text changes
-    const totalTimeStrut = new Rectangle(0, 0, INFO_DISPLAY_WIDTH, 1, {
-      fill: null,
-      stroke: null,
-      pickable: false,
-    });
-    const totalTimeLabel = new HBox({
-      children: [totalTimeStrut, totalTimeText],
-      spacing: 0,
-      align: "center",
-    });
+    // Node([HStrut, text]): Scenery unions children bounds, so the container
+    // width = max(INFO_DISPLAY_WIDTH, text.width) — always INFO_DISPLAY_WIDTH
+    // as long as the text fits, preventing layout shifts as the text changes.
+    const totalTimeLabel = new Node({ children: [new HStrut(INFO_DISPLAY_WIDTH), totalTimeText] });
 
     const frameCountText = new Text(frameCountTextProperty, {
       font: LABEL_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
-    // Width enforcer to prevent layout shift when text changes
-    const frameCountStrut = new Rectangle(0, 0, INFO_DISPLAY_WIDTH, 1, {
-      fill: null,
-      stroke: null,
-      pickable: false,
-    });
-    const frameCountLabel = new HBox({
-      children: [frameCountStrut, frameCountText],
-      spacing: 0,
-      align: "center",
-    });
+    const frameCountLabel = new Node({ children: [new HStrut(INFO_DISPLAY_WIDTH), frameCountText] });
 
     const infoDisplay = new VBox({
       children: [totalTimeLabel, frameCountLabel],
       spacing: INFO_DISPLAY_SPACING,
       align: "left",
-      preferredWidth: INFO_DISPLAY_WIDTH,
     });
 
     // ── Rewind-to-zero button ──────────────────────────────────────────────
