@@ -156,6 +156,7 @@ function buildHtmlTable(
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
     overflow: auto;
+    width: max-content;
     max-width: ${MAX_TABLE_WIDTH}px;
     min-height: ${MIN_TABLE_HEIGHT}px;
     max-height: ${MAX_TABLE_HEIGHT}px;
@@ -401,6 +402,13 @@ export class DataTableNode extends Panel {
     const tableWrapper = buildHtmlTable([], "m", getTableColors(), getLabels(), getA11yLabels());
     const tableDomNode = new DOM(tableWrapper, { allowInput: true });
 
+    // Notify Scenery whenever the wrapper's layout dimensions change so the
+    // Panel reflows to match the growing/shrinking table content.
+    const resizeObserver = new ResizeObserver(() => {
+      tableDomNode.invalidateDOM();
+    });
+    resizeObserver.observe(tableWrapper);
+
     // ── Export button ────────────────────────────────────────────────────────
     const exportButton = createTrackLabButton(
       new HBox({
@@ -610,6 +618,7 @@ export class DataTableNode extends Panel {
 
     // Store cleanup function
     this.disposeDataTable = () => {
+      resizeObserver.disconnect();
       model.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
       TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
