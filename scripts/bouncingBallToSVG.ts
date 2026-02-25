@@ -2,7 +2,7 @@
  * bouncingBallToSVG.ts
  *
  * Generates an SVG of a bouncing ball for use as an icon.
- * 
+ *
  * The bouncing ball is a simple parabolic motion with a restitution coefficient.
  * The ball is drawn as a series of circles, one for each snapshot.
  * The floor is drawn as a line.
@@ -108,7 +108,7 @@ function buildSvg(snapshots: Point[]): string {
       (p) =>
         `  <circle cx="${p.x}" cy="${p.y}" r="${BALL_RADIUS}" ` +
         `fill="${BALL_FILL}" stroke="${BALL_STROKE}" stroke-width="${BALL_STROKE_WIDTH}" ` +
-        `opacity="${BALL_OPACITY}"/>`
+        `opacity="${BALL_OPACITY}"/>`,
     )
     .join("\n");
 
