@@ -1,123 +1,26 @@
 /**
- * Typed façade over the OpenCV.js WASM module.
- * Only covers the API surface used by OpenCVTracker so that version-bump
- * breakage is caught by the TypeScript compiler rather than at runtime.
+ * Main-thread façade for the OpenCV Web Worker.
+ *
+ * All CPU-intensive OpenCV operations (WASM load, cvtColor, matchTemplate) run
+ * inside `opencv-worker.js` on a dedicated OS thread, so the main thread is
+ * never blocked by WASM compilation or template matching.
+ *
+ * The main thread is still responsible for:
+ *  - Drawing the video frame onto an offscreen canvas (GPU-accelerated)
+ *  - Extracting the search-window ImageData (CPU ← GPU transfer)
+ *  - Computing the windowed search region (cheap arithmetic)
  */
-
-/** Opaque handle for an OpenCV Mat allocated on the WASM heap. */
-interface CvMat {
-  readonly rows: number;
-  readonly cols: number;
-  roi(rect: CvRect): CvMat;
-  clone(): CvMat;
-  delete(): void;
-}
-
-/** OpenCV Rect value. Created with `new cv.Rect()`, passed to `CvMat.roi()`. */
-interface CvRect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-interface MinMaxLocResult {
-  minVal: number;
-  maxVal: number;
-  minLoc: { x: number; y: number };
-  maxLoc: { x: number; y: number };
-}
-
-/** Typed surface of the OpenCV.js module used by this tracker. */
-interface Cv {
-  // Constructors
-  // biome-ignore lint/style/useNamingConvention: OpenCV API uses PascalCase for constructor properties
-  readonly Mat: new () => CvMat;
-  // biome-ignore lint/style/useNamingConvention: OpenCV API uses PascalCase for constructor properties
-  readonly Rect: new (
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-  ) => CvRect;
-
-  // Factory from browser ImageData
-  matFromImageData(imageData: ImageData): CvMat;
-
-  // Color conversion
-  cvtColor(src: CvMat, dst: CvMat, code: number): void;
-  readonly COLOR_RGBA2GRAY: number;
-
-  // Template matching
-  matchTemplate(image: CvMat, templ: CvMat, result: CvMat, method: number): void;
-  minMaxLoc(src: CvMat): MinMaxLocResult;
-  readonly TM_CCOEFF_NORMED: number;
-
-  // WASM lifecycle callback set by caller, invoked when Emscripten is ready
-  onRuntimeInitialized?: () => void;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-let cvPromise: Promise<Cv> | null = null;
-
-const CV_LOAD_TIMEOUT_MS = 30_000;
-
-/** Type predicate: confirms the WASM module has a usable `Mat` constructor. */
-function isCvReady(v: unknown): v is Cv {
-  // biome-ignore lint/complexity/useLiteralKeys: noPropertyAccessFromIndexSignature requires bracket notation for index signatures
-  return typeof (v as Record<string, unknown>)["Mat"] === "function";
-}
-
-function loadCv(): Promise<Cv> {
-  if (!cvPromise) {
-    cvPromise = import("@techstark/opencv-js").then(async (mod) => {
-      // The package ships no TypeScript typings so `mod` is `any`. Extract the
-      // runtime object as `unknown` and validate before use.
-      let cv: unknown = mod.default ?? mod;
-
-      // The default export may itself be a Promise (v4.12.0+).
-      if (cv instanceof Promise) {
-        cv = await cv;
-      }
-
-      // WASM may already be ready (e.g. in test environments).
-      if (isCvReady(cv)) {
-        return cv;
-      }
-
-      // Wait for the Emscripten runtime to initialise, with a timeout so we
-      // never hang indefinitely.
-      return new Promise<Cv>((resolve, reject) => {
-        const timer = setTimeout(() => {
-          reject(new Error("OpenCV WASM initialisation timed out"));
-        }, CV_LOAD_TIMEOUT_MS);
-
-        (cv as { onRuntimeInitialized?: () => void }).onRuntimeInitialized = () => {
-          clearTimeout(timer);
-          if (isCvReady(cv)) {
-            resolve(cv);
-          } else {
-            reject(new Error("OpenCV module did not initialise correctly"));
-          }
-        };
-      });
-    });
-
-    // If loading fails, clear the cached promise so the next attempt can retry.
-    cvPromise.catch(() => {
-      cvPromise = null;
-    });
-  }
-  return cvPromise;
-}
 
 export type TrackerRegion = { x: number; y: number; w: number; h: number };
 
+type WorkerResponse =
+  | { id: number; type: "init-done"; templateW: number; templateH: number; centerX: number; centerY: number }
+  | { id: number; type: "track-result"; x: number; y: number }
+  | { id: number; type: "error"; message: string };
+
 /**
- * Tracks a user-selected object across video frames using OpenCV template matching.
- * The template is captured once from the user's selection and then matched against
- * each subsequent frame using normalised cross-correlation (TM_CCOEFF_NORMED).
+ * Tracks a user-selected object across video frames using OpenCV template
+ * matching running in a Web Worker.
  *
  * ## Windowed search optimisation
  *
@@ -132,22 +35,30 @@ export type TrackerRegion = { x: number; y: number; w: number; h: number };
  * motion), the tracker falls back to a full-frame search automatically.
  */
 export class OpenCVTracker {
-  private cv: Cv | null = null;
-  private templateMat: CvMat | null = null;
   private readonly offscreen: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly worker: Worker;
 
-  // Center of the last successful match in full-frame pixel coordinates.
-  // Null until the first track() call succeeds; reset on dispose().
+  // True once the worker has successfully captured a template.
+  private workerReady = false;
+
+  // Message ID counter — each request gets a unique ID so stale worker
+  // responses from a previous selection can be silently discarded.
+  private nextMsgId = 0;
+  private pendingId = -1;
+  private pendingResolve: ((value: WorkerResponse) => void) | null = null;
+  private pendingReject: ((reason: Error) => void) | null = null;
+
+  // Template dimensions and last match center kept on the main thread so the
+  // windowed search region can be computed without a worker round-trip.
+  private templateW = 0;
+  private templateH = 0;
   private lastMatchCenter: { x: number; y: number } | null = null;
 
-  // Padding added on each side of the template extent to form the search window.
-  // 2× the larger template dimension gives ~5–6× pixel-transfer savings for
-  // typical template sizes while still accommodating inter-frame motion.
   private static readonly SEARCH_PADDING_FACTOR = 2;
 
   /**
-   * @param videoWidth - Pixel width of the video element (used for the offscreen canvas).
+   * @param videoWidth  - Pixel width of the video element (offscreen canvas size).
    * @param videoHeight - Pixel height of the video element.
    */
   public constructor(videoWidth: number, videoHeight: number) {
@@ -159,36 +70,50 @@ export class OpenCVTracker {
       throw new Error("Could not get 2D context from offscreen canvas");
     }
     this.ctx = ctx;
+
+    this.worker = new Worker("./opencv-worker.js");
+    this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      const msg = event.data;
+      // Ignore responses from superseded requests (e.g. rapid re-selections).
+      if (msg.id !== this.pendingId) {
+        return;
+      }
+      if (msg.type === "error") {
+        this.pendingReject?.(new Error(msg.message));
+      } else {
+        this.pendingResolve?.(msg);
+      }
+      this.pendingResolve = null;
+      this.pendingReject = null;
+      this.pendingId = -1;
+    };
+    this.worker.onerror = (e: ErrorEvent) => {
+      const err = new Error(`OpenCV worker error: ${e.message}`);
+      this.pendingReject?.(err);
+      this.pendingResolve = null;
+      this.pendingReject = null;
+    };
   }
 
+  /** True once a template has been successfully captured and tracking can begin. */
   public get ready(): boolean {
-    return this.cv !== null && this.templateMat !== null;
+    return this.workerReady;
   }
 
   /**
    * Resize the offscreen canvas to new dimensions.
-   * Call this when the video element's display size changes (e.g. a new clip
-   * with a different aspect ratio is loaded) so that template capture and
-   * matching operate in the same pixel space as the displayed content.
+   * Call this when the video element's display size changes so that template
+   * capture and matching operate in the same pixel space as the displayed content.
    */
   public resize(width: number, height: number): void {
     this.offscreen.width = width;
     this.offscreen.height = height;
   }
 
-  /**
-   * Draw the current video frame onto the offscreen canvas, scaled to fill
-   * the canvas exactly.  Using explicit destination dimensions ensures the
-   * captured pixels align with the displayed video (no black-bar offsets).
-   */
   private drawVideoFrame(video: HTMLVideoElement): void {
     this.ctx.drawImage(video, 0, 0, this.offscreen.width, this.offscreen.height);
   }
 
-  /**
-   * Read a rectangular region of pixels from the offscreen canvas into CPU memory.
-   * Throws a descriptive Error if the video is cross-origin without CORS headers.
-   */
   private readPixels(x: number, y: number, w: number, h: number): ImageData {
     try {
       return this.ctx.getImageData(x, y, w, h);
@@ -198,81 +123,57 @@ export class OpenCVTracker {
     }
   }
 
+  /** Send a message to the worker and return a Promise that resolves with the response. */
+  private send(msg: object): Promise<WorkerResponse> {
+    const id = this.nextMsgId++;
+    return new Promise<WorkerResponse>((resolve, reject) => {
+      this.pendingId = id;
+      this.pendingResolve = resolve;
+      this.pendingReject = reject;
+      this.worker.postMessage({ ...msg, id });
+    });
+  }
+
   /**
-   * Capture the template from the currently visible video frame inside `region`,
-   * loading OpenCV (WASM) on first call.
+   * Capture the template from the current video frame inside `region` and send
+   * it to the worker.  OpenCV (WASM) is loaded inside the worker on the first
+   * call — this may take a moment but never blocks the main thread.
    */
   public async initFromVideo(video: HTMLVideoElement, region: TrackerRegion): Promise<void> {
-    // Capture into a local const so TypeScript can narrow CV through the
-    // subsequent readPixels() call (class fields can't be narrowed across
-    // method calls).
-    // biome-ignore lint/suspicious/noAssignInExpressions: Assignment + local const needed for TypeScript narrowing
-    const cv = (this.cv = await loadCv());
-
     this.drawVideoFrame(video);
     const imageData = this.readPixels(0, 0, this.offscreen.width, this.offscreen.height);
-    const frame = cv.matFromImageData(imageData);
-    const gray = new cv.Mat();
-    try {
-      cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+    const response = await this.send({ type: "init", imageData, region });
 
-      if (this.templateMat) {
-        this.templateMat.delete();
-      }
-
-      // Clamp the origin first, then use the clamped values when bounding the
-      // width and height.  Without this, a negative region.x / region.y makes
-      // `offscreen.width - region.x` larger than the canvas, causing OpenCV to
-      // read outside the source image and crash.
-      const clampedX = Math.round(Math.max(0, region.x));
-      const clampedY = Math.round(Math.max(0, region.y));
-      const roiW = Math.round(Math.min(region.w, this.offscreen.width - clampedX));
-      const roiH = Math.round(Math.min(region.h, this.offscreen.height - clampedY));
-      if (roiW <= 0 || roiH <= 0) {
-        throw new Error(`Invalid ROI dimensions: ${roiW}x${roiH}`);
-      }
-      const roi = new cv.Rect(clampedX, clampedY, roiW, roiH);
-      this.templateMat = gray.roi(roi).clone();
-
-      // Seed lastMatchCenter so the very first track() call uses a tight
-      // search window rather than falling back to the full frame.
-      this.lastMatchCenter = { x: clampedX + roiW / 2, y: clampedY + roiH / 2 };
-    } finally {
-      frame.delete();
-      gray.delete();
+    if (response.type === "init-done") {
+      this.templateW = response.templateW;
+      this.templateH = response.templateH;
+      this.lastMatchCenter = { x: response.centerX, y: response.centerY };
+      this.workerReady = true;
     }
   }
 
   /**
    * Match the stored template against the current video frame.
-   * Returns the center of the best match in video-pixel coordinates, or null if not ready.
-   *
-   * Uses a windowed search: only the pixels near the previous match position are
-   * transferred from GPU to CPU.  Falls back to a full-frame search on the first
-   * call or when the window cannot contain the full template.
+   * Returns the center of the best match in video-pixel coordinates, or null if
+   * the tracker is not ready.  Runs asynchronously in the worker — the main
+   * thread is free while the worker executes matchTemplate.
    */
-  public track(video: HTMLVideoElement): { x: number; y: number } | null {
-    // Capture into local consts so TypeScript narrows both to non-null for the
-    // remainder of the method (class fields can't be narrowed across calls).
-    const cv = this.cv;
-    const templateMat = this.templateMat;
-    if (!(cv && templateMat)) {
+  public async track(video: HTMLVideoElement): Promise<{ x: number; y: number } | null> {
+    if (!this.workerReady) {
       return null;
     }
 
-    const tw = templateMat.cols;
-    const th = templateMat.rows;
+    const tw = this.templateW;
+    const th = this.templateH;
     const padding = Math.max(tw, th) * OpenCVTracker.SEARCH_PADDING_FACTOR;
 
-    // ── Compute search window ─────────────────────────────────────────────
-    // Default: full frame (used on first call or when no prior match exists).
+    // ── Compute windowed search region ────────────────────────────────────
     let searchX = 0;
     let searchY = 0;
     let searchW = this.offscreen.width;
     let searchH = this.offscreen.height;
 
     if (this.lastMatchCenter) {
-      // Top-left corner of the last matched region in full-frame coords.
       const lastLeft = this.lastMatchCenter.x - tw / 2;
       const lastTop = this.lastMatchCenter.y - th / 2;
 
@@ -281,8 +182,6 @@ export class OpenCVTracker {
       const x1 = Math.min(this.offscreen.width, Math.ceil(lastLeft + tw + padding));
       const y1 = Math.min(this.offscreen.height, Math.ceil(lastTop + th + padding));
 
-      // Only use the window if it is strictly larger than the template on both
-      // axes; matchTemplate requires image > template in each dimension.
       if (x1 - x0 > tw && y1 - y0 > th) {
         searchX = x0;
         searchY = y0;
@@ -291,43 +190,38 @@ export class OpenCVTracker {
       }
     }
 
-    // ── Read only the search region (GPU → CPU transfer) ──────────────────
-    // drawImage renders the full frame on the GPU (fast); getImageData copies
-    // only the search window to CPU memory (the expensive step).
+    // ── Extract search-window pixels (GPU → CPU) ──────────────────────────
     this.drawVideoFrame(video);
     let imageData: ImageData;
     try {
       imageData = this.readPixels(searchX, searchY, searchW, searchH);
-    } catch (_e) {
+    } catch {
       return null;
     }
 
-    const frame = cv.matFromImageData(imageData);
-    const gray = new cv.Mat();
-    const result = new cv.Mat();
-    try {
-      cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-      cv.matchTemplate(gray, templateMat, result, cv.TM_CCOEFF_NORMED);
-      const { maxLoc } = cv.minMaxLoc(result);
+    const response = await this.send({ type: "track", imageData, searchX, searchY });
 
-      // maxLoc is in search-window coordinates; convert to full-frame coordinates.
-      const centerX = maxLoc.x + searchX + tw / 2;
-      const centerY = maxLoc.y + searchY + th / 2;
-      this.lastMatchCenter = { x: centerX, y: centerY };
-
-      return { x: centerX, y: centerY };
-    } finally {
-      frame.delete();
-      gray.delete();
-      result.delete();
+    if (response.type === "track-result") {
+      const { x, y } = response;
+      this.lastMatchCenter = { x, y };
+      return { x, y };
     }
+    return null;
   }
 
+  /**
+   * Reset tracking state.  Sends a dispose message to the worker (fire-and-forget)
+   * and rejects any in-flight request so callers don't hang.
+   */
   public dispose(): void {
-    if (this.templateMat) {
-      this.templateMat.delete();
-      this.templateMat = null;
-    }
+    this.worker.postMessage({ type: "dispose", id: -1 });
+    this.workerReady = false;
     this.lastMatchCenter = null;
+    if (this.pendingReject) {
+      this.pendingReject(new Error("Tracker disposed"));
+      this.pendingResolve = null;
+      this.pendingReject = null;
+      this.pendingId = -1;
+    }
   }
 }

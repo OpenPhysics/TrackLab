@@ -15,8 +15,53 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
+import { countWebmFrames } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
+
+/**
+ * Returns frame count, total duration (seconds), and average fps for an
+ * animated WebP image using the ImageDecoder API (Chrome 94+).
+ * Resolves to null if the API is unavailable or the file is not a valid
+ * animated WebP.
+ */
+async function getAnimatedWebPInfo(blob: Blob): Promise<{ frameCount: number; duration: number; fps: number } | null> {
+  if (typeof ImageDecoder === "undefined") {
+    return null;
+  }
+  try {
+    const decoder = new ImageDecoder({
+      data: blob.stream(),
+      type: "image/webp",
+      preferAnimation: true,
+    });
+    await decoder.tracks.ready;
+    const track = decoder.tracks.selectedTrack;
+    if (!track) {
+      decoder.close();
+      return null;
+    }
+    const frameCount = track.frameCount;
+    if (frameCount <= 0) {
+      decoder.close();
+      return null;
+    }
+    // Sum per-frame durations (microseconds) to get total duration in seconds
+    let totalMicroseconds = 0;
+    for (let i = 0; i < frameCount; i++) {
+      const result = await decoder.decode({ frameIndex: i });
+      totalMicroseconds += result.image.duration ?? 0;
+      result.image.close();
+    }
+    decoder.close();
+    const duration = totalMicroseconds / 1_000_000;
+    const fps = duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
+    return { frameCount, duration, fps };
+  } catch {
+    // Not a valid animated WebP or ImageDecoder threw — fall back gracefully.
+    return null;
+  }
+}
 
 const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
@@ -28,6 +73,7 @@ type VideoFile = {
   labelProperty: TReadOnlyProperty<string>;
   filename: string;
   fps: number;
+  frameCount: number;
   tandemName: string;
 };
 
@@ -61,72 +107,84 @@ export class VideoSourceControlNode extends HBox {
         labelProperty: videoFileStrings.ballOilStringProperty,
         filename: "ballOil.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 249,
         tandemName: "ballOilItem",
       },
       {
         labelProperty: videoFileStrings.bouncingCartStringProperty,
         filename: "bouncingCart.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 328,
         tandemName: "bouncingCartItem",
       },
       {
         labelProperty: videoFileStrings.cartPendulumStringProperty,
         filename: "cartPendulum.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 44,
         tandemName: "cartPendulumItem",
       },
       {
         labelProperty: videoFileStrings.cupsClipsStringProperty,
         filename: "cupsClips.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 52,
         tandemName: "cupsClipsItem",
       },
       {
         labelProperty: videoFileStrings.parachuteMonkeyStringProperty,
         filename: "parachuteMonkey.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 21,
         tandemName: "parachuteMonkeyItem",
       },
       {
         labelProperty: videoFileStrings.pendulumStringProperty,
         filename: "pendulum.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 62,
         tandemName: "pendulumItem",
       },
       {
         labelProperty: videoFileStrings.pendulumDragStringProperty,
         filename: "pendulumDrag.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 176,
         tandemName: "pendulumDragItem",
       },
       {
         labelProperty: videoFileStrings.pucksCollideStringProperty,
         filename: "pucksCollide.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 33,
         tandemName: "pucksCollideItem",
       },
       {
         labelProperty: videoFileStrings.collisionOneStringProperty,
         filename: "collisionOne.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 191,
         tandemName: "collisionOneItem",
       },
       {
         labelProperty: videoFileStrings.collisionTwoStringProperty,
         filename: "collisionTwo.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 247,
         tandemName: "collisionTwoItem",
       },
       {
         labelProperty: videoFileStrings.oscillatingCarStringProperty,
         filename: "oscillatingCar.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 243,
         tandemName: "oscillatingCarItem",
       },
       {
         labelProperty: videoFileStrings.verticalTossStringProperty,
         filename: "verticalToss.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 77,
         tandemName: "verticalTossItem",
       },
     ];
@@ -158,6 +216,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = recording.fps;
+        model.totalFrameCountProperty.value = 0;
         model.currentWebcamBlobProperty.value = recording.blob;
         onWebcamReady(recording.blob, recording.duration);
         return;
@@ -169,6 +228,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = upload.fps;
+        model.totalFrameCountProperty.value = upload.frameCount ?? 0;
         model.currentWebcamBlobProperty.value = upload.blob;
         onWebcamReady(upload.blob, upload.duration);
         return;
@@ -180,6 +240,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = false;
         model.currentWebcamBlobProperty.value = null;
+        model.totalFrameCountProperty.value = videoInfo.frameCount;
         onVideoSelected(`./videos/${value}`, videoInfo.fps);
       }
     });
@@ -336,34 +397,66 @@ export class VideoSourceControlNode extends HBox {
     // ── Upload button (opens file picker for local video files) ───────────
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = "video/*";
+    fileInput.accept = "video/*,image/webp";
     fileInput.style.display = "none";
     document.body.appendChild(fileInput);
 
-    fileInput.addEventListener("change", () => {
+    fileInput.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
       if (!file) {
         return;
       }
-      // Read duration via a temporary video element, then store and load
       const blob: Blob = file;
-      const tempUrl = URL.createObjectURL(blob);
-      const tempVideo = document.createElement("video");
-      tempVideo.preload = "metadata";
-      tempVideo.src = tempUrl;
-      tempVideo.addEventListener("loadedmetadata", () => {
-        const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
-        URL.revokeObjectURL(tempUrl);
+      // Reset so selecting the same file again still triggers "change"
+      fileInput.value = "";
 
-        const upload = model.addUploadedVideo(blob, file.name, duration);
+      if (file.type === "image/webp") {
+        // HTMLVideoElement does not report duration for animated WebP.
+        // Use ImageDecoder to count frames and derive duration from frame timing.
+        const info = await getAnimatedWebPInfo(blob);
+        const duration = info?.duration ?? 0;
+        const fps = info?.fps ?? DEFAULT_FRAME_RATE;
+        const frameCount = info?.frameCount ?? 0;
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount > 0 ? frameCount : undefined);
+        model.totalFrameCountProperty.value = frameCount;
         model.currentWebcamBlobProperty.value = blob;
         this.lastLoadedValue = upload.id;
         selectedVideoProperty.value = upload.id;
         model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
-      });
-      // Reset so selecting the same file again still triggers "change"
-      fileInput.value = "";
+        return;
+      }
+
+      const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount);
+        model.totalFrameCountProperty.value = frameCount ?? 0;
+        model.currentWebcamBlobProperty.value = blob;
+        this.lastLoadedValue = upload.id;
+        selectedVideoProperty.value = upload.id;
+        model.isWebcamVideoProperty.value = true;
+        onWebcamReady(blob, duration);
+      };
+
+      if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
+        // Count actual frames for WebM files; also fixes Infinity duration from MediaRecorder
+        countWebmFrames(blob)
+          .then(({ frameCount, duration }) => {
+            const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
+            storeAndLoad(duration, fps, frameCount > 0 ? frameCount : undefined);
+          })
+          .catch(() => storeAndLoad(0));
+      } else {
+        // Read duration via a temporary video element, then store and load
+        const tempUrl = URL.createObjectURL(blob);
+        const tempVideo = document.createElement("video");
+        tempVideo.preload = "metadata";
+        tempVideo.src = tempUrl;
+        tempVideo.addEventListener("loadedmetadata", () => {
+          const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
+          URL.revokeObjectURL(tempUrl);
+          storeAndLoad(duration);
+        });
+      }
     });
 
     const uploadButton = createTrackLabButton(makeUploadIcon(), {

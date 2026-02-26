@@ -64,10 +64,12 @@ export class AutoTrackerNode extends Node {
   private readonly crosshairH: Line;
   private readonly crosshairV: Line;
   private readonly crosshairCircle: Path;
-
   private selecting = false;
   private selStart = Vector2.ZERO;
-
+  /** ID of the pending requestAnimationFrame callback (0 = none pending). */
+  private pendingFrameId = 0;
+  /** True while an async track() call is in flight; prevents concurrent tracking calls. */
+  private trackInProgress = false;
   // Monotonically increasing counter — each new initFromVideo call captures the
   // current value and only applies results if the counter hasn't changed by the
   // time the async initialisation completes, preventing stale results from a
@@ -277,11 +279,27 @@ export class AutoTrackerNode extends Node {
     model.videoDimensionsProperty.link(videoDimensionsListener);
 
     // ── Track on every video frame ────────────────────────────────────────
-    const onFrame = () => {
+    // OpenCV template matching (track()) is a heavy synchronous operation.
+    // Scheduling it via requestAnimationFrame coalesces rapid timeupdate/seeked
+    // events into at most one tracking call per browser paint cycle, preventing
+    // event callbacks from piling up and freezing the main thread.
+    const processFrame = async () => {
+      this.pendingFrameId = 0;
       if (!(this.visible && this.model.tracker.ready)) {
         return;
       }
-      const pt = this.model.tracker.track(videoElement);
+
+      this.trackInProgress = true;
+      let pt: { x: number; y: number } | null = null;
+      try {
+        pt = await this.model.tracker.track(videoElement);
+      } catch {
+        // Tracker was disposed mid-flight (e.g. new selection started); skip frame.
+        return;
+      } finally {
+        this.trackInProgress = false;
+      }
+
       if (!pt) {
         return;
       }
@@ -314,6 +332,12 @@ export class AutoTrackerNode extends Node {
         }
       }
     };
+
+    const onFrame = () => {
+      if (this.pendingFrameId === 0 && !this.trackInProgress) {
+        this.pendingFrameId = requestAnimationFrame(processFrame);
+      }
+    };
     videoElement.addEventListener("timeupdate", onFrame);
     videoElement.addEventListener("seeked", onFrame);
 
@@ -339,11 +363,19 @@ export class AutoTrackerNode extends Node {
     this.disposeAutoTrackerNode = () => {
       videoElement.removeEventListener("timeupdate", onFrame);
       videoElement.removeEventListener("seeked", onFrame);
+      this.cancelPendingFrame();
       model.activeTrackIdProperty.unlink(clearRecordedFrames);
       autoTrackingShownProperty.unlink(autoTrackingShownListener);
       model.videoDimensionsProperty.unlink(videoDimensionsListener);
       this.model.tracker.dispose();
     };
+  }
+
+  private cancelPendingFrame(): void {
+    if (this.pendingFrameId !== 0) {
+      cancelAnimationFrame(this.pendingFrameId);
+      this.pendingFrameId = 0;
+    }
   }
 
   private setCrosshairVisible(visible: boolean): void {
@@ -376,6 +408,8 @@ export class AutoTrackerNode extends Node {
 
   /** Clear tracking state (template, trail, visuals, and any displayed error). */
   public reset(): void {
+    this.cancelPendingFrame();
+    this.trackInProgress = false;
     this.model.tracker.dispose();
     this.trailHead = 0;
     this.trailSize = 0;

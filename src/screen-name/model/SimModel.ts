@@ -48,7 +48,7 @@ const VIDEO_LOCAL_CENTER_Y = VIDEO_HEIGHT / 2;
 
 // ── Initial tool positions (video-local coordinates) ───────────────────────
 const COORD_ORIGIN_INITIAL = new Vector2(VIDEO_WIDTH / 4, VIDEO_LOCAL_CENTER_Y);
-const CALIB_CENTER_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X, VIDEO_HEIGHT * 3 / 4);
+const CALIB_CENTER_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X, (VIDEO_HEIGHT * 3) / 4);
 const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
 const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
@@ -86,6 +86,8 @@ export type UploadedVideo = {
   label: string;
   duration: number;
   fps: number;
+  /** Actual frame count from countWebmFrames / getAnimatedWebPInfo, or undefined if unknown. */
+  frameCount?: number;
   timestamp: number;
 };
 
@@ -118,6 +120,11 @@ export class SimModel {
   // any scenery-phet dependency.
   public readonly playbackRateProperty = new NumberProperty(DEFAULT_PLAYBACK_RATE, {
     range: PLAYBACK_RATE_RANGE,
+  });
+
+  // ── Exact frame count when known (0 = unknown; derive from duration × fps) ──
+  public readonly totalFrameCountProperty = new NumberProperty(0, {
+    range: new Range(0, Number.MAX_VALUE),
   });
 
   // Derived frame duration for convenience
@@ -439,7 +446,13 @@ export class SimModel {
     return recording;
   }
 
-  public addUploadedVideo(blob: Blob, name: string, duration: number): UploadedVideo {
+  public addUploadedVideo(
+    blob: Blob,
+    name: string,
+    duration: number,
+    fps = DEFAULT_FRAME_RATE,
+    frameCount?: number,
+  ): UploadedVideo {
     const num = this.nextUploadNumber;
     this.nextUploadNumber++;
     // Strip extension and truncate long names for the dropdown label
@@ -454,7 +467,8 @@ export class SimModel {
       blob,
       label: `${displayName}  (${durationStr})`,
       duration,
-      fps: DEFAULT_FRAME_RATE,
+      fps,
+      ...(frameCount !== undefined ? { frameCount } : {}),
       timestamp: Date.now(),
     };
     this.uploadedVideosProperty.value = [...this.uploadedVideosProperty.value, upload];
@@ -468,6 +482,7 @@ export class SimModel {
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
     this.frameRateProperty.reset();
+    this.totalFrameCountProperty.reset();
     this.isWebcamVideoProperty.reset();
     this.webcamRecordingsProperty.value = [];
     this.currentWebcamBlobProperty.value = null;

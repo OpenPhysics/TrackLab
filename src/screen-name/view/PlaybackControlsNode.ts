@@ -101,7 +101,8 @@ export class PlaybackControlsNode extends HBox {
 
     // ── Scrubber ───────────────────────────────────────────────────────────
     // Create mutable range that will be updated when duration changes
-    this.scrubberRange = new Range(0, model.durationProperty.value > 0 ? model.durationProperty.value : 1);
+    const initDuration = model.durationProperty.value;
+    this.scrubberRange = new Range(0, Number.isFinite(initDuration) && initDuration > 0 ? initDuration : 1);
 
     /**
      * Calculate a "nice" tick interval for the scrubber based on total frames.
@@ -167,8 +168,9 @@ export class PlaybackControlsNode extends HBox {
       const duration = model.durationProperty.value;
       const frameRate = model.frameRateProperty.value;
 
-      if (duration > 0 && frameRate > 0) {
-        const totalFrames = Math.round(duration * frameRate);
+      if (Number.isFinite(duration) && duration > 0 && frameRate > 0) {
+        const knownCount = model.totalFrameCountProperty.value;
+        const totalFrames = knownCount > 0 ? knownCount : Math.round(duration * frameRate);
         const { majorInterval, minorInterval } = calculateTickInterval(totalFrames);
 
         // Add major ticks
@@ -194,8 +196,8 @@ export class PlaybackControlsNode extends HBox {
 
     // Update range and ticks when duration changes
     const durationListener = (duration: number) => {
-      // Update scrubber range
-      this.scrubberRange.max = duration > 0 ? duration : 1;
+      // Update scrubber range — guard against Infinity (reported by WebM files)
+      this.scrubberRange.max = Number.isFinite(duration) && duration > 0 ? duration : 1;
       // Recreate scrubber with new tick marks
       this.replaceScrubber(createScrubber());
     };
@@ -206,6 +208,12 @@ export class PlaybackControlsNode extends HBox {
       this.replaceScrubber(createScrubber());
     };
     model.frameRateProperty.lazyLink(frameRateListener);
+
+    // Recreate scrubber when the exact frame count becomes known
+    const totalFrameCountListener = () => {
+      this.replaceScrubber(createScrubber());
+    };
+    model.totalFrameCountProperty.lazyLink(totalFrameCountListener);
 
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
@@ -227,8 +235,8 @@ export class PlaybackControlsNode extends HBox {
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty],
-      (time: number, duration: number, frameRate: number) => {
+      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty, model.totalFrameCountProperty],
+      (time: number, duration: number, frameRate: number, totalFrameCount: number) => {
         if (duration <= 0) {
           return "0/0";
         }
@@ -236,7 +244,10 @@ export class PlaybackControlsNode extends HBox {
         // (1/fps) to avoid cascading floating-point error at non-integer fps
         // values like 29.97, matching the approach used in AutoTrackerNode.
         const current = Math.round(time * frameRate);
-        const total = Math.round(duration * frameRate);
+        if (!Number.isFinite(duration)) {
+          return `${current}/?`;
+        }
+        const total = totalFrameCount > 0 ? totalFrameCount : Math.round(duration * frameRate);
         return `${current}/${total}`;
       },
     );
@@ -293,6 +304,7 @@ export class PlaybackControlsNode extends HBox {
       model.currentTimeProperty.unlink(onTimeChange);
       model.durationProperty.unlink(durationListener);
       model.frameRateProperty.unlink(frameRateListener);
+      model.totalFrameCountProperty.unlink(totalFrameCountListener);
       timeSpeedProperty.dispose();
       totalTimeTextProperty.dispose();
       frameCountTextProperty.dispose();

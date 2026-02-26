@@ -133,7 +133,7 @@
     "lineWidth": 120
   },
   "files": {
-    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist"]
+    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist", "!public/opencv-worker.js"]
   },
   "overrides": [
     {
