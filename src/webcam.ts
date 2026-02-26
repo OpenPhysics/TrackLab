@@ -112,7 +112,7 @@ export function countWebmFrames(blob: Blob): Promise<{ frameCount: number; durat
     };
 
     video.addEventListener("loadedmetadata", () => {
-      void (async () => {
+      (async () => {
         // Fix Infinity duration (WebM recordings from MediaRecorder start with Infinity)
         if (!Number.isFinite(video.duration)) {
           await new Promise<void>((res) => {
@@ -147,7 +147,7 @@ export function countWebmFrames(blob: Blob): Promise<{ frameCount: number; durat
         }
 
         await video.play();
-      })();
+      })().catch(() => undefined);
     });
   });
 }

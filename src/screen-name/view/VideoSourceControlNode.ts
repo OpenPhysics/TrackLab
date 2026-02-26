@@ -15,8 +15,8 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
-import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { countWebmFrames } from "../../webcam.js";
+import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
 /**
@@ -420,7 +420,7 @@ export class VideoSourceControlNode extends HBox {
 
       if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
         // Count actual frames for WebM files; also fixes Infinity duration from MediaRecorder
-        void countWebmFrames(blob)
+        countWebmFrames(blob)
           .then(({ frameCount, duration }) => {
             const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
             storeAndLoad(duration, fps);
