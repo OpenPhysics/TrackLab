@@ -67,7 +67,7 @@ export class VideoPlayerNode extends Node {
 
     const updateDuration = () => {
       const d = this.videoElement.duration;
-      if (Number.isFinite(d) && d > 0) {
+      if (d > 0) {
         model.durationProperty.value = d;
       }
     };
@@ -270,11 +270,13 @@ export class VideoPlayerNode extends Node {
   private seekByFrames(direction: number): void {
     this.model.isPlayingProperty.value = false;
     const duration = this.videoElement.duration;
-    if (!Number.isFinite(duration)) {
+    if (!(duration > 0)) {
       return;
     }
     const frameDuration = this.model.frameDurationProperty.value;
     const raw = this.videoElement.currentTime + direction * frameDuration;
+    // Math.min(raw, Infinity) === raw, so this clamp works for both finite and
+    // Infinity durations (WebM files often report Infinity until fully loaded).
     const clamped = Math.max(0, Math.min(raw, duration));
     this.videoElement.currentTime = clamped;
     this.model.currentTimeProperty.value = clamped;

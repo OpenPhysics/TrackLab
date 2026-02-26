@@ -142,11 +142,7 @@ const TrackLabColors = {
     new Color(255, 60, 60, 0.95),
     new Color(255, 80, 80, 0.98),
   ),
-  trackerBadgeFillProperty: profileColor(
-    "trackerBadgeFill",
-    new Color(0, 0, 0, 0.65),
-    new Color(240, 240, 240, 0.88),
-  ),
+  trackerBadgeFillProperty: profileColor("trackerBadgeFill", new Color(0, 0, 0, 0.65), new Color(240, 240, 240, 0.88)),
 
   // Control panel icons
   iconGrayProperty: profileColor("iconGray", new Color(187, 187, 187), new Color(100, 100, 100)),
