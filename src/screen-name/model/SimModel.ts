@@ -421,7 +421,7 @@ export class SimModel {
     return recording;
   }
 
-  public addUploadedVideo(blob: Blob, name: string, duration: number): UploadedVideo {
+  public addUploadedVideo(blob: Blob, name: string, duration: number, fps = DEFAULT_FRAME_RATE): UploadedVideo {
     const num = this.nextUploadNumber;
     this.nextUploadNumber++;
     // Strip extension and truncate long names for the dropdown label
@@ -436,7 +436,7 @@ export class SimModel {
       blob,
       label: `${displayName}  (${durationStr})`,
       duration,
-      fps: DEFAULT_FRAME_RATE,
+      fps,
       timestamp: Date.now(),
     };
     this.uploadedVideosProperty.value = [...this.uploadedVideosProperty.value, upload];
