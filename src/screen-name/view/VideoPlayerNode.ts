@@ -188,7 +188,7 @@ export class VideoPlayerNode extends Node {
       this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
       this.videoSourceControlNode.centerX = displayW / 2;
       this.playbackControlsNode.preferredWidth = displayW;
-      model.tracker.resize(displayW, displayH);
+      model.resizeTracker(displayW, displayH);
     };
     this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
 
@@ -204,10 +204,9 @@ export class VideoPlayerNode extends Node {
     this.videoSourceControlNode = new VideoSourceControlNode(
       model,
       listParent,
-      (url, fps) => {
+      (url) => {
         model.isPlayingProperty.value = false;
         autoTrackerNode.reset();
-        model.frameRateProperty.value = fps;
         this.loadUrl(url);
       },
       (blob, duration) => {

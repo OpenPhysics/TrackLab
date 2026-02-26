@@ -16,7 +16,7 @@ import {
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
-import { OpenCVTracker } from "../../tracking/OpenCVTracker.js";
+import { OpenCVTracker, type TrackerRegion } from "../../tracking/OpenCVTracker.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
 import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
 import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
@@ -139,7 +139,7 @@ export class SimModel {
   public readonly videoDimensionsProperty = new Property<Dimension2>(new Dimension2(VIDEO_WIDTH, VIDEO_HEIGHT));
 
   // ── OpenCV Tracker (computational service) ────────────────────────────
-  public readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
+  private readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
 
   // ── Overlay visibility ────────────────────────────────────────────────
   public readonly axesVisibleProperty = new BooleanProperty(true);
@@ -425,6 +425,96 @@ export class SimModel {
       return updated;
     });
     this.tracksProperty.value = tracks;
+  }
+
+  // ── Tracker facade ──────────────────────────────────────────────────────
+  // Views interact with the tracker exclusively through these methods so that
+  // the tracker implementation stays encapsulated inside the model layer.
+
+  /** True once a template has been captured and frame-to-frame tracking can begin. */
+  public get isTrackerReady(): boolean {
+    return this.tracker.ready;
+  }
+
+  /** Reset tracking state. Cancels any in-flight operation and clears the template. */
+  public resetTracker(): void {
+    this.tracker.dispose();
+  }
+
+  /**
+   * Resize the tracker's offscreen canvas to match the video element's display dimensions.
+   * Must be called whenever the displayed video size changes.
+   */
+  public resizeTracker(width: number, height: number): void {
+    this.tracker.resize(width, height);
+  }
+
+  /**
+   * Capture the tracking template from the current video frame within `region`.
+   * Resolves when the worker has processed the template and is ready to track.
+   */
+  public async initTracker(video: HTMLVideoElement, region: TrackerRegion): Promise<void> {
+    await this.tracker.initFromVideo(video, region);
+  }
+
+  /**
+   * Match the stored template against the current video frame.
+   * Returns the center of the best match in video-pixel coordinates, or null.
+   */
+  public async trackFrame(video: HTMLVideoElement): Promise<{ x: number; y: number } | null> {
+    return this.tracker.track(video);
+  }
+
+  // ── Track helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Create a new track and immediately make it the active track.
+   * Does nothing if the track limit or symbol limit has been reached.
+   */
+  public addTrackAndActivate(): void {
+    this.addTrack();
+    const newest = this.tracksProperty.value.at(-1);
+    if (newest) {
+      this.activeTrackIdProperty.value = newest.id;
+    }
+  }
+
+  // ── Video source activation ─────────────────────────────────────────────
+  // Each method sets all affected model properties in one call so that no
+  // intermediate state is visible to subscribers (e.g. isWebcamVideo true but
+  // frameRateProperty still stale from the previous video).
+
+  /**
+   * Activate a webcam recording as the current video source.
+   * Sets all related properties atomically.
+   */
+  public activateRecording(recording: WebcamRecording): void {
+    this.isWebcamVideoProperty.value = true;
+    this.frameRateProperty.value = recording.fps;
+    this.totalFrameCountProperty.value = 0;
+    this.currentWebcamBlobProperty.value = recording.blob;
+  }
+
+  /**
+   * Activate an uploaded video as the current video source.
+   * Sets all related properties atomically.
+   */
+  public activateUpload(upload: UploadedVideo): void {
+    this.isWebcamVideoProperty.value = true;
+    this.frameRateProperty.value = upload.fps;
+    this.totalFrameCountProperty.value = upload.frameCount ?? 0;
+    this.currentWebcamBlobProperty.value = upload.blob;
+  }
+
+  /**
+   * Activate a bundled (sample) video as the current video source.
+   * Sets all related properties atomically.
+   */
+  public activateBundledVideo(frameCount: number, fps: number): void {
+    this.isWebcamVideoProperty.value = false;
+    this.currentWebcamBlobProperty.value = null;
+    this.totalFrameCountProperty.value = frameCount;
+    this.frameRateProperty.value = fps;
   }
 
   public addWebcamRecording(blob: Blob, duration: number, fps: number): WebcamRecording {
