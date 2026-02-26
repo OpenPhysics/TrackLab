@@ -407,6 +407,8 @@ export class StringManager {
    * Get accessibility string properties
    */
   public getA11y(): {
+    infoDialogTab1StringProperty: ReadOnlyProperty<string>;
+    infoDialogTab2StringProperty: ReadOnlyProperty<string>;
     videoPlayerStringProperty: ReadOnlyProperty<string>;
     videoScrubberStringProperty: ReadOnlyProperty<string>;
     rewindToStartStringProperty: ReadOnlyProperty<string>;
@@ -437,6 +439,8 @@ export class StringManager {
     selectTrackForGraphStringProperty: ReadOnlyProperty<string>;
   } {
     return {
+      infoDialogTab1StringProperty: this.stringProperties.a11y.infoDialogTab1StringProperty,
+      infoDialogTab2StringProperty: this.stringProperties.a11y.infoDialogTab2StringProperty,
       videoPlayerStringProperty: this.stringProperties.a11y.videoPlayerStringProperty,
       videoScrubberStringProperty: this.stringProperties.a11y.videoScrubberStringProperty,
       rewindToStartStringProperty: this.stringProperties.a11y.rewindToStartStringProperty,
@@ -473,6 +477,8 @@ export class StringManager {
    */
   public getInfoDialog(): {
     titleStringProperty: ReadOnlyProperty<string>;
+    tab1LabelStringProperty: ReadOnlyProperty<string>;
+    tab2LabelStringProperty: ReadOnlyProperty<string>;
     loadVideoTitleStringProperty: ReadOnlyProperty<string>;
     loadVideoBodyStringProperty: ReadOnlyProperty<string>;
     coordinateSystemTitleStringProperty: ReadOnlyProperty<string>;
@@ -485,9 +491,19 @@ export class StringManager {
     digitizeBodyStringProperty: ReadOnlyProperty<string>;
     autoTrackTitleStringProperty: ReadOnlyProperty<string>;
     autoTrackBodyStringProperty: ReadOnlyProperty<string>;
+    measuringTapeTitleStringProperty: ReadOnlyProperty<string>;
+    measuringTapeBodyStringProperty: ReadOnlyProperty<string>;
+    angleToolTitleStringProperty: ReadOnlyProperty<string>;
+    angleToolBodyStringProperty: ReadOnlyProperty<string>;
+    kinematicsGraphTitleStringProperty: ReadOnlyProperty<string>;
+    kinematicsGraphBodyStringProperty: ReadOnlyProperty<string>;
+    dataTableTitleStringProperty: ReadOnlyProperty<string>;
+    dataTableBodyStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       titleStringProperty: this.stringProperties.infoDialog.titleStringProperty,
+      tab1LabelStringProperty: this.stringProperties.infoDialog.tab1LabelStringProperty,
+      tab2LabelStringProperty: this.stringProperties.infoDialog.tab2LabelStringProperty,
       loadVideoTitleStringProperty: this.stringProperties.infoDialog.loadVideoTitleStringProperty,
       loadVideoBodyStringProperty: this.stringProperties.infoDialog.loadVideoBodyStringProperty,
       coordinateSystemTitleStringProperty: this.stringProperties.infoDialog.coordinateSystemTitleStringProperty,
@@ -500,6 +516,14 @@ export class StringManager {
       digitizeBodyStringProperty: this.stringProperties.infoDialog.digitizeBodyStringProperty,
       autoTrackTitleStringProperty: this.stringProperties.infoDialog.autoTrackTitleStringProperty,
       autoTrackBodyStringProperty: this.stringProperties.infoDialog.autoTrackBodyStringProperty,
+      measuringTapeTitleStringProperty: this.stringProperties.infoDialog.measuringTapeTitleStringProperty,
+      measuringTapeBodyStringProperty: this.stringProperties.infoDialog.measuringTapeBodyStringProperty,
+      angleToolTitleStringProperty: this.stringProperties.infoDialog.angleToolTitleStringProperty,
+      angleToolBodyStringProperty: this.stringProperties.infoDialog.angleToolBodyStringProperty,
+      kinematicsGraphTitleStringProperty: this.stringProperties.infoDialog.kinematicsGraphTitleStringProperty,
+      kinematicsGraphBodyStringProperty: this.stringProperties.infoDialog.kinematicsGraphBodyStringProperty,
+      dataTableTitleStringProperty: this.stringProperties.infoDialog.dataTableTitleStringProperty,
+      dataTableBodyStringProperty: this.stringProperties.infoDialog.dataTableBodyStringProperty,
     };
   }
 

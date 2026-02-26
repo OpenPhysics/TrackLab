@@ -145,7 +145,9 @@
     "verticalToss": "Lancer vertical"
   },
   "infoDialog": {
-    "title": "Comment num\u00e9riser une piste",
+    "title": "Guide TrackLab",
+    "tab1Label": "\u00c9tapes",
+    "tab2Label": "Outils",
     "loadVideoTitle": "1. Charger une vid\u00e9o",
     "loadVideoBody": "S\u00e9lectionnez une vid\u00e9o dans le menu d\u00e9roulant en haut \u2014 choisissez un exemple, un enregistrement webcam ou un fichier import\u00e9.",
     "coordinateSystemTitle": "2. Configurer le syst\u00e8me de coordonn\u00e9es",
@@ -155,11 +157,21 @@
     "addTrackTitle": "4. Ajouter une piste",
     "addTrackBody": "Dans le panneau Pistes, cliquez sur \u00ab\u00a0+ Ajouter une piste\u00a0\u00bb pour cr\u00e9er une nouvelle piste \u00e9tiquet\u00e9e A, B, C, \u2026",
     "digitizeTitle": "5. Num\u00e9riser image par image",
-    "digitizeBody": "S\u00e9lectionnez une piste et cliquez sur la position de l\u2019objet dans la vid\u00e9o. La vid\u00e9o avance automatiquement d\u2019une image apr\u00e8s chaque clic.",
-    "autoTrackTitle": "6. Suivi automatique (optionnel)",
-    "autoTrackBody": "Activez le Suivi automatique dans le panneau de contr\u00f4le, puis faites glisser un cadre de s\u00e9lection autour de l\u2019objet. TrackLab le suivra sur les images restantes."
+    "digitizeBody": "S\u00e9lectionnez une piste et cliquez sur la position de l\u2019objet dans la vid\u00e9o. Activez la Loupe pour plus de pr\u00e9cision. La vid\u00e9o avance automatiquement d\u2019une image apr\u00e8s chaque clic.",
+    "autoTrackTitle": "Suivi automatique",
+    "autoTrackBody": "Activez le Suivi automatique dans le panneau de contr\u00f4le, puis faites glisser un cadre de s\u00e9lection autour de l\u2019objet. TrackLab le suivra automatiquement sur les images restantes.",
+    "measuringTapeTitle": "Ruban de mesure",
+    "measuringTapeBody": "Activez le Ruban de mesure depuis le panneau de contr\u00f4le. Faites glisser les deux extr\u00e9mit\u00e9s pour mesurer des distances r\u00e9elles n\u2019importe o\u00f9 sur la vid\u00e9o.",
+    "angleToolTitle": "Rapporteur",
+    "angleToolBody": "Activez le Rapporteur depuis le panneau de contr\u00f4le. Faites glisser les trois poign\u00e9es pour mesurer des angles dans votre sc\u00e8ne. L\u2019angle au sommet est affich\u00e9 en degr\u00e9s.",
+    "kinematicsGraphTitle": "Graphique cin\u00e9matique",
+    "kinematicsGraphBody": "Le graphique configurable trace deux grandeurs l\u2019une par rapport \u00e0 l\u2019autre. Choisissez parmi la position, la vitesse, l\u2019acc\u00e9l\u00e9ration, la rapidit\u00e9 ou le temps sur chaque axe.",
+    "dataTableTitle": "Tableau de donn\u00e9es",
+    "dataTableBody": "Tous les points num\u00e9ris\u00e9s apparaissent dans un tableau affichant l\u2019image, le temps et la position. Cliquez sur le bouton CSV pour t\u00e9l\u00e9charger vos donn\u00e9es."
   },
   "a11y": {
+    "infoDialogTab1": "Onglet \u00c9tapes",
+    "infoDialogTab2": "Onglet Outils",
     "videoPlayer": "Lecteur vid\u00e9o",
     "videoScrubber": "Ligne de temps vid\u00e9o \u2014 glisser pour naviguer",
     "rewindToStart": "Revenir au d\u00e9but",

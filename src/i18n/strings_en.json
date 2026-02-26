@@ -170,6 +170,8 @@
     "dataTableBody": "All digitized points appear in a table showing frame, time, and position. Click the CSV button to download your data."
   },
   "a11y": {
+    "infoDialogTab1": "Workflow tab",
+    "infoDialogTab2": "Tools tab",
     "videoPlayer": "Video player",
     "videoScrubber": "Video timeline — drag to seek",
     "rewindToStart": "Rewind to start",
