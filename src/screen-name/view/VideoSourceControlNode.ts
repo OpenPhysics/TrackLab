@@ -15,58 +15,35 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
-import { countWebmFrames } from "../../webcam.js";
+import { countWebmFrames, getAnimatedWebPInfo } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
-
-/**
- * Returns frame count, total duration (seconds), and average fps for an
- * animated WebP image using the ImageDecoder API (Chrome 94+).
- * Resolves to null if the API is unavailable or the file is not a valid
- * animated WebP.
- */
-async function getAnimatedWebPInfo(blob: Blob): Promise<{ frameCount: number; duration: number; fps: number } | null> {
-  if (typeof ImageDecoder === "undefined") {
-    return null;
-  }
-  try {
-    const decoder = new ImageDecoder({
-      data: blob.stream(),
-      type: "image/webp",
-      preferAnimation: true,
-    });
-    await decoder.tracks.ready;
-    const track = decoder.tracks.selectedTrack;
-    if (!track) {
-      decoder.close();
-      return null;
-    }
-    const frameCount = track.frameCount;
-    if (frameCount <= 0) {
-      decoder.close();
-      return null;
-    }
-    // Sum per-frame durations (microseconds) to get total duration in seconds
-    let totalMicroseconds = 0;
-    for (let i = 0; i < frameCount; i++) {
-      const result = await decoder.decode({ frameIndex: i });
-      totalMicroseconds += result.image.duration ?? 0;
-      result.image.close();
-    }
-    decoder.close();
-    const duration = totalMicroseconds / 1_000_000;
-    const fps = duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
-    return { frameCount, duration, fps };
-  } catch {
-    // Not a valid animated WebP or ImageDecoder threw — fall back gracefully.
-    return null;
-  }
-}
 
 const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
 const CONTROLS_SPACING = 12;
 const HEADER_VALUE_PREFIX = "__header:";
+const LABEL_MAX_NAME_LENGTH = 25; // max chars before truncating upload filenames
+
+// ── Label formatting helpers ─────────────────────────────────────────────────
+
+function formatDuration(seconds: number): string {
+  const totalSec = Math.round(seconds);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatRecordingLabel(rec: WebcamRecording): string {
+  return `Recording ${rec.num}  (${formatDuration(rec.duration)})`;
+}
+
+function formatUploadLabel(upl: UploadedVideo): string {
+  const baseName = upl.name.replace(/\.[^.]+$/, "");
+  const displayName =
+    baseName.length > LABEL_MAX_NAME_LENGTH ? `${baseName.substring(0, LABEL_MAX_NAME_LENGTH - 3)}...` : baseName;
+  return `${displayName}  (${formatDuration(upl.duration)})`;
+}
 
 // Bundled video files with known frame rates (labels resolved from StringManager)
 type VideoFile = {
@@ -77,7 +54,7 @@ type VideoFile = {
   tandemName: string;
 };
 
-export type VideoSelectedCallback = (url: string, fps: number) => void;
+export type VideoSelectedCallback = (url: string) => void;
 export type WebcamReadyCallback = (blob: Blob, duration: number) => void;
 
 /**
@@ -194,6 +171,9 @@ export class VideoSourceControlNode extends HBox {
     const selectedVideoProperty = this.selectedVideoProperty; // local alias for callbacks
 
     // ── Selection handler for bundled videos, recordings, and uploads ──────
+    // This is the single canonical place where a video source is activated.
+    // Each branch calls a model method that sets all affected properties
+    // atomically, preventing subscribers from seeing intermediate states.
     selectedVideoProperty.lazyLink((value) => {
       // Revert section-header selections immediately
       if (value?.startsWith(HEADER_VALUE_PREFIX)) {
@@ -214,10 +194,7 @@ export class VideoSourceControlNode extends HBox {
       const recording = model.webcamRecordingsProperty.value.find((r) => r.id === value);
       if (recording) {
         this.lastLoadedValue = value;
-        model.isWebcamVideoProperty.value = true;
-        model.frameRateProperty.value = recording.fps;
-        model.totalFrameCountProperty.value = 0;
-        model.currentWebcamBlobProperty.value = recording.blob;
+        model.activateRecording(recording);
         onWebcamReady(recording.blob, recording.duration);
         return;
       }
@@ -226,10 +203,7 @@ export class VideoSourceControlNode extends HBox {
       const upload = model.uploadedVideosProperty.value.find((u) => u.id === value);
       if (upload) {
         this.lastLoadedValue = value;
-        model.isWebcamVideoProperty.value = true;
-        model.frameRateProperty.value = upload.fps;
-        model.totalFrameCountProperty.value = upload.frameCount ?? 0;
-        model.currentWebcamBlobProperty.value = upload.blob;
+        model.activateUpload(upload);
         onWebcamReady(upload.blob, upload.duration);
         return;
       }
@@ -238,10 +212,8 @@ export class VideoSourceControlNode extends HBox {
       const videoInfo = VIDEO_FILES.find((v) => v.filename === value);
       if (videoInfo) {
         this.lastLoadedValue = value;
-        model.isWebcamVideoProperty.value = false;
-        model.currentWebcamBlobProperty.value = null;
-        model.totalFrameCountProperty.value = videoInfo.frameCount;
-        onVideoSelected(`./videos/${value}`, videoInfo.fps);
+        model.activateBundledVideo(videoInfo.frameCount, videoInfo.fps);
+        onVideoSelected(`./videos/${value}`);
       }
     });
 
@@ -308,7 +280,7 @@ export class VideoSourceControlNode extends HBox {
           items.push({
             value: rec.id,
             createNode: () =>
-              new Text(rec.label, {
+              new Text(formatRecordingLabel(rec), {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),
@@ -333,7 +305,7 @@ export class VideoSourceControlNode extends HBox {
           items.push({
             value: upl.id,
             createNode: () =>
-              new Text(upl.label, {
+              new Text(formatUploadLabel(upl), {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),
@@ -418,23 +390,17 @@ export class VideoSourceControlNode extends HBox {
         const fps = info?.fps ?? DEFAULT_FRAME_RATE;
         const frameCount = info?.frameCount ?? 0;
         const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount > 0 ? frameCount : undefined);
-        model.totalFrameCountProperty.value = frameCount;
-        model.currentWebcamBlobProperty.value = blob;
-        this.lastLoadedValue = upload.id;
+        // Setting selectedVideoProperty triggers the lazyLink which calls
+        // model.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
-        model.isWebcamVideoProperty.value = true;
-        onWebcamReady(blob, duration);
         return;
       }
 
       const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
         const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount);
-        model.totalFrameCountProperty.value = frameCount ?? 0;
-        model.currentWebcamBlobProperty.value = blob;
-        this.lastLoadedValue = upload.id;
+        // Setting selectedVideoProperty triggers the lazyLink which calls
+        // model.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
-        model.isWebcamVideoProperty.value = true;
-        onWebcamReady(blob, duration);
       };
 
       if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
@@ -472,14 +438,11 @@ export class VideoSourceControlNode extends HBox {
       model: model,
       onVideoReady: (blob, duration) => {
         this.webcamPanel.visible = false;
-        // Store the recording in the model (this triggers a ComboBox rebuild)
+        // Store the recording in the model (this triggers a ComboBox rebuild).
         const recording = model.addWebcamRecording(blob, duration, model.frameRateProperty.value);
-        model.currentWebcamBlobProperty.value = blob;
-        // Select the new recording — the lazyLink handler loads it into the player
-        this.lastLoadedValue = recording.id;
+        // Setting selectedVideoProperty triggers the lazyLink which calls
+        // model.activateRecording(recording) and onWebcamReady atomically.
         selectedVideoProperty.value = recording.id;
-        model.isWebcamVideoProperty.value = true;
-        onWebcamReady(blob, duration);
       },
       onCancel: () => {
         this.webcamPanel.visible = false;

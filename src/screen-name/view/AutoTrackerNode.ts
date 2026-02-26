@@ -168,9 +168,9 @@ export class AutoTrackerNode extends Node {
       start: (event) => {
         this.trailHead = 0;
         this.trailSize = 0;
-        // Bump version so any in-flight initFromVideo call is discarded when it resolves.
+        // Bump version so any in-flight initTracker call is discarded when it resolves.
         this.initVersion++;
-        this.model.tracker.dispose();
+        this.model.resetTracker();
         this.setCrosshairVisible(false);
         this.trailPath.shape = null;
         this.trailPath.visible = false;
@@ -216,28 +216,20 @@ export class AutoTrackerNode extends Node {
         if (region.w > MIN_REGION_SIZE && region.h > MIN_REGION_SIZE) {
           // Auto-create a track if none is active
           if (!this.model.activeTrackIdProperty.value) {
-            this.model.addTrack();
-            // Set the newly created track as active
-            const tracks = this.model.tracksProperty.value;
-            if (tracks.length > 0) {
-              const newTrack = tracks[tracks.length - 1];
-              if (newTrack) {
-                this.model.activeTrackIdProperty.value = newTrack.id;
-              }
-            }
+            this.model.addTrackAndActivate();
           }
 
-          // initFromVideo is async (loads WASM on first call); tracking begins
-          // automatically once `ready` becomes true.
+          // initTracker is async (loads WASM on first call); tracking begins
+          // automatically once isTrackerReady becomes true.
           // Capture the current version so stale results from a previous drag
           // (still awaiting WASM load) are discarded if a new drag has started.
           const capturedVersion = this.initVersion;
-          this.model.tracker
-            .initFromVideo(videoElement, region)
+          this.model
+            .initTracker(videoElement, region)
             .then(() => {
               if (this.initVersion !== capturedVersion) {
                 // A newer drag has already started; discard this result.
-                this.model.tracker.dispose();
+                this.model.resetTracker();
                 return;
               }
               // Guard against the race condition where the user removes the
@@ -248,7 +240,7 @@ export class AutoTrackerNode extends Node {
               const trackStillExists =
                 activeId !== null && this.model.tracksProperty.value.some((t) => t.id === activeId);
               if (!trackStillExists) {
-                this.model.tracker.dispose();
+                this.model.resetTracker();
                 this.hintText.visible = true;
               }
             })
@@ -285,14 +277,14 @@ export class AutoTrackerNode extends Node {
     // event callbacks from piling up and freezing the main thread.
     const processFrame = async () => {
       this.pendingFrameId = 0;
-      if (!(this.visible && this.model.tracker.ready)) {
+      if (!(this.visible && this.model.isTrackerReady)) {
         return;
       }
 
       this.trackInProgress = true;
       let pt: { x: number; y: number } | null = null;
       try {
-        pt = await this.model.tracker.track(videoElement);
+        pt = await this.model.trackFrame(videoElement);
       } catch {
         // Tracker was disposed mid-flight (e.g. new selection started); skip frame.
         return;
@@ -367,7 +359,7 @@ export class AutoTrackerNode extends Node {
       model.activeTrackIdProperty.unlink(clearRecordedFrames);
       autoTrackingShownProperty.unlink(autoTrackingShownListener);
       model.videoDimensionsProperty.unlink(videoDimensionsListener);
-      this.model.tracker.dispose();
+      this.model.resetTracker();
     };
   }
 
@@ -410,7 +402,7 @@ export class AutoTrackerNode extends Node {
   public reset(): void {
     this.cancelPendingFrame();
     this.trackInProgress = false;
-    this.model.tracker.dispose();
+    this.model.resetTracker();
     this.trailHead = 0;
     this.trailSize = 0;
     this.recordedFrames.clear();

@@ -10,7 +10,7 @@ import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
@@ -262,7 +262,7 @@ export class DigitizingOverlayNode extends Node {
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
-        if (model.magnifyVideoProperty.value) {
+        if (model.overlayTools.magnifyVideoProperty.value) {
           const crosshairX = localPt.x - magX;
           const crosshairY = localPt.y - magY;
           updateMagnifier(localPt.x, localPt.y, crosshairX, crosshairY);
@@ -287,7 +287,7 @@ export class DigitizingOverlayNode extends Node {
     const rebuildMarks = () => {
       const frameDuration = model.frameDurationProperty.value;
       const currentFrame = Math.round(model.currentTimeProperty.value / frameDuration);
-      const mvt = model.modelViewTransformProperty.value;
+      const mvt = model.overlayTools.modelViewTransformProperty.value;
       const tracks = model.tracksProperty.value;
       const activeTrackIds = new Set(tracks.map((t) => t.id));
 
@@ -295,7 +295,7 @@ export class DigitizingOverlayNode extends Node {
       for (const track of tracks) {
         let path = trackPaths.get(track.id);
         if (!path) {
-          path = new Path(null, { fill: track.color, pickable: false });
+          path = new Path(null, { fill: getTrackColor(track.colorIndex), pickable: false });
           trackPaths.set(track.id, path);
           marksLayer.addChild(path);
         }
@@ -329,7 +329,7 @@ export class DigitizingOverlayNode extends Node {
     model.tracksProperty.link(tracksListener);
 
     const mvtListener = () => rebuildMarks();
-    model.modelViewTransformProperty.link(mvtListener);
+    model.overlayTools.modelViewTransformProperty.link(mvtListener);
 
     const frameRateListener = () => rebuildMarks();
     model.frameRateProperty.link(frameRateListener);
@@ -347,7 +347,7 @@ export class DigitizingOverlayNode extends Node {
         magnifierNode.visible = false;
       }
     };
-    model.magnifyVideoProperty.link(magnifyListener);
+    model.overlayTools.magnifyVideoProperty.link(magnifyListener);
 
     digitizingOverlay.addInputListener(
       new FireListener({
@@ -391,10 +391,10 @@ export class DigitizingOverlayNode extends Node {
       model.videoDimensionsProperty.unlink(videoDimensionsListener);
       model.currentTimeProperty.unlink(currentTimeListener);
       model.tracksProperty.unlink(tracksListener);
-      model.modelViewTransformProperty.unlink(mvtListener);
+      model.overlayTools.modelViewTransformProperty.unlink(mvtListener);
       model.frameRateProperty.unlink(frameRateListener);
       model.activeTrackIdProperty.unlink(activeTrackListener);
-      model.magnifyVideoProperty.unlink(magnifyListener);
+      model.overlayTools.magnifyVideoProperty.unlink(magnifyListener);
       for (const path of trackPaths.values()) {
         path.dispose();
       }

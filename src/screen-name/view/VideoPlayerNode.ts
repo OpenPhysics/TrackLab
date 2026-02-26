@@ -36,11 +36,10 @@ export class VideoPlayerNode extends Node {
   /**
    * Video content layer containing the video element and all overlays (auto-tracker,
    * digitizing, coordinate system, calibration, measurement tools). All children
-   * share video-local coordinates (0,0 = top-left of video). SimScreenView adds
-   * additional overlay nodes as children. The videoTransformProperty is applied to
-   * this layer so the video and overlays can be dragged/magnified as a unit.
+   * share video-local coordinates (0,0 = top-left of video). External overlays
+   * should be added via addVideoOverlay() rather than accessing this layer directly.
    */
-  public readonly videoContentLayer: Node;
+  private readonly videoContentLayer: Node;
   private readonly model: SimModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
@@ -107,7 +106,7 @@ export class VideoPlayerNode extends Node {
 
     // ── Auto-tracking overlay ──────────────────────────────────────────────
     const autoTrackingShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.autoTrackingProperty],
+      [model.videoLoadedProperty, model.overlayTools.autoTrackingProperty],
       (loaded, tracking) => loaded && tracking,
     );
     const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, model);
@@ -188,7 +187,7 @@ export class VideoPlayerNode extends Node {
       this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
       this.videoSourceControlNode.centerX = displayW / 2;
       this.playbackControlsNode.preferredWidth = displayW;
-      model.tracker.resize(displayW, displayH);
+      model.resizeTracker(displayW, displayH);
     };
     this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
 
@@ -204,10 +203,9 @@ export class VideoPlayerNode extends Node {
     this.videoSourceControlNode = new VideoSourceControlNode(
       model,
       listParent,
-      (url, fps) => {
+      (url) => {
         model.isPlayingProperty.value = false;
         autoTrackerNode.reset();
-        model.frameRateProperty.value = fps;
         this.loadUrl(url);
       },
       (blob, duration) => {
@@ -247,15 +245,8 @@ export class VideoPlayerNode extends Node {
     };
     model.videoTransformProperty.link(videoTransformListener);
 
-    // ── Home key → rewind to start ────────────────────────────────────────
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (e.key === "Home" && model.videoLoadedProperty.value) {
-        this.rewindToStart();
-      }
-    };
+    // ── Keyboard shortcuts ─────────────────────────────────────────────────
+    const onKeyDown = this.createKeyboardHandler(model);
     document.addEventListener("keydown", onKeyDown);
 
     // Store cleanup function
@@ -278,6 +269,27 @@ export class VideoPlayerNode extends Node {
       this.playbackControlsNode.dispose();
       this.videoSourceControlNode.dispose();
       autoTrackingShownProperty.dispose();
+    };
+  }
+
+  /**
+   * Add an overlay node to the video content layer.
+   * The overlay shares video-local coordinates with the video element and moves
+   * with the video when the user pans or zooms.
+   */
+  public addVideoOverlay(node: Node): void {
+    this.videoContentLayer.addChild(node);
+  }
+
+  /** Factory for the document-level keyboard handler for this player instance. */
+  private createKeyboardHandler(model: SimModel): (e: KeyboardEvent) => void {
+    return (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.key === "Home" && model.videoLoadedProperty.value) {
+        this.rewindToStart();
+      }
     };
   }
 

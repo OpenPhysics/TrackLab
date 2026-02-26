@@ -112,7 +112,7 @@ function angleToolIcon(): Node {
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
 
-function makeRow(icon: Node, property: SimModel["measuringTapeVisibleProperty"], accessibleName: string): Checkbox {
+function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProperty, accessibleName: string): Checkbox {
   return new Checkbox(property, icon, {
     checkboxColor: TrackLabColors.checkboxColorProperty,
     checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
@@ -134,10 +134,14 @@ export class MeasurementToolsPanel extends Panel {
       children: [
         makeRow(
           measuringTapeIcon(),
-          model.measuringTapeVisibleProperty,
+          model.overlayTools.measuringTapeVisibleProperty,
           a11yStrings.toggleMeasuringTapeStringProperty.value,
         ),
-        makeRow(angleToolIcon(), model.angleToolVisibleProperty, a11yStrings.toggleAngleToolStringProperty.value),
+        makeRow(
+          angleToolIcon(),
+          model.overlayTools.angleToolVisibleProperty,
+          a11yStrings.toggleAngleToolStringProperty.value,
+        ),
       ],
       spacing: CONTROL_PANEL_ROWS_SPACING,
       align: "left",

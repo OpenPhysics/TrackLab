@@ -286,14 +286,15 @@ export default class GraphDataManager {
   /**
    * Calculate appropriate tick spacing for a given range.
    * This is a static utility method that doesn't depend on instance state.
+   *
+   * @param rangeLength - The total span of the axis.
+   * @param targetTicks - Desired approximate number of major ticks (default 5).
    */
-  public static calculateTickSpacing(rangeLength: number): number {
+  public static calculateTickSpacing(rangeLength: number, targetTicks = 5): number {
     if (!Number.isFinite(rangeLength) || rangeLength <= 0) {
       return 1;
     }
 
-    // Target ~5-6 ticks to avoid too many grid lines
-    const targetTicks = 5;
     const roughSpacing = rangeLength / targetTicks;
 
     if (roughSpacing < 1e-10) {

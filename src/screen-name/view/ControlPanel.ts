@@ -159,7 +159,7 @@ function trackingIcon(): Node {
 
 // ── Helper ────────────────────────────────────────────────────────────────
 
-function makeRow(icon: Node, property: SimModel["axesVisibleProperty"], accessibleName: string): Checkbox {
+function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProperty, accessibleName: string): Checkbox {
   return new Checkbox(property, icon, {
     checkboxColor: TrackLabColors.checkboxColorProperty,
     checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
@@ -184,7 +184,7 @@ export class ControlPanel extends Panel {
 
     const autoTrackingCheckbox = makeRow(
       trackingIcon(),
-      model.autoTrackingProperty,
+      model.overlayTools.autoTrackingProperty,
       a11yStrings.toggleAutoTrackingStringProperty.value,
     );
     // The auto-tracking checkbox is only visible if the preference allows it.
@@ -193,9 +193,17 @@ export class ControlPanel extends Panel {
 
     const rows = new VBox({
       children: [
-        makeRow(axesIcon(), model.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
-        makeRow(calibrationIcon(), model.calibrationVisibleProperty, a11yStrings.toggleCalibrationStringProperty.value),
-        makeRow(magnifyIcon(), model.magnifyVideoProperty, a11yStrings.toggleMagnifierStringProperty.value),
+        makeRow(axesIcon(), model.overlayTools.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
+        makeRow(
+          calibrationIcon(),
+          model.overlayTools.calibrationVisibleProperty,
+          a11yStrings.toggleCalibrationStringProperty.value,
+        ),
+        makeRow(
+          magnifyIcon(),
+          model.overlayTools.magnifyVideoProperty,
+          a11yStrings.toggleMagnifierStringProperty.value,
+        ),
         autoTrackingCheckbox,
       ],
       spacing: CONTROL_PANEL_ROWS_SPACING,
