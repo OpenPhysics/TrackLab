@@ -15,6 +15,7 @@ import type { SimModel } from "../model/SimModel.js";
 const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
 
 import { StringManager } from "../../i18n/StringManager.js";
+import trackLab from "../../TrackLabNamespace.js";
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
@@ -338,3 +339,5 @@ export class VideoPlayerNode extends Node {
     this.videoElement.load();
   }
 }
+
+trackLab.register("VideoPlayerNode", VideoPlayerNode);

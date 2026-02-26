@@ -18,6 +18,7 @@ import {
   CONTROL_PANEL_Y_MARGIN,
   PANEL_CORNER_RADIUS,
 } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ICON_ARROW_HEAD_SIZE = 5; // headWidth and headHeight for icon arrows
@@ -219,3 +220,5 @@ export class ControlPanel extends Panel {
     });
   }
 }
+
+trackLab.register("ControlPanel", ControlPanel);

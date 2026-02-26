@@ -25,6 +25,7 @@ import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 const a11yStrings = StringManager.getInstance().getA11y();
 
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 
@@ -300,3 +301,5 @@ export class TrackListPanel extends Panel {
     super.dispose();
   }
 }
+
+trackLab.register("TrackListPanel", TrackListPanel);

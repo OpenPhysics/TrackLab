@@ -14,6 +14,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const MAX_TRAIL = 150;
@@ -419,3 +420,5 @@ export class AutoTrackerNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("AutoTrackerNode", AutoTrackerNode);

@@ -27,6 +27,7 @@ import {
   OVERLAY_SHIFT_DRAG_SPEED,
   OVERLAY_TOUCH_DILATION,
 } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 // ── Visual constants ──────────────────────────────────────────────────────────
@@ -241,3 +242,5 @@ export class AngleToolNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("AngleToolNode", AngleToolNode);

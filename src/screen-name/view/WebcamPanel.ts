@@ -15,6 +15,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
 import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
 
@@ -480,3 +481,5 @@ export class WebcamPanel extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("WebcamPanel", WebcamPanel);

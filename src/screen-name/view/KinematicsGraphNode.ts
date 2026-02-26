@@ -13,6 +13,7 @@ import { Checkbox } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
+import trackLab from "../../TrackLabNamespace.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
 import type { PlottableProperty } from "../graph/PlottableProperty.js";
@@ -317,3 +318,5 @@ export class KinematicsGraphNode extends Node {
     }
   }
 }
+
+trackLab.register("KinematicsGraphNode", KinematicsGraphNode);

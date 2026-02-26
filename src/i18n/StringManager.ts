@@ -6,6 +6,7 @@
  */
 
 import { LocalizedString, type ReadOnlyProperty } from "scenerystack";
+import trackLab from "../TrackLabNamespace.js";
 import stringsEn from "./strings_en.json";
 import stringsFr from "./strings_fr.json";
 
@@ -560,3 +561,5 @@ export class StringManager {
     };
   }
 }
+
+trackLab.register("StringManager", StringManager);

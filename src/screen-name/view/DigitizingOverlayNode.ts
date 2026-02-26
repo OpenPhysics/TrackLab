@@ -12,6 +12,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const OUTER_R = 12;
@@ -407,3 +408,5 @@ export class DigitizingOverlayNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("DigitizingOverlayNode", DigitizingOverlayNode);

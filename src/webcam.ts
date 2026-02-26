@@ -3,6 +3,8 @@
  * Handles MediaStream, MediaRecorder, and device enumeration.
  */
 
+import trackLab from "./TrackLabNamespace.js";
+
 /** Frame rate constraints for getUserMedia. */
 export interface FrameRateConstraints {
   ideal?: number;
@@ -586,3 +588,5 @@ export async function getAnimatedWebPInfo(
     return null;
   }
 }
+
+trackLab.register("WebcamRecorder", WebcamRecorder);

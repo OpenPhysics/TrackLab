@@ -13,6 +13,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
 import { StringManager } from "../i18n/StringManager.js";
 import TrackLabColors from "../TrackLabColors.js";
+import trackLab from "../TrackLabNamespace.js";
 import type { TrackLabPreferencesModel } from "./TrackLabPreferencesModel.js";
 
 export class TrackLabPreferencesNode extends VBox {
@@ -135,3 +136,5 @@ export class TrackLabPreferencesNode extends VBox {
     });
   }
 }
+
+trackLab.register("TrackLabPreferencesNode", TrackLabPreferencesNode);

@@ -17,6 +17,7 @@ import {
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import { OpenCVTracker, type TrackerRegion } from "../../tracking/OpenCVTracker.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
 import { OverlayToolsModel } from "./OverlayToolsModel.js";
@@ -421,3 +422,5 @@ export class SimModel {
     // video playback is driven by the HTML video element; no model stepping needed
   }
 }
+
+trackLab.register("SimModel", SimModel);

@@ -26,6 +26,7 @@ import {
   OVERLAY_SHIFT_DRAG_SPEED,
   OVERLAY_TOUCH_DILATION,
 } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 // ── Visual constants ──────────────────────────────────────────────────────────
@@ -163,3 +164,5 @@ export class MeasuringTapeNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("MeasuringTapeNode", MeasuringTapeNode);

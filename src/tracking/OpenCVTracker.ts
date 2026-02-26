@@ -11,6 +11,8 @@
  *  - Computing the windowed search region (cheap arithmetic)
  */
 
+import trackLab from "../TrackLabNamespace.js";
+
 export type TrackerRegion = { x: number; y: number; w: number; h: number };
 
 type WorkerResponse =
@@ -225,3 +227,5 @@ export class OpenCVTracker {
     }
   }
 }
+
+trackLab.register("OpenCVTracker", OpenCVTracker);

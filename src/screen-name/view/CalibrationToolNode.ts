@@ -22,6 +22,7 @@ import {
   OVERLAY_DRAG_SPEED,
   OVERLAY_SHIFT_DRAG_SPEED,
 } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import { CALIBRATION_UNITS } from "../model/OverlayToolsModel.js";
 import type { SimModel } from "../model/SimModel.js";
 
@@ -304,3 +305,5 @@ export class CalibrationToolNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("CalibrationToolNode", CalibrationToolNode);

@@ -10,6 +10,7 @@
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { CALIB_HALF_LENGTH, VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
 
 // ── Calibration unit type ──────────────────────────────────────────────────
@@ -132,3 +133,5 @@ export class OverlayToolsModel {
     this.calibUnitProperty.reset();
   }
 }
+
+trackLab.register("OverlayToolsModel", OverlayToolsModel);

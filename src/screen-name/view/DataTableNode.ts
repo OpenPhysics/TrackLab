@@ -20,6 +20,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
 import TrackLabColors, { TRACK_COLORS } from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 import { buildDataRows, type DataRow, generateCsv } from "../model/TrackExporter.js";
@@ -734,3 +735,5 @@ export class DataTableNode extends Panel {
     super.dispose();
   }
 }
+
+trackLab.register("DataTableNode", DataTableNode);

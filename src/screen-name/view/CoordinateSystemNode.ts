@@ -14,6 +14,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
+import trackLab from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const ARROW_LENGTH = 120;
@@ -279,3 +280,5 @@ export class CoordinateSystemNode extends Node {
     super.dispose();
   }
 }
+
+trackLab.register("CoordinateSystemNode", CoordinateSystemNode);

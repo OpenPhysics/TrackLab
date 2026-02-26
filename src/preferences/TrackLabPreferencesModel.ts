@@ -7,6 +7,7 @@
  */
 
 import { BooleanProperty } from "scenerystack/axon";
+import trackLab from "../TrackLabNamespace.js";
 import trackLabQueryParameters from "./trackLabQueryParameters.js";
 
 export class TrackLabPreferencesModel {
@@ -51,3 +52,5 @@ export class TrackLabPreferencesModel {
     this.enableMeasurementToolsProperty.reset();
   }
 }
+
+trackLab.register("TrackLabPreferencesModel", TrackLabPreferencesModel);
