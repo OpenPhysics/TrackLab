@@ -221,7 +221,7 @@ export class WebcamRecorder {
    * Request camera permission and get available devices.
    * Returns true if permission was granted.
    */
-  async requestPermission(): Promise<boolean> {
+  public async requestPermission(): Promise<boolean> {
     try {
       // Request a temporary stream to trigger permission prompt
       const tempStream = await navigator.mediaDevices.getUserMedia({
@@ -241,7 +241,7 @@ export class WebcamRecorder {
   /**
    * Get a list of available video input devices (cameras).
    */
-  async getAvailableCameras(): Promise<MediaDeviceInfo[]> {
+  public async getAvailableCameras(): Promise<MediaDeviceInfo[]> {
     const devices = await navigator.mediaDevices.enumerateDevices();
     return devices.filter((device) => device.kind === "videoinput");
   }
@@ -252,7 +252,11 @@ export class WebcamRecorder {
    * @param deviceId - Optional device ID to use a specific camera
    * @param frameRate - Optional frame rate constraints (e.g. { ideal: 60, max: 60 })
    */
-  async startPreview(previewEl: HTMLVideoElement, deviceId?: string, frameRate?: FrameRateConstraints): Promise<void> {
+  public async startPreview(
+    previewEl: HTMLVideoElement,
+    deviceId?: string,
+    frameRate?: FrameRateConstraints,
+  ): Promise<void> {
     // Stop any existing stream first
     this.stopPreview();
 
@@ -277,7 +281,7 @@ export class WebcamRecorder {
   /**
    * Stop the camera preview and release the stream.
    */
-  stopPreview(): void {
+  public stopPreview(): void {
     if (this.stream) {
       for (const track of this.stream.getTracks()) {
         track.stop();
@@ -293,7 +297,7 @@ export class WebcamRecorder {
    * Start recording from the current stream.
    * Must call startPreview first.
    */
-  startRecording(): void {
+  public startRecording(): void {
     if (!this.stream) {
       throw new Error("No active stream. Call startPreview first.");
     }
@@ -320,7 +324,7 @@ export class WebcamRecorder {
   /**
    * Stop recording and return the recorded video as a Blob.
    */
-  stopRecording(): Promise<Blob> {
+  public stopRecording(): Promise<Blob> {
     return new Promise((resolve, reject) => {
       if (!this.mediaRecorder) {
         reject(new Error("No active recording."));
@@ -345,14 +349,14 @@ export class WebcamRecorder {
   /**
    * Check if currently recording.
    */
-  isRecording(): boolean {
+  public isRecording(): boolean {
     return this.mediaRecorder?.state === "recording";
   }
 
   /**
    * Check if preview is active.
    */
-  isPreviewActive(): boolean {
+  public isPreviewActive(): boolean {
     return this.stream?.active ?? false;
   }
 
@@ -361,7 +365,7 @@ export class WebcamRecorder {
    * Uses track.getSettings() which returns the negotiated hardware settings.
    * Returns null if no stream or no video track.
    */
-  getFrameRate(): number | null {
+  public getFrameRate(): number | null {
     const track = this.stream?.getVideoTracks()[0];
     if (!track) {
       return null;
@@ -375,7 +379,7 @@ export class WebcamRecorder {
    * Get the frame rate capabilities supported by the hardware.
    * Returns { min, max } or null if no stream or no video track.
    */
-  getFrameRateCapabilities(): FrameRateCapabilities | null {
+  public getFrameRateCapabilities(): FrameRateCapabilities | null {
     const track = this.stream?.getVideoTracks()[0];
     if (!track) {
       return null;
@@ -391,7 +395,7 @@ export class WebcamRecorder {
   /**
    * Get the current device ID being used.
    */
-  getCurrentDeviceId(): string | null {
+  public getCurrentDeviceId(): string | null {
     return this.currentDeviceId;
   }
 
@@ -399,14 +403,14 @@ export class WebcamRecorder {
    * Get the current MediaStream (active or recently stopped).
    * Returns null if no stream was ever created.
    */
-  getStream(): MediaStream | null {
+  public getStream(): MediaStream | null {
     return this.stream;
   }
 
   /**
    * Clean up all resources.
    */
-  cleanup(): void {
+  public cleanup(): void {
     if (this.mediaRecorder?.state === "recording") {
       this.mediaRecorder.stop();
     }
