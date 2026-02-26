@@ -64,7 +64,8 @@
   "autoTracker": {
     "dragToSelect": "Drag on video to select object to track",
     "videoTrackingArea": "Video tracking area — drag to select object to track",
-    "trackingInitFailed": "Tracking initialisation failed. Try again."
+    "trackingInitFailed": "Tracking initialisation failed. Try again.",
+    "framesTracked": "● {{count}} frames"
   },
   "calibration": {
     "pointsTooClose": "Points too close — move apart to calibrate",
