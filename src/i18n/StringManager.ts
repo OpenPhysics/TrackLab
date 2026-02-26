@@ -222,11 +222,13 @@ export class StringManager {
     dragToSelectStringProperty: ReadOnlyProperty<string>;
     videoTrackingAreaStringProperty: ReadOnlyProperty<string>;
     trackingInitFailedStringProperty: ReadOnlyProperty<string>;
+    framesTrackedStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       dragToSelectStringProperty: this.stringProperties.autoTracker.dragToSelectStringProperty,
       videoTrackingAreaStringProperty: this.stringProperties.autoTracker.videoTrackingAreaStringProperty,
       trackingInitFailedStringProperty: this.stringProperties.autoTracker.trackingInitFailedStringProperty,
+      framesTrackedStringProperty: this.stringProperties.autoTracker.framesTrackedStringProperty,
     };
   }
 

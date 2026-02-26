@@ -64,7 +64,8 @@
   "autoTracker": {
     "dragToSelect": "Faire glisser sur la vid\u00e9o pour s\u00e9lectionner l'objet \u00e0 suivre",
     "videoTrackingArea": "Zone de suivi vid\u00e9o \u2014 faire glisser pour s\u00e9lectionner l'objet \u00e0 suivre",
-    "trackingInitFailed": "\u00c9chec de l'initialisation du suivi. R\u00e9essayez."
+    "trackingInitFailed": "\u00c9chec de l'initialisation du suivi. R\u00e9essayez.",
+    "framesTracked": "● {{count}} images"
   },
   "calibration": {
     "pointsTooClose": "Points trop proches \u2014 les \u00e9carter pour calibrer",
