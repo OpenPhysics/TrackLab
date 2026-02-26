@@ -18,6 +18,52 @@ import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILAT
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
+/**
+ * Returns frame count, total duration (seconds), and average fps for an
+ * animated WebP image using the ImageDecoder API (Chrome 94+).
+ * Resolves to null if the API is unavailable or the file is not a valid
+ * animated WebP.
+ */
+async function getAnimatedWebPInfo(
+  blob: Blob,
+): Promise<{ frameCount: number; duration: number; fps: number } | null> {
+  if (typeof ImageDecoder === "undefined") {
+    return null;
+  }
+  try {
+    const decoder = new ImageDecoder({
+      data: blob.stream(),
+      type: "image/webp",
+      preferAnimation: true,
+    });
+    await decoder.tracks.ready;
+    const track = decoder.tracks.selectedTrack;
+    if (!track) {
+      decoder.close();
+      return null;
+    }
+    const frameCount = track.frameCount;
+    if (frameCount <= 0) {
+      decoder.close();
+      return null;
+    }
+    // Sum per-frame durations (microseconds) to get total duration in seconds
+    let totalMicroseconds = 0;
+    for (let i = 0; i < frameCount; i++) {
+      const result = await decoder.decode({ frameIndex: i });
+      totalMicroseconds += result.image.duration ?? 0;
+      result.image.close();
+    }
+    decoder.close();
+    const duration = totalMicroseconds / 1_000_000;
+    const fps = duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
+    return { frameCount, duration, fps };
+  } catch {
+    // Not a valid animated WebP or ImageDecoder threw — fall back gracefully.
+    return null;
+  }
+}
+
 const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
 const CONTROLS_SPACING = 12;
@@ -336,7 +382,7 @@ export class VideoSourceControlNode extends HBox {
     // ── Upload button (opens file picker for local video files) ───────────
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = "video/*";
+    fileInput.accept = "video/*,image/webp";
     fileInput.style.display = "none";
     document.body.appendChild(fileInput);
 
@@ -345,8 +391,27 @@ export class VideoSourceControlNode extends HBox {
       if (!file) {
         return;
       }
-      // Read duration via a temporary video element, then store and load
       const blob: Blob = file;
+      // Reset so selecting the same file again still triggers "change"
+      fileInput.value = "";
+
+      if (file.type === "image/webp") {
+        // HTMLVideoElement does not report duration for animated WebP.
+        // Use ImageDecoder to count frames and derive duration from frame timing.
+        void getAnimatedWebPInfo(blob).then((info) => {
+          const duration = info?.duration ?? 0;
+          const fps = info?.fps ?? DEFAULT_FRAME_RATE;
+          const upload = model.addUploadedVideo(blob, file.name, duration, fps);
+          model.currentWebcamBlobProperty.value = blob;
+          this.lastLoadedValue = upload.id;
+          selectedVideoProperty.value = upload.id;
+          model.isWebcamVideoProperty.value = true;
+          onWebcamReady(blob, duration);
+        });
+        return;
+      }
+
+      // Read duration via a temporary video element, then store and load
       const tempUrl = URL.createObjectURL(blob);
       const tempVideo = document.createElement("video");
       tempVideo.preload = "metadata";
@@ -362,8 +427,6 @@ export class VideoSourceControlNode extends HBox {
         model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
       });
-      // Reset so selecting the same file again still triggers "change"
-      fileInput.value = "";
     });
 
     const uploadButton = createTrackLabButton(makeUploadIcon(), {
