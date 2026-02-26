@@ -73,6 +73,7 @@ type VideoFile = {
   labelProperty: TReadOnlyProperty<string>;
   filename: string;
   fps: number;
+  frameCount: number;
   tandemName: string;
 };
 
@@ -106,72 +107,84 @@ export class VideoSourceControlNode extends HBox {
         labelProperty: videoFileStrings.ballOilStringProperty,
         filename: "ballOil.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 249,
         tandemName: "ballOilItem",
       },
       {
         labelProperty: videoFileStrings.bouncingCartStringProperty,
         filename: "bouncingCart.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 328,
         tandemName: "bouncingCartItem",
       },
       {
         labelProperty: videoFileStrings.cartPendulumStringProperty,
         filename: "cartPendulum.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 44,
         tandemName: "cartPendulumItem",
       },
       {
         labelProperty: videoFileStrings.cupsClipsStringProperty,
         filename: "cupsClips.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 52,
         tandemName: "cupsClipsItem",
       },
       {
         labelProperty: videoFileStrings.parachuteMonkeyStringProperty,
         filename: "parachuteMonkey.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 21,
         tandemName: "parachuteMonkeyItem",
       },
       {
         labelProperty: videoFileStrings.pendulumStringProperty,
         filename: "pendulum.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 62,
         tandemName: "pendulumItem",
       },
       {
         labelProperty: videoFileStrings.pendulumDragStringProperty,
         filename: "pendulumDrag.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 176,
         tandemName: "pendulumDragItem",
       },
       {
         labelProperty: videoFileStrings.pucksCollideStringProperty,
         filename: "pucksCollide.mp4",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 33,
         tandemName: "pucksCollideItem",
       },
       {
         labelProperty: videoFileStrings.collisionOneStringProperty,
         filename: "collisionOne.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 191,
         tandemName: "collisionOneItem",
       },
       {
         labelProperty: videoFileStrings.collisionTwoStringProperty,
         filename: "collisionTwo.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 247,
         tandemName: "collisionTwoItem",
       },
       {
         labelProperty: videoFileStrings.oscillatingCarStringProperty,
         filename: "oscillatingCar.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 243,
         tandemName: "oscillatingCarItem",
       },
       {
         labelProperty: videoFileStrings.verticalTossStringProperty,
         filename: "verticalToss.webm",
         fps: DEFAULT_FRAME_RATE,
+        frameCount: 77,
         tandemName: "verticalTossItem",
       },
     ];
@@ -203,6 +216,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = recording.fps;
+        model.totalFrameCountProperty.value = 0;
         model.currentWebcamBlobProperty.value = recording.blob;
         onWebcamReady(recording.blob, recording.duration);
         return;
@@ -214,6 +228,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = true;
         model.frameRateProperty.value = upload.fps;
+        model.totalFrameCountProperty.value = upload.frameCount ?? 0;
         model.currentWebcamBlobProperty.value = upload.blob;
         onWebcamReady(upload.blob, upload.duration);
         return;
@@ -225,6 +240,7 @@ export class VideoSourceControlNode extends HBox {
         this.lastLoadedValue = value;
         model.isWebcamVideoProperty.value = false;
         model.currentWebcamBlobProperty.value = null;
+        model.totalFrameCountProperty.value = videoInfo.frameCount;
         onVideoSelected(`./videos/${value}`, videoInfo.fps);
       }
     });
@@ -400,7 +416,9 @@ export class VideoSourceControlNode extends HBox {
         const info = await getAnimatedWebPInfo(blob);
         const duration = info?.duration ?? 0;
         const fps = info?.fps ?? DEFAULT_FRAME_RATE;
-        const upload = model.addUploadedVideo(blob, file.name, duration, fps);
+        const frameCount = info?.frameCount ?? 0;
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount > 0 ? frameCount : undefined);
+        model.totalFrameCountProperty.value = frameCount;
         model.currentWebcamBlobProperty.value = blob;
         this.lastLoadedValue = upload.id;
         selectedVideoProperty.value = upload.id;
@@ -409,8 +427,9 @@ export class VideoSourceControlNode extends HBox {
         return;
       }
 
-      const storeAndLoad = (duration: number, fps?: number) => {
-        const upload = model.addUploadedVideo(blob, file.name, duration, fps);
+      const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount);
+        model.totalFrameCountProperty.value = frameCount ?? 0;
         model.currentWebcamBlobProperty.value = blob;
         this.lastLoadedValue = upload.id;
         selectedVideoProperty.value = upload.id;
@@ -423,7 +442,7 @@ export class VideoSourceControlNode extends HBox {
         countWebmFrames(blob)
           .then(({ frameCount, duration }) => {
             const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
-            storeAndLoad(duration, fps);
+            storeAndLoad(duration, fps, frameCount > 0 ? frameCount : undefined);
           })
           .catch(() => storeAndLoad(0));
       } else {

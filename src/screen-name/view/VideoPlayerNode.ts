@@ -75,6 +75,19 @@ export class VideoPlayerNode extends Node {
     const onLoadedMetadata = () => {
       model.currentTimeProperty.value = 0;
       updateDuration();
+      // WebM files from MediaRecorder report Infinity until seeked to the end.
+      // Trigger that seek here; durationchange (already listened to) will fire
+      // with the real duration, and the once-handler resets the position to 0.
+      if (!Number.isFinite(this.videoElement.duration)) {
+        this.videoElement.addEventListener(
+          "seeked",
+          () => {
+            this.videoElement.currentTime = 0;
+          },
+          { once: true },
+        );
+        this.videoElement.currentTime = Number.MAX_SAFE_INTEGER;
+      }
     };
     this.videoElement.addEventListener("loadedmetadata", onLoadedMetadata);
     this.videoElement.addEventListener("durationchange", updateDuration);

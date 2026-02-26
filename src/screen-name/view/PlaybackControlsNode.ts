@@ -169,7 +169,8 @@ export class PlaybackControlsNode extends HBox {
       const frameRate = model.frameRateProperty.value;
 
       if (Number.isFinite(duration) && duration > 0 && frameRate > 0) {
-        const totalFrames = Math.round(duration * frameRate);
+        const knownCount = model.totalFrameCountProperty.value;
+        const totalFrames = knownCount > 0 ? knownCount : Math.round(duration * frameRate);
         const { majorInterval, minorInterval } = calculateTickInterval(totalFrames);
 
         // Add major ticks
@@ -208,6 +209,12 @@ export class PlaybackControlsNode extends HBox {
     };
     model.frameRateProperty.lazyLink(frameRateListener);
 
+    // Recreate scrubber when the exact frame count becomes known
+    const totalFrameCountListener = () => {
+      this.replaceScrubber(createScrubber());
+    };
+    model.totalFrameCountProperty.lazyLink(totalFrameCountListener);
+
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
         videoElement.currentTime = time;
@@ -228,8 +235,8 @@ export class PlaybackControlsNode extends HBox {
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty],
-      (time: number, duration: number, frameRate: number) => {
+      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty, model.totalFrameCountProperty],
+      (time: number, duration: number, frameRate: number, totalFrameCount: number) => {
         if (duration <= 0) {
           return "0/0";
         }
@@ -240,7 +247,7 @@ export class PlaybackControlsNode extends HBox {
         if (!Number.isFinite(duration)) {
           return `${current}/?`;
         }
-        const total = Math.round(duration * frameRate);
+        const total = totalFrameCount > 0 ? totalFrameCount : Math.round(duration * frameRate);
         return `${current}/${total}`;
       },
     );
@@ -297,6 +304,7 @@ export class PlaybackControlsNode extends HBox {
       model.currentTimeProperty.unlink(onTimeChange);
       model.durationProperty.unlink(durationListener);
       model.frameRateProperty.unlink(frameRateListener);
+      model.totalFrameCountProperty.unlink(totalFrameCountListener);
       timeSpeedProperty.dispose();
       totalTimeTextProperty.dispose();
       frameCountTextProperty.dispose();

@@ -81,6 +81,8 @@ export type UploadedVideo = {
   label: string;
   duration: number;
   fps: number;
+  /** Actual frame count from countWebmFrames / getAnimatedWebPInfo, or undefined if unknown. */
+  frameCount?: number;
   timestamp: number;
 };
 
@@ -113,6 +115,11 @@ export class SimModel {
   // any scenery-phet dependency.
   public readonly playbackRateProperty = new NumberProperty(DEFAULT_PLAYBACK_RATE, {
     range: PLAYBACK_RATE_RANGE,
+  });
+
+  // ── Exact frame count when known (0 = unknown; derive from duration × fps) ──
+  public readonly totalFrameCountProperty = new NumberProperty(0, {
+    range: new Range(0, Number.MAX_VALUE),
   });
 
   // Derived frame duration for convenience
@@ -421,7 +428,13 @@ export class SimModel {
     return recording;
   }
 
-  public addUploadedVideo(blob: Blob, name: string, duration: number, fps = DEFAULT_FRAME_RATE): UploadedVideo {
+  public addUploadedVideo(
+    blob: Blob,
+    name: string,
+    duration: number,
+    fps = DEFAULT_FRAME_RATE,
+    frameCount?: number,
+  ): UploadedVideo {
     const num = this.nextUploadNumber;
     this.nextUploadNumber++;
     // Strip extension and truncate long names for the dropdown label
@@ -437,6 +450,7 @@ export class SimModel {
       label: `${displayName}  (${durationStr})`,
       duration,
       fps,
+      ...(frameCount !== undefined ? { frameCount } : {}),
       timestamp: Date.now(),
     };
     this.uploadedVideosProperty.value = [...this.uploadedVideosProperty.value, upload];
@@ -450,6 +464,7 @@ export class SimModel {
     this.currentTimeProperty.reset();
     this.durationProperty.reset();
     this.frameRateProperty.reset();
+    this.totalFrameCountProperty.reset();
     this.isWebcamVideoProperty.reset();
     this.webcamRecordingsProperty.value = [];
     this.currentWebcamBlobProperty.value = null;
