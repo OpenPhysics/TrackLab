@@ -76,6 +76,8 @@ export class AutoTrackerNode extends Node {
   private selStart = Vector2.ZERO;
   /** ID of the pending requestAnimationFrame callback (0 = none pending). */
   private pendingFrameId = 0;
+  /** True while an async track() call is in flight; prevents concurrent tracking calls. */
+  private trackInProgress = false;
   /** Total frames successfully tracked since the last selection; drives the badge readout. */
   private framesTrackedCount = 0;
 
@@ -334,12 +336,23 @@ export class AutoTrackerNode extends Node {
     // Scheduling it via requestAnimationFrame coalesces rapid timeupdate/seeked
     // events into at most one tracking call per browser paint cycle, preventing
     // event callbacks from piling up and freezing the main thread.
-    const processFrame = () => {
+    const processFrame = async () => {
       this.pendingFrameId = 0;
       if (!(this.visible && this.model.tracker.ready)) {
         return;
       }
-      const pt = this.model.tracker.track(videoElement);
+
+      this.trackInProgress = true;
+      let pt: { x: number; y: number } | null = null;
+      try {
+        pt = await this.model.tracker.track(videoElement);
+      } catch {
+        // Tracker was disposed mid-flight (e.g. new selection started); skip frame.
+        return;
+      } finally {
+        this.trackInProgress = false;
+      }
+
       if (!pt) {
         return;
       }
@@ -369,9 +382,9 @@ export class AutoTrackerNode extends Node {
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {
-          // Convert video-pixel coords to global/scene coords, then to model coords.
-          const globalPt = this.localToGlobalPoint(new Vector2(pt.x, pt.y));
-          const modelPt = model.pixelToModelCoords(globalPt);
+          // pt is already in local (video-pixel) coordinates — the same space
+          // pixelToModelCoords expects, matching how DigitizingOverlayNode records points.
+          const modelPt = model.pixelToModelCoords(new Vector2(pt.x, pt.y));
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           this.recordedFrames.add(frame);
         }
@@ -379,7 +392,7 @@ export class AutoTrackerNode extends Node {
     };
 
     const onFrame = () => {
-      if (this.pendingFrameId === 0) {
+      if (this.pendingFrameId === 0 && !this.trackInProgress) {
         this.pendingFrameId = requestAnimationFrame(processFrame);
       }
     };
@@ -454,6 +467,7 @@ export class AutoTrackerNode extends Node {
   /** Clear tracking state (template, trail, visuals, and any displayed error). */
   public reset(): void {
     this.cancelPendingFrame();
+    this.trackInProgress = false;
     this.model.tracker.dispose();
     this.trailHead = 0;
     this.trailSize = 0;
