@@ -4,10 +4,11 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 
 ## Features
 
-- **Video playback** — Load from 9 built-in physics sample videos or record your own with a webcam
+- **Video playback** — Load from 12 built-in physics sample videos or record your own with a webcam
 - **Coordinate system** — Place and rotate a draggable axes overlay anywhere on the video
 - **Calibration tool** — Define a known reference distance to convert pixel measurements to real-world units (mm, cm, m, km, in, ft)
 - **Auto-tracking** — Select any object and track it across frames using OpenCV template matching
+- **Video upload** — Load local video files or animated WebP images from disk
 - **Manual digitizing** — Add multiple tracks (A, B, C…) and place points frame-by-frame with a crosshair cursor and magnifier
 - **Measurement tools** — Draggable measuring tape (real-world distance) and three-handle angle tool, enabled via preferences
 - **Kinematics graph** — Configurable X-Y plot of any two kinematic quantities (position, velocity, acceleration, speed) for any track
@@ -25,14 +26,18 @@ The following physics scenarios are included:
 
 | File | Description |
 |------|-------------|
-| `ball_oil.mp4` | Ball falling through oil |
-| `bouncing_cart.mp4` | Cart bouncing off a wall |
-| `cart_pendulum.mp4` | Cart with pendulum |
-| `CupsClips.mp4` | Cup collision demonstration |
-| `parachute_monkey.mp4` | Monkey with parachute drop |
-| `Pendulum.mp4` | Simple pendulum |
-| `pendulum_drag.mp4` | Pendulum with drag |
-| `PucksCollide.mp4` | Air puck collision |
+| `ballOil.mp4` | Ball falling through oil |
+| `bouncingCart.mp4` | Cart bouncing off a wall |
+| `cartPendulum.mp4` | Cart with pendulum |
+| `cupsClips.mp4` | Cup collision demonstration |
+| `parachuteMonkey.mp4` | Monkey with parachute drop |
+| `pendulum.mp4` | Simple pendulum |
+| `pendulumDrag.mp4` | Pendulum with drag |
+| `pucksCollide.mp4` | Air puck collision |
+| `collisionOne.webm` | One-dimensional collision |
+| `collisionTwo.webm` | Two-dimensional collision |
+| `oscillatingCar.webm` | Oscillating car |
+| `verticalToss.webm` | Vertical toss |
 
 ## Tech Stack
 
@@ -156,7 +161,7 @@ src/
 │   │   ├── AngleToolNode.ts           # Three-handle angle overlay with degree label
 │   │   ├── InfoDialogNode.ts          # Modal help dialog for digitizing workflow
 │   │   ├── WebcamPanel.ts             # Webcam recording dialog
-│   │   └── KeyboardShortcutsNode.ts
+│   │   └── KeyboardShortcutsNode.ts   # Keyboard shortcuts reference overlay
 │   └── graph/
 │       ├── ConfigurableGraph.ts              # Top-level graph node; axis selectors, chart layout, zoom/reset
 │       ├── GraphDataManager.ts               # Data points, auto-scaling, tick spacing
@@ -186,7 +191,7 @@ State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon)
 **Auto-tracking:**
 1. User drags a selection box over the target object (`AutoTrackerNode`)
 2. `OpenCVTracker.initFromVideo()` captures the template image from the current video frame
-3. On each frame advance, `OpenCVTracker.track()` runs OpenCV `matchTemplate` (TM_CCOEFF_NORMED) to find the best match location
+3. On each frame advance, `OpenCVTracker.track()` runs OpenCV `matchTemplate` (TM_CCOEFF_NORMED) in a Web Worker to find the best match location without blocking the main thread
 4. The result center point is appended to the trail and the crosshair is moved
 
 **Manual digitizing:** User adds tracks in `TrackListPanel`, selects one, then clicks on the video at each frame. `DigitizingOverlayNode` provides a crosshair cursor and magnifier; positions are stored in the track model and converted to real-world units via the model-view transform.

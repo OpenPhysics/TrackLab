@@ -24,9 +24,7 @@ import { WebcamPanel } from "./WebcamPanel.js";
  * Resolves to null if the API is unavailable or the file is not a valid
  * animated WebP.
  */
-async function getAnimatedWebPInfo(
-  blob: Blob,
-): Promise<{ frameCount: number; duration: number; fps: number } | null> {
+async function getAnimatedWebPInfo(blob: Blob): Promise<{ frameCount: number; duration: number; fps: number } | null> {
   if (typeof ImageDecoder === "undefined") {
     return null;
   }
@@ -386,7 +384,7 @@ export class VideoSourceControlNode extends HBox {
     fileInput.style.display = "none";
     document.body.appendChild(fileInput);
 
-    fileInput.addEventListener("change", () => {
+    fileInput.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
       if (!file) {
         return;
@@ -398,16 +396,15 @@ export class VideoSourceControlNode extends HBox {
       if (file.type === "image/webp") {
         // HTMLVideoElement does not report duration for animated WebP.
         // Use ImageDecoder to count frames and derive duration from frame timing.
-        void getAnimatedWebPInfo(blob).then((info) => {
-          const duration = info?.duration ?? 0;
-          const fps = info?.fps ?? DEFAULT_FRAME_RATE;
-          const upload = model.addUploadedVideo(blob, file.name, duration, fps);
-          model.currentWebcamBlobProperty.value = blob;
-          this.lastLoadedValue = upload.id;
-          selectedVideoProperty.value = upload.id;
-          model.isWebcamVideoProperty.value = true;
-          onWebcamReady(blob, duration);
-        });
+        const info = await getAnimatedWebPInfo(blob);
+        const duration = info?.duration ?? 0;
+        const fps = info?.fps ?? DEFAULT_FRAME_RATE;
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps);
+        model.currentWebcamBlobProperty.value = blob;
+        this.lastLoadedValue = upload.id;
+        selectedVideoProperty.value = upload.id;
+        model.isWebcamVideoProperty.value = true;
+        onWebcamReady(blob, duration);
         return;
       }
 
