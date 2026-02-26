@@ -194,8 +194,16 @@ export class ControlPanel extends Panel {
     const rows = new VBox({
       children: [
         makeRow(axesIcon(), model.overlayTools.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
-        makeRow(calibrationIcon(), model.overlayTools.calibrationVisibleProperty, a11yStrings.toggleCalibrationStringProperty.value),
-        makeRow(magnifyIcon(), model.overlayTools.magnifyVideoProperty, a11yStrings.toggleMagnifierStringProperty.value),
+        makeRow(
+          calibrationIcon(),
+          model.overlayTools.calibrationVisibleProperty,
+          a11yStrings.toggleCalibrationStringProperty.value,
+        ),
+        makeRow(
+          magnifyIcon(),
+          model.overlayTools.magnifyVideoProperty,
+          a11yStrings.toggleMagnifierStringProperty.value,
+        ),
         autoTrackingCheckbox,
       ],
       spacing: CONTROL_PANEL_ROWS_SPACING,

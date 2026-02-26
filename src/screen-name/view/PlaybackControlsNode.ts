@@ -18,7 +18,7 @@ import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
 
-import { GraphDataManager } from "../graph/GraphDataManager.js";
+import GraphDataManager from "../graph/GraphDataManager.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);

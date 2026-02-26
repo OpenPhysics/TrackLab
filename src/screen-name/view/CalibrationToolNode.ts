@@ -22,8 +22,8 @@ import {
   OVERLAY_DRAG_SPEED,
   OVERLAY_SHIFT_DRAG_SPEED,
 } from "../../TrackLabConstants.js";
-import type { SimModel } from "../model/SimModel.js";
 import { CALIBRATION_UNITS } from "../model/OverlayToolsModel.js";
+import type { SimModel } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
 const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
@@ -133,7 +133,10 @@ export class CalibrationToolNode extends Node {
       tandem: Tandem.OPT_OUT,
     });
     // Pattern shown inside the dialog as "Range: {{min}} – {{max}} <unit>"
-    const rangePatternProperty = new DerivedProperty([model.overlayTools.calibUnitProperty], (unit) => `{{min}} – {{max}} ${unit}`);
+    const rangePatternProperty = new DerivedProperty(
+      [model.overlayTools.calibUnitProperty],
+      (unit) => `{{min}} – {{max}} ${unit}`,
+    );
 
     // ── Midpoint panel ────────────────────────────────────────────────────
     // Button showing current value + unit; clicking it opens the keypad.
@@ -244,7 +247,10 @@ export class CalibrationToolNode extends Node {
     // A single Multilink replaces two separate link() calls so that geometry
     // is rebuilt once per change event regardless of which endpoint moved,
     // and disposal is managed in one place.
-    const calibMultilink = Multilink.multilink([model.overlayTools.calibPoint1Property, model.overlayTools.calibPoint2Property], updateGeometry);
+    const calibMultilink = Multilink.multilink(
+      [model.overlayTools.calibPoint1Property, model.overlayTools.calibPoint2Property],
+      updateGeometry,
+    );
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     endpoint1.addInputListener(

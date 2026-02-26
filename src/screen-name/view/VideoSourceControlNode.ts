@@ -40,9 +40,8 @@ function formatRecordingLabel(rec: WebcamRecording): string {
 
 function formatUploadLabel(upl: UploadedVideo): string {
   const baseName = upl.name.replace(/\.[^.]+$/, "");
-  const displayName = baseName.length > LABEL_MAX_NAME_LENGTH
-    ? `${baseName.substring(0, LABEL_MAX_NAME_LENGTH - 3)}...`
-    : baseName;
+  const displayName =
+    baseName.length > LABEL_MAX_NAME_LENGTH ? `${baseName.substring(0, LABEL_MAX_NAME_LENGTH - 3)}...` : baseName;
   return `${displayName}  (${formatDuration(upl.duration)})`;
 }
 

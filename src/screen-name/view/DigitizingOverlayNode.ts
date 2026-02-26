@@ -10,8 +10,7 @@ import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
-import { TRACK_COLORS } from "../../TrackLabColors.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 
@@ -296,7 +295,7 @@ export class DigitizingOverlayNode extends Node {
       for (const track of tracks) {
         let path = trackPaths.get(track.id);
         if (!path) {
-          path = new Path(null, { fill: TRACK_COLORS[track.colorIndex], pickable: false });
+          path = new Path(null, { fill: getTrackColor(track.colorIndex), pickable: false });
           trackPaths.set(track.id, path);
           marksLayer.addChild(path);
         }

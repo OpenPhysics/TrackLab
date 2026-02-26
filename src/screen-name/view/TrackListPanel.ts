@@ -20,8 +20,7 @@ import { Checkbox, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
-import { TRACK_COLORS } from "../../TrackLabColors.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
 
@@ -115,7 +114,7 @@ class TrackRowNode extends Node {
     super();
 
     // colorIndex is always in range 0..TRACK_COLORS.length-1 by construction
-    const trackColor = TRACK_COLORS[track.colorIndex]!;
+    const trackColor = getTrackColor(track.colorIndex);
     const ROW_CY = ROW_HEIGHT / 2;
 
     // ── Rounded background (purely visual, not pickable) ──────────────────

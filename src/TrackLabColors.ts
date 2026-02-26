@@ -55,6 +55,11 @@ export const TRACK_COLORS = [
   new Color(178, 132, 190), // Z – lavender
 ];
 
+/** Returns the Color for a track, guaranteed non-null (falls back to orange if index is out of range). */
+export function getTrackColor(colorIndex: number): Color {
+  return TRACK_COLORS[colorIndex % TRACK_COLORS.length] ?? TRACK_COLORS[0] ?? new Color(255, 140, 0);
+}
+
 /**
  * Color definitions for the TrackLab Simulations
  */

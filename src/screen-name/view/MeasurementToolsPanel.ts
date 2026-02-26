@@ -137,7 +137,11 @@ export class MeasurementToolsPanel extends Panel {
           model.overlayTools.measuringTapeVisibleProperty,
           a11yStrings.toggleMeasuringTapeStringProperty.value,
         ),
-        makeRow(angleToolIcon(), model.overlayTools.angleToolVisibleProperty, a11yStrings.toggleAngleToolStringProperty.value),
+        makeRow(
+          angleToolIcon(),
+          model.overlayTools.angleToolVisibleProperty,
+          a11yStrings.toggleAngleToolStringProperty.value,
+        ),
       ],
       spacing: CONTROL_PANEL_ROWS_SPACING,
       align: "left",

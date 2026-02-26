@@ -12,8 +12,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
-import { TRACK_COLORS } from "../../TrackLabColors.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
 import type { PlottableProperty } from "../graph/PlottableProperty.js";
@@ -231,7 +230,7 @@ export class KinematicsGraphNode extends Node {
       // Create label with track symbol in track color
       const label = new Text(track.symbol, {
         font: TRACK_CHECKBOX_FONT,
-        fill: TRACK_COLORS[track.colorIndex],
+        fill: getTrackColor(track.colorIndex),
       });
 
       // Create checkbox with accessibility label
@@ -313,7 +312,7 @@ export class KinematicsGraphNode extends Node {
         }));
 
         // Set track data with the track's color
-        this.graph.setTrackData(trackId, TRACK_COLORS[track.colorIndex], dataPoints);
+        this.graph.setTrackData(trackId, getTrackColor(track.colorIndex), dataPoints);
       }
     }
   }

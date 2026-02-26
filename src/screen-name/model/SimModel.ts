@@ -19,16 +19,8 @@ import {
 } from "../../TrackLabConstants.js";
 import { OpenCVTracker, type TrackerRegion } from "../../tracking/OpenCVTracker.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
-import {
-  CALIBRATION_DISTANCE_RANGE,
-  CALIBRATION_UNITS,
-  type CalibrationUnit,
-  OverlayToolsModel,
-} from "./OverlayToolsModel.js";
+import { OverlayToolsModel } from "./OverlayToolsModel.js";
 import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
-
-// Re-export calibration constants so existing importers need not change.
-export { CALIBRATION_DISTANCE_RANGE, CALIBRATION_UNITS, type CalibrationUnit } from "./OverlayToolsModel.js";
 
 // ── Frame rate options ─────────────────────────────────────────────────────
 export const FRAME_RATE_OPTIONS = [15, 24, 25, 29.97, 30, 50, 60] as const;
@@ -308,7 +300,7 @@ export class SimModel {
    * Returns the center of the best match in video-pixel coordinates, or null.
    */
   public async trackFrame(video: HTMLVideoElement): Promise<{ x: number; y: number } | null> {
-    return this.tracker.track(video);
+    return await this.tracker.track(video);
   }
 
   // ── Track helpers ───────────────────────────────────────────────────────
@@ -319,7 +311,8 @@ export class SimModel {
    */
   public addTrackAndActivate(): void {
     this.addTrack();
-    const newest = this.tracksProperty.value.at(-1);
+    const tracks = this.tracksProperty.value;
+    const newest = tracks[tracks.length - 1];
     if (newest) {
       this.activeTrackIdProperty.value = newest.id;
     }
