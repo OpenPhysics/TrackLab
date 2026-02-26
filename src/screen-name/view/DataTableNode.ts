@@ -11,8 +11,9 @@
  *   - Export button to download data as CSV (export1.csv, export2.csv, ...)
  */
 
-import type { TReadOnlyProperty } from "scenerystack/axon";
-import { DOM, HBox, Text, VBox } from "scenerystack/scenery";
+import { BooleanProperty, type TReadOnlyProperty } from "scenerystack/axon";
+import type { Vector2 } from "scenerystack/dot";
+import { DOM, DragListener, HBox, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -54,6 +55,14 @@ const PANEL_Y_MARGIN = 10;
 const CONTENT_SPACING = 6; // gap between title row and table DOM node
 const TITLE_ROW_SPACING = 8; // gap between title label and export button
 const EXPORT_BUTTON_ICON_SPACING = 3;
+
+// ── Resize handle geometry ────────────────────────────────────────────────────
+const HANDLE_SIZE = 12;
+const HANDLE_OFFSET = -6; // centers the 12px handle on each corner
+const RESIZE_TOUCH_DILATION = 6;
+const RESIZE_MOUSE_DILATION = 4;
+const MIN_TABLE_RESIZE_WIDTH = 200; // minimum table max-width during resize
+const MIN_TABLE_RESIZE_HEIGHT = 80; // minimum table max-height during resize
 
 // ── HTML table CSS dimensions ─────────────────────────────────────────────────
 const TABLE_WRAPPER_BORDER_RADIUS = 3; // px, border-radius on the scroll wrapper
@@ -310,6 +319,12 @@ export class DataTableNode extends Panel {
   private tableWrapper: HTMLDivElement;
   private readonly disposeDataTable: () => void;
 
+  // ── Resize state ─────────────────────────────────────────────────────────
+  private currentMaxWidth = MAX_TABLE_WIDTH;
+  private currentMaxHeight = MAX_TABLE_HEIGHT;
+  private readonly isResizingProperty = new BooleanProperty(false);
+  private readonly resizeHandles: Rectangle[] = [];
+
   // ── Incremental-update state ─────────────────────────────────────────────
   // Tracks whether the table needs a full structural rebuild or just new rows.
   private lastTrackIds: string[] = [];
@@ -438,6 +453,9 @@ export class DataTableNode extends Panel {
       }
       // Copy all styles including the dynamic height
       this.tableWrapper.style.cssText = newWrapper.style.cssText;
+      // Restore user-resized dimensions (cssText above resets them to the defaults)
+      this.tableWrapper.style.maxWidth = `${this.currentMaxWidth}px`;
+      this.tableWrapper.style.maxHeight = `${this.currentMaxHeight}px`;
 
       // Cache <tbody> reference and rebuild the frame→row map.
       const tbody = this.tableWrapper.querySelector("tbody");
@@ -566,6 +584,102 @@ export class DataTableNode extends Panel {
     };
     videoLoadedProperty.link(videoLoadedListener);
 
+    // ── Resize handles ────────────────────────────────────────────────────────
+    // Four corner handles styled and positioned to match the graph resize handles.
+    const resizeCursors = ["nwse-resize", "nesw-resize", "nesw-resize", "nwse-resize"] as const;
+    resizeCursors.forEach((cursor, cornerIndex) => {
+      const handle = new Rectangle(0, 0, HANDLE_SIZE, HANDLE_SIZE, 2, 2, {
+        fill: TrackLabColors.controlPanelFillProperty,
+        stroke: TrackLabColors.controlPanelStrokeProperty,
+        lineWidth: 2,
+        cursor,
+      });
+      handle.touchArea = handle.localBounds.dilated(RESIZE_TOUCH_DILATION);
+      handle.mouseArea = handle.localBounds.dilated(RESIZE_MOUSE_DILATION);
+
+      let dragStartState: { maxWidth: number; maxHeight: number; nodeX: number; nodeY: number } | null = null;
+      let dragStartPointerPoint: Vector2 | null = null;
+
+      handle.addInputListener(
+        new DragListener({
+          start: (event) => {
+            dragStartState = {
+              maxWidth: this.currentMaxWidth,
+              maxHeight: this.currentMaxHeight,
+              nodeX: this.x,
+              nodeY: this.y,
+            };
+            dragStartPointerPoint = event.pointer.point.copy();
+            this.isResizingProperty.value = true;
+          },
+          drag: (event) => {
+            if (!(dragStartState && dragStartPointerPoint)) {
+              return;
+            }
+            const delta = event.pointer.point.minus(dragStartPointerPoint);
+            let newMaxWidth = dragStartState.maxWidth;
+            let newMaxHeight = dragStartState.maxHeight;
+            let deltaX = 0;
+            let deltaY = 0;
+
+            switch (cornerIndex) {
+              case 0: // Top-left
+                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
+                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
+                deltaX = dragStartState.maxWidth - newMaxWidth;
+                deltaY = dragStartState.maxHeight - newMaxHeight;
+                break;
+              case 1: // Top-right
+                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
+                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
+                deltaY = dragStartState.maxHeight - newMaxHeight;
+                break;
+              case 2: // Bottom-left
+                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
+                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
+                deltaX = dragStartState.maxWidth - newMaxWidth;
+                break;
+              case 3: // Bottom-right
+                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
+                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
+                break;
+            }
+
+            this.currentMaxWidth = newMaxWidth;
+            this.currentMaxHeight = newMaxHeight;
+            this.applyTableDimensions();
+
+            if (deltaX !== 0 || deltaY !== 0) {
+              this.x = dragStartState.nodeX + deltaX;
+              this.y = dragStartState.nodeY + deltaY;
+            }
+          },
+          end: () => {
+            dragStartState = null;
+            dragStartPointerPoint = null;
+            this.isResizingProperty.value = false;
+          },
+        }),
+      );
+
+      this.resizeHandles.push(handle);
+      this.addChild(handle);
+    });
+
+    this.updateResizeHandlePositions();
+
+    // Reposition handles whenever the panel reflows (table content or font changes)
+    const localBoundsListener = () => {
+      this.updateResizeHandlePositions();
+    };
+    this.localBoundsProperty.lazyLink(localBoundsListener);
+
+    // Dim the panel while resizing for visual feedback
+    const isResizingListener = (isResizing: boolean) => {
+      this.opacity = isResizing ? 0.8 : 1.0;
+    };
+    this.isResizingProperty.link(isResizingListener);
+
     // Store cleanup function
     this.disposeDataTable = () => {
       resizeObserver.disconnect();
@@ -575,7 +689,44 @@ export class DataTableNode extends Panel {
       dataTableStrings.frameStringProperty.unlink(frameStringListener);
       videoLoadedProperty.unlink(videoLoadedListener);
       exportButton.dispose();
+      this.localBoundsProperty.unlink(localBoundsListener);
+      this.isResizingProperty.unlink(isResizingListener);
+      this.isResizingProperty.dispose();
     };
+  }
+
+  /**
+   * Apply the current max dimensions to the table wrapper's CSS.
+   * Called during resize drags and after full rebuilds to restore user-set sizes.
+   */
+  private applyTableDimensions(): void {
+    this.tableWrapper.style.maxWidth = `${this.currentMaxWidth}px`;
+    this.tableWrapper.style.maxHeight = `${this.currentMaxHeight}px`;
+  }
+
+  /**
+   * Reposition the four corner resize handles to match the current panel bounds.
+   * Called after any resize or panel reflow.
+   */
+  private updateResizeHandlePositions(): void {
+    if (this.resizeHandles.length === 0) {
+      return;
+    }
+    const b = this.localBounds;
+    const corners = [
+      { x: b.minX, y: b.minY },
+      { x: b.maxX, y: b.minY },
+      { x: b.minX, y: b.maxY },
+      { x: b.maxX, y: b.maxY },
+    ];
+    this.resizeHandles.forEach((handle, index) => {
+      const corner = corners[index];
+      if (corner) {
+        handle.setRect(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE);
+        handle.touchArea = handle.localBounds.dilated(RESIZE_TOUCH_DILATION);
+        handle.mouseArea = handle.localBounds.dilated(RESIZE_MOUSE_DILATION);
+      }
+    });
   }
 
   public override dispose(): void {
