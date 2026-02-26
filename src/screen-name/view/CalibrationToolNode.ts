@@ -23,7 +23,7 @@ import {
   OVERLAY_SHIFT_DRAG_SPEED,
 } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
-import { CALIBRATION_UNITS } from "../model/SimModel.js";
+import { CALIBRATION_UNITS } from "../model/OverlayToolsModel.js";
 
 const FONT = new PhetFont(14);
 const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
@@ -133,12 +133,12 @@ export class CalibrationToolNode extends Node {
       tandem: Tandem.OPT_OUT,
     });
     // Pattern shown inside the dialog as "Range: {{min}} – {{max}} <unit>"
-    const rangePatternProperty = new DerivedProperty([model.calibUnitProperty], (unit) => `{{min}} – {{max}} ${unit}`);
+    const rangePatternProperty = new DerivedProperty([model.overlayTools.calibUnitProperty], (unit) => `{{min}} – {{max}} ${unit}`);
 
     // ── Midpoint panel ────────────────────────────────────────────────────
     // Button showing current value + unit; clicking it opens the keypad.
     const buttonLabelProperty = new DerivedProperty(
-      [model.calibDistanceProperty, model.calibUnitProperty],
+      [model.overlayTools.calibDistanceProperty, model.overlayTools.calibUnitProperty],
       (dist, unit) => `${dist.toFixed(CALIBRATION_DECIMAL_PLACES)} ${unit}`,
     );
 
@@ -152,9 +152,9 @@ export class CalibrationToolNode extends Node {
       listener: () => {
         keypadDialog.beginEdit(
           (value: number) => {
-            model.calibDistanceProperty.value = value;
+            model.overlayTools.calibDistanceProperty.value = value;
           },
-          model.calibDistanceProperty.range,
+          model.overlayTools.calibDistanceProperty.range,
           rangePatternProperty,
           () => {
             /* no-op: keypad close callback not needed */
@@ -174,7 +174,7 @@ export class CalibrationToolNode extends Node {
         }),
       tandemName: `${unit}Item`,
     }));
-    const unitComboBox = new ComboBox(model.calibUnitProperty, unitItems, listParent, {
+    const unitComboBox = new ComboBox(model.overlayTools.calibUnitProperty, unitItems, listParent, {
       buttonFill: TrackLabColors.comboBoxButtonFillProperty,
       listFill: TrackLabColors.comboBoxListFillProperty,
       highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
@@ -209,8 +209,8 @@ export class CalibrationToolNode extends Node {
 
     // ── Update geometry when endpoints move ───────────────────────────────
     const updateGeometry = () => {
-      const p1 = model.calibPoint1Property.value;
-      const p2 = model.calibPoint2Property.value;
+      const p1 = model.overlayTools.calibPoint1Property.value;
+      const p2 = model.overlayTools.calibPoint2Property.value;
 
       // Update both shadow and main lines
       calibrationLineShadow.setLine(p1.x, p1.y, p2.x, p2.y);
@@ -244,12 +244,12 @@ export class CalibrationToolNode extends Node {
     // A single Multilink replaces two separate link() calls so that geometry
     // is rebuilt once per change event regardless of which endpoint moved,
     // and disposal is managed in one place.
-    const calibMultilink = Multilink.multilink([model.calibPoint1Property, model.calibPoint2Property], updateGeometry);
+    const calibMultilink = Multilink.multilink([model.overlayTools.calibPoint1Property, model.overlayTools.calibPoint2Property], updateGeometry);
 
     // ── Drag listeners for endpoints ──────────────────────────────────────
     endpoint1.addInputListener(
       new RichDragListener({
-        positionProperty: model.calibPoint1Property,
+        positionProperty: model.overlayTools.calibPoint1Property,
         keyboardDragListenerOptions: {
           dragSpeed: OVERLAY_DRAG_SPEED,
           shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
@@ -259,7 +259,7 @@ export class CalibrationToolNode extends Node {
     );
     endpoint2.addInputListener(
       new RichDragListener({
-        positionProperty: model.calibPoint2Property,
+        positionProperty: model.overlayTools.calibPoint2Property,
         keyboardDragListenerOptions: {
           dragSpeed: OVERLAY_DRAG_SPEED,
           shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,

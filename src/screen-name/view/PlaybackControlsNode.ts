@@ -18,6 +18,7 @@ import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
 
+import { GraphDataManager } from "../graph/GraphDataManager.js";
 import type { SimModel } from "../model/SimModel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -106,27 +107,11 @@ export class PlaybackControlsNode extends HBox {
 
     /**
      * Calculate a "nice" tick interval for the scrubber based on total frames.
-     * Targets approximately 10-20 major ticks maximum.
+     * Targets approximately 15 major ticks. Minor ticks are added between major
+     * ticks when the major interval is large enough to warrant subdivision.
      */
     const calculateTickInterval = (totalFrames: number): { majorInterval: number; minorInterval: number } => {
-      // Target roughly 10-20 major ticks
-      const targetMajorTicks = 15;
-      const rawInterval = totalFrames / targetMajorTicks;
-
-      // Find the nearest "nice" number: 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, etc.
-      const magnitude = 10 ** Math.floor(Math.log10(rawInterval));
-      const normalized = rawInterval / magnitude;
-
-      let majorInterval: number;
-      if (normalized <= 1.5) {
-        majorInterval = magnitude;
-      } else if (normalized <= 3) {
-        majorInterval = 2 * magnitude;
-      } else if (normalized <= 7) {
-        majorInterval = 5 * magnitude;
-      } else {
-        majorInterval = 10 * magnitude;
-      }
+      const majorInterval = GraphDataManager.calculateTickSpacing(totalFrames, 15);
 
       // Calculate minor interval (5 minor ticks between major ticks when practical)
       let minorInterval = 0;

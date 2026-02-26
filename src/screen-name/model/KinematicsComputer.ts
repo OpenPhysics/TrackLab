@@ -94,7 +94,7 @@ export function computeTrackKinematics(track: Track): TrackKinematics {
   return {
     id: track.id,
     symbol: track.symbol,
-    color: track.color,
+    colorIndex: track.colorIndex,
     points: kinematicPoints,
   };
 }

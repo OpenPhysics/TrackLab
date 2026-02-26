@@ -15,58 +15,36 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
-import { countWebmFrames } from "../../webcam.js";
+import { countWebmFrames, getAnimatedWebPInfo } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
-
-/**
- * Returns frame count, total duration (seconds), and average fps for an
- * animated WebP image using the ImageDecoder API (Chrome 94+).
- * Resolves to null if the API is unavailable or the file is not a valid
- * animated WebP.
- */
-async function getAnimatedWebPInfo(blob: Blob): Promise<{ frameCount: number; duration: number; fps: number } | null> {
-  if (typeof ImageDecoder === "undefined") {
-    return null;
-  }
-  try {
-    const decoder = new ImageDecoder({
-      data: blob.stream(),
-      type: "image/webp",
-      preferAnimation: true,
-    });
-    await decoder.tracks.ready;
-    const track = decoder.tracks.selectedTrack;
-    if (!track) {
-      decoder.close();
-      return null;
-    }
-    const frameCount = track.frameCount;
-    if (frameCount <= 0) {
-      decoder.close();
-      return null;
-    }
-    // Sum per-frame durations (microseconds) to get total duration in seconds
-    let totalMicroseconds = 0;
-    for (let i = 0; i < frameCount; i++) {
-      const result = await decoder.decode({ frameIndex: i });
-      totalMicroseconds += result.image.duration ?? 0;
-      result.image.close();
-    }
-    decoder.close();
-    const duration = totalMicroseconds / 1_000_000;
-    const fps = duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
-    return { frameCount, duration, fps };
-  } catch {
-    // Not a valid animated WebP or ImageDecoder threw — fall back gracefully.
-    return null;
-  }
-}
 
 const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
 const CONTROLS_SPACING = 12;
 const HEADER_VALUE_PREFIX = "__header:";
+const LABEL_MAX_NAME_LENGTH = 25; // max chars before truncating upload filenames
+
+// ── Label formatting helpers ─────────────────────────────────────────────────
+
+function formatDuration(seconds: number): string {
+  const totalSec = Math.round(seconds);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatRecordingLabel(rec: WebcamRecording): string {
+  return `Recording ${rec.num}  (${formatDuration(rec.duration)})`;
+}
+
+function formatUploadLabel(upl: UploadedVideo): string {
+  const baseName = upl.name.replace(/\.[^.]+$/, "");
+  const displayName = baseName.length > LABEL_MAX_NAME_LENGTH
+    ? `${baseName.substring(0, LABEL_MAX_NAME_LENGTH - 3)}...`
+    : baseName;
+  return `${displayName}  (${formatDuration(upl.duration)})`;
+}
 
 // Bundled video files with known frame rates (labels resolved from StringManager)
 type VideoFile = {
@@ -303,7 +281,7 @@ export class VideoSourceControlNode extends HBox {
           items.push({
             value: rec.id,
             createNode: () =>
-              new Text(rec.label, {
+              new Text(formatRecordingLabel(rec), {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),
@@ -328,7 +306,7 @@ export class VideoSourceControlNode extends HBox {
           items.push({
             value: upl.id,
             createNode: () =>
-              new Text(upl.label, {
+              new Text(formatUploadLabel(upl), {
                 font: LABEL_FONT,
                 fill: TrackLabColors.textOnDarkProperty,
               }),

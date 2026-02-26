@@ -16,7 +16,7 @@ export type TrackPoint = {
 export type Track = {
   id: string;
   symbol: string; // single uppercase letter: 'A', 'B', 'C', ...
-  color: string; // CSS hex color
+  colorIndex: number; // index into TRACK_COLORS array
   points: readonly TrackPoint[];
 };
 
@@ -45,6 +45,6 @@ export type KinematicPoint = {
 export type TrackKinematics = {
   id: string;
   symbol: string;
-  color: string;
+  colorIndex: number;
   points: readonly KinematicPoint[];
 };

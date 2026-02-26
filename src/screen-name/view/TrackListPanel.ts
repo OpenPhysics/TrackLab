@@ -13,7 +13,6 @@
  *  • The panel is hidden until a video is loaded.
  */
 
-import { Color } from "scenerystack";
 import { BooleanProperty, DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { Circle, Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -21,6 +20,7 @@ import { Checkbox, Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton } from "../../TrackLabButton.js";
+import { TRACK_COLORS } from "../../TrackLabColors.js";
 import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
@@ -114,7 +114,8 @@ class TrackRowNode extends Node {
   public constructor(track: Track, model: SimModel) {
     super();
 
-    const trackColor = new Color(track.color);
+    // colorIndex is always in range 0..TRACK_COLORS.length-1 by construction
+    const trackColor = TRACK_COLORS[track.colorIndex]!;
     const ROW_CY = ROW_HEIGHT / 2;
 
     // ── Rounded background (purely visual, not pickable) ──────────────────
@@ -127,7 +128,7 @@ class TrackRowNode extends Node {
 
     // ── Colour badge with symbol letter ───────────────────────────────────
     const badge = new Circle(BADGE_R, {
-      fill: track.color,
+      fill: trackColor,
       x: BADGE_CX,
       y: ROW_CY,
     });

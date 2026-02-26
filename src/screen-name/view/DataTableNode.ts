@@ -17,9 +17,11 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
+import { TRACK_COLORS } from "../../TrackLabColors.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
+import { buildDataRows, generateCsv, type DataRow } from "../model/TrackExporter.js";
 import type { Track } from "../model/Track.js";
 
 // ── Accessibility ─────────────────────────────────────────────────────────────
@@ -44,7 +46,6 @@ const EXPORT_BUTTON_FONT_SIZE = 9;
 
 // ── Precision ─────────────────────────────────────────────────────────────────
 // Both values are kept equal so exported CSV data matches what users see on screen.
-const CSV_DECIMAL_PLACES = 4; // decimal places for CSV time and position columns
 const CELL_DECIMAL_PLACES = 4; // decimal places shown in on-screen table cells
 const MIN_EMPTY_COL_COUNT = 4; // minimum columns (Frame, Time, x, y) when no tracks exist
 
@@ -65,64 +66,7 @@ const TABLE_CELL_PADDING_Y = 3; // px, vertical padding in data cells
 const TABLE_CELL_PADDING_X = 6; // px, horizontal padding in data cells
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-type DataRow = {
-  frame: number;
-  time: number;
-  values: Map<string, { x: number; y: number }>; // track id -> position
-};
-
-/**
- * Collect all unique frames across all tracks and build rows of data.
- */
-function buildDataRows(tracks: readonly Track[]): DataRow[] {
-  const frameMap = new Map<number, DataRow>();
-
-  for (const track of tracks) {
-    for (const pt of track.points) {
-      let row = frameMap.get(pt.frame);
-      if (!row) {
-        row = { frame: pt.frame, time: pt.time, values: new Map() };
-        frameMap.set(pt.frame, row);
-      }
-      row.values.set(track.id, { x: pt.x, y: pt.y });
-    }
-  }
-
-  // Sort by frame number
-  return Array.from(frameMap.values()).sort((a, b) => a.frame - b.frame);
-}
-
-/**
- * Generate CSV content from tracks.
- */
-function generateCsv(tracks: readonly Track[], unit: string, labels: TableLabels): string {
-  const dataRows = buildDataRows(tracks);
-
-  // Header row
-  const headers = [labels.frame, labels.timeSeconds];
-  for (const track of tracks) {
-    headers.push(`${track.symbol}_x (${unit})`, `${track.symbol}_y (${unit})`);
-  }
-
-  const lines = [headers.join(",")];
-
-  // Data rows
-  for (const row of dataRows) {
-    const cells: string[] = [String(row.frame), row.time.toFixed(CSV_DECIMAL_PLACES)];
-    for (const track of tracks) {
-      const val = row.values.get(track.id);
-      if (val) {
-        cells.push(val.x.toFixed(CSV_DECIMAL_PLACES), val.y.toFixed(CSV_DECIMAL_PLACES));
-      } else {
-        cells.push("", "");
-      }
-    }
-    lines.push(cells.join(","));
-  }
-
-  return lines.join("\n");
-}
+// DataRow, buildDataRows, and generateCsv are imported from TrackExporter.
 
 // Localized label strings for the HTML table
 type TableLabels = {
@@ -230,7 +174,7 @@ function buildHtmlTable(
     const symbolSpan = document.createElement("span");
     symbolSpan.textContent = track.symbol;
     symbolSpan.style.cssText = `
-      color: ${track.color};
+      color: ${TRACK_COLORS[track.colorIndex]?.toCSS() ?? "#000000"};
       font-weight: bold;
       text-shadow: 0 0 2px ${colors.symbolShadow};
     `;

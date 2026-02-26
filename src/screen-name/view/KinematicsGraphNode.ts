@@ -12,6 +12,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
+import { TRACK_COLORS } from "../../TrackLabColors.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
@@ -146,7 +147,7 @@ export class KinematicsGraphNode extends Node {
     const distanceUnitListener = () => {
       this.graph.updateAxisLabels();
     };
-    model.distanceUnitProperty.lazyLink(distanceUnitListener);
+    model.overlayTools.calibUnitProperty.lazyLink(distanceUnitListener);
 
     // When preferences change, rebuild the available properties in the graph selectors.
     const velocityPrefListener = () => {
@@ -178,7 +179,7 @@ export class KinematicsGraphNode extends Node {
       model.trackKinematicsProperty.unlink(kinematicsListener);
       this.graph.getXPropertyProperty().unlink(xPropertyListener);
       this.graph.getYPropertyProperty().unlink(yPropertyListener);
-      model.distanceUnitProperty.unlink(distanceUnitListener);
+      model.overlayTools.calibUnitProperty.unlink(distanceUnitListener);
       preferencesModel.showVelocityInGraphProperty.unlink(velocityPrefListener);
       preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
       model.videoLoadedProperty.unlink(videoLoadedListener);
@@ -230,7 +231,7 @@ export class KinematicsGraphNode extends Node {
       // Create label with track symbol in track color
       const label = new Text(track.symbol, {
         font: TRACK_CHECKBOX_FONT,
-        fill: track.color,
+        fill: TRACK_COLORS[track.colorIndex],
       });
 
       // Create checkbox with accessibility label
@@ -312,7 +313,7 @@ export class KinematicsGraphNode extends Node {
         }));
 
         // Set track data with the track's color
-        this.graph.setTrackData(trackId, track.color, dataPoints);
+        this.graph.setTrackData(trackId, TRACK_COLORS[track.colorIndex], dataPoints);
       }
     }
   }

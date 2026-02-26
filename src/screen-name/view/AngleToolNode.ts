@@ -27,7 +27,7 @@ import {
   OVERLAY_SHIFT_DRAG_SPEED,
   OVERLAY_TOUCH_DILATION,
 } from "../../TrackLabConstants.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 // ── Visual constants ──────────────────────────────────────────────────────────
 const ARM_LINE_WIDTH = 2.5;
@@ -57,7 +57,7 @@ const ANGLE_DECIMAL_PLACES = 1;
 export class AngleToolNode extends Node {
   private readonly disposeAngleToolNode: () => void;
 
-  public constructor(visibleProperty: TReadOnlyProperty<boolean>, model: SimModel) {
+  public constructor(visibleProperty: TReadOnlyProperty<boolean>, model: OverlayToolsModel) {
     super();
 
     const a11yStrings = StringManager.getInstance().getA11y();

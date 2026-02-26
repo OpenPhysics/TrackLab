@@ -51,7 +51,7 @@ const DEG_TO_RAD = Math.PI / 180;
  *
  * The origin can be dragged anywhere on screen; a small disk on the X axis
  * controls rotation by pointer angle. Both gestures write directly to
- * `model.coordOriginProperty` and `model.coordAngleProperty`, keeping the
+ * `model.overlayTools.coordOriginProperty` and `model.overlayTools.coordAngleProperty`, keeping the
  * model-view transform in sync. Keyboard drag is supported via RichDragListener.
  * Hidden until a video is loaded.
  */
@@ -164,7 +164,7 @@ export class CoordinateSystemNode extends Node {
       lineWidth: ORIGIN_LINE_WIDTH,
     });
 
-    // ── Position wrapper: translates with model.coordOriginProperty ───────
+    // ── Position wrapper: translates with model.overlayTools.coordOriginProperty ───────
     const positionNode = new Node({
       children: [rotatingNode, originShadow, originMarker],
       cursor: "move",
@@ -192,7 +192,7 @@ export class CoordinateSystemNode extends Node {
     const onOriginChange = (pos: Vector2) => {
       positionNode.translation = pos;
     };
-    model.coordOriginProperty.link(onOriginChange);
+    model.overlayTools.coordOriginProperty.link(onOriginChange);
 
     const onAngleChange = (angle: number) => {
       rotatingNode.rotation = angle;
@@ -202,7 +202,7 @@ export class CoordinateSystemNode extends Node {
       positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH, ORIGIN_TOUCH_DILATION).transformed(m);
       positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH, ORIGIN_MOUSE_DILATION).transformed(m);
     };
-    model.coordAngleProperty.link(onAngleChange);
+    model.overlayTools.coordAngleProperty.link(onAngleChange);
 
     // ── Drag: translate the entire coordinate system ──────────────────────
     positionNode.addInputListener(
@@ -210,16 +210,16 @@ export class CoordinateSystemNode extends Node {
         dragListenerOptions: {
           drag: (_event, listener) => {
             const newPos = listener.parentPoint;
-            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+            model.overlayTools.coordOriginProperty.value = model.overlayTools.clampCoordOrigin(newPos);
           },
         },
         keyboardDragListenerOptions: {
           dragSpeed: TRANSLATE_DRAG_SPEED,
           shiftDragSpeed: TRANSLATE_SHIFT_DRAG_SPEED,
           drag: (_event, listener) => {
-            const currentPos = model.coordOriginProperty.value;
+            const currentPos = model.overlayTools.coordOriginProperty.value;
             const newPos = currentPos.plus(listener.modelDelta);
-            model.coordOriginProperty.value = model.clampCoordOrigin(newPos);
+            model.overlayTools.coordOriginProperty.value = model.overlayTools.clampCoordOrigin(newPos);
           },
         },
         tandem: Tandem.OPT_OUT,
@@ -234,7 +234,7 @@ export class CoordinateSystemNode extends Node {
         dragListenerOptions: {
           drag: (event) => {
             const p = positionNode.globalToLocalPoint(event.pointer.point);
-            model.coordAngleProperty.value = Math.atan2(p.y, p.x);
+            model.overlayTools.coordAngleProperty.value = Math.atan2(p.y, p.x);
           },
         },
         keyboardDragListenerOptions: {
@@ -242,7 +242,7 @@ export class CoordinateSystemNode extends Node {
           dragSpeed: ROTATE_DRAG_SPEED,
           shiftDragSpeed: ROTATE_SHIFT_DRAG_SPEED,
           drag: (_event, listener) => {
-            model.coordAngleProperty.value += listener.modelDelta.x * DEG_TO_RAD;
+            model.overlayTools.coordAngleProperty.value += listener.modelDelta.x * DEG_TO_RAD;
           },
         },
         tandem: Tandem.OPT_OUT,
@@ -267,8 +267,8 @@ export class CoordinateSystemNode extends Node {
     model.activeTrackIdProperty.link(onActiveTrackChange);
 
     this.disposeCoordinateSystemNode = () => {
-      model.coordOriginProperty.unlink(onOriginChange);
-      model.coordAngleProperty.unlink(onAngleChange);
+      model.overlayTools.coordOriginProperty.unlink(onOriginChange);
+      model.overlayTools.coordAngleProperty.unlink(onAngleChange);
       videoLoadedProperty.unlink(onVideoLoaded);
       model.activeTrackIdProperty.unlink(onActiveTrackChange);
     };

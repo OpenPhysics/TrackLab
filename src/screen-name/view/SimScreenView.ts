@@ -52,19 +52,19 @@ export class SimScreenView extends ScreenView {
 
     // Combined visibility: video loaded AND user-toggled model flag.
     const axesShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.axesVisibleProperty],
+      [model.videoLoadedProperty, model.overlayTools.axesVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const calibrationShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.calibrationVisibleProperty],
+      [model.videoLoadedProperty, model.overlayTools.calibrationVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const measuringTapeShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.measuringTapeVisibleProperty],
+      [model.videoLoadedProperty, model.overlayTools.measuringTapeVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const angleToolShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.angleToolVisibleProperty],
+      [model.videoLoadedProperty, model.overlayTools.angleToolVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
 
@@ -91,23 +91,23 @@ export class SimScreenView extends ScreenView {
     this.videoPlayerNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(this.videoPlayerNode);
 
-    // ── Overlay tools (children of videoContentLayer, video-local coords) ──
-    // All overlay tools are added to the video content layer so they share
-    // the same video-local coordinate space and transform with the video.
+    // ── Overlay tools (children of the video content layer, video-local coords) ──
+    // All overlay tools are added via addVideoOverlay() so they share the same
+    // video-local coordinate space and transform with the video.
     const coordinateSystemNode = new CoordinateSystemNode(axesShownProperty, model);
-    this.videoPlayerNode.videoContentLayer.addChild(coordinateSystemNode);
+    this.videoPlayerNode.addVideoOverlay(coordinateSystemNode);
 
     const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
-    this.videoPlayerNode.videoContentLayer.addChild(calibrationToolNode);
+    this.videoPlayerNode.addVideoOverlay(calibrationToolNode);
 
-    const measuringTapeNode = new MeasuringTapeNode(measuringTapeShownProperty, model);
-    this.videoPlayerNode.videoContentLayer.addChild(measuringTapeNode);
+    const measuringTapeNode = new MeasuringTapeNode(measuringTapeShownProperty, model.overlayTools);
+    this.videoPlayerNode.addVideoOverlay(measuringTapeNode);
 
-    const angleToolNode = new AngleToolNode(angleToolShownProperty, model);
-    this.videoPlayerNode.videoContentLayer.addChild(angleToolNode);
+    const angleToolNode = new AngleToolNode(angleToolShownProperty, model.overlayTools);
+    this.videoPlayerNode.addVideoOverlay(angleToolNode);
 
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
-    const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);
+    const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.overlayTools.calibUnitProperty);
     this.addChild(dataTableNode);
 
     dataTableNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
