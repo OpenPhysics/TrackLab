@@ -26,11 +26,6 @@ const CROSSHAIR_CIRCLE_RADIUS = 6; // small filled circle at crosshair centre
 const MIN_REGION_SIZE = 4; // minimum pixel width/height to begin tracking
 const TRAIL_DOT_RADIUS = 3; // radius of each past-position dot in the trail
 const LABELS_SPACING = 8; // vertical gap between hint text and error text
-const BADGE_PADDING_X = 6; // horizontal padding inside the frame-count badge
-const BADGE_PADDING_Y = 3; // vertical padding inside the frame-count badge
-const BADGE_CORNER_RADIUS = 4; // corner rounding of the badge background
-const BADGE_INSET = 8; // gap between badge and video edge
-const BADGE_FONT_SIZE = 13; // font size for the frame counter label
 
 /**
  * Transparent SceneryStack overlay that sits directly on top of the video element.
@@ -69,18 +64,12 @@ export class AutoTrackerNode extends Node {
   private readonly crosshairH: Line;
   private readonly crosshairV: Line;
   private readonly crosshairCircle: Path;
-  private readonly framesCountText: Text;
-  private readonly framesCountBadge: Node;
-
   private selecting = false;
   private selStart = Vector2.ZERO;
   /** ID of the pending requestAnimationFrame callback (0 = none pending). */
   private pendingFrameId = 0;
   /** True while an async track() call is in flight; prevents concurrent tracking calls. */
   private trackInProgress = false;
-  /** Total frames successfully tracked since the last selection; drives the badge readout. */
-  private framesTrackedCount = 0;
-
   // Monotonically increasing counter — each new initFromVideo call captures the
   // current value and only applies results if the counter hasn't changed by the
   // time the async initialisation completes, preventing stale results from a
@@ -174,48 +163,11 @@ export class AutoTrackerNode extends Node {
     this.addChild(this.crosshairH);
     this.addChild(this.crosshairV);
 
-    // ── Frame count badge (bottom-left corner of the video) ───────────────
-    // Shows "● N frames" while tracking is active so the user can confirm
-    // that frames are being processed even when the video plays slowly.
-    this.framesCountText = new Text("", {
-      font: new PhetFont({ size: BADGE_FONT_SIZE, weight: "bold" }),
-      fill: TrackLabColors.trackerTrailFillProperty,
-      pickable: false,
-    });
-    const framesCountBg = new Rectangle(0, 0, 0, 0, {
-      fill: TrackLabColors.trackerBadgeFillProperty,
-      cornerRadius: BADGE_CORNER_RADIUS,
-      pickable: false,
-    });
-    this.framesCountBadge = new Node({
-      children: [framesCountBg, this.framesCountText],
-      visible: false,
-      pickable: false,
-    });
-    this.addChild(this.framesCountBadge);
-
-    // Updates badge text, resizes its background, and re-pins it to the
-    // bottom-left corner of the current video area.
-    const framesTrackedStringProperty = autoTrackerStrings.framesTrackedStringProperty;
-    const updateBadge = (count: number) => {
-      const label = framesTrackedStringProperty.value.replace("{{count}}", String(count));
-      this.framesCountText.string = label;
-      const w = this.framesCountText.width + 2 * BADGE_PADDING_X;
-      const h = this.framesCountText.height + 2 * BADGE_PADDING_Y;
-      framesCountBg.setRect(0, 0, w, h);
-      this.framesCountText.left = BADGE_PADDING_X;
-      this.framesCountText.centerY = h / 2;
-      const dims = model.videoDimensionsProperty.value;
-      this.framesCountBadge.left = BADGE_INSET;
-      this.framesCountBadge.bottom = dims.height - BADGE_INSET;
-    };
-
     // ── Drag listener: region selection ──────────────────────────────────
     const dragListener = new DragListener({
       start: (event) => {
         this.trailHead = 0;
         this.trailSize = 0;
-        this.framesTrackedCount = 0;
         // Bump version so any in-flight initFromVideo call is discarded when it resolves.
         this.initVersion++;
         this.model.tracker.dispose();
@@ -224,7 +176,6 @@ export class AutoTrackerNode extends Node {
         this.trailPath.visible = false;
         this.hintText.visible = false;
         this.errorText.visible = false;
-        this.framesCountBadge.visible = false;
 
         this.selStart = this.globalToLocalPoint(event.pointer.point);
         this.selecting = true;
@@ -324,10 +275,6 @@ export class AutoTrackerNode extends Node {
     const videoDimensionsListener = (dims: Dimension2) => {
       hitArea.setRect(0, 0, dims.width, dims.height);
       centeredLabels.center = new Vector2(dims.width / 2, dims.height / 2);
-      if (this.framesCountBadge.visible) {
-        this.framesCountBadge.left = BADGE_INSET;
-        this.framesCountBadge.bottom = dims.height - BADGE_INSET;
-      }
     };
     model.videoDimensionsProperty.link(videoDimensionsListener);
 
@@ -356,11 +303,6 @@ export class AutoTrackerNode extends Node {
       if (!pt) {
         return;
       }
-
-      // Update the frame count badge so the user can see tracking is active.
-      this.framesTrackedCount++;
-      updateBadge(this.framesTrackedCount);
-      this.framesCountBadge.visible = true;
 
       // O(1) ring-buffer write: overwrite the oldest slot when full.
       this.trailBuf[this.trailHead] = pt;
@@ -471,7 +413,6 @@ export class AutoTrackerNode extends Node {
     this.model.tracker.dispose();
     this.trailHead = 0;
     this.trailSize = 0;
-    this.framesTrackedCount = 0;
     this.recordedFrames.clear();
     this.selecting = false;
     this.selectionRect.visible = false;
@@ -479,7 +420,6 @@ export class AutoTrackerNode extends Node {
     this.trailPath.visible = false;
     this.setCrosshairVisible(false);
     this.errorText.visible = false;
-    this.framesCountBadge.visible = false;
   }
 
   public override dispose(): void {
