@@ -17,12 +17,11 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
-import { TRACK_COLORS } from "../../TrackLabColors.js";
-import TrackLabColors from "../../TrackLabColors.js";
+import TrackLabColors, { TRACK_COLORS } from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
-import { buildDataRows, generateCsv, type DataRow } from "../model/TrackExporter.js";
 import type { Track } from "../model/Track.js";
+import { buildDataRows, type DataRow, generateCsv } from "../model/TrackExporter.js";
 
 // ── Accessibility ─────────────────────────────────────────────────────────────
 // The HTML table gets a <caption> element for screen readers. The caption text
