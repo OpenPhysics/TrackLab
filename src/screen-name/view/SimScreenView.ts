@@ -91,24 +91,20 @@ export class SimScreenView extends ScreenView {
     this.videoPlayerNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(this.videoPlayerNode);
 
-    // ── Coordinate system overlay (above video, below camera modal) ─────────
-    // Reads/writes model.coordOriginProperty and model.coordAngleProperty.
+    // ── Overlay tools (children of videoContentLayer, video-local coords) ──
+    // All overlay tools are added to the video content layer so they share
+    // the same video-local coordinate space and transform with the video.
     const coordinateSystemNode = new CoordinateSystemNode(axesShownProperty, model);
-    this.addChild(coordinateSystemNode);
+    this.videoPlayerNode.videoContentLayer.addChild(coordinateSystemNode);
 
-    // ── Calibration tool overlay (above video, below camera modal) ─────────
-    // Reads/writes model.calibPoint1/2Property, model.calibDistanceProperty,
-    // and model.calibUnitProperty.
     const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
-    this.addChild(calibrationToolNode);
+    this.videoPlayerNode.videoContentLayer.addChild(calibrationToolNode);
 
-    // ── Measuring tape overlay (above video) ──────────────────────────────
     const measuringTapeNode = new MeasuringTapeNode(measuringTapeShownProperty, model);
-    this.addChild(measuringTapeNode);
+    this.videoPlayerNode.videoContentLayer.addChild(measuringTapeNode);
 
-    // ── Angle tool overlay (above video) ─────────────────────────────────
     const angleToolNode = new AngleToolNode(angleToolShownProperty, model);
-    this.addChild(angleToolNode);
+    this.videoPlayerNode.videoContentLayer.addChild(angleToolNode);
 
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.calibUnitProperty);

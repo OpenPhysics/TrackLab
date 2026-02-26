@@ -6,15 +6,13 @@
  */
 
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
-import { Dimension2, Range, type Transform3, Vector2 } from "scenerystack/dot";
+import { Dimension2, Matrix3, Range, type Transform3, Vector2 } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import {
   CALIB_HALF_LENGTH,
   MAX_TRACKS,
   TRACK_SYMBOL_FIRST_CODE,
   TRACK_SYMBOL_LAST_CODE,
-  VIDEO_CENTER_X,
-  VIDEO_CENTER_Y,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
@@ -40,29 +38,36 @@ export const FRAME_RATE_RANGE = new Range(1, 120);
 export const DEFAULT_PLAYBACK_RATE = 1;
 export const PLAYBACK_RATE_RANGE = new Range(0.1, 4);
 
-// ── Initial tool positions (view / pixel space) ───────────────────────────
-// These default positions are computed from the shared video layout constants.
-const COORD_ORIGIN_INITIAL = new Vector2(VIDEO_CENTER_X - VIDEO_WIDTH / 4, VIDEO_CENTER_Y);
-const CALIB_CENTER_INITIAL = new Vector2(VIDEO_CENTER_X, VIDEO_CENTER_Y + VIDEO_HEIGHT / 4);
+// ── Video-local coordinate helpers ──────────────────────────────────────────
+// All tool positions are in video-local coordinates: (0,0) = top-left of the
+// video element, (VIDEO_WIDTH, VIDEO_HEIGHT) = bottom-right.  This ensures
+// every overlay shares the same coordinate space as the video and can be
+// uniformly transformed (scaled/translated) via videoTransformProperty.
+const VIDEO_LOCAL_CENTER_X = VIDEO_WIDTH / 2;
+const VIDEO_LOCAL_CENTER_Y = VIDEO_HEIGHT / 2;
+
+// ── Initial tool positions (video-local coordinates) ───────────────────────
+const COORD_ORIGIN_INITIAL = new Vector2(VIDEO_WIDTH / 4, VIDEO_LOCAL_CENTER_Y);
+const CALIB_CENTER_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X, (VIDEO_HEIGHT * 3) / 4);
 const CALIB_P1_INITIAL = CALIB_CENTER_INITIAL.plusXY(-CALIB_HALF_LENGTH, 0);
 const CALIB_P2_INITIAL = CALIB_CENTER_INITIAL.plusXY(CALIB_HALF_LENGTH, 0);
 
-// ── Initial measuring tape positions (view / pixel space) ─────────────────
-const TAPE_P1_INITIAL = new Vector2(VIDEO_CENTER_X - 90, VIDEO_CENTER_Y + 100);
-const TAPE_P2_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 100);
+// ── Initial measuring tape positions (video-local coordinates) ─────────────
+const TAPE_P1_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X - 90, VIDEO_LOCAL_CENTER_Y + 100);
+const TAPE_P2_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X + 90, VIDEO_LOCAL_CENTER_Y + 100);
 
-// ── Initial angle tool positions (view / pixel space) ─────────────────────
-const ANGLE_VERTEX_INITIAL = new Vector2(VIDEO_CENTER_X, VIDEO_CENTER_Y + 80);
-const ANGLE_ARM1_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 20);
-const ANGLE_ARM2_INITIAL = new Vector2(VIDEO_CENTER_X + 90, VIDEO_CENTER_Y + 140);
+// ── Initial angle tool positions (video-local coordinates) ─────────────────
+const ANGLE_VERTEX_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X, VIDEO_LOCAL_CENTER_Y + 80);
+const ANGLE_ARM1_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X + 90, VIDEO_LOCAL_CENTER_Y + 20);
+const ANGLE_ARM2_INITIAL = new Vector2(VIDEO_LOCAL_CENTER_X + 90, VIDEO_LOCAL_CENTER_Y + 140);
 
 // ── Bounds for clamping the coordinate-system origin ─────────────────────────
 // The origin must stay within the video area so the axes are always visible.
-// These are layout / pixel-space bounds, matching the view-layer video rectangle.
-const COORD_ORIGIN_BOUNDS_MIN_X = VIDEO_CENTER_X - VIDEO_WIDTH / 2;
-const COORD_ORIGIN_BOUNDS_MAX_X = VIDEO_CENTER_X + VIDEO_WIDTH / 2;
-const COORD_ORIGIN_BOUNDS_MIN_Y = VIDEO_CENTER_Y - VIDEO_HEIGHT / 2;
-const COORD_ORIGIN_BOUNDS_MAX_Y = VIDEO_CENTER_Y + VIDEO_HEIGHT / 2;
+// Bounds are in video-local coordinates.
+const COORD_ORIGIN_BOUNDS_MIN_X = 0;
+const COORD_ORIGIN_BOUNDS_MAX_X = VIDEO_WIDTH;
+const COORD_ORIGIN_BOUNDS_MIN_Y = 0;
+const COORD_ORIGIN_BOUNDS_MAX_Y = VIDEO_HEIGHT;
 
 // ── Webcam recording entry ────────────────────────────────────────────────
 export type WebcamRecording = {
@@ -147,6 +152,19 @@ export class SimModel {
   // ── Measurement tools visibility ──────────────────────────────────────
   public readonly measuringTapeVisibleProperty = new BooleanProperty(false);
   public readonly angleToolVisibleProperty = new BooleanProperty(false);
+
+  // ── Video display transform (translate + uniform scale) ───────────────
+  // Applied to the video content layer so the video and all overlays
+  // (tools, digitized points) can be dragged and magnified together while
+  // keeping the same aspect ratio.
+  public readonly videoScaleProperty = new NumberProperty(1, {
+    range: new Range(0.5, 4),
+  });
+  public readonly videoOffsetProperty = new Property<Vector2>(Vector2.ZERO);
+  public readonly videoTransformProperty: TReadOnlyProperty<Matrix3> = new DerivedProperty(
+    [this.videoScaleProperty, this.videoOffsetProperty],
+    (scale, offset) => Matrix3.translationFromVector(offset).timesMatrix(Matrix3.scaling(scale)),
+  );
 
   // ── Measuring tape endpoint positions (view / pixel space) ────────────
   public readonly tapPoint1Property = new Property<Vector2>(TAPE_P1_INITIAL.copy());
@@ -478,6 +496,8 @@ export class SimModel {
     this.autoTrackingProperty.reset();
     this.measuringTapeVisibleProperty.reset();
     this.angleToolVisibleProperty.reset();
+    this.videoScaleProperty.reset();
+    this.videoOffsetProperty.reset();
     this.tapPoint1Property.reset();
     this.tapPoint2Property.reset();
     this.angleVertexProperty.reset();

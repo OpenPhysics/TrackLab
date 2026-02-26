@@ -324,8 +324,8 @@ export class AutoTrackerNode extends Node {
 
         // O(1) duplicate-frame check via Set (vs O(n) linear scan).
         if (!this.recordedFrames.has(frame)) {
-          // pt is already in local (video-pixel) coordinates — the same space
-          // pixelToModelCoords expects, matching how DigitizingOverlayNode records points.
+          // Convert video-local pixel coords directly to model coords.
+          // The MVT operates in video-local space, matching these coordinates.
           const modelPt = model.pixelToModelCoords(new Vector2(pt.x, pt.y));
           model.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           this.recordedFrames.add(frame);
