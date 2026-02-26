@@ -16,6 +16,7 @@ import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../Tr
 import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
 import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
+import { countWebmFrames } from "../../webcam.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
 /**
@@ -411,22 +412,35 @@ export class VideoSourceControlNode extends HBox {
         return;
       }
 
-      // Read duration via a temporary video element, then store and load
-      const tempUrl = URL.createObjectURL(blob);
-      const tempVideo = document.createElement("video");
-      tempVideo.preload = "metadata";
-      tempVideo.src = tempUrl;
-      tempVideo.addEventListener("loadedmetadata", () => {
-        const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
-        URL.revokeObjectURL(tempUrl);
-
-        const upload = model.addUploadedVideo(blob, file.name, duration);
+      const storeAndLoad = (duration: number, fps?: number) => {
+        const upload = model.addUploadedVideo(blob, file.name, duration, fps);
         model.currentWebcamBlobProperty.value = blob;
         this.lastLoadedValue = upload.id;
         selectedVideoProperty.value = upload.id;
         model.isWebcamVideoProperty.value = true;
         onWebcamReady(blob, duration);
-      });
+      };
+
+      if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
+        // Count actual frames for WebM files; also fixes Infinity duration from MediaRecorder
+        void countWebmFrames(blob)
+          .then(({ frameCount, duration }) => {
+            const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
+            storeAndLoad(duration, fps);
+          })
+          .catch(() => storeAndLoad(0));
+      } else {
+        // Read duration via a temporary video element, then store and load
+        const tempUrl = URL.createObjectURL(blob);
+        const tempVideo = document.createElement("video");
+        tempVideo.preload = "metadata";
+        tempVideo.src = tempUrl;
+        tempVideo.addEventListener("loadedmetadata", () => {
+          const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
+          URL.revokeObjectURL(tempUrl);
+          storeAndLoad(duration);
+        });
+      }
     });
 
     const uploadButton = createTrackLabButton(makeUploadIcon(), {

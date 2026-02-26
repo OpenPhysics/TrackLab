@@ -57,6 +57,102 @@ export function getSupportedMimeType(): string {
 }
 
 /**
+ * Count the total number of frames in a WebM video by playing it through at
+ * maximum speed and tracking presented frames via requestVideoFrameCallback.
+ * Also resolves the true duration for WebM blobs that initially report Infinity.
+ *
+ * Returns frameCount=0 when requestVideoFrameCallback is unavailable; callers
+ * should fall back to a duration-based frame estimate in that case.
+ */
+export function countWebmFrames(blob: Blob): Promise<{ frameCount: number; duration: number }> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "auto";
+    video.muted = true;
+
+    const blobUrl = URL.createObjectURL(blob);
+    video.src = blobUrl;
+
+    let lastPresentedFrames = 0;
+    let settled = false;
+
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error("Timeout counting WebM frames"));
+      }
+    }, 60000);
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      URL.revokeObjectURL(blobUrl);
+    };
+
+    video.addEventListener("ended", () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      const duration = video.duration;
+      cleanup();
+      if (Number.isFinite(duration) && duration > 0) {
+        resolve({ frameCount: lastPresentedFrames, duration });
+      } else {
+        reject(new Error("Could not determine video duration"));
+      }
+    });
+
+    video.onerror = () => {
+      if (!settled) {
+        settled = true;
+        cleanup();
+        reject(new Error("Failed to load video for frame counting"));
+      }
+    };
+
+    video.addEventListener("loadedmetadata", () => {
+      void (async () => {
+        // Fix Infinity duration (WebM recordings from MediaRecorder start with Infinity)
+        if (!Number.isFinite(video.duration)) {
+          await new Promise<void>((res) => {
+            const onSeeked = () => {
+              video.removeEventListener("seeked", onSeeked);
+              res();
+            };
+            video.addEventListener("seeked", onSeeked);
+            video.currentTime = Number.MAX_SAFE_INTEGER;
+          });
+          // Seek back to the beginning before counting frames
+          await new Promise<void>((res) => {
+            const onSeeked = () => {
+              video.removeEventListener("seeked", onSeeked);
+              res();
+            };
+            video.addEventListener("seeked", onSeeked);
+            video.currentTime = 0;
+          });
+        }
+
+        video.playbackRate = 16;
+
+        if ("requestVideoFrameCallback" in video) {
+          const onFrame = (_now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata) => {
+            lastPresentedFrames = metadata.presentedFrames;
+            if (!video.ended) {
+              video.requestVideoFrameCallback(onFrame);
+            }
+          };
+          video.requestVideoFrameCallback(onFrame);
+        }
+
+        await video.play();
+      })();
+    });
+  });
+}
+
+/**
  * Fix WebM blob duration by seeking to the end to force browser to calculate it.
  * WebM files from MediaRecorder often have Infinity duration until seeked.
  */
