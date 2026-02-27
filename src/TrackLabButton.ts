@@ -22,8 +22,7 @@
  *   });
  */
 
-import { Shape } from "scenerystack/kite";
-import { HStrut, Node, Path, VStrut } from "scenerystack/scenery";
+import { HStrut, Node, VStrut } from "scenerystack/scenery";
 import { ButtonNode, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "./TrackLabColors.js";
@@ -34,6 +33,11 @@ import {
   MOUSE_AREA_DILATION,
   TOUCH_AREA_DILATION,
 } from "./TrackLabConstants.js";
+
+// Re-export all icon factories from the central icons module so that existing
+// imports of the form `import { makeDownloadIcon } from "…/TrackLabButton.js"`
+// continue to work without modification.
+export { makeDownloadIcon, makeUploadIcon } from "./TrackLabIcons.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,57 +101,4 @@ export function createTrackLabButton(content: Node, options?: TrackLabButtonOpti
     // ── Content: always the min-sized wrapper ────────────────────────────────
     content: sizeContent(content),
   });
-}
-
-// ── Icon helpers ──────────────────────────────────────────────────────────────
-
-/**
- * Download icon: downward arrow with a tray bar.
- *
- * Replaces the plain ⬇ unicode glyph with a proper symbolic Path icon that
- * scales cleanly at all sizes and renders crisply regardless of font hinting.
- *
- *   | shaft |
- *  \  arrow  /
- *   \_head__/
- *  [=tray bar=]
- */
-export function makeDownloadIcon(): Node {
-  const totalW = 12; // total icon width
-  const shaftW = 4; // width of the vertical arrow shaft
-  const shaftH = 5; // height of the shaft above the arrowhead
-  const headH = 4; // height of the arrowhead triangle
-  const gap = 1; // gap between arrowhead tip and tray bar
-  const barH = 2; // height of the tray bar
-
-  const shape = new Shape();
-
-  // Vertical shaft (centered horizontally)
-  shape.rect((totalW - shaftW) / 2, 0, shaftW, shaftH);
-
-  // Arrowhead triangle (pointing down)
-  shape.moveTo(0, shaftH);
-  shape.lineTo(totalW / 2, shaftH + headH);
-  shape.lineTo(totalW, shaftH);
-  shape.close();
-
-  // Tray bar at bottom
-  shape.rect(0, shaftH + headH + gap, totalW, barH);
-
-  return new Path(shape, { fill: TrackLabColors.textOnDarkProperty });
-}
-
-/**
- * Upload icon: folder shape indicating "open a file".
- */
-export function makeUploadIcon(): Node {
-  const folderShape = new Shape()
-    .moveTo(0, 3)
-    .lineTo(4, 3)
-    .lineTo(5.5, 0)
-    .lineTo(14, 0)
-    .lineTo(14, 10)
-    .lineTo(0, 10)
-    .close();
-  return new Path(folderShape, { fill: TrackLabColors.textOnDarkProperty });
 }

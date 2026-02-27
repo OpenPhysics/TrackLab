@@ -192,7 +192,7 @@ export class VideoSourceControlNode extends HBox {
       }
 
       // Check webcam recordings
-      const recording = model.webcamRecordingsProperty.value.find((r) => r.id === value);
+      const recording = model.sources.webcamRecordingsProperty.value.find((r) => r.id === value);
       if (recording) {
         this.lastLoadedValue = value;
         model.activateRecording(recording);
@@ -201,7 +201,7 @@ export class VideoSourceControlNode extends HBox {
       }
 
       // Check uploaded videos
-      const upload = model.uploadedVideosProperty.value.find((u) => u.id === value);
+      const upload = model.sources.uploadedVideosProperty.value.find((u) => u.id === value);
       if (upload) {
         this.lastLoadedValue = value;
         model.activateUpload(upload);
@@ -323,8 +323,8 @@ export class VideoSourceControlNode extends HBox {
     };
 
     const rebuildComboBox = (): void => {
-      const recordings = model.webcamRecordingsProperty.value;
-      const uploads = model.uploadedVideosProperty.value;
+      const recordings = model.sources.webcamRecordingsProperty.value;
+      const uploads = model.sources.uploadedVideosProperty.value;
       const oldBox = videoComboBox;
       videoComboBox = buildComboBox(recordings, uploads);
 
@@ -342,14 +342,14 @@ export class VideoSourceControlNode extends HBox {
     videoComboBox = buildComboBox([], []);
 
     // Rebuild when either list changes
-    model.webcamRecordingsProperty.lazyLink(() => rebuildComboBox());
-    model.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
+    model.sources.webcamRecordingsProperty.lazyLink(() => rebuildComboBox());
+    model.sources.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
 
     // ── Download button (visible for user-provided videos) ────────────────
     const downloadButton = createTrackLabButton(makeDownloadIcon(), {
       accessibleName: videoSourceStrings.downloadVideoStringProperty,
       listener: () => {
-        const blob = model.currentWebcamBlobProperty.value;
+        const blob = model.sources.currentWebcamBlobProperty.value;
         if (!blob) {
           return;
         }
@@ -363,7 +363,7 @@ export class VideoSourceControlNode extends HBox {
       },
     });
     downloadButton.visible = false;
-    model.isWebcamVideoProperty.link((isUserVideo) => {
+    model.sources.isWebcamVideoProperty.link((isUserVideo) => {
       downloadButton.visible = isUserVideo;
     });
 
@@ -390,7 +390,13 @@ export class VideoSourceControlNode extends HBox {
         const duration = info?.duration ?? 0;
         const fps = info?.fps ?? DEFAULT_FRAME_RATE;
         const frameCount = info?.frameCount ?? 0;
-        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount > 0 ? frameCount : undefined);
+        const upload = model.sources.addUploadedVideo(
+          blob,
+          file.name,
+          duration,
+          fps,
+          frameCount > 0 ? frameCount : undefined,
+        );
         // Setting selectedVideoProperty triggers the lazyLink which calls
         // model.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
@@ -398,7 +404,7 @@ export class VideoSourceControlNode extends HBox {
       }
 
       const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
-        const upload = model.addUploadedVideo(blob, file.name, duration, fps, frameCount);
+        const upload = model.sources.addUploadedVideo(blob, file.name, duration, fps, frameCount);
         // Setting selectedVideoProperty triggers the lazyLink which calls
         // model.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
@@ -429,7 +435,7 @@ export class VideoSourceControlNode extends HBox {
     const uploadButton = createTrackLabButton(makeUploadIcon(), {
       accessibleName: videoSourceStrings.openVideoFileStringProperty,
       listener: () => {
-        model.isPlayingProperty.value = false;
+        model.playback.isPlayingProperty.value = false;
         fileInput.click();
       },
     });
@@ -440,7 +446,7 @@ export class VideoSourceControlNode extends HBox {
       onVideoReady: (blob, duration) => {
         this.webcamPanel.visible = false;
         // Store the recording in the model (this triggers a ComboBox rebuild).
-        const recording = model.addWebcamRecording(blob, duration, model.frameRateProperty.value);
+        const recording = model.sources.addWebcamRecording(blob, duration, model.playback.frameRateProperty.value);
         // Setting selectedVideoProperty triggers the lazyLink which calls
         // model.activateRecording(recording) and onWebcamReady atomically.
         selectedVideoProperty.value = recording.id;
@@ -464,7 +470,7 @@ export class VideoSourceControlNode extends HBox {
       tandem: Tandem.OPT_OUT,
       accessibleName: videoSourceStrings.recordWebcamStringProperty,
       listener: async () => {
-        model.isPlayingProperty.value = false;
+        model.playback.isPlayingProperty.value = false;
         this.webcamPanel.visible = true;
         try {
           await this.webcamPanel.open();
