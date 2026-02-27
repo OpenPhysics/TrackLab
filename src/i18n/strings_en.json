@@ -207,6 +207,7 @@
     "tableResizeTopLeft": "Data table resize — top-left corner",
     "tableResizeTopRight": "Data table resize — top-right corner",
     "tableResizeBottomLeft": "Data table resize — bottom-left corner",
-    "tableResizeBottomRight": "Data table resize — bottom-right corner"
+    "tableResizeBottomRight": "Data table resize — bottom-right corner",
+    "toggleVideoVisibility": "Toggle video visibility"
   }
 }

@@ -138,6 +138,12 @@ export class VideoPlayerNode extends Node {
       localBounds: new Bounds2(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT),
     });
 
+    // ── Video content visibility (eye toggle button) ────────────────────────
+    const videoContentVisibleListener = (visible: boolean) => {
+      this.videoContentLayer.visible = visible;
+    };
+    model.overlayTools.videoContentVisibleProperty.link(videoContentVisibleListener);
+
     // ── Play / Pause ───────────────────────────────────────────────────────
     const isPlayingListener = (isPlaying: boolean) => {
       if (isPlaying) {
@@ -242,6 +248,8 @@ export class VideoPlayerNode extends Node {
           model.playback.durationProperty.value = duration;
         }
       },
+      model.overlayTools.videoContentVisibleProperty,
+      model.playback.videoLoadedProperty,
     );
 
     // ── Layout ─────────────────────────────────────────────────────────────
@@ -271,6 +279,7 @@ export class VideoPlayerNode extends Node {
     // Store cleanup function
     this.disposeVideoPlayer = () => {
       document.removeEventListener("keydown", onKeyDown);
+      model.overlayTools.videoContentVisibleProperty.unlink(videoContentVisibleListener);
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       model.playback.isPlayingProperty.unlink(isPlayingListener);
       model.playback.playbackRateProperty.unlink(playbackRateListener);

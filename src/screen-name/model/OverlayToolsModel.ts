@@ -53,6 +53,7 @@ const COORD_ORIGIN_BOUNDS_MAX_Y = VIDEO_HEIGHT;
  */
 export class OverlayToolsModel {
   // ── Overlay visibility ────────────────────────────────────────────────────
+  public readonly videoContentVisibleProperty = new BooleanProperty(true);
   public readonly axesVisibleProperty = new BooleanProperty(true);
   public readonly calibrationVisibleProperty = new BooleanProperty(true);
   public readonly magnifyVideoProperty = new BooleanProperty(false);
@@ -114,6 +115,7 @@ export class OverlayToolsModel {
   }
 
   public reset(): void {
+    this.videoContentVisibleProperty.reset();
     this.axesVisibleProperty.reset();
     this.calibrationVisibleProperty.reset();
     this.magnifyVideoProperty.reset();

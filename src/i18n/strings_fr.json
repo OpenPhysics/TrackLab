@@ -207,6 +207,7 @@
     "tableResizeTopLeft": "Redimensionnement du tableau \u2014 coin sup\u00e9rieur gauche",
     "tableResizeTopRight": "Redimensionnement du tableau \u2014 coin sup\u00e9rieur droit",
     "tableResizeBottomLeft": "Redimensionnement du tableau \u2014 coin inf\u00e9rieur gauche",
-    "tableResizeBottomRight": "Redimensionnement du tableau \u2014 coin inf\u00e9rieur droit"
+    "tableResizeBottomRight": "Redimensionnement du tableau \u2014 coin inf\u00e9rieur droit",
+    "toggleVideoVisibility": "Basculer la visibilit\u00e9 de la vid\u00e9o"
   }
 }

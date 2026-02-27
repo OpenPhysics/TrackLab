@@ -7,14 +7,28 @@
 
 import type { NumberProperty, TProperty, TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
-import { HBox, type Node, Text } from "scenerystack/scenery";
+import { Dimension2 } from "scenerystack/dot";
+import { HBox, type Node, Path, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
-import { ButtonNode, ComboBox, type ComboBoxItem } from "scenerystack/sun";
+import {
+  BooleanRectangularToggleButton,
+  ButtonNode,
+  ComboBox,
+  type ComboBoxItem,
+  eyeSlashSolidShape,
+  eyeSolidShape,
+} from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon, makeUploadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
+import {
+  BUTTON_MIN_CONTENT_SIZE,
+  BUTTON_X_MARGIN,
+  BUTTON_Y_MARGIN,
+  MOUSE_AREA_DILATION,
+  TOUCH_AREA_DILATION,
+} from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import { countWebmFrames, getAnimatedWebPInfo } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
@@ -88,6 +102,8 @@ export class VideoSourceControlNode extends HBox {
     listParent: Node,
     onVideoSelected: VideoSelectedCallback,
     onWebcamReady: WebcamReadyCallback,
+    videoContentVisibleProperty: Property<boolean>,
+    videoLoadedProperty: TReadOnlyProperty<boolean>,
   ) {
     super({ spacing: CONTROLS_SPACING });
 
@@ -495,7 +511,34 @@ export class VideoSourceControlNode extends HBox {
       },
     });
 
-    this.children = [videoComboBox, downloadButton, uploadButton, webcamButton];
+    // ── Eye toggle: show/hide video + all overlays ──────────────────────────
+    const a11yStrings = StringManager.getInstance().getA11y();
+    const iconFill = TrackLabColors.textOnDarkProperty;
+    const eyeButton = new BooleanRectangularToggleButton(
+      videoContentVisibleProperty,
+      new Path(eyeSolidShape, { fill: iconFill }),
+      new Path(eyeSlashSolidShape, { fill: iconFill }),
+      {
+        baseColor: TrackLabColors.buttonBaseDarkProperty,
+        buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+        size: new Dimension2(
+          BUTTON_MIN_CONTENT_SIZE + 2 * BUTTON_X_MARGIN,
+          BUTTON_MIN_CONTENT_SIZE + 2 * BUTTON_Y_MARGIN,
+        ),
+        touchAreaXDilation: TOUCH_AREA_DILATION,
+        touchAreaYDilation: TOUCH_AREA_DILATION,
+        mouseAreaXDilation: MOUSE_AREA_DILATION,
+        mouseAreaYDilation: MOUSE_AREA_DILATION,
+        accessibleName: a11yStrings.toggleVideoVisibilityStringProperty,
+        tandem: Tandem.OPT_OUT,
+        visible: false,
+      },
+    );
+    videoLoadedProperty.link((loaded) => {
+      eyeButton.visible = loaded;
+    });
+
+    this.children = [videoComboBox, eyeButton, downloadButton, uploadButton, webcamButton];
   }
 
   /**
