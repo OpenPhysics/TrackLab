@@ -256,15 +256,18 @@ export class AutoTrackerNode extends Node {
               }
             })
             .catch((err: unknown) => {
+              // A version mismatch means the operation was cancelled (reset or new drag
+              // started) – not a real failure.  Silently discard.
+              if (this.initVersion !== capturedVersion) {
+                return;
+              }
               // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
               console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
-              if (this.initVersion === capturedVersion) {
-                const message =
-                  err instanceof Error ? err.message : autoTrackerStrings.trackingInitFailedStringProperty.value;
-                this.errorText.string = message;
-                this.errorText.visible = true;
-                this.hintText.visible = true;
-              }
+              const message =
+                err instanceof Error ? err.message : autoTrackerStrings.trackingInitFailedStringProperty.value;
+              this.errorText.string = message;
+              this.errorText.visible = true;
+              this.hintText.visible = true;
             });
         } else {
           this.hintText.visible = true;
@@ -413,6 +416,9 @@ export class AutoTrackerNode extends Node {
   public reset(): void {
     this.cancelPendingFrame();
     this.trackInProgress = false;
+    // Bump version before disposing so any in-flight initTracker rejection is
+    // treated as a cancellation rather than a real error (mirrors DragListener.start).
+    this.initVersion++;
     this.tracking.resetTracker();
     this.trailHead = 0;
     this.trailSize = 0;

@@ -357,6 +357,12 @@ export class VideoPlayerNode extends Node {
     // Math.min(raw, Infinity) === raw, so this clamp works for both finite and
     // Infinity durations (WebM files often report Infinity until fully loaded).
     const clamped = Math.max(0, Math.min(raw, duration));
+    // Guard: if currentTime was non-finite (e.g. Infinity on an unfinished WebM
+    // stream) the arithmetic above propagates NaN/Infinity into clamped.
+    // HTMLMediaElement rejects non-finite values, so bail out instead of throwing.
+    if (!Number.isFinite(clamped)) {
+      return;
+    }
     this.videoElement.currentTime = clamped;
     this.playback.currentTimeProperty.value = clamped;
   }
