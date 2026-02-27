@@ -21,9 +21,9 @@ import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js"
 import TrackLabColors, { TRACK_COLORS } from "../../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
 import { buildDataRows, type DataRow, generateCsv } from "../model/TrackExporter.js";
+import type { TrackingModel } from "../model/TrackingModel.js";
 
 // ── Accessibility ─────────────────────────────────────────────────────────────
 // The HTML table gets a <caption> element for screen readers. The caption text
@@ -335,7 +335,7 @@ export class DataTableNode extends Panel {
   private maxRenderedFrame: number = -Infinity;
 
   public constructor(
-    model: SimModel,
+    tracking: TrackingModel,
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     unitProperty: TReadOnlyProperty<string>,
   ) {
@@ -394,7 +394,7 @@ export class DataTableNode extends Panel {
         accessibleName: a11yStrings.exportCSVStringProperty,
         baseColor: TrackLabColors.exportButtonProperty,
         listener: () => {
-          const tracks = model.tracking.tracksProperty.value;
+          const tracks = tracking.tracksProperty.value;
           const unit = unitProperty.value;
           const csv = generateCsv(tracks, unit, getLabels());
 
@@ -489,7 +489,7 @@ export class DataTableNode extends Panel {
     // ~30 times/s, so avoiding unnecessary full DOM rebuilds is critical.
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: intentionally complex — must handle structural and incremental updates efficiently
     const rebuildTable = () => {
-      const tracks = model.tracking.tracksProperty.value;
+      const tracks = tracking.tracksProperty.value;
       const unit = unitProperty.value;
       const trackIds = tracks.map((t) => t.id);
 
@@ -564,7 +564,7 @@ export class DataTableNode extends Panel {
 
     // ── Reactive updates ─────────────────────────────────────────────────────
     const tracksListener = () => rebuildTable();
-    model.tracking.tracksProperty.link(tracksListener);
+    tracking.tracksProperty.link(tracksListener);
 
     const unitListener = () => rebuildTable();
     unitProperty.link(unitListener);
@@ -572,7 +572,7 @@ export class DataTableNode extends Panel {
     // Colour profile and locale changes require a full rebuild because cell
     // colours and label strings are baked into the DOM; they are not captured
     // by the track-ID / unit structural-change check above.
-    const fullRebuild = () => doFullRebuild(model.tracking.tracksProperty.value, unitProperty.value);
+    const fullRebuild = () => doFullRebuild(tracking.tracksProperty.value, unitProperty.value);
 
     const tableHeaderBgListener = () => fullRebuild();
     TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
@@ -684,7 +684,7 @@ export class DataTableNode extends Panel {
     // Store cleanup function
     this.disposeDataTable = () => {
       resizeObserver.disconnect();
-      model.tracking.tracksProperty.unlink(tracksListener);
+      tracking.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
       TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
       dataTableStrings.frameStringProperty.unlink(frameStringListener);

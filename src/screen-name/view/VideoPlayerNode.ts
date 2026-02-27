@@ -158,7 +158,7 @@ export class VideoPlayerNode extends Node {
 
     // ── Playback controls (positioned by SimScreenView at screen bottom) ──
     this.playbackControlsNode = new PlaybackControlsNode(
-      model,
+      model.playback,
       this.videoElement,
       () => this.seekByFrames(-1),
       () => this.seekByFrames(1),

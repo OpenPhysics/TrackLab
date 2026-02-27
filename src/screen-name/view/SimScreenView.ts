@@ -70,13 +70,13 @@ export class SimScreenView extends ScreenView {
     );
 
     // ── Control panel / tool checkboxes (upper left) ───────────────────────
-    const controlPanel = new ControlPanel(model, trackLabPreferences);
+    const controlPanel = new ControlPanel(model.overlayTools, trackLabPreferences);
     controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
     controlPanel.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(controlPanel);
 
     // ── Track list panel (beneath control panel) ─────────────────────────
-    const trackListPanel = new TrackListPanel(model, model.playback.videoLoadedProperty);
+    const trackListPanel = new TrackListPanel(model.tracking, model.playback.videoLoadedProperty);
     this.addChild(trackListPanel);
     // Reactively reposition whenever controlPanel resizes (e.g. auto-tracking row toggles).
     controlPanel.boundsProperty.link(() => {
@@ -95,10 +95,19 @@ export class SimScreenView extends ScreenView {
     // ── Overlay tools (children of the video content layer, video-local coords) ──
     // All overlay tools are added via addVideoOverlay() so they share the same
     // video-local coordinate space and transform with the video.
-    const coordinateSystemNode = new CoordinateSystemNode(axesShownProperty, model);
+    const coordinateSystemNode = new CoordinateSystemNode(
+      axesShownProperty,
+      model.overlayTools,
+      model.tracking.activeTrackIdProperty,
+    );
     this.videoPlayerNode.addVideoOverlay(coordinateSystemNode);
 
-    const calibrationToolNode = new CalibrationToolNode(calibrationShownProperty, this, model);
+    const calibrationToolNode = new CalibrationToolNode(
+      calibrationShownProperty,
+      this,
+      model.overlayTools,
+      model.tracking.activeTrackIdProperty,
+    );
     this.videoPlayerNode.addVideoOverlay(calibrationToolNode);
 
     const measuringTapeNode = new MeasuringTapeNode(measuringTapeShownProperty, model.overlayTools);
@@ -109,7 +118,7 @@ export class SimScreenView extends ScreenView {
 
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(
-      model,
+      model.tracking,
       model.playback.videoLoadedProperty,
       model.overlayTools.calibUnitProperty,
     );
@@ -136,7 +145,13 @@ export class SimScreenView extends ScreenView {
     });
 
     // ── Kinematics graph (bottom right, above reset all) ─────────────────
-    const kinematicsGraph = new KinematicsGraphNode(model, this, trackLabPreferences);
+    const kinematicsGraph = new KinematicsGraphNode(
+      model.tracking,
+      model.overlayTools,
+      model.playback.videoLoadedProperty,
+      this,
+      trackLabPreferences,
+    );
     this.addChild(kinematicsGraph);
 
     // ── Info dialog (explains digitizing workflow) ────────────────────────────
@@ -154,7 +169,7 @@ export class SimScreenView extends ScreenView {
     this.addChild(infoButton);
 
     // ── Measurement tools panel (above the info button, preference-gated) ─
-    const measurementToolsPanel = new MeasurementToolsPanel(model);
+    const measurementToolsPanel = new MeasurementToolsPanel(model.overlayTools);
     measurementToolsPanel.visibleProperty = trackLabPreferences.enableMeasurementToolsProperty;
     this.addChild(measurementToolsPanel);
 

@@ -27,8 +27,8 @@ const a11yStrings = StringManager.getInstance().getA11y();
 
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
 import type { Track } from "../model/Track.js";
+import type { TrackingModel } from "../model/TrackingModel.js";
 
 // ── Layout constants ────────────────────────────────────────────────────────
 const PANEL_WIDTH = 110; // inner content width (reduced from 165)
@@ -55,7 +55,7 @@ const SYMBOL_FONT = new PhetFont({ size: 12, weight: "bold" }); // reduced from 
 class TrackRowNode extends Node {
   private readonly disposeTrackRowNode: () => void;
 
-  public constructor(track: Track, model: SimModel) {
+  public constructor(track: Track, tracking: TrackingModel) {
     super();
 
     // colorIndex is always in range 0..TRACK_COLORS.length-1 by construction
@@ -85,21 +85,21 @@ class TrackRowNode extends Node {
     symbolLabel.centerY = ROW_CY;
 
     // ── Checkbox: activates this track for video digitizing ───────────────
-    const isDigitizingProperty = new BooleanProperty(model.tracking.activeTrackIdProperty.value === track.id);
+    const isDigitizingProperty = new BooleanProperty(tracking.activeTrackIdProperty.value === track.id);
 
     // Sync checkbox from model (when another track becomes active, uncheck this one).
     // Axon Properties deduplicate same-value writes, so no infinite loop can occur.
     const activeTrackListener = (activeId: string | null) => {
       isDigitizingProperty.value = activeId === track.id;
     };
-    model.tracking.activeTrackIdProperty.link(activeTrackListener);
+    tracking.activeTrackIdProperty.link(activeTrackListener);
 
     // Sync model from checkbox
     const digitizingListener = (isDigitizing: boolean) => {
       if (isDigitizing) {
-        model.tracking.activeTrackIdProperty.value = track.id;
-      } else if (model.tracking.activeTrackIdProperty.value === track.id) {
-        model.tracking.activeTrackIdProperty.value = null;
+        tracking.activeTrackIdProperty.value = track.id;
+      } else if (tracking.activeTrackIdProperty.value === track.id) {
+        tracking.activeTrackIdProperty.value = null;
       }
     };
     isDigitizingProperty.lazyLink(digitizingListener);
@@ -115,7 +115,7 @@ class TrackRowNode extends Node {
     // ── Trash button (right side) ─────────────────────────────────────────
     const trashButton = createTrackLabButton(makeTrashIcon(), {
       baseColor: TrackLabColors.trashButtonBaseProperty,
-      listener: () => model.tracking.removeTrack(track.id),
+      listener: () => tracking.removeTrack(track.id),
       accessibleName: a11yStrings.removeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
     });
     trashButton.centerY = ROW_CY;
@@ -129,7 +129,7 @@ class TrackRowNode extends Node {
 
     // Store cleanup function
     this.disposeTrackRowNode = () => {
-      model.tracking.activeTrackIdProperty.unlink(activeTrackListener);
+      tracking.activeTrackIdProperty.unlink(activeTrackListener);
       isDigitizingProperty.unlink(digitizingListener);
       checkbox.dispose();
       trashButton.dispose();
@@ -148,7 +148,7 @@ class TrackRowNode extends Node {
 export class TrackListPanel extends Panel {
   private readonly disposeTrackListPanel: () => void;
 
-  public constructor(model: SimModel, videoLoadedProperty: TReadOnlyProperty<boolean>) {
+  public constructor(tracking: TrackingModel, videoLoadedProperty: TReadOnlyProperty<boolean>) {
     const trackListStrings = StringManager.getInstance().getTrackList();
 
     // Width enforcer: invisible rectangle keeps the panel wide even when the
@@ -161,13 +161,13 @@ export class TrackListPanel extends Panel {
 
     // ── "Add Track" button ────────────────────────────────────────────────
     const addButtonEnabledProperty = new DerivedProperty(
-      [videoLoadedProperty, model.tracking.canAddTrackProperty],
+      [videoLoadedProperty, tracking.canAddTrackProperty],
       (loaded, canAdd) => loaded && canAdd,
     );
 
     const addButton = createTrackLabButton(makePlusIcon(), {
       enabledProperty: addButtonEnabledProperty,
-      listener: () => model.tracking.addTrack(),
+      listener: () => tracking.addTrack(),
       accessibleName: trackListStrings.addTrackStringProperty,
     });
 
@@ -221,14 +221,14 @@ export class TrackListPanel extends Panel {
           child.dispose();
         }
       }
-      trackListVBox.children = tracks.map((track) => new TrackRowNode(track, model));
+      trackListVBox.children = tracks.map((track) => new TrackRowNode(track, tracking));
     };
-    model.tracking.tracksProperty.link(tracksListener);
+    tracking.tracksProperty.link(tracksListener);
 
     // Store cleanup function
     this.disposeTrackListPanel = () => {
       videoLoadedProperty.unlink(videoLoadedListener);
-      model.tracking.tracksProperty.unlink(tracksListener);
+      tracking.tracksProperty.unlink(tracksListener);
       // Dispose all track rows
       for (const child of trackListVBox.children) {
         if (child instanceof TrackRowNode) {

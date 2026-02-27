@@ -23,7 +23,7 @@ import {
   PANEL_CORNER_RADIUS,
 } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 // ── Icon geometry constants ──────────────────────────────────────────────────
 const ICON_EDGE_INSET = 1;
@@ -128,19 +128,19 @@ function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProper
  * Positioned above the Info button by SimScreenView.
  */
 export class MeasurementToolsPanel extends Panel {
-  public constructor(model: SimModel) {
+  public constructor(overlayTools: OverlayToolsModel) {
     const a11yStrings = StringManager.getInstance().getA11y();
 
     const rows = new VBox({
       children: [
         makeRow(
           measuringTapeIcon(),
-          model.overlayTools.measuringTapeVisibleProperty,
+          overlayTools.measuringTapeVisibleProperty,
           a11yStrings.toggleMeasuringTapeStringProperty.value,
         ),
         makeRow(
           angleToolIcon(),
-          model.overlayTools.angleToolVisibleProperty,
+          overlayTools.angleToolVisibleProperty,
           a11yStrings.toggleAngleToolStringProperty.value,
         ),
       ],

@@ -442,7 +442,7 @@ export class VideoSourceControlNode extends HBox {
 
     // ── Webcam panel and button ───────────────────────────────────────────
     this.webcamPanel = new WebcamPanel({
-      model: model,
+      frameRateProperty: model.playback.frameRateProperty,
       onVideoReady: (blob, duration) => {
         this.webcamPanel.visible = false;
         // Store the recording in the model (this triggers a ComboBox rebuild).

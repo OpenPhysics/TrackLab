@@ -6,7 +6,7 @@
  * The velocity and acceleration groups can be hidden via user preferences.
  */
 
-import { Property } from "scenerystack/axon";
+import { Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
@@ -17,8 +17,9 @@ import trackLab from "../../TrackLabNamespace.js";
 import ConfigurableGraph from "../graph/ConfigurableGraph.js";
 import { buildKinematicsPlottableGroups } from "../graph/kinematics-plottable-properties.js";
 import type { PlottableProperty } from "../graph/PlottableProperty.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 import type { Track } from "../model/Track.js";
+import type { TrackingModel } from "../model/TrackingModel.js";
 
 // Graph dimensions
 const GRAPH_WIDTH = 300;
@@ -31,13 +32,19 @@ const TRACK_CHECKBOX_SPACING = 6;
 
 export class KinematicsGraphNode extends Node {
   private readonly graph: ConfigurableGraph;
-  private readonly model: SimModel;
+  private readonly tracking: TrackingModel;
   private readonly selectedTracksProperty: Property<Set<string>>;
   private readonly trackCheckboxPanel: Node;
   private readonly trackCheckboxes: Map<string, { checkbox: Checkbox; property: Property<boolean> }> = new Map();
   private readonly disposeKinematicsGraph: () => void;
 
-  public constructor(model: SimModel, listParent: Node, preferencesModel: TrackLabPreferencesModel) {
+  public constructor(
+    tracking: TrackingModel,
+    overlayTools: OverlayToolsModel,
+    videoLoadedProperty: TReadOnlyProperty<boolean>,
+    listParent: Node,
+    preferencesModel: TrackLabPreferencesModel,
+  ) {
     const a11yStrings = StringManager.getInstance().getA11y();
     super({
       visible: false,
@@ -45,13 +52,13 @@ export class KinematicsGraphNode extends Node {
       accessibleName: a11yStrings.kinematicsGraphStringProperty,
     });
 
-    this.model = model;
+    this.tracking = tracking;
     this.selectedTracksProperty = new Property<Set<string>>(new Set());
 
     // Build the categorised groups of plottable quantities.
     // Object references are stable — the same PlottableProperty instances are
     // reused across filter updates so identity checks in setAvailableProperties work.
-    const groups = buildKinematicsPlottableGroups(model);
+    const groups = buildKinematicsPlottableGroups(overlayTools);
 
     /** Compute the current filtered list from preference state. */
     const getFilteredProperties = (): PlottableProperty[] => {
@@ -126,14 +133,14 @@ export class KinematicsGraphNode extends Node {
       // Build new checkbox panel with updated tracks
       this.rebuildTrackCheckboxes();
     };
-    model.tracking.tracksProperty.link(tracksListener);
+    tracking.tracksProperty.link(tracksListener);
 
     // Update graph when selected tracks change or kinematics update
     const selectedTracksListener = () => this.updateGraph();
     this.selectedTracksProperty.link(selectedTracksListener);
 
     const kinematicsListener = () => this.updateGraph();
-    model.tracking.trackKinematicsProperty.link(kinematicsListener);
+    tracking.trackKinematicsProperty.link(kinematicsListener);
 
     // Update graph when axis selection changes
     const xPropertyListener = () => this.updateGraph();
@@ -147,7 +154,7 @@ export class KinematicsGraphNode extends Node {
     const distanceUnitListener = () => {
       this.graph.updateAxisLabels();
     };
-    model.overlayTools.calibUnitProperty.lazyLink(distanceUnitListener);
+    overlayTools.calibUnitProperty.lazyLink(distanceUnitListener);
 
     // When preferences change, rebuild the available properties in the graph selectors.
     const velocityPrefListener = () => {
@@ -164,7 +171,7 @@ export class KinematicsGraphNode extends Node {
     const videoLoadedListener = (loaded: boolean) => {
       this.visible = loaded;
     };
-    model.playback.videoLoadedProperty.link(videoLoadedListener);
+    videoLoadedProperty.link(videoLoadedListener);
 
     // Update checkbox positions when graph bounds change (e.g., after resize)
     const graphBoundsListener = () => {
@@ -174,15 +181,15 @@ export class KinematicsGraphNode extends Node {
 
     // Store cleanup function
     this.disposeKinematicsGraph = () => {
-      model.tracking.tracksProperty.unlink(tracksListener);
+      tracking.tracksProperty.unlink(tracksListener);
       this.selectedTracksProperty.unlink(selectedTracksListener);
-      model.tracking.trackKinematicsProperty.unlink(kinematicsListener);
+      tracking.trackKinematicsProperty.unlink(kinematicsListener);
       this.graph.getXPropertyProperty().unlink(xPropertyListener);
       this.graph.getYPropertyProperty().unlink(yPropertyListener);
-      model.overlayTools.calibUnitProperty.unlink(distanceUnitListener);
+      overlayTools.calibUnitProperty.unlink(distanceUnitListener);
       preferencesModel.showVelocityInGraphProperty.unlink(velocityPrefListener);
       preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
-      model.playback.videoLoadedProperty.unlink(videoLoadedListener);
+      videoLoadedProperty.unlink(videoLoadedListener);
       this.graph.localBoundsProperty.unlink(graphBoundsListener);
       for (const [, { checkbox, property }] of this.trackCheckboxes) {
         checkbox.dispose();
@@ -204,7 +211,7 @@ export class KinematicsGraphNode extends Node {
    * Positions it in the upper right corner of the graph.
    */
   private rebuildTrackCheckboxes(): void {
-    const tracks = this.model.tracking.tracksProperty.value;
+    const tracks = this.tracking.tracksProperty.value;
 
     if (tracks.length === 0) {
       this.trackCheckboxPanel.children = [];
@@ -291,8 +298,8 @@ export class KinematicsGraphNode extends Node {
       return;
     }
 
-    const kinematics = this.model.tracking.trackKinematicsProperty.value;
-    const tracks = this.model.tracking.tracksProperty.value;
+    const kinematics = this.tracking.trackKinematicsProperty.value;
+    const tracks = this.tracking.tracksProperty.value;
 
     // Plot each selected track separately with its own color
     for (const trackId of selectedIds) {
