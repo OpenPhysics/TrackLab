@@ -12,7 +12,7 @@
  */
 
 import { BooleanProperty, type TReadOnlyProperty } from "scenerystack/axon";
-import type { Vector2 } from "scenerystack/dot";
+import { Vector2 } from "scenerystack/dot";
 import { DOM, DragListener, HBox, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
@@ -680,6 +680,31 @@ export class DataTableNode extends Panel {
       this.opacity = isResizing ? 0.8 : 1.0;
     };
     this.isResizingProperty.link(isResizingListener);
+
+    // ── Pan drag: lets the user freely reposition the panel ──────────────────
+    let panStartPosition: Vector2 | null = null;
+    let panStartPointerPoint: Vector2 | null = null;
+    this.cursor = "grab";
+    this.addInputListener(
+      new DragListener({
+        start: (event) => {
+          panStartPosition = new Vector2(this.x, this.y);
+          panStartPointerPoint = event.pointer.point.copy();
+        },
+        drag: (event) => {
+          if (!(panStartPosition && panStartPointerPoint)) {
+            return;
+          }
+          const delta = event.pointer.point.minus(panStartPointerPoint);
+          this.x = panStartPosition.x + delta.x;
+          this.y = panStartPosition.y + delta.y;
+        },
+        end: () => {
+          panStartPosition = null;
+          panStartPointerPoint = null;
+        },
+      }),
+    );
 
     // Store cleanup function
     this.disposeDataTable = () => {

@@ -6,8 +6,7 @@
  */
 
 import { DerivedProperty } from "scenerystack/axon";
-import { Vector2 } from "scenerystack/dot";
-import { DragListener, Node } from "scenerystack/scenery";
+import { Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
@@ -240,32 +239,6 @@ export class SimScreenView extends ScreenView {
           infoDialogNode,
           webcamPanel,
         ],
-      }),
-    );
-
-    // ── Data table drag ───────────────────────────────────────────────────
-    // Lets the user freely reposition the data table panel by dragging it.
-    let dragStartPosition: Vector2 | null = null;
-    let dragStartPointerPoint: Vector2 | null = null;
-    dataTableNode.cursor = "grab";
-    dataTableNode.addInputListener(
-      new DragListener({
-        start: (event) => {
-          dragStartPosition = new Vector2(dataTableNode.x, dataTableNode.y);
-          dragStartPointerPoint = event.pointer.point.copy();
-        },
-        drag: (event) => {
-          if (!(dragStartPosition && dragStartPointerPoint)) {
-            return;
-          }
-          const delta = event.pointer.point.minus(dragStartPointerPoint);
-          dataTableNode.x = dragStartPosition.x + delta.x;
-          dataTableNode.y = dragStartPosition.y + delta.y;
-        },
-        end: () => {
-          dragStartPosition = null;
-          dragStartPointerPoint = null;
-        },
       }),
     );
   }

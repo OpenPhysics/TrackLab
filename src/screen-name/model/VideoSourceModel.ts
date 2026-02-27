@@ -40,9 +40,9 @@ export type UploadedVideo = {
  * the flag that indicates whether the current video is user-provided.
  */
 export class VideoSourceModel {
-  // Track whether the current video is from webcam/upload (enables FPS editing
-  // and shows the download button).
-  public readonly isWebcamVideoProperty = new BooleanProperty(false);
+  // True when the active video is user-provided (webcam recording or upload);
+  // false for bundled sample videos. Controls FPS editing and download button.
+  public readonly isUserVideoProperty = new BooleanProperty(false);
 
   // ── Webcam recordings storage ──────────────────────────────────────────
   public readonly webcamRecordingsProperty = new Property<readonly WebcamRecording[]>([]);
@@ -92,7 +92,7 @@ export class VideoSourceModel {
   }
 
   public reset(): void {
-    this.isWebcamVideoProperty.reset();
+    this.isUserVideoProperty.reset();
     this.webcamRecordingsProperty.value = [];
     this.currentWebcamBlobProperty.value = null;
     this.nextRecordingNumber = 1;
