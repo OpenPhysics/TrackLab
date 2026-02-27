@@ -18,6 +18,7 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 - **Configurable frame rate** — Set video frame rate (15–60 fps) for accurate time calculations
 - **Bilingual UI** — English and French interface support
 - **Color profiles** — Default and projector modes for classroom presentation
+- **Pinned track points** — Digitized points stay at the same pixel on the video when you move the coordinate system or calibration
 - **PWA support** — Installable as a desktop/mobile app
 
 ## Sample Videos
@@ -39,13 +40,14 @@ The following physics scenarios are included:
 | `oscillatingCar.webm` | Oscillating car |
 | `verticalToss.webm` | Vertical toss |
 
+Bundled videos live in `public/videos/` and are served at `/videos/`.
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | UI Framework | [SceneryStack](https://scenerystack.org) (PhET) |
 | Tracking | [OpenCV.js](https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html) (WASM) |
-| Video processing | [FFmpeg.js](https://ffmpegwasm.netlify.app/) |
 | Build tool | [Vite](https://vite.dev) |
 | Language | TypeScript |
 | Linter / Formatter | [Biome](https://biomejs.dev) |
@@ -89,7 +91,9 @@ Output is written to `dist/`. The build includes the video files and the OpenCV 
 | `npm run lint` | Lint with Biome |
 | `npm run format` | Format with Biome |
 | `npm run fix` | Fix lint and format issues |
-| `npm run icons` | Regenerate app icons from `public/icons/icon.svg` |
+| `npm run icons` | Regenerate app icons (SVG → PNG/ICO) |
+| `npm run generate-svg-icon` | Generate `public/icons/icon.svg` from bouncing ball script |
+| `npm run preview` | Preview production build locally |
 
 ## Usage
 
@@ -135,24 +139,31 @@ src/
 │   └── strings_fr.json      # French strings
 ├── preferences/
 │   ├── TrackLabPreferencesModel.ts  # User preferences (auto-tracking, graph quantities, measurement tools)
-│   └── TrackLabPreferencesNode.ts   # Preferences UI
+│   ├── TrackLabPreferencesNode.ts  # Preferences UI
+│   └── trackLabQueryParameters.ts  # Query parameter parsing
 ├── screen-name/
 │   ├── SimScreen.ts         # Screen wiring (model + view)
 │   ├── model/
-│   │   ├── SimModel.ts             # Application state (Axon Properties)
-│   │   ├── Track.ts                # Track model (points, label, color)
-│   │   ├── KinematicsComputer.ts   # Velocity and acceleration via finite differences
-│   │   └── ModelViewTransformFactory.ts  # Builds Transform3 from coord-system + calibration
+│   │   ├── SimModel.ts             # Thin coordinator; composes sub-models
+│   │   ├── OverlayToolsModel.ts    # Axes, calibration, measuring tape, angle tool, MVT
+│   │   ├── VideoPlaybackModel.ts   # Timing, frame rate, playback state
+│   │   ├── VideoSourceModel.ts     # Webcam recordings, uploads, active blob
+│   │   ├── TrackingModel.ts       # Tracks, kinematics, OpenCV facade
+│   │   ├── ModelViewTransformFactory.ts  # Builds Transform3 from coord-system + calibration
+│   │   ├── Track.ts               # Track model (points, label, color)
+│   │   ├── TrackExporter.ts       # CSV export
+│   │   └── KinematicsComputer.ts  # Velocity and acceleration via finite differences
 │   ├── view/
-│   │   ├── SimScreenView.ts        # Root view, layout, MVT computation
+│   │   ├── SimScreenView.ts        # Root view, layout
 │   │   ├── VideoPlayerNode.ts      # Video element, hosts overlays
-│   │   ├── VideoSourceControlNode.ts  # Video dropdown + Record button
+│   │   ├── VideoSourceControlNode.ts  # Video dropdown, Record, Upload
 │   │   ├── PlaybackControlsNode.ts    # Play, scrubber, frame step, frame rate
 │   │   ├── CoordinateSystemNode.ts    # Draggable/rotatable axes overlay
 │   │   ├── CalibrationToolNode.ts     # Reference distance tool
 │   │   ├── ControlPanel.ts            # Left-side toggle panel
 │   │   ├── AutoTrackerNode.ts         # Auto-tracking overlay and trail
 │   │   ├── DigitizingOverlayNode.ts   # Manual digitizing crosshair + magnifier
+│   │   ├── DigitizingAwareOverlayNode.ts  # Base for overlays that need digitizing context
 │   │   ├── DataTableNode.ts           # Spreadsheet of track data, CSV export
 │   │   ├── KinematicsGraphNode.ts     # Configurable kinematics graph (wraps graph/)
 │   │   ├── TrackListPanel.ts          # Add/remove tracks for digitizing
@@ -174,17 +185,27 @@ src/
 │       ├── GraphControlsPanel.ts             # Axis property selector dropdowns
 │       ├── PlottableProperty.ts              # Interface for quantities in the axis selector
 │       └── kinematics-plottable-properties.ts  # Registry of all plottable quantities
-└── tracking/
-    └── OpenCVTracker.ts     # OpenCV template matching (TM_CCOEFF_NORMED)
+├── tracking/
+│   └── OpenCVTracker.ts     # OpenCV template matching (TM_CCOEFF_NORMED)
+└── scripts/
+    ├── bouncingBallToSVG.ts # Generates icon.svg from bouncing ball animation
+    └── generate-icons.ts    # Creates PNG/ICO from icon.svg
 ```
 
 ### State management
 
-State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon). The central `SimModel` holds playback state, overlay visibility flags, frame rate, the computed model-view transform, and the list of tracks (each with digitized points). Views observe properties and update themselves automatically.
+State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon). `SimModel` is a thin coordinator that composes four sub-models:
+
+- **OverlayToolsModel** — Coordinate system, calibration, measuring tape, angle tool, and the derived model-view transform
+- **VideoPlaybackModel** — Timing, frame rate, playback state
+- **VideoSourceModel** — Webcam recordings, uploads, active video blob
+- **TrackingModel** — Tracks (each with digitized points), kinematics, OpenCV facade
+
+Views observe properties and update themselves automatically.
 
 ### Model-view transform
 
-`ModelViewTransformFactory` builds a `Transform3` from the coordinate system's position/rotation and the calibration tool's endpoints and distance. `SimScreenView` wraps this in a reactive `modelViewTransformProperty`. The transform maps real-world coordinates (e.g., meters) to video pixel coordinates and back.
+`ModelViewTransformFactory.buildModelViewTransform()` builds a `Transform3` from the coordinate system's position/rotation and the calibration tool's endpoints and distance. `OverlayToolsModel` exposes this as a reactive `modelViewTransformProperty`. The transform maps real-world coordinates (e.g., meters) to video pixel coordinates and back. When the user moves the coordinate system or calibration, `SimModel` re-expresses all track points so they stay pinned to the same pixels on the video.
 
 ### Tracking pipeline
 
@@ -201,7 +222,7 @@ State is modeled as reactive [Axon Properties](https://github.com/phetsims/axon)
 | Feature | Requirement |
 |---------|-------------|
 | OpenCV WASM | Chrome 79+, Firefox 72+, Safari 15.2+ |
-| SharedArrayBuffer (FFmpeg) | Requires `COOP`/`COEP` headers (served automatically in dev and production) |
+| SharedArrayBuffer (OpenCV WASM) | Requires `COOP`/`COEP` headers (served automatically in dev and production) |
 | WebM webcam recording | Chrome/Edge (Firefox records in WebM with limited seek support) |
 | Range requests | Required for video seeking; handled automatically by the dev server and production build |
 
