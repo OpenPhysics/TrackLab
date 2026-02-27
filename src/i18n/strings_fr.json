@@ -208,6 +208,7 @@
     "tableResizeTopRight": "Redimensionnement du tableau \u2014 coin sup\u00e9rieur droit",
     "tableResizeBottomLeft": "Redimensionnement du tableau \u2014 coin inf\u00e9rieur gauche",
     "tableResizeBottomRight": "Redimensionnement du tableau \u2014 coin inf\u00e9rieur droit",
-    "toggleVideoVisibility": "Basculer la visibilit\u00e9 de la vid\u00e9o"
+    "toggleVideoVisibility": "Basculer la visibilit\u00e9 de la vid\u00e9o",
+    "graphPanelHeader": "En-t\u00eate du panneau graphique \u2014 faire glisser ou utiliser les touches fl\u00e9ch\u00e9es pour d\u00e9placer"
   }
 }

@@ -49,6 +49,7 @@ export class TrackLabPreferencesNode extends VBox {
         spacing: 8,
       },
     );
+    enableAutoTrackingCheckbox.addInputListener({ down: () => enableAutoTrackingCheckbox.focus() });
 
     const showVelocityCheckbox = new Checkbox(
       preferencesModel.showVelocityInGraphProperty,
@@ -73,6 +74,7 @@ export class TrackLabPreferencesNode extends VBox {
         spacing: 8,
       },
     );
+    showVelocityCheckbox.addInputListener({ down: () => showVelocityCheckbox.focus() });
 
     const showAccelerationCheckbox = new Checkbox(
       preferencesModel.showAccelerationInGraphProperty,
@@ -97,6 +99,7 @@ export class TrackLabPreferencesNode extends VBox {
         spacing: 8,
       },
     );
+    showAccelerationCheckbox.addInputListener({ down: () => showAccelerationCheckbox.focus() });
 
     const enableMeasurementToolsCheckbox = new Checkbox(
       preferencesModel.enableMeasurementToolsProperty,
@@ -121,6 +124,7 @@ export class TrackLabPreferencesNode extends VBox {
         spacing: 8,
       },
     );
+    enableMeasurementToolsCheckbox.addInputListener({ down: () => enableMeasurementToolsCheckbox.focus() });
 
     super({
       align: "left",

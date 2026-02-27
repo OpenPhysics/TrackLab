@@ -109,6 +109,7 @@ class TrackRowNode extends Node {
       tandem: Tandem.OPT_OUT,
       accessibleName: a11yStrings.digitizeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
     });
+    checkbox.addInputListener({ down: () => checkbox.focus() });
     checkbox.left = CHECKBOX_X;
     checkbox.centerY = ROW_CY;
 

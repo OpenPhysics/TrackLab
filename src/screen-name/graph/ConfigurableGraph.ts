@@ -458,7 +458,7 @@ export default class ConfigurableGraph extends Node {
     this.yPropertyProperty.link(yPropertyListener);
 
     // Create header bar (checkbox is now in ToolsControlPanel)
-    this.headerBar = controlsPanel.createHeaderBar();
+    this.headerBar = controlsPanel.createHeaderBar(a11yStrings.graphPanelHeaderStringProperty);
 
     // Add the graph content container first
     this.addChild(this.graphContentNode);

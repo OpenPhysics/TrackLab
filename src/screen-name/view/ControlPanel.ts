@@ -161,11 +161,13 @@ function trackingIcon(): Node {
 // ── Helper ────────────────────────────────────────────────────────────────
 
 function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProperty, accessibleName: string): Checkbox {
-  return new Checkbox(property, icon, {
+  const checkbox = new Checkbox(property, icon, {
     checkboxColor: TrackLabColors.checkboxColorProperty,
     checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
     accessibleName,
   });
+  checkbox.addInputListener({ down: () => checkbox.focus() });
+  return checkbox;
 }
 
 // ── ControlPanel class ────────────────────────────────────────────────────

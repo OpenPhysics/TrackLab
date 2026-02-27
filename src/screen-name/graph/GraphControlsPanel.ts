@@ -4,7 +4,7 @@
  * - Header bar
  */
 
-import { DerivedProperty, type Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { DerivedProperty, type Property, type ReadOnlyProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { HBox, type Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox } from "scenerystack/sun";
@@ -208,7 +208,7 @@ export default class GraphControlsPanel {
   /**
    * Create the header bar (without checkbox - checkbox is now in ToolsControlPanel)
    */
-  public createHeaderBar(): Rectangle {
+  public createHeaderBar(accessibleName: ReadOnlyProperty<string>): Rectangle {
     // Create header bar with dynamic fill that darkens the control panel background
     const headerFillProperty = new DerivedProperty([TrackLabColors.controlPanelFillProperty], (backgroundColor) =>
       backgroundColor.colorUtilsDarker(HEADER_DARKEN_FACTOR),
@@ -226,6 +226,9 @@ export default class GraphControlsPanel {
         lineWidth: HEADER_LINE_WIDTH,
         cursor: "grab",
         pickable: true,
+        tagName: "div",
+        focusable: true,
+        accessibleName,
       },
     );
 

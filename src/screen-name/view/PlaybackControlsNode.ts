@@ -149,6 +149,7 @@ export class PlaybackControlsNode extends HBox {
         enabledProperty: playback.videoLoadedProperty,
         accessibleName: a11yStrings.videoScrubberStringProperty,
       });
+      newScrubber.addInputListener({ down: () => newScrubber.focus() });
 
       // Add tick marks based on calculated intervals
       const duration = playback.durationProperty.value;

@@ -249,6 +249,7 @@ export class KinematicsGraphNode extends Node {
         spacing: 4,
         accessibleName: kinematicsGraphStrings.trackItemStringProperty.value.replace("{{symbol}}", track.symbol),
       });
+      checkbox.addInputListener({ down: () => checkbox.focus() });
 
       // Store for later disposal
       this.trackCheckboxes.set(track.id, { checkbox, property: checkboxProperty });

@@ -177,6 +177,7 @@ export default class ResizeGestureHandler {
       new RichDragListener({
         dragListenerOptions: {
           start: (event) => {
+            handle.focus();
             dragStartGraphBounds = {
               width: this.graphWidth,
               height: this.graphHeight,

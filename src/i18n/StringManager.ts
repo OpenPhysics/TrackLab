@@ -447,6 +447,7 @@ export class StringManager {
     tableResizeBottomLeftStringProperty: ReadOnlyProperty<string>;
     tableResizeBottomRightStringProperty: ReadOnlyProperty<string>;
     toggleVideoVisibilityStringProperty: ReadOnlyProperty<string>;
+    graphPanelHeaderStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       infoDialogTab1StringProperty: this.stringProperties.a11y.infoDialogTab1StringProperty,
@@ -488,6 +489,7 @@ export class StringManager {
       tableResizeBottomLeftStringProperty: this.stringProperties.a11y.tableResizeBottomLeftStringProperty,
       tableResizeBottomRightStringProperty: this.stringProperties.a11y.tableResizeBottomRightStringProperty,
       toggleVideoVisibilityStringProperty: this.stringProperties.a11y.toggleVideoVisibilityStringProperty,
+      graphPanelHeaderStringProperty: this.stringProperties.a11y.graphPanelHeaderStringProperty,
     };
   }
 

@@ -7,7 +7,9 @@
 
 import type { BooleanProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
-import { DragListener, type Node, type Rectangle } from "scenerystack/scenery";
+import { type Node, type Rectangle, RichDragListener } from "scenerystack/scenery";
+import { Tandem } from "scenerystack/tandem";
+import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 
 export interface HeaderDragElements {
@@ -42,30 +44,48 @@ export default class HeaderDragHandler {
     let dragStartPosition: Vector2 | null = null;
     let dragStartPointerPoint: Vector2 | null = null;
 
-    const dragListener = new DragListener({
-      start: (event) => {
-        dragStartPosition = new Vector2(this.dragTargetNode.x, this.dragTargetNode.y);
-        dragStartPointerPoint = event.pointer.point.copy();
-        this.isDraggingProperty.value = true;
-      },
+    this.headerBar.addInputListener(
+      new RichDragListener({
+        dragListenerOptions: {
+          start: (event) => {
+            this.headerBar.focus();
+            dragStartPosition = new Vector2(this.dragTargetNode.x, this.dragTargetNode.y);
+            dragStartPointerPoint = event.pointer.point.copy();
+            this.isDraggingProperty.value = true;
+          },
 
-      drag: (event) => {
-        if (!(dragStartPosition && dragStartPointerPoint)) {
-          return;
-        }
-        const delta = event.pointer.point.minus(dragStartPointerPoint);
-        this.dragTargetNode.x = dragStartPosition.x + delta.x;
-        this.dragTargetNode.y = dragStartPosition.y + delta.y;
-      },
+          drag: (event) => {
+            if (!(dragStartPosition && dragStartPointerPoint)) {
+              return;
+            }
+            const delta = event.pointer.point.minus(dragStartPointerPoint);
+            this.dragTargetNode.x = dragStartPosition.x + delta.x;
+            this.dragTargetNode.y = dragStartPosition.y + delta.y;
+          },
 
-      end: () => {
-        dragStartPosition = null;
-        dragStartPointerPoint = null;
-        this.isDraggingProperty.value = false;
-      },
-    });
-
-    this.headerBar.addInputListener(dragListener);
+          end: () => {
+            dragStartPosition = null;
+            dragStartPointerPoint = null;
+            this.isDraggingProperty.value = false;
+          },
+        },
+        keyboardDragListenerOptions: {
+          dragSpeed: OVERLAY_DRAG_SPEED,
+          shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
+          start: () => {
+            this.isDraggingProperty.value = true;
+          },
+          drag: (_event, listener) => {
+            this.dragTargetNode.x += listener.modelDelta.x;
+            this.dragTargetNode.y += listener.modelDelta.y;
+          },
+          end: () => {
+            this.isDraggingProperty.value = false;
+          },
+        },
+        tandem: Tandem.OPT_OUT,
+      }),
+    );
   }
 }
 

@@ -262,6 +262,7 @@ export class CalibrationToolNode extends DigitizingAwareOverlayNode {
     endpoint1.addInputListener(
       new RichDragListener({
         positionProperty: overlayTools.calibPoint1Property,
+        dragListenerOptions: { start: () => endpoint1.focus() },
         keyboardDragListenerOptions: {
           dragSpeed: OVERLAY_DRAG_SPEED,
           shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
@@ -272,6 +273,7 @@ export class CalibrationToolNode extends DigitizingAwareOverlayNode {
     endpoint2.addInputListener(
       new RichDragListener({
         positionProperty: overlayTools.calibPoint2Property,
+        dragListenerOptions: { start: () => endpoint2.focus() },
         keyboardDragListenerOptions: {
           dragSpeed: OVERLAY_DRAG_SPEED,
           shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,

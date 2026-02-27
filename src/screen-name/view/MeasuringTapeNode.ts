@@ -134,6 +134,7 @@ export class MeasuringTapeNode extends Node {
     endpoint1Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint1Property,
+        dragListenerOptions: { start: () => endpoint1Node.focus() },
         keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
@@ -141,6 +142,7 @@ export class MeasuringTapeNode extends Node {
     endpoint2Node.addInputListener(
       new RichDragListener({
         positionProperty: model.tapPoint2Property,
+        dragListenerOptions: { start: () => endpoint2Node.focus() },
         keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),

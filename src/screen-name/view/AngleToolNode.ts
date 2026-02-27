@@ -206,6 +206,7 @@ export class AngleToolNode extends Node {
     vertexNode.addInputListener(
       new RichDragListener({
         positionProperty: model.angleVertexProperty,
+        dragListenerOptions: { start: () => vertexNode.focus() },
         keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
@@ -213,6 +214,7 @@ export class AngleToolNode extends Node {
     arm1Node.addInputListener(
       new RichDragListener({
         positionProperty: model.angleArm1Property,
+        dragListenerOptions: { start: () => arm1Node.focus() },
         keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),
@@ -220,6 +222,7 @@ export class AngleToolNode extends Node {
     arm2Node.addInputListener(
       new RichDragListener({
         positionProperty: model.angleArm2Property,
+        dragListenerOptions: { start: () => arm2Node.focus() },
         keyboardDragListenerOptions: { dragSpeed: OVERLAY_DRAG_SPEED, shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED },
         tandem: Tandem.OPT_OUT,
       }),

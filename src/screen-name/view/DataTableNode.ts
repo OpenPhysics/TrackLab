@@ -662,6 +662,7 @@ export class DataTableNode extends Node {
         new RichDragListener({
           dragListenerOptions: {
             start: (event) => {
+              handle.focus();
               dragStartState = {
                 maxWidth: this.currentMaxWidth,
                 maxHeight: this.currentMaxHeight,

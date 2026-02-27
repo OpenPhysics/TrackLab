@@ -214,6 +214,9 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
     positionNode.addInputListener(
       new RichDragListener({
         dragListenerOptions: {
+          start: () => {
+            positionNode.focus();
+          },
           drag: (_event, listener) => {
             const newPos = listener.parentPoint;
             overlayTools.coordOriginProperty.value = overlayTools.clampCoordOrigin(newPos);
@@ -238,6 +241,9 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
     handleDisk.addInputListener(
       new RichDragListener({
         dragListenerOptions: {
+          start: () => {
+            handleDisk.focus();
+          },
           drag: (event) => {
             const p = positionNode.globalToLocalPoint(event.pointer.point);
             overlayTools.coordAngleProperty.value = Math.atan2(p.y, p.x);

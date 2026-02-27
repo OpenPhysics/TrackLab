@@ -208,6 +208,7 @@
     "tableResizeTopRight": "Data table resize — top-right corner",
     "tableResizeBottomLeft": "Data table resize — bottom-left corner",
     "tableResizeBottomRight": "Data table resize — bottom-right corner",
-    "toggleVideoVisibility": "Toggle video visibility"
+    "toggleVideoVisibility": "Toggle video visibility",
+    "graphPanelHeader": "Graph panel header — drag or use arrow keys to move"
   }
 }
