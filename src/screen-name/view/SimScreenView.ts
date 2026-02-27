@@ -53,19 +53,19 @@ export class SimScreenView extends ScreenView {
 
     // Combined visibility: video loaded AND user-toggled model flag.
     const axesShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.overlayTools.axesVisibleProperty],
+      [model.playback.videoLoadedProperty, model.overlayTools.axesVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const calibrationShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.overlayTools.calibrationVisibleProperty],
+      [model.playback.videoLoadedProperty, model.overlayTools.calibrationVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const measuringTapeShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.overlayTools.measuringTapeVisibleProperty],
+      [model.playback.videoLoadedProperty, model.overlayTools.measuringTapeVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
     const angleToolShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.overlayTools.angleToolVisibleProperty],
+      [model.playback.videoLoadedProperty, model.overlayTools.angleToolVisibleProperty],
       (loaded, visible) => loaded && visible,
     );
 
@@ -76,7 +76,7 @@ export class SimScreenView extends ScreenView {
     this.addChild(controlPanel);
 
     // ── Track list panel (beneath control panel) ─────────────────────────
-    const trackListPanel = new TrackListPanel(model, model.videoLoadedProperty);
+    const trackListPanel = new TrackListPanel(model, model.playback.videoLoadedProperty);
     this.addChild(trackListPanel);
     // Reactively reposition whenever controlPanel resizes (e.g. auto-tracking row toggles).
     controlPanel.boundsProperty.link(() => {
@@ -108,7 +108,11 @@ export class SimScreenView extends ScreenView {
     this.videoPlayerNode.addVideoOverlay(angleToolNode);
 
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
-    const dataTableNode = new DataTableNode(model, model.videoLoadedProperty, model.overlayTools.calibUnitProperty);
+    const dataTableNode = new DataTableNode(
+      model,
+      model.playback.videoLoadedProperty,
+      model.overlayTools.calibUnitProperty,
+    );
     this.addChild(dataTableNode);
 
     dataTableNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;

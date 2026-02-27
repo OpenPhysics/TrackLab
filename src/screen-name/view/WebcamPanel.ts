@@ -187,7 +187,7 @@ export class WebcamPanel extends Node {
       fill: TrackLabColors.textMutedProperty,
     });
 
-    const fpsPicker = new NumberPicker(this.model.frameRateProperty, new Property(FRAME_RATE_RANGE), {
+    const fpsPicker = new NumberPicker(this.model.playback.frameRateProperty, new Property(FRAME_RATE_RANGE), {
       font: SMALL_FONT,
       scale: FPS_PICKER_SCALE,
       touchAreaXDilation: 10,
@@ -390,7 +390,7 @@ export class WebcamPanel extends Node {
       }
       this.updateFPSEstimateDisplay();
       // Set the estimated FPS as the initial value
-      this.model.frameRateProperty.value = this.fpsEstimate.fps;
+      this.model.playback.frameRateProperty.value = this.fpsEstimate.fps;
     } catch (_error) {
       this.fpsEstimateText.string = "";
     }

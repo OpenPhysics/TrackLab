@@ -265,13 +265,13 @@ export class CoordinateSystemNode extends Node {
       this.pickable = !isDigitizing;
       this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
     };
-    model.activeTrackIdProperty.link(onActiveTrackChange);
+    model.tracking.activeTrackIdProperty.link(onActiveTrackChange);
 
     this.disposeCoordinateSystemNode = () => {
       model.overlayTools.coordOriginProperty.unlink(onOriginChange);
       model.overlayTools.coordAngleProperty.unlink(onAngleChange);
       videoLoadedProperty.unlink(onVideoLoaded);
-      model.activeTrackIdProperty.unlink(onActiveTrackChange);
+      model.tracking.activeTrackIdProperty.unlink(onActiveTrackChange);
     };
   }
 

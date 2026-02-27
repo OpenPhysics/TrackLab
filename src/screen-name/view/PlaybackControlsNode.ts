@@ -68,7 +68,7 @@ export class PlaybackControlsNode extends HBox {
 
     // view → model
     const onSpeedChange = (speed: TimeSpeed) => {
-      model.playbackRateProperty.value = speedMap.get(speed) ?? SPEED_NORMAL;
+      model.playback.playbackRateProperty.value = speedMap.get(speed) ?? SPEED_NORMAL;
     };
     timeSpeedProperty.link(onSpeedChange);
 
@@ -76,14 +76,14 @@ export class PlaybackControlsNode extends HBox {
     const onRateChange = (rate: number) => {
       timeSpeedProperty.value = rateToSpeed.get(rate) ?? TimeSpeed.NORMAL;
     };
-    model.playbackRateProperty.lazyLink(onRateChange);
+    model.playback.playbackRateProperty.lazyLink(onRateChange);
 
     // ── TimeControlNode: play/pause + step back + step forward + speed ─────
-    const timeControlNode = new TimeControlNode(model.isPlayingProperty, {
+    const timeControlNode = new TimeControlNode(model.playback.isPlayingProperty, {
       timeSpeedProperty: timeSpeedProperty,
       timeSpeeds: [TimeSpeed.NORMAL, TimeSpeed.SLOW],
       speedRadioButtonGroupPlacement: "left",
-      enabledProperty: model.videoLoadedProperty,
+      enabledProperty: model.playback.videoLoadedProperty,
       tandem: Tandem.OPT_OUT,
       playPauseStepButtonOptions: {
         includeStepBackwardButton: true,
@@ -103,7 +103,7 @@ export class PlaybackControlsNode extends HBox {
 
     // ── Scrubber ───────────────────────────────────────────────────────────
     // Create mutable range that will be updated when duration changes
-    const initDuration = model.durationProperty.value;
+    const initDuration = model.playback.durationProperty.value;
     this.scrubberRange = new Range(0, Number.isFinite(initDuration) && initDuration > 0 ? initDuration : 1);
 
     /**
@@ -127,7 +127,7 @@ export class PlaybackControlsNode extends HBox {
 
     // Helper to create/recreate the scrubber with tick marks
     const createScrubber = (): HSlider => {
-      const newScrubber = new HSlider(model.currentTimeProperty, this.scrubberRange, {
+      const newScrubber = new HSlider(model.playback.currentTimeProperty, this.scrubberRange, {
         trackSize: new Dimension2(SCRUBBER_TRACK_WIDTH, SCRUBBER_TRACK_HEIGHT),
         thumbSize: new Dimension2(SCRUBBER_THUMB_WIDTH, SCRUBBER_THUMB_HEIGHT),
         thumbTouchAreaXDilation: 6,
@@ -146,16 +146,16 @@ export class PlaybackControlsNode extends HBox {
         endDrag: () => {
           this.isScrubbing = false;
         },
-        enabledProperty: model.videoLoadedProperty,
+        enabledProperty: model.playback.videoLoadedProperty,
         accessibleName: a11yStrings.videoScrubberStringProperty,
       });
 
       // Add tick marks based on calculated intervals
-      const duration = model.durationProperty.value;
-      const frameRate = model.frameRateProperty.value;
+      const duration = model.playback.durationProperty.value;
+      const frameRate = model.playback.frameRateProperty.value;
 
       if (Number.isFinite(duration) && duration > 0 && frameRate > 0) {
-        const knownCount = model.totalFrameCountProperty.value;
+        const knownCount = model.playback.totalFrameCountProperty.value;
         const totalFrames = knownCount > 0 ? knownCount : Math.round(duration * frameRate);
         const { majorInterval, minorInterval } = calculateTickInterval(totalFrames);
 
@@ -187,26 +187,26 @@ export class PlaybackControlsNode extends HBox {
       // Recreate scrubber with new tick marks
       this.replaceScrubber(createScrubber());
     };
-    model.durationProperty.link(durationListener);
+    model.playback.durationProperty.link(durationListener);
 
     // Recreate scrubber when frame rate changes
     const frameRateListener = () => {
       this.replaceScrubber(createScrubber());
     };
-    model.frameRateProperty.lazyLink(frameRateListener);
+    model.playback.frameRateProperty.lazyLink(frameRateListener);
 
     // Recreate scrubber when the exact frame count becomes known
     const totalFrameCountListener = () => {
       this.replaceScrubber(createScrubber());
     };
-    model.totalFrameCountProperty.lazyLink(totalFrameCountListener);
+    model.playback.totalFrameCountProperty.lazyLink(totalFrameCountListener);
 
     const onTimeChange = (time: number) => {
       if (this.isScrubbing) {
         videoElement.currentTime = time;
       }
     };
-    model.currentTimeProperty.lazyLink(onTimeChange);
+    model.playback.currentTimeProperty.lazyLink(onTimeChange);
 
     // ── Time and frame info display ────────────────────────────────────────
     const formatDuration = (seconds: number): string => {
@@ -216,12 +216,17 @@ export class PlaybackControlsNode extends HBox {
       return `${seconds.toFixed(2)} ${playbackStrings.secondsUnitStringProperty.value}`;
     };
 
-    const totalTimeTextProperty = new DerivedProperty([model.durationProperty], (duration: number) =>
+    const totalTimeTextProperty = new DerivedProperty([model.playback.durationProperty], (duration: number) =>
       formatDuration(duration),
     );
 
     const frameCountTextProperty = new DerivedProperty(
-      [model.currentTimeProperty, model.durationProperty, model.frameRateProperty, model.totalFrameCountProperty],
+      [
+        model.playback.currentTimeProperty,
+        model.playback.durationProperty,
+        model.playback.frameRateProperty,
+        model.playback.totalFrameCountProperty,
+      ],
       (time: number, duration: number, frameRate: number, totalFrameCount: number) => {
         if (duration <= 0) {
           return "0/0";
@@ -272,11 +277,11 @@ export class PlaybackControlsNode extends HBox {
         enabledAppearanceStrategy: (enabled: boolean, button: import("scenerystack/scenery").Node) => {
           button.opacity = enabled ? 1 : 0.45;
         },
-        enabledProperty: model.videoLoadedProperty,
+        enabledProperty: model.playback.videoLoadedProperty,
         accessibleName: a11yStrings.rewindToStartStringProperty,
         listener: () => {
-          model.isPlayingProperty.value = false;
-          model.currentTimeProperty.value = 0;
+          model.playback.isPlayingProperty.value = false;
+          model.playback.currentTimeProperty.value = 0;
           videoElement.currentTime = 0;
         },
       },
@@ -286,11 +291,11 @@ export class PlaybackControlsNode extends HBox {
 
     this.disposePlaybackControlsNode = () => {
       timeSpeedProperty.unlink(onSpeedChange);
-      model.playbackRateProperty.unlink(onRateChange);
-      model.currentTimeProperty.unlink(onTimeChange);
-      model.durationProperty.unlink(durationListener);
-      model.frameRateProperty.unlink(frameRateListener);
-      model.totalFrameCountProperty.unlink(totalFrameCountListener);
+      model.playback.playbackRateProperty.unlink(onRateChange);
+      model.playback.currentTimeProperty.unlink(onTimeChange);
+      model.playback.durationProperty.unlink(durationListener);
+      model.playback.frameRateProperty.unlink(frameRateListener);
+      model.playback.totalFrameCountProperty.unlink(totalFrameCountListener);
       timeSpeedProperty.dispose();
       totalTimeTextProperty.dispose();
       frameCountTextProperty.dispose();

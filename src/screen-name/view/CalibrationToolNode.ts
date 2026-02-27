@@ -289,12 +289,12 @@ export class CalibrationToolNode extends Node {
       this.pickable = !isDigitizing;
       this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
     };
-    model.activeTrackIdProperty.link(onActiveTrackChange);
+    model.tracking.activeTrackIdProperty.link(onActiveTrackChange);
 
     this.disposeCalibrationToolNode = () => {
       calibMultilink.dispose();
       videoLoadedProperty.unlink(onVideoLoaded);
-      model.activeTrackIdProperty.unlink(onActiveTrackChange);
+      model.tracking.activeTrackIdProperty.unlink(onActiveTrackChange);
       rangePatternProperty.dispose();
       buttonLabelProperty.dispose();
     };

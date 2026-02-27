@@ -76,12 +76,12 @@ export class VideoPlayerNode extends Node {
     const updateDuration = () => {
       const d = this.videoElement.duration;
       if (d > 0) {
-        model.durationProperty.value = d;
+        model.playback.durationProperty.value = d;
       }
     };
 
     const onLoadedMetadata = () => {
-      model.currentTimeProperty.value = 0;
+      model.playback.currentTimeProperty.value = 0;
       updateDuration();
       // WebM files from MediaRecorder report Infinity until seeked to the end.
       // Trigger that seek here; durationchange (already listened to) will fire
@@ -101,13 +101,13 @@ export class VideoPlayerNode extends Node {
     this.videoElement.addEventListener("durationchange", updateDuration);
 
     const onEnded = () => {
-      model.isPlayingProperty.value = false;
+      model.playback.isPlayingProperty.value = false;
     };
     this.videoElement.addEventListener("ended", onEnded);
 
     // ── Auto-tracking overlay ──────────────────────────────────────────────
     const autoTrackingShownProperty = new DerivedProperty(
-      [model.videoLoadedProperty, model.overlayTools.autoTrackingProperty],
+      [model.playback.videoLoadedProperty, model.overlayTools.autoTrackingProperty],
       (loaded, tracking) => loaded && tracking,
     );
     const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, model);
@@ -136,25 +136,25 @@ export class VideoPlayerNode extends Node {
             if (err.name === "NotAllowedError") {
               // Autoplay blocked (no user gesture). Silently reset so the UI
               // stays consistent; expected during fuzz testing.
-              model.isPlayingProperty.value = false;
+              model.playback.isPlayingProperty.value = false;
               return;
             }
           }
           // biome-ignore lint/suspicious/noConsole: error logging for video playback failure
           console.error("Video playback failed:", err);
-          model.isPlayingProperty.value = false;
+          model.playback.isPlayingProperty.value = false;
         });
       } else {
         this.videoElement.pause();
       }
     };
-    model.isPlayingProperty.lazyLink(isPlayingListener);
+    model.playback.isPlayingProperty.lazyLink(isPlayingListener);
 
     // ── Playback rate (applies model rate to the video element) ──────────
     const playbackRateListener = (rate: number) => {
       this.videoElement.playbackRate = rate;
     };
-    model.playbackRateProperty.link(playbackRateListener);
+    model.playback.playbackRateProperty.link(playbackRateListener);
 
     // ── Playback controls (positioned by SimScreenView at screen bottom) ──
     this.playbackControlsNode = new PlaybackControlsNode(
@@ -183,19 +183,19 @@ export class VideoPlayerNode extends Node {
       const displayH = Math.round(intrinsicH * scale);
       this.videoElement.width = displayW;
       this.videoElement.height = displayH;
-      model.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
+      model.playback.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
       // Keep content layer bounds in sync so layout doesn't shift.
       this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
       this.videoSourceControlNode.centerX = displayW / 2;
       this.playbackControlsNode.preferredWidth = displayW;
-      model.resizeTracker(displayW, displayH);
+      model.tracking.resizeTracker(displayW, displayH);
     };
     this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
 
     // Sync model time from video during playback (event-driven, not polled)
     const onTimeUpdate = () => {
       if (!this.playbackControlsNode.scrubbing) {
-        model.currentTimeProperty.value = this.videoElement.currentTime;
+        model.playback.currentTimeProperty.value = this.videoElement.currentTime;
       }
     };
     this.videoElement.addEventListener("timeupdate", onTimeUpdate);
@@ -205,12 +205,12 @@ export class VideoPlayerNode extends Node {
       model,
       listParent,
       (url) => {
-        model.isPlayingProperty.value = false;
+        model.playback.isPlayingProperty.value = false;
         autoTrackerNode.reset();
         this.loadUrl(url);
       },
       (blob, duration) => {
-        model.isPlayingProperty.value = false;
+        model.playback.isPlayingProperty.value = false;
         autoTrackerNode.reset();
         // Revoke the previous blob URL before creating a new one to prevent
         // the browser from holding the recorded video in memory indefinitely.
@@ -221,7 +221,7 @@ export class VideoPlayerNode extends Node {
         this.videoElement.src = this.currentBlobUrl;
         this.videoElement.load();
         if (duration > 0) {
-          model.durationProperty.value = duration;
+          model.playback.durationProperty.value = duration;
         }
       },
     );
@@ -244,7 +244,7 @@ export class VideoPlayerNode extends Node {
     const videoTransformListener = (matrix: import("scenerystack/dot").Matrix3) => {
       this.videoContentLayer.matrix = matrix;
     };
-    model.videoTransformProperty.link(videoTransformListener);
+    model.playback.videoTransformProperty.link(videoTransformListener);
 
     // ── Keyboard shortcuts ─────────────────────────────────────────────────
     const onKeyDown = this.createKeyboardHandler(model);
@@ -254,9 +254,9 @@ export class VideoPlayerNode extends Node {
     this.disposeVideoPlayer = () => {
       document.removeEventListener("keydown", onKeyDown);
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
-      model.isPlayingProperty.unlink(isPlayingListener);
-      model.playbackRateProperty.unlink(playbackRateListener);
-      model.videoTransformProperty.unlink(videoTransformListener);
+      model.playback.isPlayingProperty.unlink(isPlayingListener);
+      model.playback.playbackRateProperty.unlink(playbackRateListener);
+      model.playback.videoTransformProperty.unlink(videoTransformListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
       this.videoElement.removeEventListener("loadedmetadata", onDimensionsLoaded);
       this.videoElement.removeEventListener("durationchange", updateDuration);
@@ -288,7 +288,7 @@ export class VideoPlayerNode extends Node {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-      if (e.key === "Home" && model.videoLoadedProperty.value) {
+      if (e.key === "Home" && model.playback.videoLoadedProperty.value) {
         this.rewindToStart();
       }
     };
@@ -309,8 +309,8 @@ export class VideoPlayerNode extends Node {
 
   /** Pause playback and seek to the very beginning of the video. */
   private rewindToStart(): void {
-    this.model.isPlayingProperty.value = false;
-    this.model.currentTimeProperty.value = 0;
+    this.model.playback.isPlayingProperty.value = false;
+    this.model.playback.currentTimeProperty.value = 0;
     this.videoElement.currentTime = 0;
   }
 
@@ -320,18 +320,18 @@ export class VideoPlayerNode extends Node {
   }
 
   private seekByFrames(direction: number): void {
-    this.model.isPlayingProperty.value = false;
+    this.model.playback.isPlayingProperty.value = false;
     const duration = this.videoElement.duration;
     if (!(duration > 0)) {
       return;
     }
-    const frameDuration = this.model.frameDurationProperty.value;
+    const frameDuration = this.model.playback.frameDurationProperty.value;
     const raw = this.videoElement.currentTime + direction * frameDuration;
     // Math.min(raw, Infinity) === raw, so this clamp works for both finite and
     // Infinity durations (WebM files often report Infinity until fully loaded).
     const clamped = Math.max(0, Math.min(raw, duration));
     this.videoElement.currentTime = clamped;
-    this.model.currentTimeProperty.value = clamped;
+    this.model.playback.currentTimeProperty.value = clamped;
   }
 
   private loadUrl(url: string): void {
