@@ -23,23 +23,6 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 
 ## Sample Videos
 
-The following physics scenarios are included:
-
-| File | Description |
-|------|-------------|
-| `ballOil.mp4` | Ball falling through oil |
-| `bouncingCart.mp4` | Cart bouncing off a wall |
-| `cartPendulum.mp4` | Cart with pendulum |
-| `cupsClips.mp4` | Cup collision demonstration |
-| `parachuteMonkey.mp4` | Monkey with parachute drop |
-| `pendulum.mp4` | Simple pendulum |
-| `pendulumDrag.mp4` | Pendulum with drag |
-| `pucksCollide.mp4` | Air puck collision |
-| `collisionOne.webm` | One-dimensional collision |
-| `collisionTwo.webm` | Two-dimensional collision |
-| `oscillatingCar.webm` | Oscillating car |
-| `verticalToss.webm` | Vertical toss |
-
 Bundled videos live in `public/videos/` and are served at `/videos/`.
 
 ## Tech Stack
