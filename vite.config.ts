@@ -1,7 +1,32 @@
 import fs from "node:fs";
+import type { ServerResponse } from "node:http";
 import path from "node:path";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+/** Handles a Range request and writes the partial response. Returns false if the header is malformed. */
+function serveRangedFile(
+  res: ServerResponse,
+  filePath: string,
+  headers: Record<string, string | number>,
+  total: number,
+  rangeHeader: string,
+): boolean {
+  const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+  if (!match) {
+    return false;
+  }
+  const [, startStr, endStr] = match;
+  const start = parseInt(startStr ?? "0", 10);
+  const end = endStr ? parseInt(endStr, 10) : total - 1;
+  res.writeHead(206, {
+    ...headers,
+    "Content-Range": `bytes ${start}-${end}/${total}`,
+    "Content-Length": end - start + 1,
+  });
+  fs.createReadStream(filePath, { start, end }).pipe(res);
+  return true;
+}
 
 /**
  * Vite plugin that serves ./videos/ as /videos/ with proper Range-request
@@ -10,7 +35,7 @@ import { VitePWA } from "vite-plugin-pwa";
 function serveVideos(): Plugin {
   return {
     name: "serve-videos",
-    configureServer(server) {
+    configureServer(server: ViteDevServer): void {
       server.middlewares.use((req, res, next) => {
         if (!req.url?.startsWith("/videos/")) {
           return next();
@@ -32,34 +57,22 @@ function serveVideos(): Plugin {
         const total = stat.size;
         const ext = path.extname(filename).toLowerCase();
         const mimeType = ext === ".webm" ? "video/webm" : "video/mp4";
-        const headers = {
+        const headers: Record<string, string | number> = {
           "Content-Type": mimeType,
           "Accept-Ranges": "bytes",
           "Cross-Origin-Resource-Policy": "same-origin",
         };
 
         const rangeHeader = req.headers.range;
-        if (rangeHeader) {
-          const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
-          if (match) {
-            const [, startStr, endStr] = match;
-            const start = parseInt(startStr ?? "0", 10);
-            const end = endStr ? parseInt(endStr, 10) : total - 1;
-            res.writeHead(206, {
-              ...headers,
-              "Content-Range": `bytes ${start}-${end}/${total}`,
-              "Content-Length": end - start + 1,
-            });
-            fs.createReadStream(filePath, { start, end }).pipe(res);
-            return;
-          }
+        if (rangeHeader && serveRangedFile(res as ServerResponse, filePath, headers, total, rangeHeader)) {
+          return;
         }
 
         res.writeHead(200, { ...headers, "Content-Length": total });
         fs.createReadStream(filePath).pipe(res);
       });
     },
-    closeBundle() {
+    closeBundle(): void {
       const src = path.resolve("videos");
       if (!fs.existsSync(src)) {
         return;
@@ -83,7 +96,7 @@ function serveOpenCV(): Plugin {
   const opencvSrc = path.resolve("node_modules/@techstark/opencv-js/dist/opencv.js");
   return {
     name: "serve-opencv",
-    configureServer(server) {
+    configureServer(server: ViteDevServer): void {
       server.middlewares.use((req, res, next) => {
         if (req.url?.split("?")[0] !== "/opencv.js") {
           return next();
@@ -97,7 +110,7 @@ function serveOpenCV(): Plugin {
         fs.createReadStream(opencvSrc).pipe(res);
       });
     },
-    closeBundle() {
+    closeBundle(): void {
       fs.copyFileSync(opencvSrc, path.resolve("dist", "opencv.js"));
     },
   };
@@ -110,7 +123,7 @@ function serveOpenCV(): Plugin {
  *  - X-Content-Type-Options: prevent MIME sniffing
  *  - X-Frame-Options: prevent clickjacking (belt-and-suspenders alongside frame-ancestors)
  */
-const securityHeaders = {
+const securityHeaders: Record<string, string> = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp",
   "Content-Security-Policy": [
