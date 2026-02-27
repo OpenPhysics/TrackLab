@@ -1,6 +1,4 @@
-# TrackLab — Claude Code Guide
-
-## Project overview
+# TrackLab
 
 TrackLab is a browser-based physics video analysis tool. Users load a video, place a coordinate system, calibrate real-world distances, and auto-track objects across frames using OpenCV.
 
@@ -16,7 +14,7 @@ src/screen-name/view/      ← all UI components
 ## Constants and colors
 
 - **Colors**: All UI colors live in `TrackLabColors.ts` as `ProfileColorProperty` instances for automatic dark/light theme switching. When adding a new color, create it there — never hardcode `rgb(…)` or hex strings in view files.
-- **Layout constants**: Shared numeric constants (panel margins, drag speeds, touch dilation) live in `TrackLabConstants.ts`. File-local constants that are used only within a single view file can remain local, but any constant duplicated across two or more files should be hoisted to `TrackLabConstants.ts`.
+- **Layout constants**: Shared numeric constants (panel margins, drag speeds, touch dilation) live in `TrackLabConstants.ts`.
 
 
 ## Accessibility
