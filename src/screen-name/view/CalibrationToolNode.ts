@@ -8,7 +8,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
-import { Circle, HBox, Line, Node, RichDragListener, Text } from "scenerystack/scenery";
+import { Circle, HBox, Line, type Node, RichDragListener, Text } from "scenerystack/scenery";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
 import { KeypadDialog } from "scenerystack/sim";
 import { ButtonNode, ComboBox, type ComboBoxItem, Panel, TextPushButton } from "scenerystack/sun";
@@ -18,12 +18,12 @@ import TrackLabColors from "../../TrackLabColors.js";
 import {
   BUTTON_X_MARGIN,
   BUTTON_Y_MARGIN,
-  DIGITIZING_DIM_OPACITY,
   OVERLAY_DRAG_SPEED,
   OVERLAY_SHIFT_DRAG_SPEED,
 } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import { CALIBRATION_UNITS, type OverlayToolsModel } from "../model/OverlayToolsModel.js";
+import { DigitizingAwareOverlayNode } from "./DigitizingAwareOverlayNode.js";
 
 const FONT = new PhetFont(14);
 const WARNING_FONT = new PhetFont({ size: 11, weight: "bold" });
@@ -55,7 +55,7 @@ const CALIBRATION_DECIMAL_PLACES = 2;
  * are too close together to produce a valid calibration. Hidden until a video
  * is loaded.
  */
-export class CalibrationToolNode extends Node {
+export class CalibrationToolNode extends DigitizingAwareOverlayNode {
   private readonly disposeCalibrationToolNode: () => void;
 
   /**
@@ -70,7 +70,7 @@ export class CalibrationToolNode extends Node {
     overlayTools: OverlayToolsModel,
     activeTrackIdProperty: TReadOnlyProperty<string | null>,
   ) {
-    super();
+    super(videoLoadedProperty, activeTrackIdProperty);
 
     const calibrationStrings = StringManager.getInstance().getCalibration();
 
@@ -280,26 +280,8 @@ export class CalibrationToolNode extends Node {
       }),
     );
 
-    // ── Visibility ─────────────────────────────────────────────────────────
-    const onVideoLoaded = (loaded: boolean) => {
-      this.visible = loaded;
-    };
-    videoLoadedProperty.link(onVideoLoaded);
-
-    // ── Lock out interaction while the user is manually digitizing ─────────
-    // Dimming + pickable:false signals that the tool is temporarily inactive
-    // so the user cannot accidentally move calibration points mid-session.
-    const onActiveTrackChange = (activeId: string | null) => {
-      const isDigitizing = activeId !== null;
-      this.pickable = !isDigitizing;
-      this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
-    };
-    activeTrackIdProperty.link(onActiveTrackChange);
-
     this.disposeCalibrationToolNode = () => {
       calibMultilink.dispose();
-      videoLoadedProperty.unlink(onVideoLoaded);
-      activeTrackIdProperty.unlink(onActiveTrackChange);
       rangePatternProperty.dispose();
       buttonLabelProperty.dispose();
     };

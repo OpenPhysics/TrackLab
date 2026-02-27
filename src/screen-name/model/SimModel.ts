@@ -14,7 +14,7 @@
  *   - re-expressing track points when the model-view transform changes
  */
 
-import type { Transform3, Vector2 } from "scenerystack/dot";
+import type { Vector2 } from "scenerystack/dot";
 import trackLab from "../../TrackLabNamespace.js";
 import { OverlayToolsModel } from "./OverlayToolsModel.js";
 import { TrackingModel } from "./TrackingModel.js";
@@ -38,18 +38,12 @@ export class SimModel {
   public readonly sources = new VideoSourceModel();
   public readonly tracking = new TrackingModel();
 
-  // Cache the previous MVT so we can compute retransforms when it changes.
-  private prevModelViewTransform: Transform3 | null = null;
-
   public constructor() {
     // Whenever the model-view transform changes, re-express all stored track
     // points in the new coordinate system so they remain visually anchored to
     // the same pixel on the video.
-    this.overlayTools.modelViewTransformProperty.lazyLink((newMvt) => {
-      if (this.prevModelViewTransform !== null) {
-        this.tracking.retransformTrackPoints(this.prevModelViewTransform, newMvt);
-      }
-      this.prevModelViewTransform = newMvt;
+    this.overlayTools.modelViewTransformProperty.lazyLink((newMvt, oldMvt) => {
+      this.tracking.retransformTrackPoints(oldMvt, newMvt);
     });
   }
 
@@ -67,7 +61,7 @@ export class SimModel {
 
   /** Activate a webcam recording as the current video source. */
   public activateRecording(recording: WebcamRecording): void {
-    this.sources.isWebcamVideoProperty.value = true;
+    this.sources.isUserVideoProperty.value = true;
     this.playback.frameRateProperty.value = recording.fps;
     this.playback.totalFrameCountProperty.value = 0;
     this.sources.currentWebcamBlobProperty.value = recording.blob;
@@ -75,7 +69,7 @@ export class SimModel {
 
   /** Activate an uploaded video as the current video source. */
   public activateUpload(upload: UploadedVideo): void {
-    this.sources.isWebcamVideoProperty.value = true;
+    this.sources.isUserVideoProperty.value = true;
     this.playback.frameRateProperty.value = upload.fps;
     this.playback.totalFrameCountProperty.value = upload.frameCount ?? 0;
     this.sources.currentWebcamBlobProperty.value = upload.blob;
@@ -83,14 +77,13 @@ export class SimModel {
 
   /** Activate a bundled (sample) video as the current video source. */
   public activateBundledVideo(frameCount: number, fps: number): void {
-    this.sources.isWebcamVideoProperty.value = false;
+    this.sources.isUserVideoProperty.value = false;
     this.sources.currentWebcamBlobProperty.value = null;
     this.playback.totalFrameCountProperty.value = frameCount;
     this.playback.frameRateProperty.value = fps;
   }
 
   public reset(): void {
-    this.prevModelViewTransform = null;
     this.playback.reset();
     this.sources.reset();
     this.tracking.reset();

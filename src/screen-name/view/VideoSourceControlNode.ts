@@ -378,7 +378,7 @@ export class VideoSourceControlNode extends HBox {
       },
     });
     downloadButton.visible = false;
-    sources.isWebcamVideoProperty.link((isUserVideo) => {
+    sources.isUserVideoProperty.link((isUserVideo) => {
       downloadButton.visible = isUserVideo;
     });
 

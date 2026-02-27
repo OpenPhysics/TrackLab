@@ -13,9 +13,9 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { DIGITIZING_DIM_OPACITY } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
+import { DigitizingAwareOverlayNode } from "./DigitizingAwareOverlayNode.js";
 
 const ARROW_LENGTH = 120;
 const HANDLE_FRACTION = 1 / 3;
@@ -56,7 +56,7 @@ const DEG_TO_RAD = Math.PI / 180;
  * model-view transform in sync. Keyboard drag is supported via RichDragListener.
  * Hidden until a video is loaded.
  */
-export class CoordinateSystemNode extends Node {
+export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
   private readonly disposeCoordinateSystemNode: () => void;
 
   /**
@@ -69,7 +69,7 @@ export class CoordinateSystemNode extends Node {
     overlayTools: OverlayToolsModel,
     activeTrackIdProperty: TReadOnlyProperty<string | null>,
   ) {
-    super();
+    super(videoLoadedProperty, activeTrackIdProperty);
 
     const coordStrings = StringManager.getInstance().getCoordSystem();
 
@@ -255,28 +255,9 @@ export class CoordinateSystemNode extends Node {
       }),
     );
 
-    // ── Visibility: only shown once a video with a finite duration is loaded
-    const onVideoLoaded = (loaded: boolean) => {
-      this.visible = loaded;
-    };
-    videoLoadedProperty.link(onVideoLoaded);
-
-    // ── Lock out interaction while the user is manually digitizing ─────────
-    // Dimming + pickable:false signals that the coordinate system is temporarily
-    // inactive so the user cannot accidentally move or rotate the axes while
-    // placing track points.
-    const onActiveTrackChange = (activeId: string | null) => {
-      const isDigitizing = activeId !== null;
-      this.pickable = !isDigitizing;
-      this.opacity = isDigitizing ? DIGITIZING_DIM_OPACITY : 1;
-    };
-    activeTrackIdProperty.link(onActiveTrackChange);
-
     this.disposeCoordinateSystemNode = () => {
       overlayTools.coordOriginProperty.unlink(onOriginChange);
       overlayTools.coordAngleProperty.unlink(onAngleChange);
-      videoLoadedProperty.unlink(onVideoLoaded);
-      activeTrackIdProperty.unlink(onActiveTrackChange);
     };
   }
 
