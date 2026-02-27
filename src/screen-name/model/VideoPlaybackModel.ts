@@ -87,7 +87,7 @@ export class VideoPlaybackModel {
   // ── Uniform scale applied to the video content wrapper (not source controls) ──
   // Range 0.25–1.5; 1.0 = default (native video display size).
   public readonly panelSizeScaleProperty = new NumberProperty(1, {
-    range: new Range(0.25, 1.5),
+    range: new Range(0.5, 1.5),
   });
 
   public reset(): void {
