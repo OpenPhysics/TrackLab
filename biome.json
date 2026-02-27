@@ -47,7 +47,7 @@
         "useThrowNewError": "error",
         "useThrowOnlyError": "error",
         "noCommonJs": "error",
-        "noExportedImports": "off",
+        "noExportedImports": "warn",
         "useNamingConvention": {
           "level": "warn",
           "options": {
@@ -85,7 +85,7 @@
         "recommended": true,
         "noConsole": "warn",
         "noEmptyBlockStatements": "error",
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "useAwait": "error",
         "useErrorMessage": "error",
         "useGuardForIn": "error",
@@ -142,6 +142,9 @@
         "rules": {
           "nursery": {
             "useExplicitType": "off"
+          },
+          "suspicious": {
+            "noConsole": "error"
           }
         }
       }

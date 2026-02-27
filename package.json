@@ -1,8 +1,11 @@
 {
   "name": "trackLab",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build",
@@ -10,8 +13,8 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "fix": "biome check --write .",
-    "release": "npm version patch && git push && git push --tags",
-    "check": "tsc --noEmit",
+    "release": "npm run check && npm run lint && npm run build && npm version patch && git push && git push --tags",
+    "check": "tsc",
     "serve": "serve -s dist",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
@@ -29,8 +32,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.2",
-    "@types/node": "^25.2.3",
+    "@types/node": "^22",
     "png-to-ico": "^3.0.1",
+    "serve": "^14.2.4",
     "sharp": "^0.34.5",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",

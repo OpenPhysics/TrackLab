@@ -1,13 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 /**
  * Vite plugin that serves ./videos/ as /videos/ with proper Range-request
  * support (required for video seeking) and copies the directory to dist on build.
  */
-function serveVideos() {
+function serveVideos(): Plugin {
   return {
     name: "serve-videos",
     configureServer(server) {
@@ -16,7 +16,7 @@ function serveVideos() {
           return next();
         }
 
-        const filename = decodeURIComponent(req.url.slice("/videos/".length).split("?")[0]);
+        const filename = decodeURIComponent(req.url.slice("/videos/".length).split("?")[0] ?? "");
         const videosDir = path.resolve("videos");
         const filePath = path.resolve(videosDir, filename);
 
@@ -42,8 +42,9 @@ function serveVideos() {
         if (rangeHeader) {
           const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
           if (match) {
-            const start = parseInt(match[1], 10);
-            const end = match[2] ? parseInt(match[2], 10) : total - 1;
+            const [, startStr, endStr] = match;
+            const start = parseInt(startStr ?? "0", 10);
+            const end = endStr ? parseInt(endStr, 10) : total - 1;
             res.writeHead(206, {
               ...headers,
               "Content-Range": `bytes ${start}-${end}/${total}`,
@@ -60,13 +61,11 @@ function serveVideos() {
     },
     closeBundle() {
       const src = path.resolve("videos");
-      const dest = path.resolve("dist", "videos");
-      if (!fs.existsSync(dest)) {
-        fs.mkdirSync(dest, { recursive: true });
+      if (!fs.existsSync(src)) {
+        return;
       }
-      for (const file of fs.readdirSync(src)) {
-        fs.copyFileSync(path.join(src, file), path.join(dest, file));
-      }
+      // cpSync handles subdirectories; the old flat loop did not
+      fs.cpSync(src, path.resolve("dist", "videos"), { recursive: true });
     },
   };
 }
@@ -80,7 +79,7 @@ function serveVideos() {
  * content-hashed chunk that breaks across deployments when the browser or
  * service worker caches the old index chunk but the server has new assets.
  */
-function serveOpenCV() {
+function serveOpenCV(): Plugin {
   const opencvSrc = path.resolve("node_modules/@techstark/opencv-js/dist/opencv.js");
   return {
     name: "serve-opencv",
@@ -189,7 +188,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         // opencv.js (≈11 MB) is loaded on-demand; skip precaching to speed up
         // the initial service-worker install.  It is still cached at runtime by
-        // the CacheFirst strategy below.
+        // the CacheFirst runtimeCaching entry below (matched by the *.js pattern).
         globIgnores: ["opencv.js"],
         runtimeCaching: [
           {
