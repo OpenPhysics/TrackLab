@@ -6,7 +6,8 @@
  */
 
 import { DerivedProperty } from "scenerystack/axon";
-import { Node } from "scenerystack/scenery";
+import { Vector2 } from "scenerystack/dot";
+import { DragListener, Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
@@ -83,13 +84,53 @@ export class SimScreenView extends ScreenView {
       trackListPanel.top = controlPanel.bottom + DATA_TABLE_TOP_SPACING;
     });
 
-    // ── Video player (shifted left) ──────────────────────────────────────
+    // ── Video player (shifted right of control panel) ────────────────────
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
     // SimModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
-    this.videoPlayerNode.left = controlPanel.right + VIDEO_PLAYER_LEFT_SPACING;
-    this.videoPlayerNode.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(this.videoPlayerNode);
+
+    // ── Initial video panel position ──────────────────────────────────────
+    // Compute the initial position based on layout and write it into the model
+    // so it persists (and can be restored on Reset All).
+    const initialPanelPos = new Vector2(
+      controlPanel.right + VIDEO_PLAYER_LEFT_SPACING,
+      this.layoutBounds.top + SCREEN_TOP_MARGIN,
+    );
+    model.playback.panelPositionProperty.value = initialPanelPos;
+
+    // ── Link panelPositionProperty → videoPlayerNode position ────────────
+    // Use left/top (not translation) so pos represents the top-left of the
+    // *entire* node — header frame included — not just the video content origin.
+    model.playback.panelPositionProperty.link((pos) => {
+      this.videoPlayerNode.left = pos.x;
+      this.videoPlayerNode.top = pos.y;
+    });
+
+    // ── Panel move drag (on the header bar) ───────────────────────────────
+    // The DragListener lives in SimScreenView so it naturally operates in
+    // SimScreenView's coordinate space.
+    let panelDragStartPos: Vector2 | null = null;
+    let panelDragStartPointerPoint: Vector2 | null = null;
+    this.videoPlayerNode.panelHeaderBar.addInputListener(
+      new DragListener({
+        start: (event) => {
+          panelDragStartPos = model.playback.panelPositionProperty.value.copy();
+          panelDragStartPointerPoint = event.pointer.point.copy();
+        },
+        drag: (event) => {
+          if (!(panelDragStartPos && panelDragStartPointerPoint)) {
+            return;
+          }
+          const delta = event.pointer.point.minus(panelDragStartPointerPoint);
+          model.playback.panelPositionProperty.value = panelDragStartPos.plus(delta);
+        },
+        end: () => {
+          panelDragStartPos = null;
+          panelDragStartPointerPoint = null;
+        },
+      }),
+    );
 
     // ── Overlay tools (children of the video content layer, video-local coords) ──
     // All overlay tools are added via addVideoOverlay() so they share the same
@@ -130,16 +171,22 @@ export class SimScreenView extends ScreenView {
       listener: () => {
         this.videoPlayerNode.reset(); // clear selection before model clears recordings list
         model.reset(); // resets all model state including tool positions
+        // Restore the panel to its initial layout position (model.reset() does not
+        // reset panelPositionProperty, so we do it explicitly here).
+        model.playback.panelPositionProperty.value = initialPanelPos;
       },
     });
     this.addChild(resetAllButton);
 
     // ── Playback controls bar (bottom of screen, same height as reset button) ─
+    // The controls stay at a fixed horizontal position even when the video panel
+    // is dragged — capture the initial center once and preserve it.
     const playbackControlsNode = this.videoPlayerNode.playbackControlsNode;
     this.addChild(playbackControlsNode);
-    playbackControlsNode.centerX = this.videoPlayerNode.centerX;
+    const initialPlaybackCenterX = this.videoPlayerNode.centerX;
+    playbackControlsNode.centerX = initialPlaybackCenterX;
     playbackControlsNode.boundsProperty.lazyLink(() => {
-      playbackControlsNode.centerX = this.videoPlayerNode.centerX;
+      playbackControlsNode.centerX = initialPlaybackCenterX;
       playbackControlsNode.centerY = resetAllButton.centerY;
     });
 

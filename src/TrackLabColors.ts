@@ -293,6 +293,20 @@ const TrackLabColors = {
   trashButtonBaseProperty: profileColor("trashButtonBase", new Color(160, 40, 40), new Color(190, 50, 50)),
   trackSymbolTextProperty: profileColor("trackSymbolText", WHITE, WHITE),
 
+  // Video panel header (drag bar between source controls and video content)
+  panelHeaderColorProperty: profileColor(
+    "panelHeaderColor",
+    new Color(50, 50, 80, 0.85), // subtle tint on dark background
+    new Color(200, 200, 220, 0.85), // subtle tint on light background
+  ),
+
+  // Resize handle knob (bottom-right corner of video content)
+  resizeHandleColorProperty: profileColor(
+    "resizeHandleColor",
+    new Color(120, 160, 220, 0.9), // accent blue for visibility on dark
+    new Color(60, 100, 180, 0.85), // deeper blue for projector mode
+  ),
+
   // Preferences dialog
   preferencesTextProperty: profileColor("preferencesText", BLACK, BLACK),
   preferencesTextSecondaryProperty: profileColor(

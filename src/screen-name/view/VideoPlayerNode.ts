@@ -7,13 +7,18 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Bounds2, Dimension2 } from "scenerystack/dot";
-import { DOM, Node } from "scenerystack/scenery";
+import { Circle, DOM, DragListener, Node, Rectangle } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
-const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
+// ── Frame / header geometry ────────────────────────────────────────────────────
+// The "frame" is the background panel that encloses the source controls and acts
+// as the primary drag target for moving the video panel.
+const FRAME_INNER_PADDING = 4; // padding inside the frame above and below the source controls
+const FRAME_BOTTOM_GAP = 2; // gap between frame bottom and video content top
+const RESIZE_HANDLE_RADIUS = 5; // px radius of the corner resize knob
 
 import { StringManager } from "../../i18n/StringManager.js";
 import trackLab from "../../TrackLabNamespace.js";
@@ -42,6 +47,19 @@ export class VideoPlayerNode extends Node {
    * should be added via addVideoOverlay() rather than accessing this layer directly.
    */
   private readonly videoContentLayer: Node;
+  /**
+   * Wrapper around videoContentLayer; its scale is driven by panelSizeScaleProperty
+   * so the entire video content (including all overlays) scales uniformly.
+   * The source controls are siblings of this wrapper (not inside it) so they are
+   * never scaled.
+   */
+  private readonly videoContentWrapper: Node;
+  /**
+   * Background frame rectangle that encloses the source controls.  Its cursor and
+   * DragListener (added by SimScreenView) make the entire header area a move handle.
+   * Width tracks the visual width of the scaled video content.
+   */
+  public readonly panelHeaderBar: Rectangle;
   private readonly playback: VideoPlaybackModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
@@ -150,13 +168,9 @@ export class VideoPlayerNode extends Node {
         this.videoElement.play().catch((err: unknown) => {
           if (err instanceof DOMException) {
             if (err.name === "AbortError") {
-              // play() was interrupted by pause() or a new load — element is
-              // already paused/loading, no recovery needed.
               return;
             }
             if (err.name === "NotAllowedError") {
-              // Autoplay blocked (no user gesture). Silently reset so the UI
-              // stays consistent; expected during fuzz testing.
               model.playback.isPlayingProperty.value = false;
               return;
             }
@@ -187,41 +201,7 @@ export class VideoPlayerNode extends Node {
     // Pin to the video width so internal text changes never shift the row.
     this.playbackControlsNode.preferredWidth = VIDEO_WIDTH;
 
-    // ── Fit video element to its intrinsic aspect ratio ───────────────────
-    // When a new clip is loaded, scale it to fill as much of VIDEO_WIDTH ×
-    // VIDEO_HEIGHT as possible while preserving aspect ratio.  Setting the
-    // element to the exact content size eliminates letterbox/pillarbox bars
-    // and ensures overlay hit-areas and the OpenCV canvas share the same
-    // coordinate space as what the user sees.
-    const onDimensionsLoaded = () => {
-      const intrinsicW = this.videoElement.videoWidth;
-      const intrinsicH = this.videoElement.videoHeight;
-      if (!(intrinsicW && intrinsicH)) {
-        return;
-      }
-      const scale = Math.min(VIDEO_WIDTH / intrinsicW, VIDEO_HEIGHT / intrinsicH);
-      const displayW = Math.round(intrinsicW * scale);
-      const displayH = Math.round(intrinsicH * scale);
-      this.videoElement.width = displayW;
-      this.videoElement.height = displayH;
-      model.playback.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
-      // Keep content layer bounds in sync so layout doesn't shift.
-      this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
-      this.videoSourceControlNode.centerX = displayW / 2;
-      this.playbackControlsNode.preferredWidth = displayW;
-      model.tracking.resizeTracker(displayW, displayH);
-    };
-    this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
-
-    // Sync model time from video during playback (event-driven, not polled)
-    const onTimeUpdate = () => {
-      if (!this.playbackControlsNode.scrubbing) {
-        model.playback.currentTimeProperty.value = this.videoElement.currentTime;
-      }
-    };
-    this.videoElement.addEventListener("timeupdate", onTimeUpdate);
-
-    // ── Video source controls (webcam panel is added to SimScreenView for z-order) ─
+    // ── Video source controls ─────────────────────────────────────────────
     this.videoSourceControlNode = new VideoSourceControlNode(
       model.sources,
       model.playback.isPlayingProperty,
@@ -236,8 +216,6 @@ export class VideoPlayerNode extends Node {
       (blob, duration) => {
         model.playback.isPlayingProperty.value = false;
         autoTrackerNode.reset();
-        // Revoke the previous blob URL before creating a new one to prevent
-        // the browser from holding the recorded video in memory indefinitely.
         if (this.currentBlobUrl) {
           URL.revokeObjectURL(this.currentBlobUrl);
         }
@@ -252,21 +230,118 @@ export class VideoPlayerNode extends Node {
       model.playback.videoLoadedProperty,
     );
 
-    // ── Layout ─────────────────────────────────────────────────────────────
-    // Manual positioning replaces the VBox so that overlay nodes added to
-    // videoContentLayer (by SimScreenView) don't affect the centering of
-    // the source control row.
-    this.videoContentLayer.top = 0;
-    this.addChild(this.videoContentLayer);
+    // ── videoContentWrapper: scales uniformly via panelSizeScaleProperty ──
+    this.videoContentWrapper = new Node({ children: [this.videoContentLayer] });
+    this.videoContentWrapper.top = 0;
 
-    this.videoSourceControlNode.centerX = this.videoContentLayer.width / 2;
-    this.videoSourceControlNode.bottom = -MAIN_CONTENT_SPACING;
-    this.addChild(this.videoSourceControlNode);
+    // ── Layout: source controls sit inside the header frame ───────────────
+    // Position source controls first (so their height is known) then build
+    // the frame rectangle to enclose them.  The frame bottom is FRAME_BOTTOM_GAP
+    // above the video content; source controls sit FRAME_INNER_PADDING above
+    // that, so the frame provides padding on all sides around the controls.
+    this.videoSourceControlNode.centerX = VIDEO_WIDTH / 2;
+    this.videoSourceControlNode.bottom = -(FRAME_BOTTOM_GAP + FRAME_INNER_PADDING);
+
+    // Frame: covers from (source controls top − padding) to (video content top − gap)
+    const frameTop = this.videoSourceControlNode.top - FRAME_INNER_PADDING;
+    const frameHeight = -FRAME_BOTTOM_GAP - frameTop; // both are negative y values
+    this.panelHeaderBar = new Rectangle(0, frameTop, VIDEO_WIDTH, frameHeight, {
+      cursor: "move",
+      tagName: "div",
+      accessibleName: a11yStrings.videoPanelHandleStringProperty,
+    });
+    const panelHeaderColorListener = (c: import("scenerystack").Color) => {
+      this.panelHeaderBar.fill = c;
+    };
+    TrackLabColors.panelHeaderColorProperty.link(panelHeaderColorListener);
+
+    // ── Resize handle (corner knob at bottom-right of video content) ───────
+    const resizeHandle = new Circle(RESIZE_HANDLE_RADIUS, {
+      cursor: "nwse-resize",
+      tagName: "div",
+      accessibleName: a11yStrings.videoPanelResizeHandleStringProperty,
+    });
+    const resizeHandleColorListener = (c: import("scenerystack").Color) => {
+      resizeHandle.fill = c;
+    };
+    TrackLabColors.resizeHandleColorProperty.link(resizeHandleColorListener);
+
+    // ── Z-order: frame background, then source controls on top, then resize knob ──
+    this.addChild(this.videoContentWrapper);
+    this.addChild(this.panelHeaderBar); // behind source controls
+    this.addChild(this.videoSourceControlNode); // on top of frame background
+    this.addChild(resizeHandle);
 
     this.webcamPanel = this.videoSourceControlNode.webcamPanel;
 
+    // ── Link panelSizeScaleProperty → videoContentWrapper ─────────────────
+    // Scales only the video content; source controls are siblings so they
+    // stay the same size.  Their centerX tracks the center of the scaled video.
+    const panelSizeScaleListener = (s: number) => {
+      this.videoContentWrapper.setScaleMagnitude(s);
+      const dims = model.playback.videoDimensionsProperty.value;
+      const scaledW = dims.width * s;
+      this.panelHeaderBar.rectWidth = scaledW;
+      this.videoSourceControlNode.centerX = scaledW / 2;
+      resizeHandle.center = this.videoContentWrapper.rightBottom;
+    };
+    model.playback.panelSizeScaleProperty.link(panelSizeScaleListener);
+
+    // ── Resize handle drag (scales video content, locked aspect ratio) ─────
+    let resizeStartScale = 1;
+    let resizeStartHandleX = 0;
+    let resizeStartPointerX = 0;
+    resizeHandle.addInputListener(
+      new DragListener({
+        start: (event) => {
+          resizeStartScale = model.playback.panelSizeScaleProperty.value;
+          resizeStartHandleX = this.videoContentWrapper.right;
+          resizeStartPointerX = event.pointer.point.x;
+        },
+        drag: (event) => {
+          const deltaX = event.pointer.point.x - resizeStartPointerX;
+          // Proportional scaling: new scale = startScale × (newRightEdge / startRightEdge)
+          const newScale = (resizeStartScale * (resizeStartHandleX + deltaX)) / resizeStartHandleX;
+          const range = model.playback.panelSizeScaleProperty.range;
+          model.playback.panelSizeScaleProperty.value = Math.max(range.min, Math.min(range.max, newScale));
+        },
+      }),
+    );
+
+    // ── Fit video element to its intrinsic aspect ratio ───────────────────
+    const onDimensionsLoaded = () => {
+      const intrinsicW = this.videoElement.videoWidth;
+      const intrinsicH = this.videoElement.videoHeight;
+      if (!(intrinsicW && intrinsicH)) {
+        return;
+      }
+      const scale = Math.min(VIDEO_WIDTH / intrinsicW, VIDEO_HEIGHT / intrinsicH);
+      const displayW = Math.round(intrinsicW * scale);
+      const displayH = Math.round(intrinsicH * scale);
+      this.videoElement.width = displayW;
+      this.videoElement.height = displayH;
+      model.playback.videoDimensionsProperty.value = new Dimension2(displayW, displayH);
+      this.videoContentLayer.localBounds = new Bounds2(0, 0, displayW, displayH);
+      this.playbackControlsNode.preferredWidth = displayW;
+      model.tracking.resizeTracker(displayW, displayH);
+      // Update header width, source control center, and resize handle to match new video size.
+      const s = model.playback.panelSizeScaleProperty.value;
+      const scaledW = displayW * s;
+      this.panelHeaderBar.rectWidth = scaledW;
+      this.videoSourceControlNode.centerX = scaledW / 2;
+      resizeHandle.center = this.videoContentWrapper.rightBottom;
+    };
+    this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
+
+    // Sync model time from video during playback (event-driven, not polled)
+    const onTimeUpdate = () => {
+      if (!this.playbackControlsNode.scrubbing) {
+        model.playback.currentTimeProperty.value = this.videoElement.currentTime;
+      }
+    };
+    this.videoElement.addEventListener("timeupdate", onTimeUpdate);
+
     // ── Apply video transform (translate + uniform scale) ────────────────
-    // Driven by the model so the video and all overlays move/zoom together.
     const videoTransformListener = (matrix: import("scenerystack/dot").Matrix3) => {
       this.videoContentLayer.matrix = matrix;
     };
@@ -281,9 +356,12 @@ export class VideoPlayerNode extends Node {
       document.removeEventListener("keydown", onKeyDown);
       model.overlayTools.videoContentVisibleProperty.unlink(videoContentVisibleListener);
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
+      TrackLabColors.panelHeaderColorProperty.unlink(panelHeaderColorListener);
+      TrackLabColors.resizeHandleColorProperty.unlink(resizeHandleColorListener);
       model.playback.isPlayingProperty.unlink(isPlayingListener);
       model.playback.playbackRateProperty.unlink(playbackRateListener);
       model.playback.videoTransformProperty.unlink(videoTransformListener);
+      model.playback.panelSizeScaleProperty.unlink(panelSizeScaleListener);
       this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
       this.videoElement.removeEventListener("loadedmetadata", onDimensionsLoaded);
       this.videoElement.removeEventListener("durationchange", updateDuration);
@@ -329,7 +407,6 @@ export class VideoPlayerNode extends Node {
   /** Reset the video source selection to the initial state. */
   public reset(): void {
     this.videoSourceControlNode.reset();
-    // Clear the video element
     this.videoElement.removeAttribute("src");
     this.videoElement.load();
   }
@@ -354,12 +431,7 @@ export class VideoPlayerNode extends Node {
     }
     const frameDuration = this.playback.frameDurationProperty.value;
     const raw = this.videoElement.currentTime + direction * frameDuration;
-    // Math.min(raw, Infinity) === raw, so this clamp works for both finite and
-    // Infinity durations (WebM files often report Infinity until fully loaded).
     const clamped = Math.max(0, Math.min(raw, duration));
-    // Guard: if currentTime was non-finite (e.g. Infinity on an unfinished WebM
-    // stream) the arithmetic above propagates NaN/Infinity into clamped.
-    // HTMLMediaElement rejects non-finite values, so bail out instead of throwing.
     if (!Number.isFinite(clamped)) {
       return;
     }

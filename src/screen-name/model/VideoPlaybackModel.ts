@@ -80,6 +80,16 @@ export class VideoPlaybackModel {
     (d) => d > 0,
   );
 
+  // ── Video panel position in SimScreenView coordinates (top-left of VideoPlayerNode) ──
+  // Default is Vector2.ZERO; SimScreenView sets the initial position on first layout.
+  public readonly panelPositionProperty = new Property<Vector2>(Vector2.ZERO);
+
+  // ── Uniform scale applied to the video content wrapper (not source controls) ──
+  // Range 0.25–1.5; 1.0 = default (native video display size).
+  public readonly panelSizeScaleProperty = new NumberProperty(1, {
+    range: new Range(0.25, 1.5),
+  });
+
   public reset(): void {
     this.isPlayingProperty.reset();
     this.currentTimeProperty.reset();
@@ -90,6 +100,9 @@ export class VideoPlaybackModel {
     this.videoDimensionsProperty.reset();
     this.videoScaleProperty.reset();
     this.videoOffsetProperty.reset();
+    // panelPositionProperty is intentionally NOT reset here — SimScreenView
+    // restores the initial layout position via the ResetAllButton listener.
+    this.panelSizeScaleProperty.reset();
   }
 }
 

@@ -86,6 +86,11 @@ export const LABEL_PANEL_SCALE = 0.8;
 // ── Shared overlay endpoint touch dilation ────────────────────────────────────
 export const OVERLAY_TOUCH_DILATION = 12;
 
+// ── Video panel drag & resize ──────────────────────────────────────────────────
+// Height of the thin header bar between the source controls and video content.
+// This bar is the drag target for moving the video panel.
+export const PANEL_HEADER_HEIGHT = 6;
+
 // ── Control panel icon and layout ─────────────────────────────────────────────
 // Shared by ControlPanel, MeasurementToolsPanel, and InfoDialogNode.
 export const CONTROL_ICON_SIZE = 20;
