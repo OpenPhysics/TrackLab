@@ -37,6 +37,7 @@ import {
 // Re-export all icon factories from the central icons module so that existing
 // imports of the form `import { makeDownloadIcon } from "…/TrackLabButton.js"`
 // continue to work without modification.
+// biome-ignore lint/performance/noBarrelFile: intentional re-export for API compatibility
 export { makeDownloadIcon, makeUploadIcon } from "./TrackLabIcons.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────

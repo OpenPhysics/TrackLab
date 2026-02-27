@@ -10,6 +10,30 @@ import trackLab from "../TrackLabNamespace.js";
 import stringsEn from "./strings_en.json";
 import stringsFr from "./strings_fr.json";
 
+/** Recursively apply phet.chipper.mapString to all string values (for ?stringTest=double, etc.) */
+function applyStringTest<T>(obj: T): T {
+  const mapString = (globalThis as { phet?: { chipper?: { mapString?: (s: string) => string } } }).phet?.chipper
+    ?.mapString;
+  if (!mapString) {
+    return obj;
+  }
+
+  if (typeof obj === "string") {
+    return mapString(obj) as T;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(applyStringTest) as T;
+  }
+  if (obj && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = applyStringTest(v);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
 // ── Compile-time key-parity check ─────────────────────────────────────────────
 // These type aliases exist solely so TypeScript verifies that both language files
 // share identical key structures. If a key is added to one file but not the
@@ -34,8 +58,8 @@ export class StringManager {
    */
   private constructor() {
     this.stringProperties = LocalizedString.getNestedStringProperties({
-      en: stringsEn,
-      fr: stringsFr,
+      en: applyStringTest(stringsEn),
+      fr: applyStringTest(stringsFr),
     });
   }
 
