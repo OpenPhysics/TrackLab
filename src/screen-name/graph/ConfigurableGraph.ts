@@ -500,7 +500,12 @@ export default class ConfigurableGraph extends Node {
     this.interactionHandler.initialize();
 
     // Create and add resize handles
-    const resizeHandles = this.interactionHandler.createResizeHandles();
+    const resizeHandles = this.interactionHandler.createResizeHandles([
+      a11yStrings.graphResizeTopLeftStringProperty,
+      a11yStrings.graphResizeTopRightStringProperty,
+      a11yStrings.graphResizeBottomLeftStringProperty,
+      a11yStrings.graphResizeBottomRightStringProperty,
+    ]);
     for (const handle of resizeHandles) {
       this.addChild(handle);
     }

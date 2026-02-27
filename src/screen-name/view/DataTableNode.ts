@@ -13,13 +13,14 @@
 
 import { BooleanProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
-import { DOM, DragListener, HBox, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { DOM, DragListener, HBox, Node, Rectangle, RichDragListener, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
+import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
 import TrackLabColors, { TRACK_COLORS } from "../../TrackLabColors.js";
-import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import type { Track } from "../model/Track.js";
 import { buildDataRows, type DataRow, generateCsv } from "../model/TrackExporter.js";
@@ -315,12 +316,13 @@ function buildSingleDataRow(
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export class DataTableNode extends Panel {
+export class DataTableNode extends Node {
   private exportCounter = 1;
   private tableWrapper: HTMLDivElement;
   private readonly disposeDataTable: () => void;
 
   // ── Resize state ─────────────────────────────────────────────────────────
+  private readonly panel: Panel;
   private currentMaxWidth = MAX_TABLE_WIDTH;
   private currentMaxHeight = MAX_TABLE_HEIGHT;
   private readonly isResizingProperty = new BooleanProperty(false);
@@ -431,14 +433,17 @@ export class DataTableNode extends Panel {
       align: "left",
     });
 
-    super(content, {
+    const panel = new Panel(content, {
       fill: TrackLabColors.panelFillProperty,
       stroke: TrackLabColors.panelStrokeProperty,
       cornerRadius: PANEL_CORNER_RADIUS,
       xMargin: PANEL_X_MARGIN,
       yMargin: PANEL_Y_MARGIN,
-      visible: false,
     });
+
+    super({ visible: false });
+    this.panel = panel;
+    this.addChild(panel);
 
     this.tableWrapper = tableWrapper;
 
@@ -587,13 +592,22 @@ export class DataTableNode extends Panel {
 
     // ── Resize handles ────────────────────────────────────────────────────────
     // Four corner handles styled and positioned to match the graph resize handles.
-    const resizeCursors = ["nwse-resize", "nesw-resize", "nesw-resize", "nwse-resize"] as const;
-    resizeCursors.forEach((cursor, cornerIndex) => {
+    const resizeCorners = [
+      { cursor: "nwse-resize", accessibleName: a11yStrings.tableResizeTopLeftStringProperty },
+      { cursor: "nesw-resize", accessibleName: a11yStrings.tableResizeTopRightStringProperty },
+      { cursor: "nesw-resize", accessibleName: a11yStrings.tableResizeBottomLeftStringProperty },
+      { cursor: "nwse-resize", accessibleName: a11yStrings.tableResizeBottomRightStringProperty },
+    ] as const;
+
+    resizeCorners.forEach(({ cursor, accessibleName }, cornerIndex) => {
       const handle = new Rectangle(0, 0, HANDLE_SIZE, HANDLE_SIZE, 2, 2, {
         fill: TrackLabColors.controlPanelFillProperty,
         stroke: TrackLabColors.controlPanelStrokeProperty,
         lineWidth: 2,
         cursor,
+        tagName: "div",
+        focusable: true,
+        accessibleName,
       });
       handle.touchArea = handle.localBounds.dilated(RESIZE_TOUCH_DILATION);
       handle.mouseArea = handle.localBounds.dilated(RESIZE_MOUSE_DILATION);
@@ -601,65 +615,125 @@ export class DataTableNode extends Panel {
       let dragStartState: { maxWidth: number; maxHeight: number; nodeX: number; nodeY: number } | null = null;
       let dragStartPointerPoint: Vector2 | null = null;
 
+      /**
+       * Apply a resize from the *current* stored dimensions.
+       * Used by keyboard drag (incremental per-frame deltas).
+       */
+      const applyIncrementalResize = (dx: number, dy: number) => {
+        let newMaxWidth = this.currentMaxWidth;
+        let newMaxHeight = this.currentMaxHeight;
+        let deltaX = 0;
+        let deltaY = 0;
+
+        switch (cornerIndex) {
+          case 0: // Top-left
+            newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, this.currentMaxWidth - dx);
+            newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, this.currentMaxHeight - dy);
+            deltaX = this.currentMaxWidth - newMaxWidth;
+            deltaY = this.currentMaxHeight - newMaxHeight;
+            break;
+          case 1: // Top-right
+            newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, this.currentMaxWidth + dx);
+            newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, this.currentMaxHeight - dy);
+            deltaY = this.currentMaxHeight - newMaxHeight;
+            break;
+          case 2: // Bottom-left
+            newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, this.currentMaxWidth - dx);
+            newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, this.currentMaxHeight + dy);
+            deltaX = this.currentMaxWidth - newMaxWidth;
+            break;
+          case 3: // Bottom-right
+            newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, this.currentMaxWidth + dx);
+            newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, this.currentMaxHeight + dy);
+            break;
+        }
+
+        this.currentMaxWidth = newMaxWidth;
+        this.currentMaxHeight = newMaxHeight;
+        this.applyTableDimensions();
+
+        if (deltaX !== 0 || deltaY !== 0) {
+          this.x += deltaX;
+          this.y += deltaY;
+        }
+      };
+
       handle.addInputListener(
-        new DragListener({
-          start: (event) => {
-            dragStartState = {
-              maxWidth: this.currentMaxWidth,
-              maxHeight: this.currentMaxHeight,
-              nodeX: this.x,
-              nodeY: this.y,
-            };
-            dragStartPointerPoint = event.pointer.point.copy();
-            this.isResizingProperty.value = true;
-          },
-          drag: (event) => {
-            if (!(dragStartState && dragStartPointerPoint)) {
-              return;
-            }
-            const delta = event.pointer.point.minus(dragStartPointerPoint);
-            let newMaxWidth = dragStartState.maxWidth;
-            let newMaxHeight = dragStartState.maxHeight;
-            let deltaX = 0;
-            let deltaY = 0;
+        new RichDragListener({
+          dragListenerOptions: {
+            start: (event) => {
+              dragStartState = {
+                maxWidth: this.currentMaxWidth,
+                maxHeight: this.currentMaxHeight,
+                nodeX: this.x,
+                nodeY: this.y,
+              };
+              dragStartPointerPoint = event.pointer.point.copy();
+              this.isResizingProperty.value = true;
+            },
+            drag: (event) => {
+              if (!(dragStartState && dragStartPointerPoint)) {
+                return;
+              }
+              // Pointer drag: snapshot-based for accuracy (no drift).
+              const delta = event.pointer.point.minus(dragStartPointerPoint);
+              let newMaxWidth = dragStartState.maxWidth;
+              let newMaxHeight = dragStartState.maxHeight;
+              let deltaX = 0;
+              let deltaY = 0;
 
-            switch (cornerIndex) {
-              case 0: // Top-left
-                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
-                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
-                deltaX = dragStartState.maxWidth - newMaxWidth;
-                deltaY = dragStartState.maxHeight - newMaxHeight;
-                break;
-              case 1: // Top-right
-                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
-                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
-                deltaY = dragStartState.maxHeight - newMaxHeight;
-                break;
-              case 2: // Bottom-left
-                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
-                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
-                deltaX = dragStartState.maxWidth - newMaxWidth;
-                break;
-              case 3: // Bottom-right
-                newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
-                newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
-                break;
-            }
+              switch (cornerIndex) {
+                case 0: // Top-left
+                  newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
+                  newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
+                  deltaX = dragStartState.maxWidth - newMaxWidth;
+                  deltaY = dragStartState.maxHeight - newMaxHeight;
+                  break;
+                case 1: // Top-right
+                  newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
+                  newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight - delta.y);
+                  deltaY = dragStartState.maxHeight - newMaxHeight;
+                  break;
+                case 2: // Bottom-left
+                  newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth - delta.x);
+                  newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
+                  deltaX = dragStartState.maxWidth - newMaxWidth;
+                  break;
+                case 3: // Bottom-right
+                  newMaxWidth = Math.max(MIN_TABLE_RESIZE_WIDTH, dragStartState.maxWidth + delta.x);
+                  newMaxHeight = Math.max(MIN_TABLE_RESIZE_HEIGHT, dragStartState.maxHeight + delta.y);
+                  break;
+              }
 
-            this.currentMaxWidth = newMaxWidth;
-            this.currentMaxHeight = newMaxHeight;
-            this.applyTableDimensions();
+              this.currentMaxWidth = newMaxWidth;
+              this.currentMaxHeight = newMaxHeight;
+              this.applyTableDimensions();
 
-            if (deltaX !== 0 || deltaY !== 0) {
-              this.x = dragStartState.nodeX + deltaX;
-              this.y = dragStartState.nodeY + deltaY;
-            }
+              if (deltaX !== 0 || deltaY !== 0) {
+                this.x = dragStartState.nodeX + deltaX;
+                this.y = dragStartState.nodeY + deltaY;
+              }
+            },
+            end: () => {
+              dragStartState = null;
+              dragStartPointerPoint = null;
+              this.isResizingProperty.value = false;
+            },
           },
-          end: () => {
-            dragStartState = null;
-            dragStartPointerPoint = null;
-            this.isResizingProperty.value = false;
+          keyboardDragListenerOptions: {
+            dragSpeed: OVERLAY_DRAG_SPEED,
+            shiftDragSpeed: OVERLAY_SHIFT_DRAG_SPEED,
+            start: () => {
+              this.isResizingProperty.value = true;
+            },
+            drag: (_event, listener) => {
+              applyIncrementalResize(listener.modelDelta.x, listener.modelDelta.y);
+            },
+            end: () => {
+              this.isResizingProperty.value = false;
+            },
           },
+          tandem: Tandem.OPT_OUT,
         }),
       );
 
@@ -673,7 +747,7 @@ export class DataTableNode extends Panel {
     const localBoundsListener = () => {
       this.updateResizeHandlePositions();
     };
-    this.localBoundsProperty.lazyLink(localBoundsListener);
+    panel.localBoundsProperty.lazyLink(localBoundsListener);
 
     // Dim the panel while resizing for visual feedback
     const isResizingListener = (isResizing: boolean) => {
@@ -715,7 +789,7 @@ export class DataTableNode extends Panel {
       dataTableStrings.frameStringProperty.unlink(frameStringListener);
       videoLoadedProperty.unlink(videoLoadedListener);
       exportButton.dispose();
-      this.localBoundsProperty.unlink(localBoundsListener);
+      panel.localBoundsProperty.unlink(localBoundsListener);
       this.isResizingProperty.unlink(isResizingListener);
       this.isResizingProperty.dispose();
     };
@@ -738,7 +812,7 @@ export class DataTableNode extends Panel {
     if (this.resizeHandles.length === 0) {
       return;
     }
-    const b = this.localBounds;
+    const b = this.panel.localBounds;
     const corners = [
       { x: b.minX, y: b.minY },
       { x: b.maxX, y: b.minY },

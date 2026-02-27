@@ -25,10 +25,15 @@ type DigitizingOverlayNodeOptions = {
   modelViewTransformProperty: TReadOnlyProperty<Transform3>;
 };
 
-const OUTER_R = 12;
-const INNER_R = 2;
-const CUR_LW = 1.5;
-const CUR_SHADOW_LW = 4; // wider shadow stroke for contrast on all backgrounds
+const OUTER_R = 20;
+const INNER_R = 3;
+const CUR_LW = 1;
+const CUR_SHADOW_LW = 2.5; // wider shadow stroke for contrast on all backgrounds
+
+// For touch input the crosshair is drawn above the contact point so the finger
+// does not occlude the target.  The recorded position is still the true touch
+// coordinate; only the visual indicator is shifted.
+const TOUCH_CURSOR_OFFSET_Y = 64; // px — upward shift of the crosshair for touch
 
 const MAG_SIZE = 175;
 const MAG_ZOOM = 4;
@@ -264,7 +269,11 @@ export class DigitizingOverlayNode extends Node {
 
     digitizingOverlay.addInputListener({
       move: (event) => {
-        const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
+        // For touch: the crosshair sits above the finger so the target is visible.
+        // Use the offset position as the "current point" everywhere so the
+        // recorded coordinate matches the crosshair, not the raw contact point.
+        const rawLocalPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
+        const localPt = event.pointer.type === "touch" ? rawLocalPt.plusXY(0, -TOUCH_CURSOR_OFFSET_Y) : rawLocalPt;
         lastLocalPt = localPt;
         cursorNode.translation = localPt;
         cursorNode.visible = true;
@@ -378,7 +387,8 @@ export class DigitizingOverlayNode extends Node {
             return;
           }
 
-          const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
+          const rawLocalPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
+          const localPt = event.pointer.type === "touch" ? rawLocalPt.plusXY(0, -TOUCH_CURSOR_OFFSET_Y) : rawLocalPt;
 
           const time = playback.currentTimeProperty.value;
           const frame = Math.round(time * playback.frameRateProperty.value);

@@ -199,6 +199,14 @@
     "graphPanUp": "Pan graph up",
     "graphPanDown": "Pan graph down",
     "kinematicsGraph": "Kinematics graph",
-    "selectTrackForGraph": "Select track to display on graph"
+    "selectTrackForGraph": "Select track to display on graph",
+    "graphResizeTopLeft": "Graph resize — top-left corner",
+    "graphResizeTopRight": "Graph resize — top-right corner",
+    "graphResizeBottomLeft": "Graph resize — bottom-left corner",
+    "graphResizeBottomRight": "Graph resize — bottom-right corner",
+    "tableResizeTopLeft": "Data table resize — top-left corner",
+    "tableResizeTopRight": "Data table resize — top-right corner",
+    "tableResizeBottomLeft": "Data table resize — bottom-left corner",
+    "tableResizeBottomRight": "Data table resize — bottom-right corner"
   }
 }

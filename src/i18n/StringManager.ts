@@ -438,6 +438,14 @@ export class StringManager {
     graphPanDownStringProperty: ReadOnlyProperty<string>;
     kinematicsGraphStringProperty: ReadOnlyProperty<string>;
     selectTrackForGraphStringProperty: ReadOnlyProperty<string>;
+    graphResizeTopLeftStringProperty: ReadOnlyProperty<string>;
+    graphResizeTopRightStringProperty: ReadOnlyProperty<string>;
+    graphResizeBottomLeftStringProperty: ReadOnlyProperty<string>;
+    graphResizeBottomRightStringProperty: ReadOnlyProperty<string>;
+    tableResizeTopLeftStringProperty: ReadOnlyProperty<string>;
+    tableResizeTopRightStringProperty: ReadOnlyProperty<string>;
+    tableResizeBottomLeftStringProperty: ReadOnlyProperty<string>;
+    tableResizeBottomRightStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       infoDialogTab1StringProperty: this.stringProperties.a11y.infoDialogTab1StringProperty,
@@ -470,6 +478,14 @@ export class StringManager {
       graphPanDownStringProperty: this.stringProperties.a11y.graphPanDownStringProperty,
       kinematicsGraphStringProperty: this.stringProperties.a11y.kinematicsGraphStringProperty,
       selectTrackForGraphStringProperty: this.stringProperties.a11y.selectTrackForGraphStringProperty,
+      graphResizeTopLeftStringProperty: this.stringProperties.a11y.graphResizeTopLeftStringProperty,
+      graphResizeTopRightStringProperty: this.stringProperties.a11y.graphResizeTopRightStringProperty,
+      graphResizeBottomLeftStringProperty: this.stringProperties.a11y.graphResizeBottomLeftStringProperty,
+      graphResizeBottomRightStringProperty: this.stringProperties.a11y.graphResizeBottomRightStringProperty,
+      tableResizeTopLeftStringProperty: this.stringProperties.a11y.tableResizeTopLeftStringProperty,
+      tableResizeTopRightStringProperty: this.stringProperties.a11y.tableResizeTopRightStringProperty,
+      tableResizeBottomLeftStringProperty: this.stringProperties.a11y.tableResizeBottomLeftStringProperty,
+      tableResizeBottomRightStringProperty: this.stringProperties.a11y.tableResizeBottomRightStringProperty,
     };
   }
 

@@ -10,7 +10,7 @@
  * - ResizeGestureHandler — corner handles for resizing the graph panel
  */
 
-import type { BooleanProperty } from "scenerystack/axon";
+import type { BooleanProperty, TReadOnlyProperty } from "scenerystack/axon";
 import type { ChartRectangle, ChartTransform, TickLabelSet } from "scenerystack/bamboo";
 import type { Node, Rectangle } from "scenerystack/scenery";
 import trackLab from "../../TrackLabNamespace.js";
@@ -130,9 +130,18 @@ export default class GraphInteractionHandler {
   /**
    * Create and return resize handles for the graph corners.
    * The caller is responsible for adding them to the scene graph.
+   *
+   * @param cornerA11yNames - accessible names for [top-left, top-right, bottom-left, bottom-right]
    */
-  public createResizeHandles(): Rectangle[] {
-    return this.resizeHandler.createResizeHandles();
+  public createResizeHandles(
+    cornerA11yNames: [
+      TReadOnlyProperty<string>,
+      TReadOnlyProperty<string>,
+      TReadOnlyProperty<string>,
+      TReadOnlyProperty<string>,
+    ],
+  ): Rectangle[] {
+    return this.resizeHandler.createResizeHandles(cornerA11yNames);
   }
 
   /**
