@@ -210,15 +210,19 @@ export class PlaybackControlsNode extends HBox {
     playback.currentTimeProperty.lazyLink(onTimeChange);
 
     // ── Time and frame info display ────────────────────────────────────────
-    const formatDuration = (seconds: number): string => {
-      if (!Number.isFinite(seconds) || seconds <= 0) {
-        return playbackStrings.durationZeroStringProperty.value;
-      }
-      return `${seconds.toFixed(2)} ${playbackStrings.secondsUnitStringProperty.value}`;
-    };
-
-    const totalTimeTextProperty = new DerivedProperty([playback.durationProperty], (duration: number) =>
-      formatDuration(duration),
+    const timeRatioTextProperty = new DerivedProperty(
+      [playback.currentTimeProperty, playback.durationProperty],
+      (time: number, duration: number) => {
+        const secondsUnit = playbackStrings.secondsUnitStringProperty.value;
+        if (duration <= 0) {
+          return `0.00/0.00 ${secondsUnit}`;
+        }
+        const current = Number.isFinite(time) && time >= 0 ? Math.min(time, duration) : 0;
+        if (!Number.isFinite(duration)) {
+          return `${current.toFixed(2)}/? ${secondsUnit}`;
+        }
+        return `${current.toFixed(2)}/${duration.toFixed(2)} ${secondsUnit}`;
+      },
     );
 
     const frameCountTextProperty = new DerivedProperty(
@@ -244,14 +248,14 @@ export class PlaybackControlsNode extends HBox {
       },
     );
 
-    const totalTimeText = new Text(totalTimeTextProperty, {
+    const timeRatioText = new Text(timeRatioTextProperty, {
       font: LABEL_FONT,
       fill: TrackLabColors.textOnDarkProperty,
     });
     // Node([HStrut, text]): Scenery unions children bounds, so the container
     // width = max(INFO_DISPLAY_WIDTH, text.width) — always INFO_DISPLAY_WIDTH
     // as long as the text fits, preventing layout shifts as the text changes.
-    const totalTimeLabel = new Node({ children: [new HStrut(INFO_DISPLAY_WIDTH), totalTimeText] });
+    const timeRatioLabel = new Node({ children: [new HStrut(INFO_DISPLAY_WIDTH), timeRatioText] });
 
     const frameCountText = new Text(frameCountTextProperty, {
       font: LABEL_FONT,
@@ -260,7 +264,7 @@ export class PlaybackControlsNode extends HBox {
     const frameCountLabel = new Node({ children: [new HStrut(INFO_DISPLAY_WIDTH), frameCountText] });
 
     const infoDisplay = new VBox({
-      children: [totalTimeLabel, frameCountLabel],
+      children: [timeRatioLabel, frameCountLabel],
       spacing: INFO_DISPLAY_SPACING,
       align: "left",
     });
@@ -298,7 +302,7 @@ export class PlaybackControlsNode extends HBox {
       playback.frameRateProperty.unlink(frameRateListener);
       playback.totalFrameCountProperty.unlink(totalFrameCountListener);
       timeSpeedProperty.dispose();
-      totalTimeTextProperty.dispose();
+      timeRatioTextProperty.dispose();
       frameCountTextProperty.dispose();
     };
   }
