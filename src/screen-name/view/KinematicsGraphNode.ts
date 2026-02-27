@@ -247,7 +247,7 @@ export class KinematicsGraphNode extends Node {
         checkboxColor: TrackLabColors.checkboxColorProperty,
         checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
         spacing: 4,
-        accessibleName: kinematicsGraphStrings.trackItemStringProperty.value.replace("{{symbol}}", track.symbol),
+        accessibleName: kinematicsGraphStrings.trackItemStringProperty.value.split("{{symbol}}").join(track.symbol),
       });
       checkbox.addInputListener({ down: () => checkbox.focus() });
 

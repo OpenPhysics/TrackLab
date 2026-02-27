@@ -345,7 +345,7 @@ export class WebcamPanel extends Node {
       const opt = document.createElement("option");
       opt.value = cam.deviceId;
       opt.textContent =
-        cam.label || this.webcamStrings.cameraLabelStringProperty.value.replace("{{number}}", String(i + 1));
+        cam.label || this.webcamStrings.cameraLabelStringProperty.value.split("{{number}}").join(String(i + 1));
       this.cameraSelect.appendChild(opt);
     });
   }
@@ -453,10 +453,14 @@ export class WebcamPanel extends Node {
           : this.webcamStrings.lowConfidenceStringProperty.value;
 
     this.fpsEstimateText.string = this.webcamStrings.estimatedFpsStringProperty.value
-      .replace("{{fps}}", String(fps))
-      .replace("{{symbol}}", confidenceSymbol)
-      .replace("{{confidence}}", confidenceText)
-      .replace("{{method}}", method);
+      .split("{{fps}}")
+      .join(String(fps))
+      .split("{{symbol}}")
+      .join(confidenceSymbol)
+      .split("{{confidence}}")
+      .join(confidenceText)
+      .split("{{method}}")
+      .join(method);
   }
 
   private startTimer(): void {
@@ -466,7 +470,7 @@ export class WebcamPanel extends Node {
         .toString()
         .padStart(2, "0");
       const s = (secs % SECONDS_PER_MINUTE).toString().padStart(2, "0");
-      this.setStatus(this.webcamStrings.recordingStringProperty.value.replace("{{time}}", `${m}:${s}`));
+      this.setStatus(this.webcamStrings.recordingStringProperty.value.split("{{time}}").join(`${m}:${s}`));
     }, TIMER_INTERVAL_MS);
   }
 

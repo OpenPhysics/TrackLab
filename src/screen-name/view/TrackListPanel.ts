@@ -107,7 +107,7 @@ class TrackRowNode extends Node {
     const checkbox = new Checkbox(isDigitizingProperty, new Rectangle(0, 0, 0, 0), {
       boxWidth: CHECKBOX_BOX_WIDTH,
       tandem: Tandem.OPT_OUT,
-      accessibleName: a11yStrings.digitizeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
+      accessibleName: a11yStrings.digitizeTrackStringProperty.value.split("{{symbol}}").join(track.symbol),
     });
     checkbox.addInputListener({ down: () => checkbox.focus() });
     checkbox.left = CHECKBOX_X;
@@ -117,7 +117,7 @@ class TrackRowNode extends Node {
     const trashButton = createTrackLabButton(makeTrashIcon(), {
       baseColor: TrackLabColors.trashButtonBaseProperty,
       listener: () => tracking.removeTrack(track.id),
-      accessibleName: a11yStrings.removeTrackStringProperty.value.replace("{{symbol}}", track.symbol),
+      accessibleName: a11yStrings.removeTrackStringProperty.value.split("{{symbol}}").join(track.symbol),
     });
     trashButton.centerY = ROW_CY;
     trashButton.right = PANEL_WIDTH - TRASH_BUTTON_RIGHT_OFFSET;

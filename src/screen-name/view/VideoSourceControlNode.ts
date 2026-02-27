@@ -207,9 +207,12 @@ export class VideoSourceControlNode extends HBox {
     // Each branch calls a model method that sets all affected properties
     // atomically, preventing subscribers from seeing intermediate states.
     selectedVideoProperty.lazyLink((value) => {
-      // Revert section-header selections immediately
+      // Revert section-header selections (defer to avoid Property reentry)
       if (value?.startsWith(HEADER_VALUE_PREFIX)) {
-        selectedVideoProperty.value = this.lastLoadedValue;
+        const revertTo = this.lastLoadedValue;
+        setTimeout(() => {
+          selectedVideoProperty.value = revertTo;
+        }, 0);
         return;
       }
 
