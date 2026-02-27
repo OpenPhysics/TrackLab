@@ -54,7 +54,7 @@ export function generateCsv(tracks: readonly Track[], unit: string, labels: CsvL
 
   const headers = [labels.frame, labels.timeSeconds];
   for (const track of tracks) {
-    headers.push(`${track.symbol}_x (${unit})`, `${track.symbol}_y (${unit})`);
+    headers.push(`x_${track.symbol} (${unit})`, `y_${track.symbol} (${unit})`);
   }
 
   const lines = [headers.join(",")];
