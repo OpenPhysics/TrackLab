@@ -22,7 +22,7 @@
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import type { SimModel } from "../model/SimModel.js";
+import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 import type { PlottableProperty } from "./PlottableProperty.js";
 
 function createPlottableProperty(
@@ -55,7 +55,7 @@ export type KinematicsPlottableGroups = {
  * @param model - Provides the reactive unit-string properties so that axis
  *   labels update automatically when the user changes the calibration unit.
  */
-export function buildKinematicsPlottableGroups(model: SimModel): KinematicsPlottableGroups {
+export function buildKinematicsPlottableGroups(overlayTools: OverlayToolsModel): KinematicsPlottableGroups {
   return {
     // ── Time ──────────────────────────────────────────────────────────────
     // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
@@ -64,29 +64,29 @@ export function buildKinematicsPlottableGroups(model: SimModel): KinematicsPlott
     // ── Position ──────────────────────────────────────────────────────────
     position: [
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("x", model.overlayTools.calibUnitProperty, (pt) => pt["x"] ?? 0),
+      createPlottableProperty("x", overlayTools.calibUnitProperty, (pt) => pt["x"] ?? 0),
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("y", model.overlayTools.calibUnitProperty, (pt) => pt["y"] ?? 0),
+      createPlottableProperty("y", overlayTools.calibUnitProperty, (pt) => pt["y"] ?? 0),
     ],
 
     // ── Velocity ──────────────────────────────────────────────────────────
     velocity: [
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("vx", model.overlayTools.velocityUnitProperty, (pt) => pt["vx"] ?? 0),
+      createPlottableProperty("vx", overlayTools.velocityUnitProperty, (pt) => pt["vx"] ?? 0),
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("vy", model.overlayTools.velocityUnitProperty, (pt) => pt["vy"] ?? 0),
+      createPlottableProperty("vy", overlayTools.velocityUnitProperty, (pt) => pt["vy"] ?? 0),
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("speed", model.overlayTools.velocityUnitProperty, (pt) => pt["speed"] ?? 0),
+      createPlottableProperty("speed", overlayTools.velocityUnitProperty, (pt) => pt["speed"] ?? 0),
     ],
 
     // ── Acceleration ──────────────────────────────────────────────────────
     acceleration: [
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("ax", model.overlayTools.accelerationUnitProperty, (pt) => pt["ax"] ?? 0),
+      createPlottableProperty("ax", overlayTools.accelerationUnitProperty, (pt) => pt["ax"] ?? 0),
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("ay", model.overlayTools.accelerationUnitProperty, (pt) => pt["ay"] ?? 0),
+      createPlottableProperty("ay", overlayTools.accelerationUnitProperty, (pt) => pt["ay"] ?? 0),
       // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
-      createPlottableProperty("|a|", model.overlayTools.accelerationUnitProperty, (pt) => pt["aMag"] ?? 0),
+      createPlottableProperty("|a|", overlayTools.accelerationUnitProperty, (pt) => pt["aMag"] ?? 0),
     ],
   };
 }

@@ -19,7 +19,7 @@ import {
   PANEL_CORNER_RADIUS,
 } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 const ICON_ARROW_HEAD_SIZE = 5; // headWidth and headHeight for icon arrows
 const ICON_ARROW_TAIL_WIDTH = 1.5;
@@ -177,15 +177,15 @@ function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProper
  */
 export class ControlPanel extends Panel {
   /**
-   * @param model - Provides the boolean visibility properties bound to each checkbox.
+   * @param overlayTools - Provides the boolean visibility properties bound to each checkbox.
    * @param trackLabPreferences - Determines whether the auto-tracking checkbox is shown.
    */
-  public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel) {
+  public constructor(overlayTools: OverlayToolsModel, trackLabPreferences: TrackLabPreferencesModel) {
     const a11yStrings = StringManager.getInstance().getA11y();
 
     const autoTrackingCheckbox = makeRow(
       trackingIcon(),
-      model.overlayTools.autoTrackingProperty,
+      overlayTools.autoTrackingProperty,
       a11yStrings.toggleAutoTrackingStringProperty.value,
     );
     // The auto-tracking checkbox is only visible if the preference allows it.
@@ -194,17 +194,13 @@ export class ControlPanel extends Panel {
 
     const rows = new VBox({
       children: [
-        makeRow(axesIcon(), model.overlayTools.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
+        makeRow(axesIcon(), overlayTools.axesVisibleProperty, a11yStrings.toggleAxesStringProperty.value),
         makeRow(
           calibrationIcon(),
-          model.overlayTools.calibrationVisibleProperty,
+          overlayTools.calibrationVisibleProperty,
           a11yStrings.toggleCalibrationStringProperty.value,
         ),
-        makeRow(
-          magnifyIcon(),
-          model.overlayTools.magnifyVideoProperty,
-          a11yStrings.toggleMagnifierStringProperty.value,
-        ),
+        makeRow(magnifyIcon(), overlayTools.magnifyVideoProperty, a11yStrings.toggleMagnifierStringProperty.value),
         autoTrackingCheckbox,
       ],
       spacing: CONTROL_PANEL_ROWS_SPACING,

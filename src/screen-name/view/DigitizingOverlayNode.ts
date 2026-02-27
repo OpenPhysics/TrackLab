@@ -5,7 +5,8 @@
  * magnified view to help users precisely click on particle positions.
  */
 
-import { type Dimension2, Vector2 } from "scenerystack/dot";
+import type { TReadOnlyProperty } from "scenerystack/axon";
+import { type Dimension2, type Transform3, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
@@ -13,7 +14,16 @@ import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { TrackingModel } from "../model/TrackingModel.js";
+import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
+
+/** Narrowed dependencies passed to DigitizingOverlayNode at construction time. */
+type DigitizingOverlayNodeOptions = {
+  tracking: TrackingModel;
+  playback: VideoPlaybackModel;
+  magnifyVideoProperty: TReadOnlyProperty<boolean>;
+  modelViewTransformProperty: TReadOnlyProperty<Transform3>;
+};
 
 const OUTER_R = 12;
 const INNER_R = 2;
@@ -41,8 +51,10 @@ const MAG_SHADOW_BLUR = 8; // px, shadow blur radius
 export class DigitizingOverlayNode extends Node {
   private readonly disposeDigitizingOverlay: () => void;
 
-  public constructor(videoElement: HTMLVideoElement, model: SimModel, onPointAdded: () => void) {
+  public constructor(videoElement: HTMLVideoElement, options: DigitizingOverlayNodeOptions, onPointAdded: () => void) {
     super();
+
+    const { tracking, playback, magnifyVideoProperty, modelViewTransformProperty } = options;
 
     // Cached CSS color strings for canvas drawing (updated via property links)
     let magBorderColor = TrackLabColors.digitizingMagnifierBorderProperty.value.toCSS();
@@ -236,13 +248,13 @@ export class DigitizingOverlayNode extends Node {
     const videoDimensionsListener = (dims: Dimension2) => {
       digitizingOverlay.setRect(0, 0, dims.width, dims.height);
     };
-    model.playback.videoDimensionsProperty.link(videoDimensionsListener);
+    playback.videoDimensionsProperty.link(videoDimensionsListener);
 
     const updateMagnifierAtLastPt = () => {
       if (!(lastLocalPt && magnifierNode.visible)) {
         return;
       }
-      const { width: overlayW, height: overlayH } = model.playback.videoDimensionsProperty.value;
+      const { width: overlayW, height: overlayH } = playback.videoDimensionsProperty.value;
       const magX = Math.max(0, Math.min(lastLocalPt.x - MAG_SIZE / 2, overlayW - MAG_SIZE));
       const magY = Math.max(0, Math.min(lastLocalPt.y - MAG_SIZE / 2, overlayH - MAG_SIZE));
       const crosshairX = lastLocalPt.x - magX;
@@ -257,13 +269,13 @@ export class DigitizingOverlayNode extends Node {
         cursorNode.translation = localPt;
         cursorNode.visible = true;
 
-        const { width: overlayW, height: overlayH } = model.playback.videoDimensionsProperty.value;
+        const { width: overlayW, height: overlayH } = playback.videoDimensionsProperty.value;
         const magX = Math.max(0, Math.min(localPt.x - MAG_SIZE / 2, overlayW - MAG_SIZE));
         const magY = Math.max(0, Math.min(localPt.y - MAG_SIZE / 2, overlayH - MAG_SIZE));
         magnifierNode.x = magX;
         magnifierNode.y = magY;
 
-        if (model.overlayTools.magnifyVideoProperty.value) {
+        if (magnifyVideoProperty.value) {
           const crosshairX = localPt.x - magX;
           const crosshairY = localPt.y - magY;
           updateMagnifier(localPt.x, localPt.y, crosshairX, crosshairY);
@@ -286,10 +298,10 @@ export class DigitizingOverlayNode extends Node {
     const trackPaths = new Map<string, Path>(); // track id → Path
 
     const rebuildMarks = () => {
-      const frameDuration = model.playback.frameDurationProperty.value;
-      const currentFrame = Math.round(model.playback.currentTimeProperty.value / frameDuration);
-      const mvt = model.overlayTools.modelViewTransformProperty.value;
-      const tracks = model.tracking.tracksProperty.value;
+      const frameDuration = playback.frameDurationProperty.value;
+      const currentFrame = Math.round(playback.currentTimeProperty.value / frameDuration);
+      const mvt = modelViewTransformProperty.value;
+      const tracks = tracking.tracksProperty.value;
       const activeTrackIds = new Set(tracks.map((t) => t.id));
 
       // Update or create one Path per track.
@@ -324,16 +336,16 @@ export class DigitizingOverlayNode extends Node {
       rebuildMarks();
       updateMagnifierAtLastPt();
     };
-    model.playback.currentTimeProperty.link(currentTimeListener);
+    playback.currentTimeProperty.link(currentTimeListener);
 
     const tracksListener = () => rebuildMarks();
-    model.tracking.tracksProperty.link(tracksListener);
+    tracking.tracksProperty.link(tracksListener);
 
     const mvtListener = () => rebuildMarks();
-    model.overlayTools.modelViewTransformProperty.link(mvtListener);
+    modelViewTransformProperty.link(mvtListener);
 
     const frameRateListener = () => rebuildMarks();
-    model.playback.frameRateProperty.link(frameRateListener);
+    playback.frameRateProperty.link(frameRateListener);
 
     const activeTrackListener = (activeId: string | null) => {
       digitizingOverlay.visible = activeId !== null;
@@ -341,14 +353,14 @@ export class DigitizingOverlayNode extends Node {
         cursorNode.visible = false;
       }
     };
-    model.tracking.activeTrackIdProperty.link(activeTrackListener);
+    tracking.activeTrackIdProperty.link(activeTrackListener);
 
     const magnifyListener = (magnify: boolean) => {
       if (!magnify) {
         magnifierNode.visible = false;
       }
     };
-    model.overlayTools.magnifyVideoProperty.link(magnifyListener);
+    magnifyVideoProperty.link(magnifyListener);
 
     digitizingOverlay.addInputListener(
       new FireListener({
@@ -356,24 +368,24 @@ export class DigitizingOverlayNode extends Node {
           if (!event) {
             return;
           }
-          const activeId = model.tracking.activeTrackIdProperty.value;
+          const activeId = tracking.activeTrackIdProperty.value;
           if (!activeId) {
             return;
           }
 
-          const track = model.tracking.tracksProperty.value.find((t) => t.id === activeId);
+          const track = tracking.tracksProperty.value.find((t) => t.id === activeId);
           if (!track) {
             return;
           }
 
           const localPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
 
-          const time = model.playback.currentTimeProperty.value;
-          const frame = Math.round(time * model.playback.frameRateProperty.value);
+          const time = playback.currentTimeProperty.value;
+          const frame = Math.round(time * playback.frameRateProperty.value);
 
-          const modelPt = model.pixelToModelCoords(localPt);
+          const modelPt = modelViewTransformProperty.value.inversePosition2(localPt);
 
-          model.tracking.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
+          tracking.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
           onPointAdded();
         },
         tandem: Tandem.OPT_OUT,
@@ -389,13 +401,13 @@ export class DigitizingOverlayNode extends Node {
       TrackLabColors.digitizingMagnifierBorderProperty.unlink(magBorderListener);
       TrackLabColors.digitizingMagnifierCrosshairProperty.unlink(magCrosshairListener);
       TrackLabColors.digitizingMagnifierShadowProperty.unlink(magShadowListener);
-      model.playback.videoDimensionsProperty.unlink(videoDimensionsListener);
-      model.playback.currentTimeProperty.unlink(currentTimeListener);
-      model.tracking.tracksProperty.unlink(tracksListener);
-      model.overlayTools.modelViewTransformProperty.unlink(mvtListener);
-      model.playback.frameRateProperty.unlink(frameRateListener);
-      model.tracking.activeTrackIdProperty.unlink(activeTrackListener);
-      model.overlayTools.magnifyVideoProperty.unlink(magnifyListener);
+      playback.videoDimensionsProperty.unlink(videoDimensionsListener);
+      playback.currentTimeProperty.unlink(currentTimeListener);
+      tracking.tracksProperty.unlink(tracksListener);
+      modelViewTransformProperty.unlink(mvtListener);
+      playback.frameRateProperty.unlink(frameRateListener);
+      tracking.activeTrackIdProperty.unlink(activeTrackListener);
+      magnifyVideoProperty.unlink(magnifyListener);
       for (const path of trackPaths.values()) {
         path.dispose();
       }

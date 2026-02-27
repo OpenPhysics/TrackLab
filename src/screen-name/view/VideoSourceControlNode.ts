@@ -5,7 +5,7 @@
  * accessing the webcam recording dialog.
  */
 
-import type { TReadOnlyProperty } from "scenerystack/axon";
+import type { NumberProperty, TProperty, TReadOnlyProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
 import { HBox, type Node, Text } from "scenerystack/scenery";
 import { CameraButton, PhetFont } from "scenerystack/scenery-phet";
@@ -17,8 +17,20 @@ import TrackLabColors from "../../TrackLabColors.js";
 import { BUTTON_X_MARGIN, BUTTON_Y_MARGIN, MOUSE_AREA_DILATION, TOUCH_AREA_DILATION } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import { countWebmFrames, getAnimatedWebPInfo } from "../../webcam.js";
-import { DEFAULT_FRAME_RATE, type SimModel, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
+import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
+import type { VideoSourceModel } from "../model/VideoSourceModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
+
+/**
+ * The three atomic activation methods from SimModel that VideoSourceControlNode
+ * needs to call when the user switches video source.  Using a structural interface
+ * rather than the full SimModel keeps this node decoupled from the overall model.
+ */
+export type VideoSourceActivation = {
+  activateRecording: (recording: WebcamRecording) => void;
+  activateUpload: (upload: UploadedVideo) => void;
+  activateBundledVideo: (frameCount: number, fps: number) => void;
+};
 
 const LABEL_FONT = new PhetFont(14);
 const HEADER_FONT = new PhetFont({ size: 12, style: "italic" });
@@ -69,7 +81,10 @@ export class VideoSourceControlNode extends HBox {
   private lastLoadedValue: string | null = null;
 
   public constructor(
-    model: SimModel,
+    sources: VideoSourceModel,
+    isPlayingProperty: TProperty<boolean>,
+    activation: VideoSourceActivation,
+    frameRateProperty: NumberProperty,
     listParent: Node,
     onVideoSelected: VideoSelectedCallback,
     onWebcamReady: WebcamReadyCallback,
@@ -192,19 +207,19 @@ export class VideoSourceControlNode extends HBox {
       }
 
       // Check webcam recordings
-      const recording = model.sources.webcamRecordingsProperty.value.find((r) => r.id === value);
+      const recording = sources.webcamRecordingsProperty.value.find((r) => r.id === value);
       if (recording) {
         this.lastLoadedValue = value;
-        model.activateRecording(recording);
+        activation.activateRecording(recording);
         onWebcamReady(recording.blob, recording.duration);
         return;
       }
 
       // Check uploaded videos
-      const upload = model.sources.uploadedVideosProperty.value.find((u) => u.id === value);
+      const upload = sources.uploadedVideosProperty.value.find((u) => u.id === value);
       if (upload) {
         this.lastLoadedValue = value;
-        model.activateUpload(upload);
+        activation.activateUpload(upload);
         onWebcamReady(upload.blob, upload.duration);
         return;
       }
@@ -213,7 +228,7 @@ export class VideoSourceControlNode extends HBox {
       const videoInfo = VIDEO_FILES.find((v) => v.filename === value);
       if (videoInfo) {
         this.lastLoadedValue = value;
-        model.activateBundledVideo(videoInfo.frameCount, videoInfo.fps);
+        activation.activateBundledVideo(videoInfo.frameCount, videoInfo.fps);
         onVideoSelected(`./videos/${value}`);
       }
     });
@@ -323,8 +338,8 @@ export class VideoSourceControlNode extends HBox {
     };
 
     const rebuildComboBox = (): void => {
-      const recordings = model.sources.webcamRecordingsProperty.value;
-      const uploads = model.sources.uploadedVideosProperty.value;
+      const recordings = sources.webcamRecordingsProperty.value;
+      const uploads = sources.uploadedVideosProperty.value;
       const oldBox = videoComboBox;
       videoComboBox = buildComboBox(recordings, uploads);
 
@@ -342,14 +357,14 @@ export class VideoSourceControlNode extends HBox {
     videoComboBox = buildComboBox([], []);
 
     // Rebuild when either list changes
-    model.sources.webcamRecordingsProperty.lazyLink(() => rebuildComboBox());
-    model.sources.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
+    sources.webcamRecordingsProperty.lazyLink(() => rebuildComboBox());
+    sources.uploadedVideosProperty.lazyLink(() => rebuildComboBox());
 
     // ── Download button (visible for user-provided videos) ────────────────
     const downloadButton = createTrackLabButton(makeDownloadIcon(), {
       accessibleName: videoSourceStrings.downloadVideoStringProperty,
       listener: () => {
-        const blob = model.sources.currentWebcamBlobProperty.value;
+        const blob = sources.currentWebcamBlobProperty.value;
         if (!blob) {
           return;
         }
@@ -363,7 +378,7 @@ export class VideoSourceControlNode extends HBox {
       },
     });
     downloadButton.visible = false;
-    model.sources.isWebcamVideoProperty.link((isUserVideo) => {
+    sources.isWebcamVideoProperty.link((isUserVideo) => {
       downloadButton.visible = isUserVideo;
     });
 
@@ -390,7 +405,7 @@ export class VideoSourceControlNode extends HBox {
         const duration = info?.duration ?? 0;
         const fps = info?.fps ?? DEFAULT_FRAME_RATE;
         const frameCount = info?.frameCount ?? 0;
-        const upload = model.sources.addUploadedVideo(
+        const upload = sources.addUploadedVideo(
           blob,
           file.name,
           duration,
@@ -398,15 +413,15 @@ export class VideoSourceControlNode extends HBox {
           frameCount > 0 ? frameCount : undefined,
         );
         // Setting selectedVideoProperty triggers the lazyLink which calls
-        // model.activateUpload(upload) and onWebcamReady atomically.
+        // activation.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
         return;
       }
 
       const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
-        const upload = model.sources.addUploadedVideo(blob, file.name, duration, fps, frameCount);
+        const upload = sources.addUploadedVideo(blob, file.name, duration, fps, frameCount);
         // Setting selectedVideoProperty triggers the lazyLink which calls
-        // model.activateUpload(upload) and onWebcamReady atomically.
+        // activation.activateUpload(upload) and onWebcamReady atomically.
         selectedVideoProperty.value = upload.id;
       };
 
@@ -435,20 +450,20 @@ export class VideoSourceControlNode extends HBox {
     const uploadButton = createTrackLabButton(makeUploadIcon(), {
       accessibleName: videoSourceStrings.openVideoFileStringProperty,
       listener: () => {
-        model.playback.isPlayingProperty.value = false;
+        isPlayingProperty.value = false;
         fileInput.click();
       },
     });
 
     // ── Webcam panel and button ───────────────────────────────────────────
     this.webcamPanel = new WebcamPanel({
-      model: model,
+      frameRateProperty: frameRateProperty,
       onVideoReady: (blob, duration) => {
         this.webcamPanel.visible = false;
         // Store the recording in the model (this triggers a ComboBox rebuild).
-        const recording = model.sources.addWebcamRecording(blob, duration, model.playback.frameRateProperty.value);
+        const recording = sources.addWebcamRecording(blob, duration, frameRateProperty.value);
         // Setting selectedVideoProperty triggers the lazyLink which calls
-        // model.activateRecording(recording) and onWebcamReady atomically.
+        // activation.activateRecording(recording) and onWebcamReady atomically.
         selectedVideoProperty.value = recording.id;
       },
       onCancel: () => {
@@ -470,7 +485,7 @@ export class VideoSourceControlNode extends HBox {
       tandem: Tandem.OPT_OUT,
       accessibleName: videoSourceStrings.recordWebcamStringProperty,
       listener: async () => {
-        model.playback.isPlayingProperty.value = false;
+        isPlayingProperty.value = false;
         this.webcamPanel.visible = true;
         try {
           await this.webcamPanel.open();

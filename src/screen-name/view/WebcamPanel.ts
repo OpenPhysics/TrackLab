@@ -5,6 +5,7 @@
  * live preview, recording controls, and frame rate configuration.
  */
 
+import type { NumberProperty } from "scenerystack/axon";
 import { Property } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
 import { DOM, HBox, Node, Path, Text, VBox } from "scenerystack/scenery";
@@ -17,7 +18,7 @@ import TrackLabColors from "../../TrackLabColors.js";
 import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
-import { FRAME_RATE_RANGE, type SimModel } from "../model/SimModel.js";
+import { FRAME_RATE_RANGE } from "../model/SimModel.js";
 
 const FONT = new PhetFont(14);
 const SMALL_FONT = new PhetFont(12);
@@ -41,8 +42,8 @@ const SECONDS_PER_MINUTE = 60; // conversion factor for mm:ss timer formatting
 
 /** Configuration passed to WebcamPanel at construction time. */
 type WebcamPanelOptions = {
-  /** Simulation model; used to write the detected frame rate. */
-  model: SimModel;
+  /** Writable frame-rate property; updated with the detected FPS after recording. */
+  frameRateProperty: NumberProperty;
   /** Called with the recorded blob and its duration when the user confirms the video. */
   onVideoReady: (blob: Blob, duration: number) => void;
   /** Called when the user dismisses the panel without confirming a recording. */
@@ -69,7 +70,7 @@ export class WebcamPanel extends Node {
   private readonly fpsEstimateText: Text;
   private readonly previewLayer: Node;
   private readonly reviewLayer: Node;
-  private readonly model: SimModel;
+  private readonly frameRateProperty: NumberProperty;
 
   private recordedBlob: Blob | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -78,7 +79,7 @@ export class WebcamPanel extends Node {
 
   public constructor(options: WebcamPanelOptions) {
     super();
-    this.model = options.model;
+    this.frameRateProperty = options.frameRateProperty;
     this.webcamStrings = StringManager.getInstance().getWebcam();
 
     // ── Camera select ─────────────────────────────────────────────────────
@@ -187,7 +188,7 @@ export class WebcamPanel extends Node {
       fill: TrackLabColors.textMutedProperty,
     });
 
-    const fpsPicker = new NumberPicker(this.model.playback.frameRateProperty, new Property(FRAME_RATE_RANGE), {
+    const fpsPicker = new NumberPicker(this.frameRateProperty, new Property(FRAME_RATE_RANGE), {
       font: SMALL_FONT,
       scale: FPS_PICKER_SCALE,
       touchAreaXDilation: 10,
@@ -390,7 +391,7 @@ export class WebcamPanel extends Node {
       }
       this.updateFPSEstimateDisplay();
       // Set the estimated FPS as the initial value
-      this.model.playback.frameRateProperty.value = this.fpsEstimate.fps;
+      this.frameRateProperty.value = this.fpsEstimate.fps;
     } catch (_error) {
       this.fpsEstimateText.string = "";
     }

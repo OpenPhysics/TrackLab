@@ -11,6 +11,7 @@ import { DOM, Node } from "scenerystack/scenery";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
+import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
 const MAIN_CONTENT_SPACING = 10; // VBox gap between source control, video layer, and playback
 
@@ -41,7 +42,7 @@ export class VideoPlayerNode extends Node {
    * should be added via addVideoOverlay() rather than accessing this layer directly.
    */
   private readonly videoContentLayer: Node;
-  private readonly model: SimModel;
+  private readonly playback: VideoPlaybackModel;
   private readonly disposeVideoPlayer: () => void;
   /** Tracks the current blob URL so it can be revoked when a new one is loaded. */
   private currentBlobUrl: string | null = null;
@@ -54,7 +55,7 @@ export class VideoPlayerNode extends Node {
    */
   public constructor(model: SimModel, listParent: Node) {
     super();
-    this.model = model;
+    this.playback = model.playback;
 
     const a11yStrings = StringManager.getInstance().getA11y();
 
@@ -110,10 +111,24 @@ export class VideoPlayerNode extends Node {
       [model.playback.videoLoadedProperty, model.overlayTools.autoTrackingProperty],
       (loaded, tracking) => loaded && tracking,
     );
-    const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, model);
+    const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, {
+      tracking: model.tracking,
+      videoDimensionsProperty: model.playback.videoDimensionsProperty,
+      frameRateProperty: model.playback.frameRateProperty,
+      modelViewTransformProperty: model.overlayTools.modelViewTransformProperty,
+    });
 
     // ── Manual digitizing overlay ─────────────────────────────────────────
-    const digitizingOverlayNode = new DigitizingOverlayNode(this.videoElement, model, () => this.stepForward());
+    const digitizingOverlayNode = new DigitizingOverlayNode(
+      this.videoElement,
+      {
+        tracking: model.tracking,
+        playback: model.playback,
+        magnifyVideoProperty: model.overlayTools.magnifyVideoProperty,
+        modelViewTransformProperty: model.overlayTools.modelViewTransformProperty,
+      },
+      () => this.stepForward(),
+    );
 
     this.videoContentLayer = new Node({
       children: [videoNode, autoTrackerNode, digitizingOverlayNode],
@@ -158,7 +173,7 @@ export class VideoPlayerNode extends Node {
 
     // ── Playback controls (positioned by SimScreenView at screen bottom) ──
     this.playbackControlsNode = new PlaybackControlsNode(
-      model,
+      model.playback,
       this.videoElement,
       () => this.seekByFrames(-1),
       () => this.seekByFrames(1),
@@ -202,7 +217,10 @@ export class VideoPlayerNode extends Node {
 
     // ── Video source controls (webcam panel is added to SimScreenView for z-order) ─
     this.videoSourceControlNode = new VideoSourceControlNode(
+      model.sources,
+      model.playback.isPlayingProperty,
       model,
+      model.playback.frameRateProperty,
       listParent,
       (url) => {
         model.playback.isPlayingProperty.value = false;
@@ -309,8 +327,8 @@ export class VideoPlayerNode extends Node {
 
   /** Pause playback and seek to the very beginning of the video. */
   private rewindToStart(): void {
-    this.model.playback.isPlayingProperty.value = false;
-    this.model.playback.currentTimeProperty.value = 0;
+    this.playback.isPlayingProperty.value = false;
+    this.playback.currentTimeProperty.value = 0;
     this.videoElement.currentTime = 0;
   }
 
@@ -320,18 +338,18 @@ export class VideoPlayerNode extends Node {
   }
 
   private seekByFrames(direction: number): void {
-    this.model.playback.isPlayingProperty.value = false;
+    this.playback.isPlayingProperty.value = false;
     const duration = this.videoElement.duration;
     if (!(duration > 0)) {
       return;
     }
-    const frameDuration = this.model.playback.frameDurationProperty.value;
+    const frameDuration = this.playback.frameDurationProperty.value;
     const raw = this.videoElement.currentTime + direction * frameDuration;
     // Math.min(raw, Infinity) === raw, so this clamp works for both finite and
     // Infinity durations (WebM files often report Infinity until fully loaded).
     const clamped = Math.max(0, Math.min(raw, duration));
     this.videoElement.currentTime = clamped;
-    this.model.playback.currentTimeProperty.value = clamped;
+    this.playback.currentTimeProperty.value = clamped;
   }
 
   private loadUrl(url: string): void {
