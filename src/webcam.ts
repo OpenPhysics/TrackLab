@@ -615,10 +615,11 @@ export type VideoFileMetadata = {
 export async function extractVideoFileMetadata(file: File, defaultFps: number): Promise<VideoFileMetadata> {
   if (file.type === "image/webp") {
     const info = await getAnimatedWebPInfo(file);
+    const knownCount = info?.frameCount ?? 0;
     return {
       duration: info?.duration ?? 0,
       fps: info?.fps ?? defaultFps,
-      frameCount: (info?.frameCount ?? 0) > 0 ? info?.frameCount : undefined,
+      ...(knownCount > 0 ? { frameCount: knownCount } : {}),
     };
   }
 
@@ -628,7 +629,7 @@ export async function extractVideoFileMetadata(file: File, defaultFps: number): 
       return {
         duration,
         fps: frameCount > 0 && duration > 0 ? frameCount / duration : defaultFps,
-        frameCount: frameCount > 0 ? frameCount : undefined,
+        ...(frameCount > 0 ? { frameCount } : {}),
       };
     } catch {
       // Frame counting failed (timeout or unsupported API) — load with unknown duration.
