@@ -11,7 +11,7 @@
  *   worker → main  { id, type: 'init-done', templateW, templateH, centerX, centerY }
  *
  *   main → worker  { id, type: 'track',   imageData, searchX, searchY }
- *   worker → main  { id, type: 'track-result', x, y }
+ *   worker → main  { id, type: 'track-result', x, y, confidence }
  *
  *   main → worker  { id: -1, type: 'dispose' }   (no response)
  *
@@ -68,6 +68,21 @@ function ensureOpenCV() {
   return cvLoadPromise;
 }
 
+// Gaussian blur kernel applied to both the captured template and every search
+// window before matching.  A 5×5 kernel (σ ≈ 1.1 px) smooths per-frame sensor
+// noise and compression artefacts without blurring object edges enough to
+// degrade match precision.  Because the same filter is applied at both init
+// time (template) and track time (search region), the template and the search
+// image remain in the same frequency domain and TM_CCOEFF_NORMED scores stay
+// reliable.  This is tuned for a stationary camera where the background is
+// static and sensor noise is the dominant source of inter-frame variation.
+function blurGray(src, dst) {
+  // Lazily build the Size object once cv is available.
+  const ksize = new cv.Size(5, 5);
+  cv.GaussianBlur(src, dst, ksize, 0);
+  ksize.delete();
+}
+
 self.onmessage = async (event) => {
   const msg = event.data;
   const { id, type } = msg;
@@ -79,6 +94,7 @@ self.onmessage = async (event) => {
       const { imageData, region } = msg;
       const frame = cv.matFromImageData(imageData);
       const gray = new cv.Mat();
+      const blurred = new cv.Mat();
       try {
         cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
 
@@ -91,9 +107,13 @@ self.onmessage = async (event) => {
           throw new Error(`Invalid ROI dimensions: ${roiW}x${roiH}`);
         }
 
+        // Blur before cropping the ROI so the template is in the same
+        // frequency domain as the blurred search regions used during tracking.
+        blurGray(gray, blurred);
+
         if (templateMat) templateMat.delete();
         const roi = new cv.Rect(clampedX, clampedY, roiW, roiH);
-        templateMat = gray.roi(roi).clone();
+        templateMat = blurred.roi(roi).clone();
 
         self.postMessage({
           id,
@@ -106,27 +126,41 @@ self.onmessage = async (event) => {
       } finally {
         frame.delete();
         gray.delete();
+        blurred.delete();
       }
     } else if (type === 'track') {
       if (!cv || !templateMat) {
-        self.postMessage({ id, type: 'track-result', x: null, y: null });
+        self.postMessage({ id, type: 'track-result', x: null, y: null, confidence: 0 });
         return;
       }
 
       const { imageData, searchX, searchY } = msg;
       const frame = cv.matFromImageData(imageData);
       const gray = new cv.Mat();
+      const blurred = new cv.Mat();
       const result = new cv.Mat();
       try {
         cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-        cv.matchTemplate(gray, templateMat, result, cv.TM_CCOEFF_NORMED);
-        const { maxLoc } = cv.minMaxLoc(result);
+        // Apply the same blur used at template-capture time so that
+        // TM_CCOEFF_NORMED compares apples to apples.  For a stationary
+        // camera this also suppresses per-frame sensor noise that would
+        // otherwise produce spurious high-scoring locations.
+        blurGray(gray, blurred);
+        cv.matchTemplate(blurred, templateMat, result, cv.TM_CCOEFF_NORMED);
+        const { maxVal, maxLoc } = cv.minMaxLoc(result);
         const centerX = maxLoc.x + searchX + templateMat.cols / 2;
         const centerY = maxLoc.y + searchY + templateMat.rows / 2;
-        self.postMessage({ id, type: 'track-result', x: centerX, y: centerY });
+        self.postMessage({
+          id,
+          type: 'track-result',
+          x: centerX,
+          y: centerY,
+          confidence: maxVal,
+        });
       } finally {
         frame.delete();
         gray.delete();
+        blurred.delete();
         result.delete();
       }
     } else if (type === 'dispose') {
