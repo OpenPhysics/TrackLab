@@ -71,8 +71,6 @@ export class SimScreenView extends ScreenView {
 
     // ── Control panel / tool checkboxes (upper left) ───────────────────────
     const controlPanel = new ControlPanel(model.overlayTools, trackLabPreferences);
-    controlPanel.left = this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN;
-    controlPanel.top = this.layoutBounds.top + SCREEN_TOP_MARGIN;
     this.addChild(controlPanel);
 
     // ── Track list panel (beneath control panel) ─────────────────────────
@@ -93,8 +91,11 @@ export class SimScreenView extends ScreenView {
     // ── Initial video panel position ──────────────────────────────────────
     // Compute the initial position based on layout and write it into the model
     // so it persists (and can be restored on Reset All).
+    // NOTE: controlPanel.left is set inside visibleBoundsProperty.link(), which
+    // fires after this code runs, so we compute the x position from layoutBounds
+    // directly rather than from controlPanel.right to avoid a stale value.
     const initialPanelPos = new Vector2(
-      controlPanel.right + VIDEO_PLAYER_LEFT_SPACING,
+      this.layoutBounds.left + CONTROL_PANEL_LEFT_MARGIN + controlPanel.width + VIDEO_PLAYER_LEFT_SPACING,
       this.layoutBounds.top + SCREEN_TOP_MARGIN,
     );
     model.playback.panelPositionProperty.value = initialPanelPos;
@@ -232,6 +233,10 @@ export class SimScreenView extends ScreenView {
     // is wider/taller than the default layout. All right-edge anchors are linked
     // here so they track the actual visible edge rather than the fixed layoutBounds.
     this.visibleBoundsProperty.link((visibleBounds) => {
+      // Control panel: anchor to the actual visible top-left corner.
+      controlPanel.left = visibleBounds.minX + CONTROL_PANEL_LEFT_MARGIN;
+      controlPanel.top = visibleBounds.minY + SCREEN_TOP_MARGIN;
+
       // Reset button: anchor to the actual visible bottom-right corner.
       resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
       resetAllButton.bottom = visibleBounds.maxY - RESET_BUTTON_MARGIN;
