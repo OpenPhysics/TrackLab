@@ -406,6 +406,10 @@ export class VideoPlayerNode extends Node {
 
   /** Reset the video source selection to the initial state. */
   public reset(): void {
+    if (this.currentBlobUrl) {
+      URL.revokeObjectURL(this.currentBlobUrl);
+      this.currentBlobUrl = null;
+    }
     this.videoSourceControlNode.reset();
     this.videoElement.removeAttribute("src");
     this.videoElement.load();
