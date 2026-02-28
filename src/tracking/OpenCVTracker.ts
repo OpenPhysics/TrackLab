@@ -9,22 +9,34 @@
  *  - Drawing the video frame onto an offscreen canvas (GPU-accelerated)
  *  - Extracting the search-window ImageData (CPU ← GPU transfer)
  *  - Computing the windowed search region (cheap arithmetic)
- */
-
-import trackLab from "../TrackLabNamespace.js";
-
-export type TrackerRegion = { x: number; y: number; w: number; h: number };
-
-type WorkerResponse =
-  | { id: number; type: "init-done"; templateW: number; templateH: number; centerX: number; centerY: number }
-  | { id: number; type: "track-result"; x: number; y: number }
-  | { id: number; type: "error"; message: string };
-
-/**
- * Tracks a user-selected object across video frames using OpenCV template
- * matching running in a Web Worker.
  *
- * ## Windowed search optimisation
+ * ## Stationary-camera optimisations
+ *
+ * When the camera is fixed (mounted on a tripod and not moving), the
+ * background is completely static between frames.  The only source of
+ * inter-frame variation is:
+ *   1. The tracked object itself moving through the scene.
+ *   2. Per-frame sensor noise and video-compression artefacts.
+ *
+ * Two mechanisms exploit these conditions:
+ *
+ * 1. **Gaussian pre-filtering** – a 5×5 Gaussian blur is applied to both the
+ *    template at capture time and the search region on every tracking call.
+ *    Because the same filter is used in both cases the normalised cross-
+ *    correlation score (TM_CCOEFF_NORMED) remains accurate, while pixel-level
+ *    sensor noise that would otherwise generate spurious match peaks is
+ *    suppressed.  This is more effective on a stationary camera than on a
+ *    panning one because the static background means noise is the dominant
+ *    source of false matches rather than background-content changes.
+ *
+ * 2. **Confidence threshold** – TM_CCOEFF_NORMED returns a score in [-1, 1].
+ *    Matches below MATCH_CONFIDENCE_THRESHOLD are silently dropped so that
+ *    a noisy or occluded frame cannot send the tracker to a wrong location.
+ *    The threshold is set lower (0.25) than would be appropriate for a
+ *    moving camera because the static background makes strong false peaks
+ *    unlikely.
+ *
+ * ## Windowed search optimisation (existing)
  *
  * Rather than reading back every pixel of every frame from the GPU (O(W×H) per
  * frame at 30 Hz), the tracker maintains the center of the last successful match
@@ -35,6 +47,20 @@ type WorkerResponse =
  * The search window is padded by `SEARCH_PADDING_FACTOR × max(templateW, templateH)`
  * on every side.  If the object would exit that window between frames (very fast
  * motion), the tracker falls back to a full-frame search automatically.
+ */
+
+import trackLab from "../TrackLabNamespace.js";
+
+export type TrackerRegion = { x: number; y: number; w: number; h: number };
+
+type WorkerResponse =
+  | { id: number; type: "init-done"; templateW: number; templateH: number; centerX: number; centerY: number }
+  | { id: number; type: "track-result"; x: number; y: number; confidence: number }
+  | { id: number; type: "error"; message: string };
+
+/**
+ * Tracks a user-selected object across video frames using OpenCV template
+ * matching running in a Web Worker.
  */
 export class OpenCVTracker {
   private readonly offscreen: HTMLCanvasElement;
@@ -57,7 +83,17 @@ export class OpenCVTracker {
   private templateH = 0;
   private lastMatchCenter: { x: number; y: number } | null = null;
 
+  // Padding factor: search window extends this many template-lengths on each
+  // side.  A value of 2 is well-matched to a stationary camera where the
+  // object's own motion is the sole source of inter-frame displacement.
   private static readonly SEARCH_PADDING_FACTOR = 2;
+
+  // TM_CCOEFF_NORMED confidence score below which a match is discarded.
+  // Set to 0.25 for a stationary camera: the static background makes strong
+  // false peaks rare, so a permissive threshold catches partial occlusions
+  // while still rejecting genuinely bad frames (compression spikes, motion
+  // blur on fast objects).
+  private static readonly MATCH_CONFIDENCE_THRESHOLD = 0.25;
 
   /**
    * @param videoWidth  - Pixel width of the video element (offscreen canvas size).
@@ -140,6 +176,10 @@ export class OpenCVTracker {
    * Capture the template from the current video frame inside `region` and send
    * it to the worker.  OpenCV (WASM) is loaded inside the worker on the first
    * call — this may take a moment but never blocks the main thread.
+   *
+   * The worker applies a Gaussian blur to the captured ROI so that the template
+   * is in the same frequency domain as the blurred search regions used at
+   * tracking time.
    */
   public async initFromVideo(video: HTMLVideoElement, region: TrackerRegion): Promise<void> {
     this.drawVideoFrame(video);
@@ -157,8 +197,13 @@ export class OpenCVTracker {
   /**
    * Match the stored template against the current video frame.
    * Returns the center of the best match in video-pixel coordinates, or null if
-   * the tracker is not ready.  Runs asynchronously in the worker — the main
-   * thread is free while the worker executes matchTemplate.
+   * the tracker is not ready or the match confidence is below the threshold.
+   * Runs asynchronously in the worker — the main thread is free while the
+   * worker executes matchTemplate.
+   *
+   * For a stationary camera the search-window padding (SEARCH_PADDING_FACTOR)
+   * only needs to cover the object's own motion between frames; no extra margin
+   * for camera motion is required.
    */
   public async track(video: HTMLVideoElement): Promise<{ x: number; y: number } | null> {
     if (!this.workerReady) {
@@ -204,7 +249,15 @@ export class OpenCVTracker {
     const response = await this.send({ type: "track", imageData, searchX, searchY });
 
     if (response.type === "track-result") {
-      const { x, y } = response;
+      const { x, y, confidence } = response;
+
+      // Drop matches below the confidence threshold.  For a stationary
+      // camera this catches motion-blurred frames and compression spikes
+      // without falsely rejecting genuine (albeit imperfect) matches.
+      if (confidence < OpenCVTracker.MATCH_CONFIDENCE_THRESHOLD) {
+        return null;
+      }
+
       this.lastMatchCenter = { x, y };
       return { x, y };
     }
