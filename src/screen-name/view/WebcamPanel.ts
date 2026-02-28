@@ -288,16 +288,20 @@ export class WebcamPanel extends Node {
     this.setStatus(this.webcamStrings.requestingAccessStringProperty.value);
     this._startButton.enabled = false;
 
-    const granted = await this.recorder.requestPermission();
-    if (!granted) {
-      this.setStatus(this.webcamStrings.accessDeniedStringProperty.value);
-      return;
-    }
+    try {
+      const granted = await this.recorder.requestPermission();
+      if (!granted) {
+        this.setStatus(this.webcamStrings.accessDeniedStringProperty.value);
+        return;
+      }
 
-    await this.populateCameras();
-    await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
-    this.clearStatus();
-    this._startButton.enabled = true;
+      await this.populateCameras();
+      await this.recorder.startPreview(this.previewElement, this.cameraSelect.value || undefined);
+      this.clearStatus();
+      this._startButton.enabled = true;
+    } catch {
+      this.setStatus(this.webcamStrings.accessDeniedStringProperty.value);
+    }
   }
 
   // Reset visibility to preview phase without touching the camera stream.
@@ -425,7 +429,7 @@ export class WebcamPanel extends Node {
         blob = fixed.blob;
         duration = fixed.duration;
       } catch {
-        // Fall back to the raw blob with unknown duration
+        this.clearStatus(); // Metadata fix failed; continue with raw blob and unknown duration
       }
     }
 
