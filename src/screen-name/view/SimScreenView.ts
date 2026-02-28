@@ -100,12 +100,11 @@ export class SimScreenView extends ScreenView {
     );
     model.playback.panelPositionProperty.value = initialPanelPos;
 
-    // ── Link panelPositionProperty → videoPlayerNode position ────────────
-    // Use left/top (not translation) so pos represents the top-left of the
-    // *entire* node — header frame included — not just the video content origin.
+    // ── Link panelPositionProperty → videoPlayerNode horizontal position ─
+    // Only the x (left) is driven here; the top is anchored to visibleBounds
+    // inside visibleBoundsProperty.link() so it always tracks the visible edge.
     model.playback.panelPositionProperty.link((pos) => {
       this.videoPlayerNode.left = pos.x;
-      this.videoPlayerNode.top = pos.y;
     });
 
     // ── Panel move drag (on the header bar) ───────────────────────────────
@@ -236,6 +235,9 @@ export class SimScreenView extends ScreenView {
       // Control panel: anchor to the actual visible top-left corner.
       controlPanel.left = visibleBounds.minX + CONTROL_PANEL_LEFT_MARGIN;
       controlPanel.top = visibleBounds.minY + SCREEN_TOP_MARGIN;
+
+      // Video player: top tracks the visible top edge; left is driven by panelPositionProperty.
+      this.videoPlayerNode.top = visibleBounds.minY + SCREEN_TOP_MARGIN;
 
       // Reset button: anchor to the actual visible bottom-right corner.
       resetAllButton.right = visibleBounds.maxX - RESET_BUTTON_MARGIN;
