@@ -320,6 +320,21 @@ export default class GraphDataManager {
   }
 
   /**
+   * Apply a new x/y range to the chart, mark the view as manually zoomed, and
+   * update tick spacing — all in one atomic call.
+   *
+   * All gesture handlers should use this method instead of mutating
+   * chartTransform directly, so that range validation and the manually-zoomed
+   * flag are always applied together.
+   */
+  public setRange(xRange: Range, yRange: Range): void {
+    this.isManuallyZoomed = true;
+    this.chartTransform.setModelXRange(xRange);
+    this.chartTransform.setModelYRange(yRange);
+    this.updateTickSpacing(xRange, yRange);
+  }
+
+  /**
    * Set the manually zoomed flag (called by interaction handlers)
    */
   public setManuallyZoomed(value: boolean): void {

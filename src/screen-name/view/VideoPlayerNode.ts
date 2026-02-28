@@ -144,6 +144,7 @@ export class VideoPlayerNode extends Node {
         playback: model.playback,
         magnifyVideoProperty: model.overlayTools.magnifyVideoProperty,
         modelViewTransformProperty: model.overlayTools.modelViewTransformProperty,
+        recordPoint: (trackId, pixelPoint) => model.recordTrackPoint(trackId, pixelPoint),
       },
       () => this.stepForward(),
     );

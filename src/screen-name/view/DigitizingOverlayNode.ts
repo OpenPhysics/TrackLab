@@ -23,6 +23,8 @@ type DigitizingOverlayNodeOptions = {
   playback: VideoPlaybackModel;
   magnifyVideoProperty: TReadOnlyProperty<boolean>;
   modelViewTransformProperty: TReadOnlyProperty<Transform3>;
+  /** Record a digitized point on the given track at the given pixel position. */
+  recordPoint: (trackId: string, pixelPoint: Vector2) => void;
 };
 
 const OUTER_R = 20;
@@ -390,12 +392,7 @@ export class DigitizingOverlayNode extends Node {
           const rawLocalPt = digitizingOverlay.globalToLocalPoint(event.pointer.point);
           const localPt = event.pointer.type === "touch" ? rawLocalPt.plusXY(0, -TOUCH_CURSOR_OFFSET_Y) : rawLocalPt;
 
-          const time = playback.currentTimeProperty.value;
-          const frame = Math.round(time * playback.frameRateProperty.value);
-
-          const modelPt = modelViewTransformProperty.value.inversePosition2(localPt);
-
-          tracking.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
+          options.recordPoint(activeId, localPt);
           onPointAdded();
         },
         tandem: Tandem.OPT_OUT,

@@ -97,3 +97,8 @@ export const CONTROL_ICON_SIZE = 20;
 export const CONTROL_PANEL_ROWS_SPACING = 12;
 export const CONTROL_PANEL_X_MARGIN = 12;
 export const CONTROL_PANEL_Y_MARGIN = 12;
+
+// ── Graph zoom ─────────────────────────────────────────────────────────────
+// Multiplicative zoom step applied by wheel ticks and the zoom-in/zoom-out
+// buttons on the configurable graph. A value of 1.1 zooms by 10% per step.
+export const GRAPH_ZOOM_FACTOR = 1.1;
