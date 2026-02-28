@@ -618,7 +618,7 @@ export async function extractVideoFileMetadata(file: File, defaultFps: number): 
     return {
       duration: info?.duration ?? 0,
       fps: info?.fps ?? defaultFps,
-      frameCount: (info?.frameCount ?? 0) > 0 ? info!.frameCount : undefined,
+      frameCount: (info?.frameCount ?? 0) > 0 ? info?.frameCount : undefined,
     };
   }
 
