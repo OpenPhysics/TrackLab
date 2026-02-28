@@ -56,6 +56,15 @@ export class VideoPlaybackModel {
     (fps) => 1 / fps,
   );
 
+  // Derived current frame index: Math.round(currentTime * frameRate)
+  // Multiply by frame rate directly rather than dividing by frameDuration
+  // (1/fps) to avoid cascading floating-point error at non-integer fps values
+  // like 29.97, which could cause adjacent timestamps to map to the same frame.
+  public readonly currentFrameProperty: TReadOnlyProperty<number> = new DerivedProperty(
+    [this.currentTimeProperty, this.frameRateProperty],
+    (time, fps) => Math.round(time * fps),
+  );
+
   // ── Actual display dimensions of the loaded video ─────────────────────
   // Updated in VideoPlayerNode once loadedmetadata fires.  Starts at the
   // max dimensions; overlays and the OpenCV canvas react to changes.
@@ -89,6 +98,35 @@ export class VideoPlaybackModel {
   public readonly panelSizeScaleProperty = new NumberProperty(1, {
     range: new Range(0.5, 1.5),
   });
+
+  /**
+   * Convert a continuous time value to a discrete frame index.
+   * Multiply by frame rate directly rather than dividing by frameDuration
+   * (1/fps) to avoid cascading floating-point error at non-integer fps values
+   * like 29.97.
+   */
+  public timeToFrame(time: number): number {
+    return Math.round(time * this.frameRateProperty.value);
+  }
+
+  /**
+   * Pause playback and advance or retreat by exactly one frame in the given
+   * direction (+1 = forward, -1 = backward). Updates currentTimeProperty;
+   * the view is responsible for syncing videoElement.currentTime afterward.
+   */
+  public seekByFrames(direction: number): void {
+    this.isPlayingProperty.value = false;
+    const duration = this.durationProperty.value;
+    if (!(duration > 0)) {
+      return;
+    }
+    const raw = this.currentTimeProperty.value + direction * this.frameDurationProperty.value;
+    const clamped = Math.max(0, Math.min(raw, duration));
+    if (!Number.isFinite(clamped)) {
+      return;
+    }
+    this.currentTimeProperty.value = clamped;
+  }
 
   public reset(): void {
     this.isPlayingProperty.reset();

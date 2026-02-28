@@ -21,7 +21,8 @@ import type { TrackingModel } from "../model/TrackingModel.js";
 type AutoTrackerNodeOptions = {
   tracking: TrackingModel;
   videoDimensionsProperty: TReadOnlyProperty<Dimension2>;
-  frameRateProperty: TReadOnlyProperty<number>;
+  /** Converts a continuous time value to a discrete frame index. */
+  timeToFrame: (time: number) => number;
   modelViewTransformProperty: TReadOnlyProperty<Transform3>;
 };
 
@@ -63,8 +64,6 @@ export class AutoTrackerNode extends Node {
   private readonly trailBuf: Array<{ x: number; y: number }> = new Array(MAX_TRAIL);
   private trailHead = 0; // index of the slot where the NEXT write will land
   private trailSize = 0; // number of valid entries (0 … MAX_TRAIL)
-  /** Frames already recorded to the active track; cleared on track change or reset. */
-  private readonly recordedFrames = new Set<number>();
 
   private readonly hintText: Text;
   private readonly errorText: Text;
@@ -79,11 +78,6 @@ export class AutoTrackerNode extends Node {
   private pendingFrameId = 0;
   /** True while an async track() call is in flight; prevents concurrent tracking calls. */
   private trackInProgress = false;
-  // Monotonically increasing counter — each new initFromVideo call captures the
-  // current value and only applies results if the counter hasn't changed by the
-  // time the async initialisation completes, preventing stale results from a
-  // previous drag from overwriting a more recent one.
-  private initVersion = 0;
 
   private readonly disposeAutoTrackerNode: () => void;
 
@@ -100,7 +94,7 @@ export class AutoTrackerNode extends Node {
   ) {
     super({ visible: false });
 
-    const { tracking, videoDimensionsProperty, frameRateProperty, modelViewTransformProperty } = options;
+    const { tracking, videoDimensionsProperty, timeToFrame, modelViewTransformProperty } = options;
     this.tracking = tracking;
 
     const autoTrackerStrings = StringManager.getInstance().getAutoTracker();
@@ -179,8 +173,8 @@ export class AutoTrackerNode extends Node {
       start: (event) => {
         this.trailHead = 0;
         this.trailSize = 0;
-        // Bump version so any in-flight initTracker call is discarded when it resolves.
-        this.initVersion++;
+        // resetTracker() increments the model's version counter so any in-flight
+        // initTracker call will be discarded when it resolves.
         this.tracking.resetTracker();
         this.setCrosshairVisible(false);
         this.trailPath.shape = null;
@@ -231,16 +225,14 @@ export class AutoTrackerNode extends Node {
           }
 
           // initTracker is async (loads WASM on first call); tracking begins
-          // automatically once isTrackerReady becomes true.
-          // Capture the current version so stale results from a previous drag
-          // (still awaiting WASM load) are discarded if a new drag has started.
-          const capturedVersion = this.initVersion;
+          // automatically once isTrackerReady becomes true.  Staleness detection
+          // (new drag starting before this one resolves) is handled inside the
+          // model: initTracker() returns false when superseded.
           this.tracking
             .initTracker(videoElement, region)
-            .then(() => {
-              if (this.initVersion !== capturedVersion) {
-                // A newer drag has already started; discard this result.
-                this.tracking.resetTracker();
+            .then((ready) => {
+              if (!ready) {
+                // Superseded by a newer drag — silently discard.
                 return;
               }
               // Guard against the race condition where the user removes the
@@ -256,11 +248,6 @@ export class AutoTrackerNode extends Node {
               }
             })
             .catch((err: unknown) => {
-              // A version mismatch means the operation was cancelled (reset or new drag
-              // started) – not a real failure.  Silently discard.
-              if (this.initVersion !== capturedVersion) {
-                return;
-              }
               // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
               console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
               const message =
@@ -322,20 +309,13 @@ export class AutoTrackerNode extends Node {
       const activeId = tracking.activeTrackIdProperty.value;
       if (activeId) {
         const time = videoElement.currentTime;
-        // Multiply by frame rate directly rather than dividing by frameDuration
-        // (1/fps) to avoid cascading floating-point error at non-integer fps values
-        // like 29.97, which could cause two adjacent timestamps to map to the same
-        // frame or skip a frame entirely.
-        const frame = Math.round(time * frameRateProperty.value);
-
-        // O(1) duplicate-frame check via Set (vs O(n) linear scan).
-        if (!this.recordedFrames.has(frame)) {
-          // Convert video-local pixel coords directly to model coords.
-          // The MVT operates in video-local space, matching these coordinates.
-          const modelPt = modelViewTransformProperty.value.inversePosition2(new Vector2(pt.x, pt.y));
-          tracking.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
-          this.recordedFrames.add(frame);
-        }
+        const frame = timeToFrame(time);
+        // Convert video-local pixel coords directly to model coords.
+        // The MVT operates in video-local space, matching these coordinates.
+        // Deduplication (skip if frame already recorded) is enforced inside
+        // TrackingModel.addPointToTrack().
+        const modelPt = modelViewTransformProperty.value.inversePosition2(new Vector2(pt.x, pt.y));
+        tracking.addPointToTrack(activeId, frame, time, modelPt.x, modelPt.y);
       }
     };
 
@@ -346,12 +326,6 @@ export class AutoTrackerNode extends Node {
     };
     videoElement.addEventListener("timeupdate", onFrame);
     videoElement.addEventListener("seeked", onFrame);
-
-    // Clear the recorded-frames set whenever the user switches to a different
-    // track so frames from the previous track don't suppress recording on the
-    // new one.
-    const clearRecordedFrames = () => this.recordedFrames.clear();
-    tracking.activeTrackIdProperty.lazyLink(clearRecordedFrames);
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     const autoTrackingShownListener = (shown: boolean) => {
@@ -370,7 +344,6 @@ export class AutoTrackerNode extends Node {
       videoElement.removeEventListener("timeupdate", onFrame);
       videoElement.removeEventListener("seeked", onFrame);
       this.cancelPendingFrame();
-      tracking.activeTrackIdProperty.unlink(clearRecordedFrames);
       autoTrackingShownProperty.unlink(autoTrackingShownListener);
       videoDimensionsProperty.unlink(videoDimensionsListener);
       this.tracking.resetTracker();
@@ -416,13 +389,11 @@ export class AutoTrackerNode extends Node {
   public reset(): void {
     this.cancelPendingFrame();
     this.trackInProgress = false;
-    // Bump version before disposing so any in-flight initTracker rejection is
-    // treated as a cancellation rather than a real error (mirrors DragListener.start).
-    this.initVersion++;
+    // resetTracker() increments the model's version counter so any in-flight
+    // initTracker rejection is treated as a cancellation rather than a real error.
     this.tracking.resetTracker();
     this.trailHead = 0;
     this.trailSize = 0;
-    this.recordedFrames.clear();
     this.selecting = false;
     this.selectionRect.visible = false;
     this.trailPath.shape = null;

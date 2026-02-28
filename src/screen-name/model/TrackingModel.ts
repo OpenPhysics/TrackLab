@@ -78,6 +78,11 @@ export class TrackingModel {
   // ── OpenCV Tracker (computational service) ────────────────────────────
   private readonly tracker = new OpenCVTracker(VIDEO_WIDTH, VIDEO_HEIGHT);
 
+  // Monotonically-increasing counter used to detect stale async initTracker
+  // results.  resetTracker() increments it; initTracker() captures the value
+  // before awaiting and returns false (stale) if the counter changed.
+  private initVersion = 0;
+
   // ── Track mutation methods ────────────────────────────────────────────
 
   /**
@@ -117,6 +122,8 @@ export class TrackingModel {
 
   /**
    * Record a digitized position for `frame` on the track identified by `id`.
+   * If a point for `frame` already exists on the track, the call is a no-op
+   * (deduplication policy: first recorded position wins).
    */
   public addPointToTrack(id: string, frame: number, time: number, x: number, y: number): void {
     const tracks = this.tracksProperty.value.map((track) => {
@@ -124,11 +131,9 @@ export class TrackingModel {
         return track;
       }
 
-      const existingIndex = track.points.findIndex((p) => p.frame === frame);
-      if (existingIndex !== -1) {
-        const updatedPoints = [...track.points];
-        updatedPoints[existingIndex] = { frame, time, x, y };
-        return { ...track, points: updatedPoints };
+      // Skip if this frame is already recorded on the track.
+      if (track.points.some((p) => p.frame === frame)) {
+        return track;
       }
 
       const point: TrackPoint = { frame, time, x, y };
@@ -183,6 +188,7 @@ export class TrackingModel {
 
   /** Reset tracking state. Cancels any in-flight operation and clears the template. */
   public resetTracker(): void {
+    this.initVersion++;
     this.tracker.dispose();
   }
 
@@ -196,10 +202,28 @@ export class TrackingModel {
 
   /**
    * Capture the tracking template from the current video frame within `region`.
-   * Resolves when the worker has processed the template and is ready to track.
+   * Returns true when the worker is ready to track, or false if this call was
+   * superseded by a newer initTracker call (stale — the view should discard
+   * the result silently).  Throws only for genuine errors (CORS, worker crash).
    */
-  public async initTracker(video: HTMLVideoElement, region: TrackerRegion): Promise<void> {
-    await this.tracker.initFromVideo(video, region);
+  public async initTracker(video: HTMLVideoElement, region: TrackerRegion): Promise<boolean> {
+    const captured = ++this.initVersion;
+    try {
+      await this.tracker.initFromVideo(video, region);
+    } catch (err) {
+      // If the tracker was reset mid-flight (initVersion changed), this error
+      // is a deliberate cancellation, not a real failure.
+      if (this.initVersion !== captured) {
+        return false;
+      }
+      throw err;
+    }
+    if (this.initVersion !== captured) {
+      // A newer drag started while the worker was initialising; discard.
+      this.tracker.dispose();
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -215,6 +239,7 @@ export class TrackingModel {
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
     this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
+    this.initVersion = 0;
     this.tracker.dispose();
   }
 }

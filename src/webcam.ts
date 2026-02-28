@@ -590,3 +590,76 @@ export async function getAnimatedWebPInfo(
 }
 
 trackLab.register("WebcamRecorder", WebcamRecorder);
+
+// ── Video file metadata extraction ────────────────────────────────────────────
+
+export type VideoFileMetadata = {
+  duration: number;
+  fps: number;
+  /** Exact frame count when known; undefined when only duration is available. */
+  frameCount?: number;
+};
+
+/**
+ * Extract duration, fps, and frame count from an uploaded video or animated-WebP
+ * file.  Handles three cases:
+ *
+ *  1. Animated WebP – uses ImageDecoder to count frames and sum per-frame durations.
+ *  2. WebM video   – plays through at high speed via requestVideoFrameCallback to
+ *     count exact frames and resolve the true duration (fixes MediaRecorder Infinity).
+ *  3. All other video formats – probes duration via a temporary HTMLVideoElement.
+ *
+ * @param file       - The File (or Blob with a `name`) to probe.
+ * @param defaultFps - Frame rate to use when it cannot be derived from the file.
+ */
+export async function extractVideoFileMetadata(file: File, defaultFps: number): Promise<VideoFileMetadata> {
+  if (file.type === "image/webp") {
+    const info = await getAnimatedWebPInfo(file);
+    const knownCount = info?.frameCount ?? 0;
+    return {
+      duration: info?.duration ?? 0,
+      fps: info?.fps ?? defaultFps,
+      ...(knownCount > 0 ? { frameCount: knownCount } : {}),
+    };
+  }
+
+  if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
+    try {
+      const { frameCount, duration } = await countWebmFrames(file);
+      return {
+        duration,
+        fps: frameCount > 0 && duration > 0 ? frameCount / duration : defaultFps,
+        ...(frameCount > 0 ? { frameCount } : {}),
+      };
+    } catch {
+      // Frame counting failed (timeout or unsupported API) — load with unknown duration.
+      return { duration: 0, fps: defaultFps };
+    }
+  }
+
+  // Generic video: probe duration via a temporary video element.
+  return new Promise<VideoFileMetadata>((resolve) => {
+    const tempUrl = URL.createObjectURL(file);
+    const tempVideo = document.createElement("video");
+    tempVideo.preload = "metadata";
+    tempVideo.src = tempUrl;
+    const cleanup = () => URL.revokeObjectURL(tempUrl);
+    tempVideo.addEventListener(
+      "loadedmetadata",
+      () => {
+        const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
+        cleanup();
+        resolve({ duration, fps: defaultFps });
+      },
+      { once: true },
+    );
+    tempVideo.addEventListener(
+      "error",
+      () => {
+        cleanup();
+        resolve({ duration: 0, fps: defaultFps });
+      },
+      { once: true },
+    );
+  });
+}
