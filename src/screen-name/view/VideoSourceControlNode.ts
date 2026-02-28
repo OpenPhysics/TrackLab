@@ -451,7 +451,7 @@ export class VideoSourceControlNode extends HBox {
             const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
             storeAndLoad(duration, fps, frameCount > 0 ? frameCount : undefined);
           })
-          .catch(() => storeAndLoad(0));
+          .catch(() => storeAndLoad(0)); // Frame counting failed; load with unknown duration (0)
       } else {
         // Read duration via a temporary video element, then store and load
         const tempUrl = URL.createObjectURL(blob);
@@ -506,11 +506,7 @@ export class VideoSourceControlNode extends HBox {
       listener: async () => {
         isPlayingProperty.value = false;
         this.webcamPanel.visible = true;
-        try {
-          await this.webcamPanel.open();
-        } catch {
-          this.webcamPanel.visible = false;
-        }
+        await this.webcamPanel.open();
       },
     });
 
