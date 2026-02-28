@@ -9,6 +9,7 @@
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
 import type { Pointer } from "scenerystack/scenery";
+import { GRAPH_ZOOM_FACTOR } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
@@ -17,7 +18,6 @@ export default class ZoomGestureHandler {
   private readonly chartTransform: ChartTransform;
   private readonly chartRectangle: ChartRectangle;
   private readonly dataManager: GraphDataManager;
-  private readonly zoomFactor: number = 1.1; // 10% zoom per wheel tick
 
   private graphWidth: number;
   private graphHeight: number;
@@ -58,7 +58,7 @@ export default class ZoomGestureHandler {
    */
   public zoomIn(): void {
     const center = new Vector2(this.graphWidth / 2, this.graphHeight / 2);
-    this.zoom(this.zoomFactor, center, true);
+    this.zoom(GRAPH_ZOOM_FACTOR, center);
   }
 
   /**
@@ -66,7 +66,7 @@ export default class ZoomGestureHandler {
    */
   public zoomOut(): void {
     const center = new Vector2(this.graphWidth / 2, this.graphHeight / 2);
-    this.zoom(1 / this.zoomFactor, center, true);
+    this.zoom(1 / GRAPH_ZOOM_FACTOR, center);
   }
 
   // ── Private setup helpers ──────────────────────────────────────────────────
@@ -79,9 +79,9 @@ export default class ZoomGestureHandler {
         const pointerPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
 
         if (delta < 0) {
-          this.zoom(this.zoomFactor, pointerPoint);
+          this.zoom(GRAPH_ZOOM_FACTOR, pointerPoint);
         } else {
-          this.zoom(1 / this.zoomFactor, pointerPoint);
+          this.zoom(1 / GRAPH_ZOOM_FACTOR, pointerPoint);
         }
       },
     });
@@ -122,7 +122,6 @@ export default class ZoomGestureHandler {
             initialMidpoint = point0.average(point1);
             initialXRange = this.chartTransform.modelXRange.copy();
             initialYRange = this.chartTransform.modelYRange.copy();
-            this.dataManager.setManuallyZoomed(true);
           }
         }
       },
@@ -152,9 +151,7 @@ export default class ZoomGestureHandler {
           const yMin = initialModelCenter.y - (initialModelCenter.y - initialYRange.min) * zoomFactor;
           const yMax = initialModelCenter.y + (initialYRange.max - initialModelCenter.y) * zoomFactor;
 
-          this.chartTransform.setModelXRange(new Range(xMin, xMax));
-          this.chartTransform.setModelYRange(new Range(yMin, yMax));
-          this.dataManager.updateTickSpacing(this.chartTransform.modelXRange, this.chartTransform.modelYRange);
+          this.dataManager.setRange(new Range(xMin, xMax), new Range(yMin, yMax));
         }
       },
 
@@ -193,13 +190,8 @@ export default class ZoomGestureHandler {
    *
    * @param factor - >1 zooms in, <1 zooms out
    * @param centerPoint - Zoom anchor in local view coordinates
-   * @param setManualFlag - When true, suppresses subsequent auto-rescaling
    */
-  public zoom(factor: number, centerPoint: Vector2, setManualFlag: boolean = true): void {
-    if (setManualFlag) {
-      this.dataManager.setManuallyZoomed(true);
-    }
-
+  public zoom(factor: number, centerPoint: Vector2): void {
     const currentXRange = this.chartTransform.modelXRange;
     const currentYRange = this.chartTransform.modelYRange;
     const modelCenter = this.chartTransform.viewToModelPosition(centerPoint);
@@ -209,12 +201,7 @@ export default class ZoomGestureHandler {
     const yMin = modelCenter.y - (modelCenter.y - currentYRange.min) / factor;
     const yMax = modelCenter.y + (currentYRange.max - modelCenter.y) / factor;
 
-    const newXRange = new Range(xMin, xMax);
-    const newYRange = new Range(yMin, yMax);
-
-    this.chartTransform.setModelXRange(newXRange);
-    this.chartTransform.setModelYRange(newYRange);
-    this.dataManager.updateTickSpacing(newXRange, newYRange);
+    this.dataManager.setRange(new Range(xMin, xMax), new Range(yMin, yMax));
   }
 
   private resetZoom(): void {

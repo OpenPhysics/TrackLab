@@ -17,6 +17,7 @@
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
 import { DragListener, type Pointer, type Rectangle } from "scenerystack/scenery";
+import { GRAPH_ZOOM_FACTOR } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
@@ -38,8 +39,6 @@ export default class AxisGestureHandler {
 
   private graphWidth: number;
   private graphHeight: number;
-
-  private readonly zoomFactor: number = 1.1;
 
   public constructor(chartConfig: ChartConfig, regions: AxisInteractionRegions, dimensions: GraphDimensions) {
     this.chartTransform = chartConfig.chartTransform;
@@ -77,14 +76,13 @@ export default class AxisGestureHandler {
     // Read the current model range for this axis.
     const getRange = (): Range => (isX ? this.chartTransform.modelXRange : this.chartTransform.modelYRange);
 
-    // Apply a new range for this axis and update tick spacing.
+    // Apply a new range for this axis via the data manager (sets isManuallyZoomed,
+    // updates chartTransform, and updates tick spacing atomically).
     const setRange = (range: Range): void => {
       if (isX) {
-        this.chartTransform.setModelXRange(range);
-        this.dataManager.updateTickSpacing(range, this.chartTransform.modelYRange);
+        this.dataManager.setRange(range, this.chartTransform.modelYRange);
       } else {
-        this.chartTransform.setModelYRange(range);
-        this.dataManager.updateTickSpacing(this.chartTransform.modelXRange, range);
+        this.dataManager.setRange(this.chartTransform.modelXRange, range);
       }
     };
 
@@ -125,7 +123,6 @@ export default class AxisGestureHandler {
         if (activePointers.size === 1) {
           singleTouchStart = coord(pt);
           initialRange = getRange().copy();
-          this.dataManager.setManuallyZoomed(true);
         } else if (activePointers.size === 2) {
           const points = Array.from(activePointers.values());
           const p0 = points[0];
@@ -135,7 +132,6 @@ export default class AxisGestureHandler {
             initialPinchMidpoint = (coord(p0) + coord(p1)) / 2;
             initialRange = getRange().copy();
             singleTouchStart = null;
-            this.dataManager.setManuallyZoomed(true);
           }
         }
       },
@@ -229,7 +225,6 @@ export default class AxisGestureHandler {
       start: (event) => {
         mouseDragStart = coord(event.pointer.point);
         mouseDragInitialRange = getRange().copy();
-        this.dataManager.setManuallyZoomed(true);
       },
 
       drag: (event) => {
@@ -278,7 +273,7 @@ export default class AxisGestureHandler {
         const modelCenter = isX ? modelPos.x : modelPos.y;
 
         const currentRange = getRange();
-        const zoomFactor = delta < 0 ? this.zoomFactor : 1 / this.zoomFactor;
+        const zoomFactor = delta < 0 ? GRAPH_ZOOM_FACTOR : 1 / GRAPH_ZOOM_FACTOR;
 
         setRange(
           new Range(
@@ -286,7 +281,6 @@ export default class AxisGestureHandler {
             modelCenter + (currentRange.max - modelCenter) / zoomFactor,
           ),
         );
-        this.dataManager.setManuallyZoomed(true);
       },
     });
   }

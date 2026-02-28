@@ -61,9 +61,7 @@ export default class PanGestureHandler {
         break;
     }
 
-    this.chartTransform.setModelXRange(newXRange);
-    this.chartTransform.setModelYRange(newYRange);
-    this.dataManager.updateTickSpacing(newXRange, newYRange);
+    this.dataManager.setRange(newXRange, newYRange);
   }
 
   // ── Private setup helpers ──────────────────────────────────────────────────
@@ -79,9 +77,6 @@ export default class PanGestureHandler {
         dragStartModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
         dragStartXRange = this.chartTransform.modelXRange.copy();
         dragStartYRange = this.chartTransform.modelYRange.copy();
-
-        // Suppress auto-scaling while the user is panning
-        this.dataManager.setManuallyZoomed(true);
       },
 
       drag: (event) => {
@@ -98,9 +93,7 @@ export default class PanGestureHandler {
         const newXRange = new Range(dragStartXRange.min + deltaX, dragStartXRange.max + deltaX);
         const newYRange = new Range(dragStartYRange.min + deltaY, dragStartYRange.max + deltaY);
 
-        this.chartTransform.setModelXRange(newXRange);
-        this.chartTransform.setModelYRange(newYRange);
-        this.dataManager.updateTickSpacing(newXRange, newYRange);
+        this.dataManager.setRange(newXRange, newYRange);
       },
 
       end: () => {

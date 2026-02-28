@@ -56,6 +56,20 @@ export class SimModel {
     return this.overlayTools.modelViewTransformProperty.value.inversePosition2(pixelPoint);
   }
 
+  /**
+   * Record a digitized point on the given track at the current playback position.
+   *
+   * The view passes raw inputs (track id + pixel position); this method
+   * coordinates all sub-model interactions so the view does not need to reach
+   * into playback or overlayTools directly.
+   */
+  public recordTrackPoint(trackId: string, pixelPoint: Vector2): void {
+    const time = this.playback.currentTimeProperty.value;
+    const frame = Math.round(time * this.playback.frameRateProperty.value);
+    const modelPt = this.overlayTools.modelViewTransformProperty.value.inversePosition2(pixelPoint);
+    this.tracking.addPointToTrack(trackId, frame, time, modelPt.x, modelPt.y);
+  }
+
   // ── Video source activation ─────────────────────────────────────────────
   // Each method sets all affected sub-model properties atomically so that no
   // intermediate state is visible to subscribers.
