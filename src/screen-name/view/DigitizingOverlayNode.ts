@@ -309,8 +309,7 @@ export class DigitizingOverlayNode extends Node {
     const trackPaths = new Map<string, Path>(); // track id → Path
 
     const rebuildMarks = () => {
-      const frameDuration = playback.frameDurationProperty.value;
-      const currentFrame = Math.round(playback.currentTimeProperty.value / frameDuration);
+      const currentFrame = playback.currentFrameProperty.value;
       const mvt = modelViewTransformProperty.value;
       const tracks = tracking.tracksProperty.value;
       const activeTrackIds = new Set(tracks.map((t) => t.id));

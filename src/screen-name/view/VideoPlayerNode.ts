@@ -132,7 +132,7 @@ export class VideoPlayerNode extends Node {
     const autoTrackerNode = new AutoTrackerNode(this.videoElement, autoTrackingShownProperty, {
       tracking: model.tracking,
       videoDimensionsProperty: model.playback.videoDimensionsProperty,
-      frameRateProperty: model.playback.frameRateProperty,
+      timeToFrame: (time: number) => model.playback.timeToFrame(time),
       modelViewTransformProperty: model.overlayTools.modelViewTransformProperty,
     });
 
@@ -429,19 +429,9 @@ export class VideoPlayerNode extends Node {
   }
 
   private seekByFrames(direction: number): void {
-    this.playback.isPlayingProperty.value = false;
-    const duration = this.videoElement.duration;
-    if (!(duration > 0)) {
-      return;
-    }
-    const frameDuration = this.playback.frameDurationProperty.value;
-    const raw = this.videoElement.currentTime + direction * frameDuration;
-    const clamped = Math.max(0, Math.min(raw, duration));
-    if (!Number.isFinite(clamped)) {
-      return;
-    }
-    this.videoElement.currentTime = clamped;
-    this.playback.currentTimeProperty.value = clamped;
+    this.playback.seekByFrames(direction);
+    // Sync the DOM element to the model's new time so the video frame updates immediately.
+    this.videoElement.currentTime = this.playback.currentTimeProperty.value;
   }
 
   private loadUrl(url: string): void {

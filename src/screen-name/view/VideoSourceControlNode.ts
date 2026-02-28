@@ -30,7 +30,7 @@ import {
   TOUCH_AREA_DILATION,
 } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import { countWebmFrames, getAnimatedWebPInfo } from "../../webcam.js";
+import { extractVideoFileMetadata } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import type { VideoSourceModel } from "../model/VideoSourceModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
@@ -417,53 +417,14 @@ export class VideoSourceControlNode extends HBox {
       // Reset so selecting the same file again still triggers "change"
       fileInput.value = "";
 
-      if (file.type === "image/webp") {
-        // HTMLVideoElement does not report duration for animated WebP.
-        // Use ImageDecoder to count frames and derive duration from frame timing.
-        const info = await getAnimatedWebPInfo(blob);
-        const duration = info?.duration ?? 0;
-        const fps = info?.fps ?? DEFAULT_FRAME_RATE;
-        const frameCount = info?.frameCount ?? 0;
-        const upload = sources.addUploadedVideo(
-          blob,
-          file.name,
-          duration,
-          fps,
-          frameCount > 0 ? frameCount : undefined,
-        );
-        // Setting selectedVideoProperty triggers the lazyLink which calls
-        // activation.activateUpload(upload) and onWebcamReady atomically.
-        selectedVideoProperty.value = upload.id;
-        return;
-      }
-
-      const storeAndLoad = (duration: number, fps?: number, frameCount?: number) => {
-        const upload = sources.addUploadedVideo(blob, file.name, duration, fps, frameCount);
-        // Setting selectedVideoProperty triggers the lazyLink which calls
-        // activation.activateUpload(upload) and onWebcamReady atomically.
-        selectedVideoProperty.value = upload.id;
-      };
-
-      if (file.type === "video/webm" || file.name.toLowerCase().endsWith(".webm")) {
-        // Count actual frames for WebM files; also fixes Infinity duration from MediaRecorder
-        countWebmFrames(blob)
-          .then(({ frameCount, duration }) => {
-            const fps = frameCount > 0 && duration > 0 ? frameCount / duration : DEFAULT_FRAME_RATE;
-            storeAndLoad(duration, fps, frameCount > 0 ? frameCount : undefined);
-          })
-          .catch(() => storeAndLoad(0)); // Frame counting failed; load with unknown duration (0)
-      } else {
-        // Read duration via a temporary video element, then store and load
-        const tempUrl = URL.createObjectURL(blob);
-        const tempVideo = document.createElement("video");
-        tempVideo.preload = "metadata";
-        tempVideo.src = tempUrl;
-        tempVideo.addEventListener("loadedmetadata", () => {
-          const duration = Number.isFinite(tempVideo.duration) ? tempVideo.duration : 0;
-          URL.revokeObjectURL(tempUrl);
-          storeAndLoad(duration);
-        });
-      }
+      // Delegate format-specific metadata extraction (animated WebP frame counting,
+      // WebM frame counting + duration fix, generic duration probing) to the model
+      // layer so this view stays free of video-file parsing logic.
+      const meta = await extractVideoFileMetadata(file, DEFAULT_FRAME_RATE);
+      const upload = sources.addUploadedVideo(blob, file.name, meta.duration, meta.fps, meta.frameCount);
+      // Setting selectedVideoProperty triggers the lazyLink which calls
+      // activation.activateUpload(upload) and onWebcamReady atomically.
+      selectedVideoProperty.value = upload.id;
     });
 
     const uploadButton = createTrackLabButton(makeUploadIcon(), {

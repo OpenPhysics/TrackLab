@@ -232,18 +232,15 @@ export class PlaybackControlsNode extends HBox {
         playback.frameRateProperty,
         playback.totalFrameCountProperty,
       ],
-      (time: number, duration: number, frameRate: number, totalFrameCount: number) => {
+      (time: number, duration: number, _frameRate: number, totalFrameCount: number) => {
         if (duration <= 0) {
           return "0/0";
         }
-        // Multiply by frame rate directly rather than dividing by frameDuration
-        // (1/fps) to avoid cascading floating-point error at non-integer fps
-        // values like 29.97, matching the approach used in AutoTrackerNode.
-        const current = Math.round(time * frameRate);
+        const current = playback.timeToFrame(time);
         if (!Number.isFinite(duration)) {
           return `${current}/?`;
         }
-        const total = totalFrameCount > 0 ? totalFrameCount : Math.round(duration * frameRate);
+        const total = totalFrameCount > 0 ? totalFrameCount : playback.timeToFrame(duration);
         return `${current}/${total}`;
       },
     );
