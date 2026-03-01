@@ -77,10 +77,9 @@ function ensureOpenCV() {
 // reliable.  This is tuned for a stationary camera where the background is
 // static and sensor noise is the dominant source of inter-frame variation.
 function blurGray(src, dst) {
-  // Lazily build the Size object once cv is available.
+  // cv.Size is a plain JS value type, not a WASM heap object — no .delete() needed.
   const ksize = new cv.Size(5, 5);
   cv.GaussianBlur(src, dst, ksize, 0);
-  ksize.delete();
 }
 
 self.onmessage = async (event) => {
