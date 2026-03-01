@@ -114,9 +114,7 @@ export default class ZoomGestureHandler {
         activePointers.set(event.pointer, localPoint);
 
         if (activePointers.size === 2) {
-          const points = Array.from(activePointers.values());
-          const point0 = points[0];
-          const point1 = points[1];
+          const [point0, point1] = activePointers.values();
           if (point0 && point1) {
             initialDistance = point0.distance(point1);
             initialMidpoint = point0.average(point1);

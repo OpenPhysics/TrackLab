@@ -228,9 +228,9 @@ export class AutoTrackerNode extends Node {
           // automatically once isTrackerReady becomes true.  Staleness detection
           // (new drag starting before this one resolves) is handled inside the
           // model: initTracker() returns false when superseded.
-          this.tracking
-            .initTracker(videoElement, region)
-            .then((ready) => {
+          (async () => {
+            try {
+              const ready = await this.tracking.initTracker(videoElement, region);
               if (!ready) {
                 // Superseded by a newer drag — silently discard.
                 return;
@@ -246,8 +246,7 @@ export class AutoTrackerNode extends Node {
                 this.tracking.resetTracker();
                 this.hintText.visible = true;
               }
-            })
-            .catch((err: unknown) => {
+            } catch (err: unknown) {
               // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
               console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
               const message =
@@ -255,7 +254,8 @@ export class AutoTrackerNode extends Node {
               this.errorText.string = message;
               this.errorText.visible = true;
               this.hintText.visible = true;
-            });
+            }
+          })();
         } else {
           this.hintText.visible = true;
         }

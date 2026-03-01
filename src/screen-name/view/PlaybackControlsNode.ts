@@ -63,7 +63,7 @@ export class PlaybackControlsNode extends HBox {
       [TimeSpeed.NORMAL, SPEED_NORMAL],
       [TimeSpeed.SLOW, SPEED_SLOW],
     ]);
-    const rateToSpeed = new Map(Array.from(speedMap.entries()).map(([k, v]) => [v, k]));
+    const rateToSpeed = new Map([...speedMap].map(([k, v]) => [v, k]));
     const timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // view → model
