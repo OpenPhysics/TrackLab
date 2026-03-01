@@ -11,7 +11,7 @@ import "./splash.js";
 import type { TBrand } from "scenerystack/brand";
 import { brand, madeWithSceneryStackOnDark, madeWithSceneryStackOnLight } from "scenerystack/brand";
 
-const Brand: TBrand = {
+const Brand = {
   // Nickname for the brand, which should match the brand subdirectory name, grunt option for --brand as well as the
   // query parameter for ?brand.  This is used in Joist to provide brand-specific logic, such as what to show in the
   // About dialog, decorative text around the PhET button, and whether to check for updates.
@@ -32,6 +32,6 @@ const Brand: TBrand = {
   getLinks: () => [],
   logoOnBlackBackground: madeWithSceneryStackOnDark,
   logoOnWhiteBackground: madeWithSceneryStackOnLight,
-};
+} satisfies TBrand;
 
 brand.register("Brand", Brand);

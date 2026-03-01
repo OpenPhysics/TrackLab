@@ -63,7 +63,7 @@ import GraphControlsPanel from "./GraphControlsPanel.js";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
 import GraphRenderer from "./GraphRenderer.js";
-import type { PlottableProperty } from "./PlottableProperty.js";
+import { isRecordPlottable, type PlottableProperty } from "./PlottableProperty.js";
 
 // Line-plot stroke width — only ConfigurableGraph creates LinePlots
 const PLOT_LINE_WIDTH = 2;
@@ -80,8 +80,8 @@ function mapDataPoints(
 ): Array<{ x: number; y: number }> {
   const result: Array<{ x: number; y: number }> = [];
   for (const point of dataPoints) {
-    const x = "accessor" in xProperty ? xProperty.accessor(point) : 0;
-    const y = "accessor" in yProperty ? yProperty.accessor(point) : 0;
+    const x = isRecordPlottable(xProperty) ? xProperty.accessor(point) : 0;
+    const y = isRecordPlottable(yProperty) ? yProperty.accessor(point) : 0;
     if (!(Number.isNaN(x) || Number.isNaN(y))) {
       result.push({ x, y });
     }

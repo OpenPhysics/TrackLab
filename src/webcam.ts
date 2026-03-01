@@ -327,25 +327,22 @@ export class WebcamRecorder {
    * Stop recording and return the recorded video as a Blob.
    */
   public stopRecording(): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      if (!this.mediaRecorder) {
-        reject(new Error("No active recording."));
-        return;
-      }
-
-      this.mediaRecorder.onstop = () => {
-        const mimeType = this.mediaRecorder?.mimeType || "video/webm";
-        const blob = new Blob(this.recordedChunks, { type: mimeType });
-        this.recordedChunks = [];
-        resolve(blob);
-      };
-
-      this.mediaRecorder.onerror = (event) => {
-        reject(event);
-      };
-
-      this.mediaRecorder.stop();
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<Blob>();
+    if (!this.mediaRecorder) {
+      reject(new Error("No active recording."));
+      return promise;
+    }
+    this.mediaRecorder.onstop = () => {
+      const mimeType = this.mediaRecorder?.mimeType || "video/webm";
+      const blob = new Blob(this.recordedChunks, { type: mimeType });
+      this.recordedChunks = [];
+      resolve(blob);
+    };
+    this.mediaRecorder.onerror = (event) => {
+      reject(event);
+    };
+    this.mediaRecorder.stop();
+    return promise;
   }
 
   /**
@@ -420,6 +417,10 @@ export class WebcamRecorder {
     this.mediaRecorder = null;
     this.recordedChunks = [];
   }
+
+  public [Symbol.dispose](): void {
+    this.cleanup();
+  }
 }
 
 /**
@@ -432,28 +433,24 @@ export class WebcamRecorder {
  * @returns Promise resolving to the measured FPS
  */
 export function measureEmpiricalFrameRate(video: HTMLVideoElement, durationMs: number = 1000): Promise<number> {
-  return new Promise((resolve, reject) => {
-    if (video.readyState < 2) {
-      reject(new Error("Video must be playing and have enough data"));
+  const { promise, resolve, reject } = Promise.withResolvers<number>();
+  if (video.readyState < 2) {
+    reject(new Error("Video must be playing and have enough data"));
+    return promise;
+  }
+  let frameCount = 0;
+  const startTime = performance.now();
+  function countFrames(): void {
+    frameCount++;
+    const elapsed = performance.now() - startTime;
+    if (elapsed >= durationMs) {
+      resolve((frameCount / elapsed) * 1000);
       return;
     }
-
-    let frameCount = 0;
-    const startTime = performance.now();
-
-    function countFrames(): void {
-      frameCount++;
-      const elapsed = performance.now() - startTime;
-      if (elapsed >= durationMs) {
-        const fps = (frameCount / elapsed) * 1000;
-        resolve(fps);
-        return;
-      }
-      requestAnimationFrame(countFrames);
-    }
-
     requestAnimationFrame(countFrames);
-  });
+  }
+  requestAnimationFrame(countFrames);
+  return promise;
 }
 
 export type FPSEstimate = {
@@ -543,6 +540,15 @@ export async function estimateVideoFrameRate(
 
 const WEBP_DEFAULT_FPS = 30;
 
+/** Wraps any object with a `.close()` method so it can be used with `using`. */
+function withDispose<T extends { close(): void }>(resource: T): T & Disposable {
+  return Object.assign(resource, {
+    [Symbol.dispose]() {
+      resource.close();
+    },
+  });
+}
+
 /**
  * Returns frame count, total duration (seconds), and average fps for an
  * animated WebP image using the ImageDecoder API (Chrome 94+).
@@ -556,20 +562,14 @@ export async function getAnimatedWebPInfo(
     return null;
   }
   try {
-    const decoder = new ImageDecoder({
-      data: blob.stream(),
-      type: "image/webp",
-      preferAnimation: true,
-    });
+    using decoder = withDispose(new ImageDecoder({ data: blob.stream(), type: "image/webp", preferAnimation: true }));
     await decoder.tracks.ready;
     const track = decoder.tracks.selectedTrack;
     if (!track) {
-      decoder.close();
       return null;
     }
     const frameCount = track.frameCount;
     if (frameCount <= 0) {
-      decoder.close();
       return null;
     }
     // Sum per-frame durations (microseconds) to get total duration in seconds.
@@ -579,7 +579,6 @@ export async function getAnimatedWebPInfo(
       totalMicroseconds += result.image.duration ?? 0;
       result.image.close();
     }
-    decoder.close();
     const duration = totalMicroseconds / 1_000_000;
     const fps = duration > 0 ? frameCount / duration : WEBP_DEFAULT_FPS;
     return { frameCount, duration, fps };

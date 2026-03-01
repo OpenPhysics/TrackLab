@@ -16,6 +16,10 @@ import { buildModelViewTransform } from "./ModelViewTransformFactory.js";
 // ── Calibration unit type ──────────────────────────────────────────────────
 export const CALIBRATION_UNITS = ["mm", "cm", "m", "km", "in", "ft"] as const;
 export type CalibrationUnit = (typeof CALIBRATION_UNITS)[number];
+/** Velocity unit derived from the calibration unit (e.g. `"m/s"`). */
+export type VelocityUnit = `${CalibrationUnit}/s`;
+/** Acceleration unit derived from the calibration unit (e.g. `"m/s²"`). */
+export type AccelerationUnit = `${CalibrationUnit}/s²`;
 export const CALIBRATION_DISTANCE_RANGE = new Range(0.001, 100000);
 
 // ── Video-local coordinate helpers ──────────────────────────────────────────
@@ -83,13 +87,13 @@ export class OverlayToolsModel {
   public readonly calibUnitProperty = new Property<CalibrationUnit>("m");
 
   // ── Derived unit strings (for display in graphs and tables) ───────────────
-  public readonly velocityUnitProperty: TReadOnlyProperty<string> = new DerivedProperty(
+  public readonly velocityUnitProperty: TReadOnlyProperty<VelocityUnit> = new DerivedProperty(
     [this.calibUnitProperty],
-    (unit) => `${unit}/s`,
+    (unit): VelocityUnit => `${unit}/s`,
   );
-  public readonly accelerationUnitProperty: TReadOnlyProperty<string> = new DerivedProperty(
+  public readonly accelerationUnitProperty: TReadOnlyProperty<AccelerationUnit> = new DerivedProperty(
     [this.calibUnitProperty],
-    (unit) => `${unit}/s²`,
+    (unit): AccelerationUnit => `${unit}/s²`,
   );
 
   // ── Model-view transform (derived; the view never writes to this) ─────────
