@@ -52,9 +52,9 @@ export class TrackingModel {
   // (`cached.points === track.points`). This is correct because every
   // mutation path (addPointToTrack, retransformTrackPoints) replaces the
   // entire Track object and its points array, so a stale entry always has a
-  // different reference. If track IDs were ever reused the cache could return
-  // a stale entry; current code assigns symbols A–Z monotonically and never
-  // reuses them, so this cannot happen in practice.
+  // different reference. removeTrack() explicitly evicts the entry for the
+  // removed track to prevent an unbounded memory leak when tracks are added
+  // and removed repeatedly.
   private readonly kinematicsCache = new Map<string, { points: Track["points"]; kinematics: TrackKinematics }>();
 
   public readonly trackKinematicsProperty: TReadOnlyProperty<readonly TrackKinematics[]> = new DerivedProperty(
@@ -118,6 +118,7 @@ export class TrackingModel {
       this.activeTrackIdProperty.value = null;
     }
     this.tracksProperty.value = this.tracksProperty.value.filter((t) => t.id !== id);
+    this.kinematicsCache.delete(id);
   }
 
   /**

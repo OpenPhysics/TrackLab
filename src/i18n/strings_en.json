@@ -28,7 +28,8 @@
     "frameRate": "Frame Rate",
     "currentFrame": "Frame",
     "duration": "Duration",
-    "export": "Export"
+    "export": "Export",
+    "loadFailed": "Could not load video — the format may not be supported."
   },
   "measurement": {
     "time": "Time",

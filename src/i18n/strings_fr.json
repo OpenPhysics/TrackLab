@@ -28,7 +28,8 @@
     "frameRate": "Images par seconde",
     "currentFrame": "Image",
     "duration": "Dur\u00e9e",
-    "export": "Exporter"
+    "export": "Exporter",
+    "loadFailed": "Impossible de charger la vid\u00e9o \u2014 le format n\u2019est peut-\u00eatre pas pris en charge."
   },
   "measurement": {
     "time": "Temps",

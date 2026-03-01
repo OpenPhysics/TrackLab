@@ -181,6 +181,7 @@ export class StringManager {
     currentFrameStringProperty: ReadOnlyProperty<string>;
     durationStringProperty: ReadOnlyProperty<string>;
     exportStringProperty: ReadOnlyProperty<string>;
+    loadFailedStringProperty: ReadOnlyProperty<string>;
   } {
     return {
       openFileStringProperty: this.stringProperties.video.openFileStringProperty,
@@ -188,6 +189,7 @@ export class StringManager {
       currentFrameStringProperty: this.stringProperties.video.currentFrameStringProperty,
       durationStringProperty: this.stringProperties.video.durationStringProperty,
       exportStringProperty: this.stringProperties.video.exportStringProperty,
+      loadFailedStringProperty: this.stringProperties.video.loadFailedStringProperty,
     };
   }
 

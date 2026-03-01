@@ -6,8 +6,9 @@
  */
 
 import { DerivedProperty } from "scenerystack/axon";
-import { Bounds2, Dimension2 } from "scenerystack/dot";
-import { Circle, DOM, DragListener, Node, Rectangle } from "scenerystack/scenery";
+import { Bounds2, Dimension2, Vector2 } from "scenerystack/dot";
+import { Circle, DOM, DragListener, Node, Rectangle, Text } from "scenerystack/scenery";
+import { PhetFont } from "scenerystack/scenery-phet";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
 import type { SimModel } from "../model/SimModel.js";
@@ -92,6 +93,27 @@ export class VideoPlayerNode extends Node {
 
     const videoNode = new DOM(this.videoElement, { allowInput: false });
 
+    // ── Video load-error overlay ───────────────────────────────────────────
+    // Shown when the browser cannot decode the chosen video (unsupported
+    // codec, network failure, etc.).  Cleared on the next loadstart so it
+    // disappears as soon as the user selects a different source.
+    const videoStrings = StringManager.getInstance().getVideo();
+    const videoErrorText = new Text(videoStrings.loadFailedStringProperty, {
+      font: new PhetFont({ size: 15, weight: "bold" }),
+      fill: TrackLabColors.trackerCrosshairStrokeProperty,
+      center: new Vector2(VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2),
+      visible: false,
+    });
+
+    const onVideoError = () => {
+      videoErrorText.visible = true;
+    };
+    const onVideoLoadStart = () => {
+      videoErrorText.visible = false;
+    };
+    this.videoElement.addEventListener("error", onVideoError);
+    this.videoElement.addEventListener("loadstart", onVideoLoadStart);
+
     const updateDuration = () => {
       const d = this.videoElement.duration;
       if (d > 0) {
@@ -150,7 +172,7 @@ export class VideoPlayerNode extends Node {
     );
 
     this.videoContentLayer = new Node({
-      children: [videoNode, autoTrackerNode, digitizingOverlayNode],
+      children: [videoNode, autoTrackerNode, digitizingOverlayNode, videoErrorText],
       // Explicit bounds prevent overlay children (coordinate system arrows,
       // calibration tool, etc.) from inflating the layer's bounds and
       // disrupting the parent layout.
@@ -368,6 +390,8 @@ export class VideoPlayerNode extends Node {
       this.videoElement.removeEventListener("durationchange", updateDuration);
       this.videoElement.removeEventListener("ended", onEnded);
       this.videoElement.removeEventListener("timeupdate", onTimeUpdate);
+      this.videoElement.removeEventListener("error", onVideoError);
+      this.videoElement.removeEventListener("loadstart", onVideoLoadStart);
       if (this.currentBlobUrl) {
         URL.revokeObjectURL(this.currentBlobUrl);
         this.currentBlobUrl = null;
