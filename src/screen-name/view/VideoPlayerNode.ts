@@ -111,8 +111,14 @@ export class VideoPlayerNode extends Node {
     const onVideoLoadStart = () => {
       videoErrorText.visible = false;
     };
-    this.videoElement.addEventListener("error", onVideoError);
-    this.videoElement.addEventListener("loadstart", onVideoLoadStart);
+
+    // AbortController lets dispose() cancel all video-element listeners with a
+    // single controller.abort() instead of a matching removeEventListener call.
+    const listenerController = new AbortController();
+    const { signal } = listenerController;
+
+    this.videoElement.addEventListener("error", onVideoError, { signal });
+    this.videoElement.addEventListener("loadstart", onVideoLoadStart, { signal });
 
     const updateDuration = () => {
       const d = this.videoElement.duration;
@@ -138,13 +144,13 @@ export class VideoPlayerNode extends Node {
         this.videoElement.currentTime = Number.MAX_SAFE_INTEGER;
       }
     };
-    this.videoElement.addEventListener("loadedmetadata", onLoadedMetadata);
-    this.videoElement.addEventListener("durationchange", updateDuration);
+    this.videoElement.addEventListener("loadedmetadata", onLoadedMetadata, { signal });
+    this.videoElement.addEventListener("durationchange", updateDuration, { signal });
 
     const onEnded = () => {
       model.playback.isPlayingProperty.value = false;
     };
-    this.videoElement.addEventListener("ended", onEnded);
+    this.videoElement.addEventListener("ended", onEnded, { signal });
 
     // ── Auto-tracking overlay ──────────────────────────────────────────────
     const autoTrackingShownProperty = new DerivedProperty(
@@ -354,7 +360,7 @@ export class VideoPlayerNode extends Node {
       this.videoSourceControlNode.centerX = scaledW / 2;
       resizeHandle.center = this.videoContentWrapper.rightBottom;
     };
-    this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded);
+    this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded, { signal });
 
     // Sync model time from video during playback (event-driven, not polled)
     const onTimeUpdate = () => {
@@ -362,7 +368,7 @@ export class VideoPlayerNode extends Node {
         model.playback.currentTimeProperty.value = this.videoElement.currentTime;
       }
     };
-    this.videoElement.addEventListener("timeupdate", onTimeUpdate);
+    this.videoElement.addEventListener("timeupdate", onTimeUpdate, { signal });
 
     // ── Apply video transform (translate + uniform scale) ────────────────
     const videoTransformListener = (matrix: import("scenerystack/dot").Matrix3) => {
@@ -372,11 +378,11 @@ export class VideoPlayerNode extends Node {
 
     // ── Keyboard shortcuts ─────────────────────────────────────────────────
     const onKeyDown = this.createKeyboardHandler(model);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, { signal });
 
     // Store cleanup function
     this.disposeVideoPlayer = () => {
-      document.removeEventListener("keydown", onKeyDown);
+      listenerController.abort(); // removes keydown + all videoElement listeners at once
       model.overlayTools.videoContentVisibleProperty.unlink(videoContentVisibleListener);
       TrackLabColors.videoBackgroundColorProperty.unlink(videoBackgroundListener);
       TrackLabColors.panelHeaderColorProperty.unlink(panelHeaderColorListener);
@@ -385,13 +391,6 @@ export class VideoPlayerNode extends Node {
       model.playback.playbackRateProperty.unlink(playbackRateListener);
       model.playback.videoTransformProperty.unlink(videoTransformListener);
       model.playback.panelSizeScaleProperty.unlink(panelSizeScaleListener);
-      this.videoElement.removeEventListener("loadedmetadata", onLoadedMetadata);
-      this.videoElement.removeEventListener("loadedmetadata", onDimensionsLoaded);
-      this.videoElement.removeEventListener("durationchange", updateDuration);
-      this.videoElement.removeEventListener("ended", onEnded);
-      this.videoElement.removeEventListener("timeupdate", onTimeUpdate);
-      this.videoElement.removeEventListener("error", onVideoError);
-      this.videoElement.removeEventListener("loadstart", onVideoLoadStart);
       if (this.currentBlobUrl) {
         URL.revokeObjectURL(this.currentBlobUrl);
         this.currentBlobUrl = null;

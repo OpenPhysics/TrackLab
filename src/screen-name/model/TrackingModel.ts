@@ -104,9 +104,9 @@ export class TrackingModel {
       points: [],
     };
 
-    const tracks = [...this.tracksProperty.value, track];
-    tracks.sort((a, b) => a.symbol.charCodeAt(0) - b.symbol.charCodeAt(0));
-    this.tracksProperty.value = tracks;
+    this.tracksProperty.value = [...this.tracksProperty.value, track].toSorted(
+      (a, b) => a.symbol.charCodeAt(0) - b.symbol.charCodeAt(0),
+    );
   }
 
   /**
@@ -151,7 +151,7 @@ export class TrackingModel {
   public addTrackAndActivate(): void {
     this.addTrack();
     const tracks = this.tracksProperty.value;
-    const newest = tracks[tracks.length - 1];
+    const newest = tracks.at(-1);
     if (newest) {
       this.activeTrackIdProperty.value = newest.id;
     }
