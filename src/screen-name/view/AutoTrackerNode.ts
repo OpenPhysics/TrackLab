@@ -324,8 +324,9 @@ export class AutoTrackerNode extends Node {
         this.pendingFrameId = requestAnimationFrame(processFrame);
       }
     };
-    videoElement.addEventListener("timeupdate", onFrame);
-    videoElement.addEventListener("seeked", onFrame);
+    const listenerController = new AbortController();
+    videoElement.addEventListener("timeupdate", onFrame, { signal: listenerController.signal });
+    videoElement.addEventListener("seeked", onFrame, { signal: listenerController.signal });
 
     // ── Show/hide based on combined "video loaded && autoTracking" ────────
     const autoTrackingShownListener = (shown: boolean) => {
@@ -341,8 +342,7 @@ export class AutoTrackerNode extends Node {
 
     // ── Centralised cleanup (mirrors the disposeXxx pattern used elsewhere) ─
     this.disposeAutoTrackerNode = () => {
-      videoElement.removeEventListener("timeupdate", onFrame);
-      videoElement.removeEventListener("seeked", onFrame);
+      listenerController.abort();
       this.cancelPendingFrame();
       autoTrackingShownProperty.unlink(autoTrackingShownListener);
       videoDimensionsProperty.unlink(videoDimensionsListener);
