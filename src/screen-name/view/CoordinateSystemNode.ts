@@ -36,8 +36,6 @@ const HANDLE_MOUSE_DILATION = 4;
 const HANDLE_LINE_WIDTH = 1.5;
 const ORIGIN_RADIUS = 5; // origin marker circle radius
 const ORIGIN_SHADOW_LINE_WIDTH = 4; // wider outline for contrast
-const ORIGIN_TOUCH_DILATION = 10;
-const ORIGIN_MOUSE_DILATION = 4;
 const AXIS_TOUCH_WIDTH = 16; // half-width of the touch area along axes
 const AXIS_MOUSE_WIDTH = 8; // half-width of the mouse area along axes
 const ORIGIN_LINE_WIDTH = 1;
@@ -208,7 +206,9 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
     // second drag event) while Property._notifyListeners is still on the stack.
     const onOriginChange = (pos: Vector2) => {
       queueMicrotask(() => {
-        if (isDisposed) return;
+        if (isDisposed) {
+          return;
+        }
         positionNode.translation = pos;
       });
     };
@@ -216,7 +216,9 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
 
     const onAngleChange = (angle: number) => {
       queueMicrotask(() => {
-        if (isDisposed) return;
+        if (isDisposed) {
+          return;
+        }
         rotatingNode.rotation = angle;
         // Rotate the hit areas to match the visual axes so the user cannot grab
         // a "phantom" axis at its original unrotated position.
