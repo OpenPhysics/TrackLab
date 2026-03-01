@@ -181,10 +181,11 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
 
     // Create a cross-shaped hit area that follows the axes rather than a huge rectangle.
     // This ensures the user must be close to an axis or the origin to drag.
-    const createAxisHitArea = (halfWidth: number, originDilation: number): Shape => {
+    // Note: no circle is included here — Shape.transformed() cannot reliably transform
+    // arc segments across browsers (Scenery asserts on this), and the overlapping
+    // rectangles already provide adequate coverage at the origin.
+    const createAxisHitArea = (halfWidth: number): Shape => {
       const shape = new Shape();
-      // Origin circle
-      shape.circle(0, 0, ORIGIN_RADIUS + originDilation);
       // X axis rectangle (from origin to arrow tip)
       shape.rect(-halfWidth, -halfWidth, ARROW_LENGTH + halfWidth * 2, halfWidth * 2);
       // Y axis rectangle (from origin upward to arrow tip)
@@ -194,19 +195,35 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
 
     this.addChild(positionNode);
 
+    // Track disposal so pending microtask callbacks become no-ops after the
+    // node is removed from the scene.
+    let isDisposed = false;
+
     // ── Property → scene-graph linkage ────────────────────────────────────
+    // Scene-graph mutations are deferred to a microtask (executes before the
+    // next browser repaint but after the current synchronous task completes).
+    // This prevents "reentry detected" assertions that arise because Scenery
+    // synchronously flushes its internal event queue whenever a node's transform
+    // or hit-area changes — which can dispatch a Reset-button mouse-up (or a
+    // second drag event) while Property._notifyListeners is still on the stack.
     const onOriginChange = (pos: Vector2) => {
-      positionNode.translation = pos;
+      queueMicrotask(() => {
+        if (isDisposed) return;
+        positionNode.translation = pos;
+      });
     };
     overlayTools.coordOriginProperty.link(onOriginChange);
 
     const onAngleChange = (angle: number) => {
-      rotatingNode.rotation = angle;
-      // Rotate the hit areas to match the visual axes so the user cannot grab
-      // a "phantom" axis at its original unrotated position.
-      const m = Matrix3.rotation2(angle);
-      positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH, ORIGIN_TOUCH_DILATION).transformed(m);
-      positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH, ORIGIN_MOUSE_DILATION).transformed(m);
+      queueMicrotask(() => {
+        if (isDisposed) return;
+        rotatingNode.rotation = angle;
+        // Rotate the hit areas to match the visual axes so the user cannot grab
+        // a "phantom" axis at its original unrotated position.
+        const m = Matrix3.rotation2(angle);
+        positionNode.touchArea = createAxisHitArea(AXIS_TOUCH_WIDTH).transformed(m);
+        positionNode.mouseArea = createAxisHitArea(AXIS_MOUSE_WIDTH).transformed(m);
+      });
     };
     overlayTools.coordAngleProperty.link(onAngleChange);
 
@@ -262,6 +279,7 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
     );
 
     this.disposeCoordinateSystemNode = () => {
+      isDisposed = true;
       overlayTools.coordOriginProperty.unlink(onOriginChange);
       overlayTools.coordAngleProperty.unlink(onAngleChange);
     };

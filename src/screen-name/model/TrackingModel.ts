@@ -239,7 +239,7 @@ export class TrackingModel {
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
     this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
-    this.initVersion = 0;
+    this.initVersion++;
     this.tracker.dispose();
   }
 }
