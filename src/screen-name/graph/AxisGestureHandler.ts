@@ -124,9 +124,7 @@ export default class AxisGestureHandler {
           singleTouchStart = coord(pt);
           initialRange = getRange().copy();
         } else if (activePointers.size === 2) {
-          const points = Array.from(activePointers.values());
-          const p0 = points[0];
-          const p1 = points[1];
+          const [p0, p1] = activePointers.values();
           if (p0 && p1) {
             initialPinchDistance = Math.abs(coord(p0) - coord(p1));
             initialPinchMidpoint = (coord(p0) + coord(p1)) / 2;
