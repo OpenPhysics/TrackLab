@@ -44,3 +44,9 @@ export type LivePlottable = PlottableBase & {
 
 /** Union of the two concrete plottable variants. */
 export type PlottableProperty = RecordPlottable | LivePlottable;
+
+/** True when {@link p} sources its value from a data-record accessor. */
+export const isRecordPlottable = (p: PlottableProperty): p is RecordPlottable => "accessor" in p;
+
+/** True when {@link p} sources its value from a live reactive property. */
+export const isLivePlottable = (p: PlottableProperty): p is LivePlottable => "property" in p;
