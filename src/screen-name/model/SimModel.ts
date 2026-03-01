@@ -76,6 +76,7 @@ export class SimModel {
 
   /** Activate a webcam recording as the current video source. */
   public activateRecording(recording: WebcamRecording): void {
+    this.tracking.reset();
     this.sources.isUserVideoProperty.value = true;
     this.playback.frameRateProperty.value = recording.fps;
     this.playback.totalFrameCountProperty.value = 0;
@@ -84,6 +85,7 @@ export class SimModel {
 
   /** Activate an uploaded video as the current video source. */
   public activateUpload(upload: UploadedVideo): void {
+    this.tracking.reset();
     this.sources.isUserVideoProperty.value = true;
     this.playback.frameRateProperty.value = upload.fps;
     this.playback.totalFrameCountProperty.value = upload.frameCount ?? 0;
@@ -92,6 +94,7 @@ export class SimModel {
 
   /** Activate a bundled (sample) video as the current video source. */
   public activateBundledVideo(frameCount: number, fps: number): void {
+    this.tracking.reset();
     this.sources.isUserVideoProperty.value = false;
     this.sources.currentWebcamBlobProperty.value = null;
     this.playback.totalFrameCountProperty.value = frameCount;
