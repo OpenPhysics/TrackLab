@@ -418,8 +418,7 @@ export class VideoPlayerNode extends Node {
 
   /** Pause playback and seek to the very beginning of the video. */
   private rewindToStart(): void {
-    this.playback.isPlayingProperty.value = false;
-    this.playback.currentTimeProperty.value = 0;
+    this.playback.seekToStart();
     this.videoElement.currentTime = 0;
   }
 

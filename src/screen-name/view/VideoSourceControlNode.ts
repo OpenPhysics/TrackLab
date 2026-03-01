@@ -30,7 +30,6 @@ import {
   TOUCH_AREA_DILATION,
 } from "../../TrackLabConstants.js";
 import trackLab from "../../TrackLabNamespace.js";
-import { extractVideoFileMetadata } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import type { VideoSourceModel } from "../model/VideoSourceModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
@@ -413,15 +412,12 @@ export class VideoSourceControlNode extends HBox {
       if (!file) {
         return;
       }
-      const blob: Blob = file;
       // Reset so selecting the same file again still triggers "change"
       fileInput.value = "";
 
-      // Delegate format-specific metadata extraction (animated WebP frame counting,
-      // WebM frame counting + duration fix, generic duration probing) to the model
-      // layer so this view stays free of video-file parsing logic.
-      const meta = await extractVideoFileMetadata(file, DEFAULT_FRAME_RATE);
-      const upload = sources.addUploadedVideo(blob, file.name, meta.duration, meta.fps, meta.frameCount);
+      // Delegate metadata extraction (animated WebP frame counting, WebM frame
+      // counting + duration fix, generic duration probing) to the model layer.
+      const upload = await sources.addUploadedVideoFromFile(file);
       // Setting selectedVideoProperty triggers the lazyLink which calls
       // activation.activateUpload(upload) and onWebcamReady atomically.
       selectedVideoProperty.value = upload.id;

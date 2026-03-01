@@ -9,6 +9,7 @@
 
 import { BooleanProperty, Property } from "scenerystack/axon";
 import trackLab from "../../TrackLabNamespace.js";
+import { extractVideoFileMetadata } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE } from "./VideoPlaybackModel.js";
 
 // ── Webcam recording entry ────────────────────────────────────────────────
@@ -89,6 +90,17 @@ export class VideoSourceModel {
     };
     this.uploadedVideosProperty.value = [...this.uploadedVideosProperty.value, upload];
     return upload;
+  }
+
+  /**
+   * Extract metadata from an uploaded file and add it to the uploads list.
+   * Handles animated WebP, WebM, and generic video formats.
+   * The view is responsible for creating a blob URL and loading it into the
+   * video element after receiving the returned UploadedVideo.
+   */
+  public async addUploadedVideoFromFile(file: File): Promise<UploadedVideo> {
+    const meta = await extractVideoFileMetadata(file, DEFAULT_FRAME_RATE);
+    return this.addUploadedVideo(file, file.name, meta.duration, meta.fps, meta.frameCount);
   }
 
   public reset(): void {

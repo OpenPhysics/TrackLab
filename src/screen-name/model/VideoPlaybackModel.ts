@@ -110,6 +110,15 @@ export class VideoPlaybackModel {
   }
 
   /**
+   * Pause playback and seek to the very beginning of the video.
+   * The view is responsible for syncing videoElement.currentTime = 0 afterward.
+   */
+  public seekToStart(): void {
+    this.isPlayingProperty.value = false;
+    this.currentTimeProperty.value = 0;
+  }
+
+  /**
    * Pause playback and advance or retreat by exactly one frame in the given
    * direction (+1 = forward, -1 = backward). Updates currentTimeProperty;
    * the view is responsible for syncing videoElement.currentTime afterward.

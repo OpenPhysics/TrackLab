@@ -282,8 +282,7 @@ export class PlaybackControlsNode extends HBox {
         enabledProperty: playback.videoLoadedProperty,
         accessibleName: a11yStrings.rewindToStartStringProperty,
         listener: () => {
-          playback.isPlayingProperty.value = false;
-          playback.currentTimeProperty.value = 0;
+          playback.seekToStart();
           videoElement.currentTime = 0;
         },
       },
