@@ -9,20 +9,31 @@ node_modules
 dist
 dev-dist
 dist-ssr
+.vite
 *.local
 tsconfig.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test output
+coverage/
+playwright-report/
+test-results/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Claude Code
-.claude/*
-!.claude/settings.json
+# Claude Code - local settings excluded, hooks tracked
+.claude/settings.local.json
