@@ -1,5 +1,11 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
   "assist": {
     "actions": {
       "source": {
@@ -12,7 +18,6 @@
     "rules": {
       "recommended": true,
       "nursery": {
-        "recommended": true,
         "noShadow": "error",
         "useExplicitType": "warn",
         "noEqualsToNull": "error",
@@ -40,7 +45,6 @@
         "useDefaultParameterLast": "error",
         "useExplicitLengthCheck": "warn",
         "useForOf": "warn",
-        "useFragmentSyntax": "warn",
         "useImportType": "error",
         "useShorthandAssign": "warn",
         "useShorthandFunctionType": "warn",
@@ -53,21 +57,13 @@
           "options": {
             "strictCase": false,
             "conventions": [
+              { "selector": { "kind": "variable" }, "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"] },
+              { "selector": { "kind": "function" }, "formats": ["camelCase", "PascalCase"] },
+              { "selector": { "kind": "typeLike" }, "formats": ["PascalCase"] },
+              { "selector": { "kind": "enumMember" }, "formats": ["CONSTANT_CASE", "PascalCase"] },
               {
-                "selector": { "kind": "variable" },
+                "selector": { "kind": "objectLiteralProperty" },
                 "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"]
-              },
-              {
-                "selector": { "kind": "function" },
-                "formats": ["camelCase", "PascalCase"]
-              },
-              {
-                "selector": { "kind": "typeLike" },
-                "formats": ["PascalCase"]
-              },
-              {
-                "selector": { "kind": "enumMember" },
-                "formats": ["CONSTANT_CASE", "PascalCase"]
               }
             ]
           }
@@ -94,11 +90,10 @@
       },
       "complexity": {
         "recommended": true,
+        "useLiteralKeys": "off",
         "noExcessiveCognitiveComplexity": {
           "level": "warn",
-          "options": {
-            "maxAllowedComplexity": 25
-          }
+          "options": { "maxAllowedComplexity": 25 }
         },
         "noForEach": "warn",
         "noStaticOnlyClass": "error",
@@ -113,9 +108,9 @@
       "performance": {
         "recommended": true,
         "noAccumulatingSpread": "warn",
-        "noBarrelFile": "warn",
+        "noBarrelFile": "off",
         "noDelete": "warn",
-        "noReExportAll": "warn"
+        "noReExportAll": "off"
       },
       "a11y": {
         "recommended": true
@@ -133,7 +128,16 @@
     "lineWidth": 120
   },
   "files": {
-    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist", "!public/opencv-worker.js"]
+    "includes": [
+      "**/*.ts",
+      "**/*.js",
+      "**/*.json",
+      "**/*.html",
+      "!dist",
+      "!node_modules",
+      "!.claude",
+      "!public/opencv-worker.js"
+    ]
   },
   "overrides": [
     {
@@ -145,6 +149,22 @@
           },
           "suspicious": {
             "noConsole": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["scripts/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "useExplicitType": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "style": {
+            "noCommonJs": "off"
           }
         }
       }

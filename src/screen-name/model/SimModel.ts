@@ -22,7 +22,6 @@ import { VideoPlaybackModel } from "./VideoPlaybackModel.js";
 import { type UploadedVideo, VideoSourceModel, type WebcamRecording } from "./VideoSourceModel.js";
 
 // ── Re-export constants so existing imports from SimModel continue to work ─
-// biome-ignore lint/performance/noBarrelFile: intentional re-export for API compatibility
 export {
   DEFAULT_FRAME_RATE,
   DEFAULT_PLAYBACK_RATE,
