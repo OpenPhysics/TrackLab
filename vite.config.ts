@@ -151,10 +151,14 @@ const securityHeaders: Record<string, string> = {
   "X-Frame-Options": "DENY",
 };
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
   // So the build can be served from an arbitrary path
   base: "./",
+  build: {
+    // Requires Vite 8+ / esbuild ≥0.24. Run `npm ci` if build errors on ES2024.
+    target: "es2024",
+  },
   server: {
     headers: securityHeaders,
   },
@@ -166,6 +170,7 @@ export default defineConfig({
     serveOpenCV(),
     VitePWA({
       registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
       manifest: {
         name: "trackLab",
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
