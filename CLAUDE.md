@@ -1,29 +1,45 @@
-# TrackLab
+# CLAUDE.md — TrackLab
 
-TrackLab is a browser-based physics video analysis tool. Users load a video, place a coordinate system, calibrate real-world distances, and auto-track objects across frames using OpenCV.
+Sim-specific context for AI assistants. General SceneryStack guidance: [OpenPhysics/.github/CLAUDE.md](https://github.com/OpenPhysics/.github/blob/main/CLAUDE.md).
+
+## Project
+
+Browser-based physics video analysis: load or record video, set coordinate system and calibration, auto-track or manually digitize motion, plot kinematics, export CSV.
 
 ## Where to work
 
-Most feature development happens in two directories:
-
 ```
-src/screen-name/model/     ← application state
-src/screen-name/view/      ← all UI components
+src/screen-name/model/     ← state (TrackingModel, VideoPlaybackModel, OverlayToolsModel, …)
+src/screen-name/view/      ← UI (video player, overlays, graph, data table)
+src/tracking/OpenCVTracker.ts   ← OpenCV template matching in Web Worker
 ```
 
 ## Constants and colors
 
-- **Colors**: All UI colors live in `TrackLabColors.ts` as `ProfileColorProperty` instances for automatic dark/light theme switching. When adding a new color, create it there — never hardcode `rgb(…)` or hex strings in view files.
-- **Layout constants**: Shared numeric constants (panel margins, drag speeds, touch dilation) live in `TrackLabConstants.ts`.
+- **Colors** → `TrackLabColors.ts` (`ProfileColorProperty` only; no hardcoded rgb/hex in views)
+- **Layout** → `TrackLabConstants.ts` (margins, drag speeds, touch dilation)
 
+## Model-view transform
+
+`ModelViewTransformFactory.buildModelViewTransform()` maps real-world units to video pixels from coordinate-system position/rotation and calibration endpoints. `OverlayToolsModel` exposes this as `modelViewTransformProperty`. Moving axes or calibration re-expresses digitized track points so they stay pinned on the video.
 
 ## Accessibility
 
-- **Localized a11y strings**: All accessibility text lives in `StringManager.getA11y()` backed by the `a11y` section in `strings_en.json` / `strings_fr.json`. Never hardcode English strings for `accessibleName` or `aria-label`.
-- **Interactive elements**: Every interactive SceneryStack node (button, checkbox, draggable handle) must have an `accessibleName` sourced from the a11y string properties.
-- **Canvas overlays**: Non-interactive overlay containers that wrap a Canvas or DOM element should have `tagName: "div"` and an `accessibleName` so screen readers can identify them.
-- **HTML tables**: Use `<caption>` (visually hidden) and `aria-label` on `<th>` elements for data tables.
+- A11y strings → `StringManager.getA11y()` / `a11y` section in locale JSON
+- Interactive nodes need `accessibleName` from a11y properties
+- Canvas overlays: `tagName: "div"` + `accessibleName`; data tables need `<caption>` and `aria-label` on headers
+
+## Browser / build notes
+
+- OpenCV WASM requires COOP/COEP headers (configured in Vite dev + production)
+- Sample videos in `public/videos/`
 
 ## Testing
 
-There is currently **no test suite**, and none should be added at this stage. The codebase is evolving rapidly — APIs, model structure, and UI components change frequently enough that maintaining tests would cost more than they save right now. Do not install a test framework or create test files.
+No test suite at this stage — do not add Vitest/Playwright without an explicit request. APIs are still evolving.
+
+## Sim-specific commands
+
+```bash
+npm run generate-svg-icon   # Bouncing-ball icon SVG
+```
