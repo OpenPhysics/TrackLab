@@ -1,6 +1,7 @@
 #!/bin/sh
-# Pre-push hook: run full lint and type-check before pushing.
-# Blocks the push if there are lint errors or type errors.
+# Pre-push hook: run lint and type-check before pushing.
+#
+# Activated by: npm install (prepare script sets core.hooksPath)
 
 echo "Running Biome lint check..."
 npm run lint --silent
