@@ -22,7 +22,9 @@
   ],
   "overrides": {
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.0",
-    "source-map": "^0.7.4"
+    "source-map": "^0.7.4",
+    "lodash": "^4.18.0",
+    "three": "^0.125.0"
   },
   "scripts": {
     "start": "vite",
