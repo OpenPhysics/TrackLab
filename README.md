@@ -25,58 +25,28 @@ A browser-based video analysis tool for tracking and measuring motion in physics
 
 Bundled videos live in `public/videos/` and are served at `/videos/`.
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| UI Framework | [SceneryStack](https://scenerystack.org) (PhET) |
-| Tracking | [OpenCV.js](https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html) (WASM) |
-| Build tool | [Vite](https://vite.dev) |
-| Language | TypeScript |
-| Linter / Formatter | [Biome](https://biomejs.dev) |
-
-## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) v18 or later
-- npm (comes with Node.js)
-
-### Install dependencies
+## Quick Start
 
 ```bash
 npm install
+npm run icons    # generate PNG icons from public/icons/icon.svg
+npm start        # dev server → http://localhost:5173
 ```
 
-### Start development server
+## Scripts
 
-```bash
-npm start
-```
-
-The app will be available at `http://localhost:5173`.
-
-### Production build
-
-```bash
-npm run build
-```
-
-Output is written to `dist/`. The build includes the video files and the OpenCV WASM binary.
-
-## Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm start` | Start the Vite dev server |
-| `npm run build` | Type-check and build for production |
-| `npm run check` | Run TypeScript type checking |
-| `npm run lint` | Lint with Biome |
-| `npm run format` | Format with Biome |
-| `npm run fix` | Fix lint and format issues |
+| Command | Description |
+|---|---|
+| `npm start` / `npm run dev` | Start Vite dev server |
+| `npm run build` | Type-check + production build → `dist/` |
+| `npm run preview` | Preview the production build locally |
+| `npm run check` | TypeScript type check |
+| `npm run lint` | Biome lint check |
+| `npm run format` | Auto-format all files |
+| `npm run fix` | Lint + auto-fix |
 | `npm run icons` | Regenerate app icons (SVG → PNG/ICO) |
 | `npm run generate-svg-icon` | Generate `public/icons/icon.svg` from bouncing ball script |
-| `npm run preview` | Preview production build locally |
+| `npm run clean` | Remove `dist/` |
 
 ## Usage
 
@@ -218,6 +188,22 @@ The repository includes GitHub Actions workflows:
 
 For other hosting targets, upload the contents of `dist/` to any static file server that supports custom HTTP headers (needed for `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`).
 
+## Tech Stack
+
+| Tool | Version | Purpose |
+|---|---|---|
+| [SceneryStack](https://scenerystack.org/) | ^3.0.0 | Simulation framework |
+| [Vite](https://vitejs.dev/) | ^8 | Build tool + dev server |
+| [TypeScript](https://www.typescriptlang.org/) | ^6 | Type-safe JavaScript |
+| [Biome](https://biomejs.dev/) | ^2.4 | Linting + formatting |
+| [OpenCV.js](https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html) | 4.x (WASM) | Object tracking |
+| [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) | ^1 | PWA + service worker |
+
 ## License
 
-See [LICENSE](LICENSE) for details.
+MIT
+
+## Contributing
+
+See [OpenPhysics contributing guidelines](https://github.com/OpenPhysics/.github/blob/main/CONTRIBUTING.md).
+Report bugs via GitHub Issues; use org issue templates.
