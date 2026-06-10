@@ -50,8 +50,8 @@ function buildBounces(): Array<{ tStart: number; tEnd: number; h: number }> {
   const bounces: Array<{ tStart: number; tEnd: number; h: number }> = [];
   let t = 0;
   for (let n = 0; n < NUM_BOUNCES; n++) {
-    const dt = durations[n] / totalDuration;
-    bounces.push({ tStart: t, tEnd: t + dt, h: heights[n] });
+    const dt = durations[n]! / totalDuration;
+    bounces.push({ tStart: t, tEnd: t + dt, h: heights[n]! });
     t += dt;
   }
   return bounces;
@@ -89,8 +89,8 @@ function computeSnapshots(): Point[] {
     const heightAboveFloor = bounce.h * (1 - (2 * tLocal - 1) ** 2);
 
     // x: linearly interpolated between the two floor contacts of this bounce
-    const xLeft = xContacts[bounceIdx];
-    const xRight = xContacts[bounceIdx + 1];
+    const xLeft = xContacts[bounceIdx]!;
+    const xRight = xContacts[bounceIdx + 1]!;
     const x = xLeft + tLocal * (xRight - xLeft);
 
     // svg y increases downward; offset by ball radius so ball sits on floor
