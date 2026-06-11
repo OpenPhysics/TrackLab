@@ -1,5 +1,5 @@
 /**
- * KeyboardShortcutsNode.ts
+ * TrackLabKeyboardHelpContent.ts
  *
  * Keyboard help content for TrackLab, displayed inside the keyboard shortcuts dialog.
  * Uses SceneryStack's pre-built help sections so that every row is backed by the
@@ -27,7 +27,7 @@ import {
 } from "scenerystack/scenery-phet";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 
-export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
+export class TrackLabKeyboardHelpContent extends TwoColumnKeyboardHelpContent {
   public constructor() {
     super(
       [
@@ -49,4 +49,4 @@ export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
   }
 }
 
-TrackLabNamespace.register("KeyboardShortcutsNode", KeyboardShortcutsNode);
+TrackLabNamespace.register("TrackLabKeyboardHelpContent", TrackLabKeyboardHelpContent);

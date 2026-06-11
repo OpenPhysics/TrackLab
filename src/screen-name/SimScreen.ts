@@ -10,6 +10,7 @@ import type { TrackLabPreferencesModel } from "../preferences/TrackLabPreference
 import TrackLabNamespace from "../TrackLabNamespace.js";
 import { SimModel } from "./model/SimModel.js";
 import { SimScreenView } from "./view/SimScreenView.js";
+import { TrackLabKeyboardHelpContent } from "./view/TrackLabKeyboardHelpContent.js";
 
 /** Extends the base ScreenOptions with the preferences model required by SimScreenView. */
 export interface SimScreenOptions extends ScreenOptions {
@@ -25,7 +26,10 @@ export class SimScreen extends Screen<SimModel, SimScreenView> {
     super(
       () => new SimModel(),
       (model) => new SimScreenView(model, options.trackLabPreferences),
-      options,
+      {
+        ...options,
+        createKeyboardHelpNode: () => new TrackLabKeyboardHelpContent(),
+      },
     );
   }
 }
