@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Browser-based video motion-analysis tool. Load a video, calibrate real-world distances, and auto-track objects across frames using computer vision.",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/OpenPhysics/TrackLab.git"
