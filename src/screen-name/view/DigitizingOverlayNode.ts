@@ -13,7 +13,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
 import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
@@ -427,4 +427,4 @@ export class DigitizingOverlayNode extends Node {
   }
 }
 
-trackLab.register("DigitizingOverlayNode", DigitizingOverlayNode);
+TrackLabNamespace.register("DigitizingOverlayNode", DigitizingOverlayNode);

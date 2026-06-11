@@ -13,7 +13,7 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 import { DigitizingAwareOverlayNode } from "./DigitizingAwareOverlayNode.js";
 
@@ -293,4 +293,4 @@ export class CoordinateSystemNode extends DigitizingAwareOverlayNode {
   }
 }
 
-trackLab.register("CoordinateSystemNode", CoordinateSystemNode);
+TrackLabNamespace.register("CoordinateSystemNode", CoordinateSystemNode);

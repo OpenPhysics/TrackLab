@@ -14,7 +14,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
 
 /** Narrowed dependencies passed to AutoTrackerNode at construction time. */
@@ -408,4 +408,4 @@ export class AutoTrackerNode extends Node {
   }
 }
 
-trackLab.register("AutoTrackerNode", AutoTrackerNode);
+TrackLabNamespace.register("AutoTrackerNode", AutoTrackerNode);

@@ -21,7 +21,7 @@ import {
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { OpenCVTracker, type TrackerRegion } from "../../tracking/OpenCVTracker.js";
 import { computeTrackKinematics } from "./KinematicsComputer.js";
 import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
@@ -245,4 +245,4 @@ export class TrackingModel {
   }
 }
 
-trackLab.register("TrackingModel", TrackingModel);
+TrackLabNamespace.register("TrackingModel", TrackingModel);

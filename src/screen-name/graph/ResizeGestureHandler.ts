@@ -14,7 +14,7 @@ import { type Node, Rectangle, RichDragListener } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
 import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { GraphDimensions } from "./GraphInteractionHandler.js";
 
 const HANDLE_SIZE = 12;
@@ -253,4 +253,4 @@ export default class ResizeGestureHandler {
   }
 }
 
-trackLab.register("ResizeGestureHandler", ResizeGestureHandler);
+TrackLabNamespace.register("ResizeGestureHandler", ResizeGestureHandler);

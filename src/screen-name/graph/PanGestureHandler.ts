@@ -7,7 +7,7 @@
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, type Vector2 } from "scenerystack/dot";
 import { DragListener } from "scenerystack/scenery";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig } from "./GraphInteractionHandler.js";
 
@@ -107,4 +107,4 @@ export default class PanGestureHandler {
   }
 }
 
-trackLab.register("PanGestureHandler", PanGestureHandler);
+TrackLabNamespace.register("PanGestureHandler", PanGestureHandler);

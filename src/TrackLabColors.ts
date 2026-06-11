@@ -5,8 +5,8 @@
  * support for different color profiles (default and projector mode).
  */
 
-import { Color, ProfileColorProperty } from "scenerystack";
-import trackLab from "./TrackLabNamespace.js";
+import { Color, ProfileColorProperty } from "scenerystack/scenery";
+import TrackLabNamespace from "./TrackLabNamespace.js";
 
 // ── Base colors ───────────────────────────────────────────────────────────
 const BLACK = new Color(0, 0, 0);
@@ -18,7 +18,7 @@ function profileColor(
   defaultColor: Color | string,
   projectorColor: Color | string,
 ): ProfileColorProperty {
-  return new ProfileColorProperty(trackLab, name, {
+  return new ProfileColorProperty(TrackLabNamespace, name, {
     default: defaultColor,
     projector: projectorColor,
   });
@@ -315,8 +315,5 @@ const TrackLabColors = {
     new Color(80, 80, 80),
   ),
 };
-
-// Register the namespace
-trackLab.register("TrackLabColors", TrackLabColors);
 
 export default TrackLabColors;

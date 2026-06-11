@@ -18,7 +18,7 @@ import {
   CONTROL_PANEL_Y_MARGIN,
   PANEL_CORNER_RADIUS,
 } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 const ICON_ARROW_HEAD_SIZE = 5; // headWidth and headHeight for icon arrows
@@ -219,4 +219,4 @@ export class ControlPanel extends Panel {
   }
 }
 
-trackLab.register("ControlPanel", ControlPanel);
+TrackLabNamespace.register("ControlPanel", ControlPanel);

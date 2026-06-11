@@ -27,7 +27,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { generateCsv } from "../model/TrackExporter.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
 import { type A11yLabels, type TableColors, type TableLabels, TableRenderer } from "./TableRenderer.js";
@@ -431,4 +431,4 @@ export class DataTableNode extends Node {
   }
 }
 
-trackLab.register("DataTableNode", DataTableNode);
+TrackLabNamespace.register("DataTableNode", DataTableNode);

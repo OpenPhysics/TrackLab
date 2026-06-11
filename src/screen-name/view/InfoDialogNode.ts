@@ -18,7 +18,7 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
 import { CONTROL_ICON_SIZE, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const CONTENT_WIDTH = 370; // inner width of the panel content area
@@ -466,4 +466,4 @@ export class InfoDialogNode extends Node {
   }
 }
 
-trackLab.register("InfoDialogNode", InfoDialogNode);
+TrackLabNamespace.register("InfoDialogNode", InfoDialogNode);

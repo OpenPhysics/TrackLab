@@ -5,7 +5,7 @@
 
 import type { ChartTransform, GridLineSet, LinePlot, TickLabelSet, TickMarkSet } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 /**
  * Configuration for grid lines, tick marks, and tick labels
@@ -350,4 +350,4 @@ export default class GraphDataManager {
 }
 
 // Register with namespace for debugging accessibility
-trackLab.register("GraphDataManager", GraphDataManager);
+TrackLabNamespace.register("GraphDataManager", GraphDataManager);

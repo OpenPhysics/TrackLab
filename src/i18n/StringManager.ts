@@ -5,8 +5,8 @@
  * Provides access to localized strings for all components.
  */
 
-import { LocalizedString, type ReadOnlyProperty } from "scenerystack";
-import trackLab from "../TrackLabNamespace.js";
+import type { ReadOnlyProperty } from "scenerystack/axon";
+import { LocalizedString } from "scenerystack/chipper";
 import stringsEn from "./strings_en.json";
 import stringsEs from "./strings_es.json";
 import stringsFr from "./strings_fr.json";
@@ -42,32 +42,22 @@ void (stringsEn satisfies typeof stringsFr);
 // biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
 void (stringsFr satisfies typeof stringsEn);
 
-/**
- * Manages all localized strings for the simulation
- */
+// ── Build the reactive string property tree ───────────────────────────────────
+const stringProperties = LocalizedString.getNestedStringProperties({
+  en: applyStringTest(stringsEn),
+  fr: applyStringTest(stringsFr),
+  es: applyStringTest(stringsEs),
+});
+
 export class StringManager {
-  // The cached singleton instance
-  private static instance: StringManager;
+  private static instance: StringManager | null = null;
 
-  // All string properties organized by category
-  private readonly stringProperties;
-
-  /**
-   * Private constructor to enforce singleton pattern
-   */
   private constructor() {
-    this.stringProperties = LocalizedString.getNestedStringProperties({
-      en: applyStringTest(stringsEn),
-      fr: applyStringTest(stringsFr),
-      es: applyStringTest(stringsEs),
-    });
+    // Private — obtain via getInstance()
   }
 
-  /**
-   * Get the singleton instance of StringManager
-   */
   public static getInstance(): StringManager {
-    if (!StringManager.instance) {
+    if (StringManager.instance === null) {
       StringManager.instance = new StringManager();
     }
     return StringManager.instance;
@@ -77,7 +67,7 @@ export class StringManager {
    * Get the title string property
    */
   public getTitleStringProperty(): ReadOnlyProperty<string> {
-    return this.stringProperties.titleStringProperty;
+    return stringProperties.titleStringProperty;
   }
 
   /**
@@ -87,7 +77,7 @@ export class StringManager {
     simStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      simStringProperty: this.stringProperties.screens.simStringProperty,
+      simStringProperty: stringProperties.screens.simStringProperty,
     };
   }
 
@@ -108,17 +98,17 @@ export class StringManager {
     panViewStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      titleStringProperty: this.stringProperties.keyboardShortcuts.titleStringProperty,
-      simulationControlsStringProperty: this.stringProperties.keyboardShortcuts.simulationControlsStringProperty,
-      graphInteractionsStringProperty: this.stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
-      playPauseSimulationStringProperty: this.stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
-      resetSimulationStringProperty: this.stringProperties.keyboardShortcuts.resetSimulationStringProperty,
-      stepBackwardStringProperty: this.stringProperties.keyboardShortcuts.stepBackwardStringProperty,
-      stepForwardStringProperty: this.stringProperties.keyboardShortcuts.stepForwardStringProperty,
-      rewindToStartStringProperty: this.stringProperties.keyboardShortcuts.rewindToStartStringProperty,
-      resetZoomStringProperty: this.stringProperties.keyboardShortcuts.resetZoomStringProperty,
-      zoomInOutStringProperty: this.stringProperties.keyboardShortcuts.zoomInOutStringProperty,
-      panViewStringProperty: this.stringProperties.keyboardShortcuts.panViewStringProperty,
+      titleStringProperty: stringProperties.keyboardShortcuts.titleStringProperty,
+      simulationControlsStringProperty: stringProperties.keyboardShortcuts.simulationControlsStringProperty,
+      graphInteractionsStringProperty: stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
+      playPauseSimulationStringProperty: stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
+      resetSimulationStringProperty: stringProperties.keyboardShortcuts.resetSimulationStringProperty,
+      stepBackwardStringProperty: stringProperties.keyboardShortcuts.stepBackwardStringProperty,
+      stepForwardStringProperty: stringProperties.keyboardShortcuts.stepForwardStringProperty,
+      rewindToStartStringProperty: stringProperties.keyboardShortcuts.rewindToStartStringProperty,
+      resetZoomStringProperty: stringProperties.keyboardShortcuts.resetZoomStringProperty,
+      zoomInOutStringProperty: stringProperties.keyboardShortcuts.zoomInOutStringProperty,
+      panViewStringProperty: stringProperties.keyboardShortcuts.panViewStringProperty,
     };
   }
 
@@ -136,14 +126,14 @@ export class StringManager {
     graphVsStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      playStringProperty: this.stringProperties.controls.playStringProperty,
-      pauseStringProperty: this.stringProperties.controls.pauseStringProperty,
-      resetStringProperty: this.stringProperties.controls.resetStringProperty,
-      stepStringProperty: this.stringProperties.controls.stepStringProperty,
-      speedStringProperty: this.stringProperties.controls.speedStringProperty,
-      recordStringProperty: this.stringProperties.controls.recordStringProperty,
-      stopStringProperty: this.stringProperties.controls.stopStringProperty,
-      graphVsStringProperty: this.stringProperties.controls.graphVsStringProperty,
+      playStringProperty: stringProperties.controls.playStringProperty,
+      pauseStringProperty: stringProperties.controls.pauseStringProperty,
+      resetStringProperty: stringProperties.controls.resetStringProperty,
+      stepStringProperty: stringProperties.controls.stepStringProperty,
+      speedStringProperty: stringProperties.controls.speedStringProperty,
+      recordStringProperty: stringProperties.controls.recordStringProperty,
+      stopStringProperty: stringProperties.controls.stopStringProperty,
+      graphVsStringProperty: stringProperties.controls.graphVsStringProperty,
     };
   }
 
@@ -161,14 +151,14 @@ export class StringManager {
     accelerationStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      trackStringProperty: this.stringProperties.tracking.trackStringProperty,
-      targetStringProperty: this.stringProperties.tracking.targetStringProperty,
-      originStringProperty: this.stringProperties.tracking.originStringProperty,
-      calibrateStringProperty: this.stringProperties.tracking.calibrateStringProperty,
-      scaleStringProperty: this.stringProperties.tracking.scaleStringProperty,
-      positionStringProperty: this.stringProperties.tracking.positionStringProperty,
-      velocityStringProperty: this.stringProperties.tracking.velocityStringProperty,
-      accelerationStringProperty: this.stringProperties.tracking.accelerationStringProperty,
+      trackStringProperty: stringProperties.tracking.trackStringProperty,
+      targetStringProperty: stringProperties.tracking.targetStringProperty,
+      originStringProperty: stringProperties.tracking.originStringProperty,
+      calibrateStringProperty: stringProperties.tracking.calibrateStringProperty,
+      scaleStringProperty: stringProperties.tracking.scaleStringProperty,
+      positionStringProperty: stringProperties.tracking.positionStringProperty,
+      velocityStringProperty: stringProperties.tracking.velocityStringProperty,
+      accelerationStringProperty: stringProperties.tracking.accelerationStringProperty,
     };
   }
 
@@ -184,12 +174,12 @@ export class StringManager {
     loadFailedStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      openFileStringProperty: this.stringProperties.video.openFileStringProperty,
-      frameRateStringProperty: this.stringProperties.video.frameRateStringProperty,
-      currentFrameStringProperty: this.stringProperties.video.currentFrameStringProperty,
-      durationStringProperty: this.stringProperties.video.durationStringProperty,
-      exportStringProperty: this.stringProperties.video.exportStringProperty,
-      loadFailedStringProperty: this.stringProperties.video.loadFailedStringProperty,
+      openFileStringProperty: stringProperties.video.openFileStringProperty,
+      frameRateStringProperty: stringProperties.video.frameRateStringProperty,
+      currentFrameStringProperty: stringProperties.video.currentFrameStringProperty,
+      durationStringProperty: stringProperties.video.durationStringProperty,
+      exportStringProperty: stringProperties.video.exportStringProperty,
+      loadFailedStringProperty: stringProperties.video.loadFailedStringProperty,
     };
   }
 
@@ -204,11 +194,11 @@ export class StringManager {
     gravityStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      timeStringProperty: this.stringProperties.measurement.timeStringProperty,
-      distanceStringProperty: this.stringProperties.measurement.distanceStringProperty,
-      angleStringProperty: this.stringProperties.measurement.angleStringProperty,
-      massStringProperty: this.stringProperties.measurement.massStringProperty,
-      gravityStringProperty: this.stringProperties.measurement.gravityStringProperty,
+      timeStringProperty: stringProperties.measurement.timeStringProperty,
+      distanceStringProperty: stringProperties.measurement.distanceStringProperty,
+      angleStringProperty: stringProperties.measurement.angleStringProperty,
+      massStringProperty: stringProperties.measurement.massStringProperty,
+      gravityStringProperty: stringProperties.measurement.gravityStringProperty,
     };
   }
 
@@ -227,18 +217,17 @@ export class StringManager {
     enableMeasurementToolsDescriptionStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      simulationStringProperty: this.stringProperties.preferences.simulationStringProperty,
-      enableAutoTrackingStringProperty: this.stringProperties.preferences.enableAutoTrackingStringProperty,
+      simulationStringProperty: stringProperties.preferences.simulationStringProperty,
+      enableAutoTrackingStringProperty: stringProperties.preferences.enableAutoTrackingStringProperty,
       enableAutoTrackingDescriptionStringProperty:
-        this.stringProperties.preferences.enableAutoTrackingDescriptionStringProperty,
-      showVelocityStringProperty: this.stringProperties.preferences.showVelocityStringProperty,
-      showVelocityDescriptionStringProperty: this.stringProperties.preferences.showVelocityDescriptionStringProperty,
-      showAccelerationStringProperty: this.stringProperties.preferences.showAccelerationStringProperty,
-      showAccelerationDescriptionStringProperty:
-        this.stringProperties.preferences.showAccelerationDescriptionStringProperty,
-      enableMeasurementToolsStringProperty: this.stringProperties.preferences.enableMeasurementToolsStringProperty,
+        stringProperties.preferences.enableAutoTrackingDescriptionStringProperty,
+      showVelocityStringProperty: stringProperties.preferences.showVelocityStringProperty,
+      showVelocityDescriptionStringProperty: stringProperties.preferences.showVelocityDescriptionStringProperty,
+      showAccelerationStringProperty: stringProperties.preferences.showAccelerationStringProperty,
+      showAccelerationDescriptionStringProperty: stringProperties.preferences.showAccelerationDescriptionStringProperty,
+      enableMeasurementToolsStringProperty: stringProperties.preferences.enableMeasurementToolsStringProperty,
       enableMeasurementToolsDescriptionStringProperty:
-        this.stringProperties.preferences.enableMeasurementToolsDescriptionStringProperty,
+        stringProperties.preferences.enableMeasurementToolsDescriptionStringProperty,
     };
   }
 
@@ -252,10 +241,10 @@ export class StringManager {
     framesTrackedStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      dragToSelectStringProperty: this.stringProperties.autoTracker.dragToSelectStringProperty,
-      videoTrackingAreaStringProperty: this.stringProperties.autoTracker.videoTrackingAreaStringProperty,
-      trackingInitFailedStringProperty: this.stringProperties.autoTracker.trackingInitFailedStringProperty,
-      framesTrackedStringProperty: this.stringProperties.autoTracker.framesTrackedStringProperty,
+      dragToSelectStringProperty: stringProperties.autoTracker.dragToSelectStringProperty,
+      videoTrackingAreaStringProperty: stringProperties.autoTracker.videoTrackingAreaStringProperty,
+      trackingInitFailedStringProperty: stringProperties.autoTracker.trackingInitFailedStringProperty,
+      framesTrackedStringProperty: stringProperties.autoTracker.framesTrackedStringProperty,
     };
   }
 
@@ -268,9 +257,9 @@ export class StringManager {
     calibrationPoint2StringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      pointsTooCloseStringProperty: this.stringProperties.calibration.pointsTooCloseStringProperty,
-      calibrationPoint1StringProperty: this.stringProperties.calibration.calibrationPoint1StringProperty,
-      calibrationPoint2StringProperty: this.stringProperties.calibration.calibrationPoint2StringProperty,
+      pointsTooCloseStringProperty: stringProperties.calibration.pointsTooCloseStringProperty,
+      calibrationPoint1StringProperty: stringProperties.calibration.calibrationPoint1StringProperty,
+      calibrationPoint2StringProperty: stringProperties.calibration.calibrationPoint2StringProperty,
     };
   }
 
@@ -285,11 +274,11 @@ export class StringManager {
     timeSecondsStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      titleStringProperty: this.stringProperties.dataTable.titleStringProperty,
-      csvStringProperty: this.stringProperties.dataTable.csvStringProperty,
-      noDataStringProperty: this.stringProperties.dataTable.noDataStringProperty,
-      frameStringProperty: this.stringProperties.dataTable.frameStringProperty,
-      timeSecondsStringProperty: this.stringProperties.dataTable.timeSecondsStringProperty,
+      titleStringProperty: stringProperties.dataTable.titleStringProperty,
+      csvStringProperty: stringProperties.dataTable.csvStringProperty,
+      noDataStringProperty: stringProperties.dataTable.noDataStringProperty,
+      frameStringProperty: stringProperties.dataTable.frameStringProperty,
+      timeSecondsStringProperty: stringProperties.dataTable.timeSecondsStringProperty,
     };
   }
 
@@ -301,8 +290,8 @@ export class StringManager {
     tracksStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      addTrackStringProperty: this.stringProperties.trackList.addTrackStringProperty,
-      tracksStringProperty: this.stringProperties.trackList.tracksStringProperty,
+      addTrackStringProperty: stringProperties.trackList.addTrackStringProperty,
+      tracksStringProperty: stringProperties.trackList.tracksStringProperty,
     };
   }
 
@@ -317,11 +306,11 @@ export class StringManager {
     uploadedVideosStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      fpsStringProperty: this.stringProperties.ui.fpsStringProperty,
-      selectVideoStringProperty: this.stringProperties.ui.selectVideoStringProperty,
-      sampleVideosStringProperty: this.stringProperties.ui.sampleVideosStringProperty,
-      myRecordingsStringProperty: this.stringProperties.ui.myRecordingsStringProperty,
-      uploadedVideosStringProperty: this.stringProperties.ui.uploadedVideosStringProperty,
+      fpsStringProperty: stringProperties.ui.fpsStringProperty,
+      selectVideoStringProperty: stringProperties.ui.selectVideoStringProperty,
+      sampleVideosStringProperty: stringProperties.ui.sampleVideosStringProperty,
+      myRecordingsStringProperty: stringProperties.ui.myRecordingsStringProperty,
+      uploadedVideosStringProperty: stringProperties.ui.uploadedVideosStringProperty,
     };
   }
 
@@ -335,10 +324,10 @@ export class StringManager {
     coordinateSystemStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      xAxisLabelStringProperty: this.stringProperties.coordSystem.xAxisLabelStringProperty,
-      yAxisLabelStringProperty: this.stringProperties.coordSystem.yAxisLabelStringProperty,
-      rotationHandleStringProperty: this.stringProperties.coordSystem.rotationHandleStringProperty,
-      coordinateSystemStringProperty: this.stringProperties.coordSystem.coordinateSystemStringProperty,
+      xAxisLabelStringProperty: stringProperties.coordSystem.xAxisLabelStringProperty,
+      yAxisLabelStringProperty: stringProperties.coordSystem.yAxisLabelStringProperty,
+      rotationHandleStringProperty: stringProperties.coordSystem.rotationHandleStringProperty,
+      coordinateSystemStringProperty: stringProperties.coordSystem.coordinateSystemStringProperty,
     };
   }
 
@@ -351,9 +340,9 @@ export class StringManager {
     recordWebcamStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      downloadVideoStringProperty: this.stringProperties.videoSource.downloadVideoStringProperty,
-      openVideoFileStringProperty: this.stringProperties.videoSource.openVideoFileStringProperty,
-      recordWebcamStringProperty: this.stringProperties.videoSource.recordWebcamStringProperty,
+      downloadVideoStringProperty: stringProperties.videoSource.downloadVideoStringProperty,
+      openVideoFileStringProperty: stringProperties.videoSource.openVideoFileStringProperty,
+      recordWebcamStringProperty: stringProperties.videoSource.recordWebcamStringProperty,
     };
   }
 
@@ -381,24 +370,24 @@ export class StringManager {
     cameraLabelStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      requestingAccessStringProperty: this.stringProperties.webcam.requestingAccessStringProperty,
-      accessDeniedStringProperty: this.stringProperties.webcam.accessDeniedStringProperty,
-      processingStringProperty: this.stringProperties.webcam.processingStringProperty,
-      fixingMetadataStringProperty: this.stringProperties.webcam.fixingMetadataStringProperty,
-      recordingStringProperty: this.stringProperties.webcam.recordingStringProperty,
-      cancelStringProperty: this.stringProperties.webcam.cancelStringProperty,
-      startRecordingStringProperty: this.stringProperties.webcam.startRecordingStringProperty,
-      stopRecordingStringProperty: this.stringProperties.webcam.stopRecordingStringProperty,
-      reRecordStringProperty: this.stringProperties.webcam.reRecordStringProperty,
-      useVideoStringProperty: this.stringProperties.webcam.useVideoStringProperty,
-      cameraStringProperty: this.stringProperties.webcam.cameraStringProperty,
-      recordFromWebcamStringProperty: this.stringProperties.webcam.recordFromWebcamStringProperty,
-      estimatingFrameRateStringProperty: this.stringProperties.webcam.estimatingFrameRateStringProperty,
-      highConfidenceStringProperty: this.stringProperties.webcam.highConfidenceStringProperty,
-      mediumConfidenceStringProperty: this.stringProperties.webcam.mediumConfidenceStringProperty,
-      lowConfidenceStringProperty: this.stringProperties.webcam.lowConfidenceStringProperty,
-      estimatedFpsStringProperty: this.stringProperties.webcam.estimatedFpsStringProperty,
-      cameraLabelStringProperty: this.stringProperties.webcam.cameraLabelStringProperty,
+      requestingAccessStringProperty: stringProperties.webcam.requestingAccessStringProperty,
+      accessDeniedStringProperty: stringProperties.webcam.accessDeniedStringProperty,
+      processingStringProperty: stringProperties.webcam.processingStringProperty,
+      fixingMetadataStringProperty: stringProperties.webcam.fixingMetadataStringProperty,
+      recordingStringProperty: stringProperties.webcam.recordingStringProperty,
+      cancelStringProperty: stringProperties.webcam.cancelStringProperty,
+      startRecordingStringProperty: stringProperties.webcam.startRecordingStringProperty,
+      stopRecordingStringProperty: stringProperties.webcam.stopRecordingStringProperty,
+      reRecordStringProperty: stringProperties.webcam.reRecordStringProperty,
+      useVideoStringProperty: stringProperties.webcam.useVideoStringProperty,
+      cameraStringProperty: stringProperties.webcam.cameraStringProperty,
+      recordFromWebcamStringProperty: stringProperties.webcam.recordFromWebcamStringProperty,
+      estimatingFrameRateStringProperty: stringProperties.webcam.estimatingFrameRateStringProperty,
+      highConfidenceStringProperty: stringProperties.webcam.highConfidenceStringProperty,
+      mediumConfidenceStringProperty: stringProperties.webcam.mediumConfidenceStringProperty,
+      lowConfidenceStringProperty: stringProperties.webcam.lowConfidenceStringProperty,
+      estimatedFpsStringProperty: stringProperties.webcam.estimatedFpsStringProperty,
+      cameraLabelStringProperty: stringProperties.webcam.cameraLabelStringProperty,
     };
   }
 
@@ -411,9 +400,9 @@ export class StringManager {
     trackItemStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      trackSelectorLabelStringProperty: this.stringProperties.kinematicsGraph.trackSelectorLabelStringProperty,
-      noTracksStringProperty: this.stringProperties.kinematicsGraph.noTracksStringProperty,
-      trackItemStringProperty: this.stringProperties.kinematicsGraph.trackItemStringProperty,
+      trackSelectorLabelStringProperty: stringProperties.kinematicsGraph.trackSelectorLabelStringProperty,
+      noTracksStringProperty: stringProperties.kinematicsGraph.noTracksStringProperty,
+      trackItemStringProperty: stringProperties.kinematicsGraph.trackItemStringProperty,
     };
   }
 
@@ -425,8 +414,8 @@ export class StringManager {
     durationZeroStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      secondsUnitStringProperty: this.stringProperties.playback.secondsUnitStringProperty,
-      durationZeroStringProperty: this.stringProperties.playback.durationZeroStringProperty,
+      secondsUnitStringProperty: stringProperties.playback.secondsUnitStringProperty,
+      durationZeroStringProperty: stringProperties.playback.durationZeroStringProperty,
     };
   }
 
@@ -478,48 +467,48 @@ export class StringManager {
     videoPanelResizeHandleStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      infoDialogTab1StringProperty: this.stringProperties.a11y.infoDialogTab1StringProperty,
-      infoDialogTab2StringProperty: this.stringProperties.a11y.infoDialogTab2StringProperty,
-      videoPlayerStringProperty: this.stringProperties.a11y.videoPlayerStringProperty,
-      videoScrubberStringProperty: this.stringProperties.a11y.videoScrubberStringProperty,
-      rewindToStartStringProperty: this.stringProperties.a11y.rewindToStartStringProperty,
-      digitizingAreaStringProperty: this.stringProperties.a11y.digitizingAreaStringProperty,
-      digitizeTrackStringProperty: this.stringProperties.a11y.digitizeTrackStringProperty,
-      removeTrackStringProperty: this.stringProperties.a11y.removeTrackStringProperty,
-      dataTableStringProperty: this.stringProperties.a11y.dataTableStringProperty,
-      exportCSVStringProperty: this.stringProperties.a11y.exportCSVStringProperty,
-      measuringTapeBaseStringProperty: this.stringProperties.a11y.measuringTapeBaseStringProperty,
-      measuringTapeTipStringProperty: this.stringProperties.a11y.measuringTapeTipStringProperty,
-      angleToolVertexStringProperty: this.stringProperties.a11y.angleToolVertexStringProperty,
-      angleArm1StringProperty: this.stringProperties.a11y.angleArm1StringProperty,
-      angleArm2StringProperty: this.stringProperties.a11y.angleArm2StringProperty,
-      toggleAxesStringProperty: this.stringProperties.a11y.toggleAxesStringProperty,
-      toggleCalibrationStringProperty: this.stringProperties.a11y.toggleCalibrationStringProperty,
-      toggleMagnifierStringProperty: this.stringProperties.a11y.toggleMagnifierStringProperty,
-      toggleAutoTrackingStringProperty: this.stringProperties.a11y.toggleAutoTrackingStringProperty,
-      toggleMeasuringTapeStringProperty: this.stringProperties.a11y.toggleMeasuringTapeStringProperty,
-      toggleAngleToolStringProperty: this.stringProperties.a11y.toggleAngleToolStringProperty,
-      graphRescaleStringProperty: this.stringProperties.a11y.graphRescaleStringProperty,
-      graphZoomInStringProperty: this.stringProperties.a11y.graphZoomInStringProperty,
-      graphZoomOutStringProperty: this.stringProperties.a11y.graphZoomOutStringProperty,
-      graphPanLeftStringProperty: this.stringProperties.a11y.graphPanLeftStringProperty,
-      graphPanRightStringProperty: this.stringProperties.a11y.graphPanRightStringProperty,
-      graphPanUpStringProperty: this.stringProperties.a11y.graphPanUpStringProperty,
-      graphPanDownStringProperty: this.stringProperties.a11y.graphPanDownStringProperty,
-      kinematicsGraphStringProperty: this.stringProperties.a11y.kinematicsGraphStringProperty,
-      selectTrackForGraphStringProperty: this.stringProperties.a11y.selectTrackForGraphStringProperty,
-      graphResizeTopLeftStringProperty: this.stringProperties.a11y.graphResizeTopLeftStringProperty,
-      graphResizeTopRightStringProperty: this.stringProperties.a11y.graphResizeTopRightStringProperty,
-      graphResizeBottomLeftStringProperty: this.stringProperties.a11y.graphResizeBottomLeftStringProperty,
-      graphResizeBottomRightStringProperty: this.stringProperties.a11y.graphResizeBottomRightStringProperty,
-      tableResizeTopLeftStringProperty: this.stringProperties.a11y.tableResizeTopLeftStringProperty,
-      tableResizeTopRightStringProperty: this.stringProperties.a11y.tableResizeTopRightStringProperty,
-      tableResizeBottomLeftStringProperty: this.stringProperties.a11y.tableResizeBottomLeftStringProperty,
-      tableResizeBottomRightStringProperty: this.stringProperties.a11y.tableResizeBottomRightStringProperty,
-      toggleVideoVisibilityStringProperty: this.stringProperties.a11y.toggleVideoVisibilityStringProperty,
-      graphPanelHeaderStringProperty: this.stringProperties.a11y.graphPanelHeaderStringProperty,
-      videoPanelHandleStringProperty: this.stringProperties.a11y.videoPanelHandleStringProperty,
-      videoPanelResizeHandleStringProperty: this.stringProperties.a11y.videoPanelResizeHandleStringProperty,
+      infoDialogTab1StringProperty: stringProperties.a11y.infoDialogTab1StringProperty,
+      infoDialogTab2StringProperty: stringProperties.a11y.infoDialogTab2StringProperty,
+      videoPlayerStringProperty: stringProperties.a11y.videoPlayerStringProperty,
+      videoScrubberStringProperty: stringProperties.a11y.videoScrubberStringProperty,
+      rewindToStartStringProperty: stringProperties.a11y.rewindToStartStringProperty,
+      digitizingAreaStringProperty: stringProperties.a11y.digitizingAreaStringProperty,
+      digitizeTrackStringProperty: stringProperties.a11y.digitizeTrackStringProperty,
+      removeTrackStringProperty: stringProperties.a11y.removeTrackStringProperty,
+      dataTableStringProperty: stringProperties.a11y.dataTableStringProperty,
+      exportCSVStringProperty: stringProperties.a11y.exportCSVStringProperty,
+      measuringTapeBaseStringProperty: stringProperties.a11y.measuringTapeBaseStringProperty,
+      measuringTapeTipStringProperty: stringProperties.a11y.measuringTapeTipStringProperty,
+      angleToolVertexStringProperty: stringProperties.a11y.angleToolVertexStringProperty,
+      angleArm1StringProperty: stringProperties.a11y.angleArm1StringProperty,
+      angleArm2StringProperty: stringProperties.a11y.angleArm2StringProperty,
+      toggleAxesStringProperty: stringProperties.a11y.toggleAxesStringProperty,
+      toggleCalibrationStringProperty: stringProperties.a11y.toggleCalibrationStringProperty,
+      toggleMagnifierStringProperty: stringProperties.a11y.toggleMagnifierStringProperty,
+      toggleAutoTrackingStringProperty: stringProperties.a11y.toggleAutoTrackingStringProperty,
+      toggleMeasuringTapeStringProperty: stringProperties.a11y.toggleMeasuringTapeStringProperty,
+      toggleAngleToolStringProperty: stringProperties.a11y.toggleAngleToolStringProperty,
+      graphRescaleStringProperty: stringProperties.a11y.graphRescaleStringProperty,
+      graphZoomInStringProperty: stringProperties.a11y.graphZoomInStringProperty,
+      graphZoomOutStringProperty: stringProperties.a11y.graphZoomOutStringProperty,
+      graphPanLeftStringProperty: stringProperties.a11y.graphPanLeftStringProperty,
+      graphPanRightStringProperty: stringProperties.a11y.graphPanRightStringProperty,
+      graphPanUpStringProperty: stringProperties.a11y.graphPanUpStringProperty,
+      graphPanDownStringProperty: stringProperties.a11y.graphPanDownStringProperty,
+      kinematicsGraphStringProperty: stringProperties.a11y.kinematicsGraphStringProperty,
+      selectTrackForGraphStringProperty: stringProperties.a11y.selectTrackForGraphStringProperty,
+      graphResizeTopLeftStringProperty: stringProperties.a11y.graphResizeTopLeftStringProperty,
+      graphResizeTopRightStringProperty: stringProperties.a11y.graphResizeTopRightStringProperty,
+      graphResizeBottomLeftStringProperty: stringProperties.a11y.graphResizeBottomLeftStringProperty,
+      graphResizeBottomRightStringProperty: stringProperties.a11y.graphResizeBottomRightStringProperty,
+      tableResizeTopLeftStringProperty: stringProperties.a11y.tableResizeTopLeftStringProperty,
+      tableResizeTopRightStringProperty: stringProperties.a11y.tableResizeTopRightStringProperty,
+      tableResizeBottomLeftStringProperty: stringProperties.a11y.tableResizeBottomLeftStringProperty,
+      tableResizeBottomRightStringProperty: stringProperties.a11y.tableResizeBottomRightStringProperty,
+      toggleVideoVisibilityStringProperty: stringProperties.a11y.toggleVideoVisibilityStringProperty,
+      graphPanelHeaderStringProperty: stringProperties.a11y.graphPanelHeaderStringProperty,
+      videoPanelHandleStringProperty: stringProperties.a11y.videoPanelHandleStringProperty,
+      videoPanelResizeHandleStringProperty: stringProperties.a11y.videoPanelResizeHandleStringProperty,
     };
   }
 
@@ -552,29 +541,29 @@ export class StringManager {
     dataTableBodyStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      titleStringProperty: this.stringProperties.infoDialog.titleStringProperty,
-      tab1LabelStringProperty: this.stringProperties.infoDialog.tab1LabelStringProperty,
-      tab2LabelStringProperty: this.stringProperties.infoDialog.tab2LabelStringProperty,
-      loadVideoTitleStringProperty: this.stringProperties.infoDialog.loadVideoTitleStringProperty,
-      loadVideoBodyStringProperty: this.stringProperties.infoDialog.loadVideoBodyStringProperty,
-      coordinateSystemTitleStringProperty: this.stringProperties.infoDialog.coordinateSystemTitleStringProperty,
-      coordinateSystemBodyStringProperty: this.stringProperties.infoDialog.coordinateSystemBodyStringProperty,
-      calibrationTitleStringProperty: this.stringProperties.infoDialog.calibrationTitleStringProperty,
-      calibrationBodyStringProperty: this.stringProperties.infoDialog.calibrationBodyStringProperty,
-      addTrackTitleStringProperty: this.stringProperties.infoDialog.addTrackTitleStringProperty,
-      addTrackBodyStringProperty: this.stringProperties.infoDialog.addTrackBodyStringProperty,
-      digitizeTitleStringProperty: this.stringProperties.infoDialog.digitizeTitleStringProperty,
-      digitizeBodyStringProperty: this.stringProperties.infoDialog.digitizeBodyStringProperty,
-      autoTrackTitleStringProperty: this.stringProperties.infoDialog.autoTrackTitleStringProperty,
-      autoTrackBodyStringProperty: this.stringProperties.infoDialog.autoTrackBodyStringProperty,
-      measuringTapeTitleStringProperty: this.stringProperties.infoDialog.measuringTapeTitleStringProperty,
-      measuringTapeBodyStringProperty: this.stringProperties.infoDialog.measuringTapeBodyStringProperty,
-      angleToolTitleStringProperty: this.stringProperties.infoDialog.angleToolTitleStringProperty,
-      angleToolBodyStringProperty: this.stringProperties.infoDialog.angleToolBodyStringProperty,
-      kinematicsGraphTitleStringProperty: this.stringProperties.infoDialog.kinematicsGraphTitleStringProperty,
-      kinematicsGraphBodyStringProperty: this.stringProperties.infoDialog.kinematicsGraphBodyStringProperty,
-      dataTableTitleStringProperty: this.stringProperties.infoDialog.dataTableTitleStringProperty,
-      dataTableBodyStringProperty: this.stringProperties.infoDialog.dataTableBodyStringProperty,
+      titleStringProperty: stringProperties.infoDialog.titleStringProperty,
+      tab1LabelStringProperty: stringProperties.infoDialog.tab1LabelStringProperty,
+      tab2LabelStringProperty: stringProperties.infoDialog.tab2LabelStringProperty,
+      loadVideoTitleStringProperty: stringProperties.infoDialog.loadVideoTitleStringProperty,
+      loadVideoBodyStringProperty: stringProperties.infoDialog.loadVideoBodyStringProperty,
+      coordinateSystemTitleStringProperty: stringProperties.infoDialog.coordinateSystemTitleStringProperty,
+      coordinateSystemBodyStringProperty: stringProperties.infoDialog.coordinateSystemBodyStringProperty,
+      calibrationTitleStringProperty: stringProperties.infoDialog.calibrationTitleStringProperty,
+      calibrationBodyStringProperty: stringProperties.infoDialog.calibrationBodyStringProperty,
+      addTrackTitleStringProperty: stringProperties.infoDialog.addTrackTitleStringProperty,
+      addTrackBodyStringProperty: stringProperties.infoDialog.addTrackBodyStringProperty,
+      digitizeTitleStringProperty: stringProperties.infoDialog.digitizeTitleStringProperty,
+      digitizeBodyStringProperty: stringProperties.infoDialog.digitizeBodyStringProperty,
+      autoTrackTitleStringProperty: stringProperties.infoDialog.autoTrackTitleStringProperty,
+      autoTrackBodyStringProperty: stringProperties.infoDialog.autoTrackBodyStringProperty,
+      measuringTapeTitleStringProperty: stringProperties.infoDialog.measuringTapeTitleStringProperty,
+      measuringTapeBodyStringProperty: stringProperties.infoDialog.measuringTapeBodyStringProperty,
+      angleToolTitleStringProperty: stringProperties.infoDialog.angleToolTitleStringProperty,
+      angleToolBodyStringProperty: stringProperties.infoDialog.angleToolBodyStringProperty,
+      kinematicsGraphTitleStringProperty: stringProperties.infoDialog.kinematicsGraphTitleStringProperty,
+      kinematicsGraphBodyStringProperty: stringProperties.infoDialog.kinematicsGraphBodyStringProperty,
+      dataTableTitleStringProperty: stringProperties.infoDialog.dataTableTitleStringProperty,
+      dataTableBodyStringProperty: stringProperties.infoDialog.dataTableBodyStringProperty,
     };
   }
 
@@ -596,20 +585,18 @@ export class StringManager {
     verticalTossStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      ballOilStringProperty: this.stringProperties.videoFiles.ballOilStringProperty,
-      bouncingCartStringProperty: this.stringProperties.videoFiles.bouncingCartStringProperty,
-      cartPendulumStringProperty: this.stringProperties.videoFiles.cartPendulumStringProperty,
-      cupsClipsStringProperty: this.stringProperties.videoFiles.cupsClipsStringProperty,
-      parachuteMonkeyStringProperty: this.stringProperties.videoFiles.parachuteMonkeyStringProperty,
-      pendulumStringProperty: this.stringProperties.videoFiles.pendulumStringProperty,
-      pendulumDragStringProperty: this.stringProperties.videoFiles.pendulumDragStringProperty,
-      pucksCollideStringProperty: this.stringProperties.videoFiles.pucksCollideStringProperty,
-      collisionOneStringProperty: this.stringProperties.videoFiles.collisionOneStringProperty,
-      collisionTwoStringProperty: this.stringProperties.videoFiles.collisionTwoStringProperty,
-      oscillatingCarStringProperty: this.stringProperties.videoFiles.oscillatingCarStringProperty,
-      verticalTossStringProperty: this.stringProperties.videoFiles.verticalTossStringProperty,
+      ballOilStringProperty: stringProperties.videoFiles.ballOilStringProperty,
+      bouncingCartStringProperty: stringProperties.videoFiles.bouncingCartStringProperty,
+      cartPendulumStringProperty: stringProperties.videoFiles.cartPendulumStringProperty,
+      cupsClipsStringProperty: stringProperties.videoFiles.cupsClipsStringProperty,
+      parachuteMonkeyStringProperty: stringProperties.videoFiles.parachuteMonkeyStringProperty,
+      pendulumStringProperty: stringProperties.videoFiles.pendulumStringProperty,
+      pendulumDragStringProperty: stringProperties.videoFiles.pendulumDragStringProperty,
+      pucksCollideStringProperty: stringProperties.videoFiles.pucksCollideStringProperty,
+      collisionOneStringProperty: stringProperties.videoFiles.collisionOneStringProperty,
+      collisionTwoStringProperty: stringProperties.videoFiles.collisionTwoStringProperty,
+      oscillatingCarStringProperty: stringProperties.videoFiles.oscillatingCarStringProperty,
+      verticalTossStringProperty: stringProperties.videoFiles.verticalTossStringProperty,
     };
   }
 }
-
-trackLab.register("StringManager", StringManager);

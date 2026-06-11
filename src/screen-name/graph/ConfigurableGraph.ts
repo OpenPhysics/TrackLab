@@ -58,7 +58,7 @@ import { ChartTransform, LinePlot } from "scenerystack/bamboo";
 import { Range } from "scenerystack/dot";
 import { Node } from "scenerystack/scenery";
 import { StringManager } from "../../i18n/StringManager.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import GraphControlsPanel from "./GraphControlsPanel.js";
 import GraphDataManager from "./GraphDataManager.js";
 import GraphInteractionHandler from "./GraphInteractionHandler.js";
@@ -421,4 +421,4 @@ export default class ConfigurableGraph extends Node {
 }
 
 // Register with namespace for debugging accessibility
-trackLab.register("ConfigurableGraph", ConfigurableGraph);
+TrackLabNamespace.register("ConfigurableGraph", ConfigurableGraph);

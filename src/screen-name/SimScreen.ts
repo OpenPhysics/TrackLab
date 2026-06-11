@@ -7,7 +7,7 @@
 
 import { Screen, type ScreenOptions } from "scenerystack/sim";
 import type { TrackLabPreferencesModel } from "../preferences/TrackLabPreferencesModel.js";
-import trackLab from "../TrackLabNamespace.js";
+import TrackLabNamespace from "../TrackLabNamespace.js";
 import { SimModel } from "./model/SimModel.js";
 import { SimScreenView } from "./view/SimScreenView.js";
 
@@ -30,4 +30,4 @@ export class SimScreen extends Screen<SimModel, SimScreenView> {
   }
 }
 
-trackLab.register("SimScreen", SimScreen);
+TrackLabNamespace.register("SimScreen", SimScreen);

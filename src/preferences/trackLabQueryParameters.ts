@@ -3,7 +3,7 @@
  */
 
 import { QueryStringMachine } from "scenerystack/query-string-machine";
-import trackLab from "../TrackLabNamespace.js";
+import TrackLabNamespace from "../TrackLabNamespace.js";
 
 const trackLabQueryParameters = QueryStringMachine.getAll({
   enableAutoTracking: {
@@ -31,6 +31,6 @@ const trackLabQueryParameters = QueryStringMachine.getAll({
   },
 });
 
-trackLab.register("trackLabQueryParameters", trackLabQueryParameters);
+TrackLabNamespace.register("trackLabQueryParameters", trackLabQueryParameters);
 
 export default trackLabQueryParameters;

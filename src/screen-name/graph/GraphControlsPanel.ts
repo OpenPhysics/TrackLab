@@ -10,7 +10,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Font sizes
@@ -244,4 +244,4 @@ export default class GraphControlsPanel {
 }
 
 // Register with namespace for debugging accessibility
-trackLab.register("GraphControlsPanel", GraphControlsPanel);
+TrackLabNamespace.register("GraphControlsPanel", GraphControlsPanel);

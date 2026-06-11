@@ -13,7 +13,7 @@
 import type { BooleanProperty, TReadOnlyProperty } from "scenerystack/axon";
 import type { ChartRectangle, ChartTransform, TickLabelSet } from "scenerystack/bamboo";
 import type { Node, Rectangle } from "scenerystack/scenery";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import AxisGestureHandler from "./AxisGestureHandler.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import HeaderDragHandler from "./HeaderDragHandler.js";
@@ -175,4 +175,4 @@ export default class GraphInteractionHandler {
   }
 }
 
-trackLab.register("GraphInteractionHandler", GraphInteractionHandler);
+TrackLabNamespace.register("GraphInteractionHandler", GraphInteractionHandler);

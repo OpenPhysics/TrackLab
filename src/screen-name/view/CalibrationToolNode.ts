@@ -21,7 +21,7 @@ import {
   OVERLAY_DRAG_SPEED,
   OVERLAY_SHIFT_DRAG_SPEED,
 } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { CALIBRATION_UNITS, type OverlayToolsModel } from "../model/OverlayToolsModel.js";
 import { DigitizingAwareOverlayNode } from "./DigitizingAwareOverlayNode.js";
 
@@ -295,4 +295,4 @@ export class CalibrationToolNode extends DigitizingAwareOverlayNode {
   }
 }
 
-trackLab.register("CalibrationToolNode", CalibrationToolNode);
+TrackLabNamespace.register("CalibrationToolNode", CalibrationToolNode);

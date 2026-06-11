@@ -1,9 +1,16 @@
 /**
  * TrackLabNamespace.ts
  *
- * Creates and exports the global trackLab namespace for registering tandem-tracked singletons.
+ * The SceneryStack Namespace for this simulation. It is used as the first
+ * argument to ProfileColorProperty (so color names are scoped to this sim)
+ * and optionally for registering objects with the PhET-iO API.
+ *
+ * ── How to customize ─────────────────────────────────────────────────────────
+ * Change the string argument to match your simulation's identifier, using the
+ * same kebab-case name as in package.json and src/init.ts.
  */
-
 import { Namespace } from "scenerystack/phet-core";
 
-export default new Namespace("trackLab");
+const TrackLabNamespace = new Namespace("track-lab");
+
+export default TrackLabNamespace;

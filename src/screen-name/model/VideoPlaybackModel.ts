@@ -10,7 +10,7 @@
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Dimension2, Matrix3, Range, Vector2 } from "scenerystack/dot";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 // ── Frame rate options ─────────────────────────────────────────────────────
 export const FRAME_RATE_OPTIONS = [15, 24, 25, 29.97, 30, 50, 60] as const;
@@ -153,4 +153,4 @@ export class VideoPlaybackModel {
   }
 }
 
-trackLab.register("VideoPlaybackModel", VideoPlaybackModel);
+TrackLabNamespace.register("VideoPlaybackModel", VideoPlaybackModel);

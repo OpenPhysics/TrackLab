@@ -22,7 +22,7 @@ import { FireListener, HBox, Node, Rectangle, Text } from "scenerystack/scenery"
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import GraphDataManager, { type GridVisualizationConfig } from "./GraphDataManager.js";
 import type { PlottableProperty } from "./PlottableProperty.js";
 
@@ -285,4 +285,4 @@ export default class GraphRenderer {
   }
 }
 
-trackLab.register("GraphRenderer", GraphRenderer);
+TrackLabNamespace.register("GraphRenderer", GraphRenderer);

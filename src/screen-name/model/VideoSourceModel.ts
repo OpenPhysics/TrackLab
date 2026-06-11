@@ -8,7 +8,7 @@
  */
 
 import { BooleanProperty, Property } from "scenerystack/axon";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { extractVideoFileMetadata } from "../../webcam.js";
 import { DEFAULT_FRAME_RATE } from "./VideoPlaybackModel.js";
 
@@ -113,4 +113,4 @@ export class VideoSourceModel {
   }
 }
 
-trackLab.register("VideoSourceModel", VideoSourceModel);
+TrackLabNamespace.register("VideoSourceModel", VideoSourceModel);

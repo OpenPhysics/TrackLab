@@ -10,7 +10,7 @@ import { Vector2 } from "scenerystack/dot";
 import { type Node, type Rectangle, RichDragListener } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 export interface HeaderDragElements {
   headerBar: Rectangle;
@@ -89,4 +89,4 @@ export default class HeaderDragHandler {
   }
 }
 
-trackLab.register("HeaderDragHandler", HeaderDragHandler);
+TrackLabNamespace.register("HeaderDragHandler", HeaderDragHandler);

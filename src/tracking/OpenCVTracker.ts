@@ -49,7 +49,7 @@
  * motion), the tracker falls back to a full-frame search automatically.
  */
 
-import trackLab from "../TrackLabNamespace.js";
+import TrackLabNamespace from "../TrackLabNamespace.js";
 
 export type TrackerRegion = { x: number; y: number; w: number; h: number };
 
@@ -282,4 +282,4 @@ export class OpenCVTracker {
   }
 }
 
-trackLab.register("OpenCVTracker", OpenCVTracker);
+TrackLabNamespace.register("OpenCVTracker", OpenCVTracker);

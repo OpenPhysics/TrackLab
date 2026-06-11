@@ -18,7 +18,7 @@ import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
 import { DragListener, type Pointer, type Rectangle } from "scenerystack/scenery";
 import { GRAPH_ZOOM_FACTOR } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
 
@@ -284,4 +284,4 @@ export default class AxisGestureHandler {
   }
 }
 
-trackLab.register("AxisGestureHandler", AxisGestureHandler);
+TrackLabNamespace.register("AxisGestureHandler", AxisGestureHandler);

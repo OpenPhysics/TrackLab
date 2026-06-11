@@ -22,7 +22,7 @@ import {
   CONTROL_PANEL_Y_MARGIN,
   PANEL_CORNER_RADIUS,
 } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { OverlayToolsModel } from "../model/OverlayToolsModel.js";
 
 // ── Icon geometry constants ──────────────────────────────────────────────────
@@ -160,4 +160,4 @@ export class MeasurementToolsPanel extends Panel {
   }
 }
 
-trackLab.register("MeasurementToolsPanel", MeasurementToolsPanel);
+TrackLabNamespace.register("MeasurementToolsPanel", MeasurementToolsPanel);

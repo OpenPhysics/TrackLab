@@ -18,7 +18,7 @@ import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
 
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import GraphDataManager from "../graph/GraphDataManager.js";
 import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
@@ -338,4 +338,4 @@ export class PlaybackControlsNode extends HBox {
   }
 }
 
-trackLab.register("PlaybackControlsNode", PlaybackControlsNode);
+TrackLabNamespace.register("PlaybackControlsNode", PlaybackControlsNode);

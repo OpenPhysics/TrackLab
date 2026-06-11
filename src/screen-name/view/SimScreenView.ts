@@ -13,7 +13,7 @@ import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { SimModel } from "../model/SimModel.js";
 import { AngleToolNode } from "./AngleToolNode.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
@@ -298,4 +298,4 @@ export class SimScreenView extends ScreenView {
   }
 }
 
-trackLab.register("SimScreenView", SimScreenView);
+TrackLabNamespace.register("SimScreenView", SimScreenView);

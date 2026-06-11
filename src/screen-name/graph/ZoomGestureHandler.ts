@@ -10,7 +10,7 @@ import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
 import type { Pointer } from "scenerystack/scenery";
 import { GRAPH_ZOOM_FACTOR } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
 
@@ -210,4 +210,4 @@ export default class ZoomGestureHandler {
   }
 }
 
-trackLab.register("ZoomGestureHandler", ZoomGestureHandler);
+TrackLabNamespace.register("ZoomGestureHandler", ZoomGestureHandler);

@@ -25,7 +25,7 @@ import {
   TimeControlsKeyboardHelpSection,
   TwoColumnKeyboardHelpContent,
 } from "scenerystack/scenery-phet";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
   public constructor() {
@@ -49,4 +49,4 @@ export class KeyboardShortcutsNode extends TwoColumnKeyboardHelpContent {
   }
 }
 
-trackLab.register("KeyboardShortcutsNode", KeyboardShortcutsNode);
+TrackLabNamespace.register("KeyboardShortcutsNode", KeyboardShortcutsNode);

@@ -29,7 +29,7 @@ import {
   MOUSE_AREA_DILATION,
   TOUCH_AREA_DILATION,
 } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
 import type { VideoSourceModel } from "../model/VideoSourceModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
@@ -506,4 +506,4 @@ export class VideoSourceControlNode extends HBox {
   }
 }
 
-trackLab.register("VideoSourceControlNode", VideoSourceControlNode);
+TrackLabNamespace.register("VideoSourceControlNode", VideoSourceControlNode);

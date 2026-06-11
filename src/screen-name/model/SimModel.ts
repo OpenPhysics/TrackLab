@@ -15,7 +15,7 @@
  */
 
 import type { Vector2 } from "scenerystack/dot";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { OverlayToolsModel } from "./OverlayToolsModel.js";
 import { TrackingModel } from "./TrackingModel.js";
 import { VideoPlaybackModel } from "./VideoPlaybackModel.js";
@@ -112,4 +112,4 @@ export class SimModel {
   }
 }
 
-trackLab.register("SimModel", SimModel);
+TrackLabNamespace.register("SimModel", SimModel);

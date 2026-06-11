@@ -22,7 +22,7 @@ const FRAME_BOTTOM_GAP = 2; // gap between frame bottom and video content top
 const RESIZE_HANDLE_RADIUS = 5; // px radius of the corner resize knob
 
 import { StringManager } from "../../i18n/StringManager.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { AutoTrackerNode } from "./AutoTrackerNode.js";
 import { DigitizingOverlayNode } from "./DigitizingOverlayNode.js";
 import { PlaybackControlsNode } from "./PlaybackControlsNode.js";
@@ -462,4 +462,4 @@ export class VideoPlayerNode extends Node {
   }
 }
 
-trackLab.register("VideoPlayerNode", VideoPlayerNode);
+TrackLabNamespace.register("VideoPlayerNode", VideoPlayerNode);

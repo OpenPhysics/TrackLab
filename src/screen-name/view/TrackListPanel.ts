@@ -26,7 +26,7 @@ import { makePlusIcon, makeTrashIcon } from "../../TrackLabIcons.js";
 const a11yStrings = StringManager.getInstance().getA11y();
 
 import { PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
-import trackLab from "../../TrackLabNamespace.js";
+import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { Track } from "../model/Track.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
 
@@ -247,4 +247,4 @@ export class TrackListPanel extends Panel {
   }
 }
 
-trackLab.register("TrackListPanel", TrackListPanel);
+TrackLabNamespace.register("TrackListPanel", TrackListPanel);
