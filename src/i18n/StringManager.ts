@@ -8,6 +8,7 @@
 import { LocalizedString, type ReadOnlyProperty } from "scenerystack";
 import trackLab from "../TrackLabNamespace.js";
 import stringsEn from "./strings_en.json";
+import stringsEs from "./strings_es.json";
 import stringsFr from "./strings_fr.json";
 
 /** Recursively apply phet.chipper.mapString to all string values (for ?stringTest=double, etc.) */
@@ -35,13 +36,11 @@ function applyStringTest<T>(obj: T): T {
 }
 
 // ── Compile-time key-parity check ─────────────────────────────────────────────
-// These type aliases exist solely so TypeScript verifies that both language files
-// share identical key structures. If a key is added to one file but not the
-// other, a type error will appear here before the app is ever run.
-type EnMatchesFr = typeof stringsEn extends typeof stringsFr ? true : never;
-type FrMatchesEn = typeof stringsFr extends typeof stringsEn ? true : never;
-// Force evaluation (unused types are not checked without a reference).
-declare const _parity: EnMatchesFr & FrMatchesEn;
+// satisfies errors immediately if either locale file is missing keys from the other.
+// biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
+void (stringsEn satisfies typeof stringsFr);
+// biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
+void (stringsFr satisfies typeof stringsEn);
 
 /**
  * Manages all localized strings for the simulation
@@ -60,6 +59,7 @@ export class StringManager {
     this.stringProperties = LocalizedString.getNestedStringProperties({
       en: applyStringTest(stringsEn),
       fr: applyStringTest(stringsFr),
+      es: applyStringTest(stringsEs),
     });
   }
 

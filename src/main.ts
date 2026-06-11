@@ -52,6 +52,10 @@ onReadyToLaunch(() => {
           },
         ],
       },
+      localizationOptions: {
+        // Adds a language picker in Preferences → Language
+        supportsDynamicLocale: true,
+      },
     }),
   };
 

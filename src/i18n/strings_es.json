@@ -1,0 +1,217 @@
+{
+  "title": "trackLab",
+  "screens": {
+    "sim": "Simulación"
+  },
+  "controls": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "reset": "Reiniciar",
+    "step": "Paso",
+    "speed": "Velocidad",
+    "record": "Grabar",
+    "stop": "Detener",
+    "graphVs": "vs"
+  },
+  "tracking": {
+    "track": "Pista",
+    "target": "Objetivo",
+    "origin": "Origen",
+    "calibrate": "Calibrar",
+    "scale": "Escala",
+    "position": "Posición",
+    "velocity": "Velocidad",
+    "acceleration": "Aceleración"
+  },
+  "video": {
+    "openFile": "Abrir archivo",
+    "frameRate": "Velocidad de fotogramas",
+    "currentFrame": "Fotograma",
+    "duration": "Duración",
+    "export": "Exportar",
+    "loadFailed": "No se pudo cargar el video — puede que el formato no sea compatible."
+  },
+  "measurement": {
+    "time": "Tiempo",
+    "distance": "Distancia",
+    "angle": "Ángulo",
+    "mass": "Masa",
+    "gravity": "Gravedad"
+  },
+  "keyboardShortcuts": {
+    "title": "Atajos de teclado",
+    "simulationControls": "Controles de simulación",
+    "graphInteractions": "Interacciones con la gráfica",
+    "playPauseSimulation": "Reproducir/Pausar la simulación",
+    "resetSimulation": "Reiniciar la simulación",
+    "stepBackward": "Retroceder un paso",
+    "stepForward": "Avanzar un paso",
+    "rewindToStart": "Rebobinar al inicio",
+    "resetZoom": "Restablecer el zoom",
+    "zoomInOut": "Acercar/Alejar",
+    "panView": "Desplazar la vista"
+  },
+  "preferences": {
+    "simulation": "Simulación",
+    "enableAutoTracking": "Activar el seguimiento automático",
+    "enableAutoTrackingDescription": "Muestra la casilla de seguimiento automático en el panel de control para el seguimiento automático de objetos basado en OpenCV.",
+    "showVelocity": "Mostrar velocidad",
+    "showVelocityDescription": "Cuando está activado, las componentes de velocidad (vx, vy, rapidez) están disponibles como opciones en los ejes de la gráfica cinemática.",
+    "showAcceleration": "Mostrar aceleración",
+    "showAccelerationDescription": "Cuando está activado, las componentes de aceleración (ax, ay, |a|) están disponibles como opciones en los ejes de la gráfica cinemática.",
+    "enableMeasurementTools": "Activar las herramientas de medición",
+    "enableMeasurementToolsDescription": "Muestra un panel con cinta métrica y herramienta de ángulo para mediciones directas sobre el video."
+  },
+  "autoTracker": {
+    "dragToSelect": "Arrastra sobre el video para seleccionar el objeto a seguir",
+    "videoTrackingArea": "Área de seguimiento de video — arrastra para seleccionar el objeto a seguir",
+    "trackingInitFailed": "Falló la inicialización del seguimiento. Inténtalo de nuevo.",
+    "framesTracked": "● {{count}} fotogramas"
+  },
+  "calibration": {
+    "pointsTooClose": "Puntos demasiado cercanos — sepáralos para calibrar",
+    "calibrationPoint1": "Punto de calibración 1",
+    "calibrationPoint2": "Punto de calibración 2"
+  },
+  "dataTable": {
+    "title": "Datos",
+    "csv": "CSV",
+    "noData": "No hay puntos digitalizados",
+    "frame": "Fotograma",
+    "timeSeconds": "Tiempo (s)"
+  },
+  "trackList": {
+    "addTrack": "+ Añadir pista",
+    "tracks": "Pistas"
+  },
+  "ui": {
+    "fps": "fps:",
+    "selectVideo": "— selecciona un video —",
+    "sampleVideos": "── Videos de muestra ──",
+    "myRecordings": "── Mis grabaciones ──",
+    "uploadedVideos": "── Videos subidos ──"
+  },
+  "coordSystem": {
+    "xAxisLabel": "x",
+    "yAxisLabel": "y",
+    "rotationHandle": "Manija de rotación",
+    "coordinateSystem": "Sistema de coordenadas"
+  },
+  "videoSource": {
+    "downloadVideo": "Descargar video",
+    "openVideoFile": "Abrir archivo de video",
+    "recordWebcam": "Grabar con la cámara web"
+  },
+  "webcam": {
+    "requestingAccess": "Solicitando acceso a la cámara…",
+    "accessDenied": "Acceso a la cámara denegado.",
+    "processing": "Procesando…",
+    "fixingMetadata": "Corrigiendo los metadatos del video…",
+    "recording": "● Grabando {{time}}",
+    "cancel": "Cancelar",
+    "startRecording": "Iniciar grabación",
+    "stopRecording": "Detener grabación",
+    "reRecord": "Volver a grabar",
+    "useVideo": "Usar video",
+    "camera": "Cámara",
+    "recordFromWebcam": "Grabar desde la cámara web",
+    "estimatingFrameRate": "Estimando la velocidad de fotogramas…",
+    "highConfidence": "Confianza alta",
+    "mediumConfidence": "Confianza media",
+    "lowConfidence": "Confianza baja",
+    "estimatedFps": "Estimado: {{fps}} fps {{symbol}} ({{confidence}}, {{method}})",
+    "cameraLabel": "Cámara {{number}}"
+  },
+  "kinematicsGraph": {
+    "trackSelectorLabel": "Pista:",
+    "noTracks": "Sin pistas",
+    "trackItem": "Pista {{symbol}}"
+  },
+  "playback": {
+    "secondsUnit": "s",
+    "durationZero": "0.00 s"
+  },
+  "videoFiles": {
+    "ballOil": "Bola en aceite",
+    "bouncingCart": "Carrito que rebota",
+    "cartPendulum": "Péndulo con carrito",
+    "cupsClips": "Vasos y clips",
+    "parachuteMonkey": "Mono con paracaídas",
+    "pendulum": "Péndulo",
+    "pendulumDrag": "Péndulo con resistencia",
+    "pucksCollide": "Discos que chocan",
+    "collisionOne": "Colisión uno",
+    "collisionTwo": "Colisión dos",
+    "oscillatingCar": "Coche oscilante",
+    "verticalToss": "Lanzamiento vertical"
+  },
+  "infoDialog": {
+    "title": "Guía de TrackLab",
+    "tab1Label": "Flujo de trabajo",
+    "tab2Label": "Herramientas",
+    "loadVideoTitle": "1. Cargar un video",
+    "loadVideoBody": "Selecciona un video del menú desplegable — elige un clip de muestra, graba con tu cámara web o sube tu propio archivo.",
+    "coordinateSystemTitle": "2. Configurar el sistema de coordenadas",
+    "coordinateSystemBody": "Activa los ejes en el panel de control. Arrastra el origen para fijar el punto (0, 0), luego rota los ejes para alinearlos con tu escena.",
+    "calibrationTitle": "3. Calibrar la escala",
+    "calibrationBody": "Activa la calibración en el panel de control. Arrastra los dos extremos sobre una distancia de referencia conocida en el video, luego introduce la longitud real.",
+    "addTrackTitle": "4. Añadir una pista",
+    "addTrackBody": "En el panel de pistas, haz clic en «+ Añadir pista» para crear una nueva pista (A, B, C…). Pueden estar activas hasta 4 pistas a la vez.",
+    "digitizeTitle": "5. Digitalizar fotograma a fotograma",
+    "digitizeBody": "Selecciona una pista y haz clic en la posición del objeto en el video. Activa la lupa para mayor precisión. El video avanza un fotograma después de cada clic.",
+    "autoTrackTitle": "Seguimiento automático",
+    "autoTrackBody": "Activa el seguimiento automático en el panel de control, luego arrastra un cuadro de selección alrededor del objeto. TrackLab lo seguirá automáticamente a lo largo de los fotogramas restantes.",
+    "measuringTapeTitle": "Cinta métrica",
+    "measuringTapeBody": "Activa la cinta métrica desde el panel de control. Arrastra los dos extremos para medir distancias reales en cualquier lugar del video.",
+    "angleToolTitle": "Herramienta de ángulo",
+    "angleToolBody": "Activa la herramienta de ángulo desde el panel de control. Arrastra las tres manijas para medir ángulos en tu escena. El ángulo del vértice se muestra en grados.",
+    "kinematicsGraphTitle": "Gráfica cinemática",
+    "kinematicsGraphBody": "La gráfica configurable representa dos cantidades cualesquiera entre sí. Elige entre posición, velocidad, aceleración, rapidez o tiempo en cada eje.",
+    "dataTableTitle": "Tabla de datos",
+    "dataTableBody": "Todos los puntos digitalizados aparecen en una tabla que muestra el fotograma, el tiempo y la posición. Haz clic en el botón CSV para descargar tus datos."
+  },
+  "a11y": {
+    "infoDialogTab1": "Pestaña de flujo de trabajo",
+    "infoDialogTab2": "Pestaña de herramientas",
+    "videoPlayer": "Reproductor de video",
+    "videoScrubber": "Línea de tiempo del video — arrastra para buscar",
+    "rewindToStart": "Rebobinar al inicio",
+    "digitizingArea": "Área de digitalización del video — haz clic para registrar la posición de la pista activa",
+    "digitizeTrack": "Digitalizar la pista {{symbol}}",
+    "removeTrack": "Eliminar la pista {{symbol}}",
+    "dataTable": "Datos de la pista",
+    "exportCSV": "Exportar los datos de la pista como archivo CSV",
+    "measuringTapeBase": "Extremo base de la cinta métrica",
+    "measuringTapeTip": "Extremo de la punta de la cinta métrica",
+    "angleToolVertex": "Vértice de la herramienta de ángulo",
+    "angleArm1": "Extremo del brazo 1 de la herramienta de ángulo",
+    "angleArm2": "Extremo del brazo 2 de la herramienta de ángulo",
+    "toggleAxes": "Mostrar/ocultar los ejes de coordenadas",
+    "toggleCalibration": "Mostrar/ocultar la herramienta de calibración",
+    "toggleMagnifier": "Mostrar/ocultar la lupa de digitalización",
+    "toggleAutoTracking": "Activar/desactivar el seguimiento automático",
+    "toggleMeasuringTape": "Mostrar/ocultar la cinta métrica",
+    "toggleAngleTool": "Mostrar/ocultar la herramienta de ángulo",
+    "graphRescale": "Reescalar la gráfica para ajustar los datos",
+    "graphZoomIn": "Acercar en la gráfica",
+    "graphZoomOut": "Alejar en la gráfica",
+    "graphPanLeft": "Desplazar la gráfica a la izquierda",
+    "graphPanRight": "Desplazar la gráfica a la derecha",
+    "graphPanUp": "Desplazar la gráfica hacia arriba",
+    "graphPanDown": "Desplazar la gráfica hacia abajo",
+    "kinematicsGraph": "Gráfica cinemática",
+    "selectTrackForGraph": "Selecciona la pista para mostrar en la gráfica",
+    "graphResizeTopLeft": "Redimensionar la gráfica — esquina superior izquierda",
+    "graphResizeTopRight": "Redimensionar la gráfica — esquina superior derecha",
+    "graphResizeBottomLeft": "Redimensionar la gráfica — esquina inferior izquierda",
+    "graphResizeBottomRight": "Redimensionar la gráfica — esquina inferior derecha",
+    "tableResizeTopLeft": "Redimensionar la tabla de datos — esquina superior izquierda",
+    "tableResizeTopRight": "Redimensionar la tabla de datos — esquina superior derecha",
+    "tableResizeBottomLeft": "Redimensionar la tabla de datos — esquina inferior izquierda",
+    "tableResizeBottomRight": "Redimensionar la tabla de datos — esquina inferior derecha",
+    "toggleVideoVisibility": "Mostrar/ocultar la visibilidad del video",
+    "graphPanelHeader": "Encabezado del panel de la gráfica — arrastra o usa las teclas de flecha para moverlo",
+    "videoPanelHandle": "Arrastra para mover el panel de video",
+    "videoPanelResizeHandle": "Arrastra para redimensionar el panel de video"
+  }
+}
