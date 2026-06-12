@@ -58,34 +58,25 @@ export type KinematicsPlottableGroups = {
 export function buildKinematicsPlottableGroups(overlayTools: OverlayToolsModel): KinematicsPlottableGroups {
   return {
     // ── Time ──────────────────────────────────────────────────────────────
-    // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
     time: [createPlottableProperty("t", "s", (pt) => pt["t"] ?? 0)],
 
     // ── Position ──────────────────────────────────────────────────────────
     position: [
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("x", overlayTools.calibUnitProperty, (pt) => pt["x"] ?? 0),
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("y", overlayTools.calibUnitProperty, (pt) => pt["y"] ?? 0),
     ],
 
     // ── Velocity ──────────────────────────────────────────────────────────
     velocity: [
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("vx", overlayTools.velocityUnitProperty, (pt) => pt["vx"] ?? 0),
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("vy", overlayTools.velocityUnitProperty, (pt) => pt["vy"] ?? 0),
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("speed", overlayTools.velocityUnitProperty, (pt) => pt["speed"] ?? 0),
     ],
 
     // ── Acceleration ──────────────────────────────────────────────────────
     acceleration: [
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("ax", overlayTools.accelerationUnitProperty, (pt) => pt["ax"] ?? 0),
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("ay", overlayTools.accelerationUnitProperty, (pt) => pt["ay"] ?? 0),
-      // biome-ignore lint/complexity/useLiteralKeys: TypeScript requires bracket notation
       createPlottableProperty("|a|", overlayTools.accelerationUnitProperty, (pt) => pt["aMag"] ?? 0),
     ],
   };
