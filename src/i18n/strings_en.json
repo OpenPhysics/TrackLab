@@ -212,6 +212,15 @@
     "toggleVideoVisibility": "Toggle video visibility",
     "graphPanelHeader": "Graph panel header — drag or use arrow keys to move",
     "videoPanelHandle": "Drag to move video panel",
-    "videoPanelResizeHandle": "Drag to resize video panel"
+    "videoPanelResizeHandle": "Drag to resize video panel",
+    "screenSummary": {
+      "playArea": "The play area shows a video frame with overlay tools — coordinate axes, a calibration ruler, a measuring tape, and an angle tool — for digitizing the motion of objects in the video.",
+      "controlArea": "The controls load or record a video, play and scrub through frames, set the coordinate system and calibration, auto-track or manually digitize points, and plot or export the resulting kinematics. A Reset All button returns the simulation to its starting state.",
+      "interactionHint": "Load a video, set the coordinate system and calibration, then digitize the object's position frame by frame."
+    },
+    "currentDetailsNoVideo": "No video is loaded. Load or record a video to begin digitizing motion.",
+    "currentDetailsWithVideo": "A video is loaded with {{tracks}} track(s) digitized. Playback is {{state}}.",
+    "playingLabel": "playing",
+    "pausedLabel": "paused"
   }
 }

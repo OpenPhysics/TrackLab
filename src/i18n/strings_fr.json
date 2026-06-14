@@ -212,6 +212,15 @@
     "toggleVideoVisibility": "Basculer la visibilit\u00e9 de la vid\u00e9o",
     "graphPanelHeader": "En-t\u00eate du panneau graphique \u2014 faire glisser ou utiliser les touches fl\u00e9ch\u00e9es pour d\u00e9placer",
     "videoPanelHandle": "Faire glisser pour d\u00e9placer le panneau vid\u00e9o",
-    "videoPanelResizeHandle": "Faire glisser pour redimensionner le panneau vid\u00e9o"
+    "videoPanelResizeHandle": "Faire glisser pour redimensionner le panneau vid\u00e9o",
+    "screenSummary": {
+      "playArea": "La zone de jeu montre une image vid\u00e9o avec des outils de superposition \u2014 axes de coordonn\u00e9es, r\u00e8gle de calibration, m\u00e8tre ruban et outil d'angle \u2014 pour num\u00e9riser le mouvement des objets dans la vid\u00e9o.",
+      "controlArea": "Les commandes chargent ou enregistrent une vid\u00e9o, lisent et parcourent les images, d\u00e9finissent le syst\u00e8me de coordonn\u00e9es et la calibration, suivent automatiquement ou num\u00e9risent manuellement des points, et tracent ou exportent la cin\u00e9matique obtenue. Un bouton Tout r\u00e9initialiser ram\u00e8ne la simulation \u00e0 son \u00e9tat initial.",
+      "interactionHint": "Chargez une vid\u00e9o, d\u00e9finissez le syst\u00e8me de coordonn\u00e9es et la calibration, puis num\u00e9risez la position de l'objet image par image."
+    },
+    "currentDetailsNoVideo": "Aucune vid\u00e9o n'est charg\u00e9e. Chargez ou enregistrez une vid\u00e9o pour commencer \u00e0 num\u00e9riser le mouvement.",
+    "currentDetailsWithVideo": "Une vid\u00e9o est charg\u00e9e avec {{tracks}} piste(s) num\u00e9ris\u00e9e(s). La lecture est {{state}}.",
+    "playingLabel": "en cours",
+    "pausedLabel": "en pause"
   }
 }

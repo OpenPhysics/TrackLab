@@ -24,6 +24,7 @@ import { InfoDialogNode } from "./InfoDialogNode.js";
 import { KinematicsGraphNode } from "./KinematicsGraphNode.js";
 import { MeasurementToolsPanel } from "./MeasurementToolsPanel.js";
 import { MeasuringTapeNode } from "./MeasuringTapeNode.js";
+import { TrackLabScreenSummaryContent } from "./TrackLabScreenSummaryContent.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
 
@@ -49,7 +50,12 @@ export class SimScreenView extends ScreenView {
    * @param options - Optional ScreenView configuration passed to the superclass.
    */
   public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel, options?: ScreenViewOptions) {
-    super(options);
+    // Register the accessible screen summary (Interactive Description); current
+    // details are derived live from the model.
+    super({
+      screenSummaryContent: new TrackLabScreenSummaryContent(model),
+      ...options,
+    });
 
     // Combined visibility: video loaded AND user-toggled model flag.
     const axesShownProperty = new DerivedProperty(

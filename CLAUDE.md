@@ -25,7 +25,10 @@ src/tracking/OpenCVTracker.ts   ← OpenCV template matching in Web Worker
 
 ## Accessibility
 
-- A11y strings → `StringManager.getA11y()` / `a11y` section in locale JSON
+Follows the shared [OpenPhysics accessibility convention](https://github.com/OpenPhysics/OpenPhysics/blob/main/ACCESSIBILITY.md).
+
+- A11y strings → `StringManager.getA11y()` (typed control names) and `getA11yStrings()` (full tree incl. screen summary) / `a11y` section in locale JSON
+- `SimScreenView` registers `TrackLabScreenSummaryContent` (live current-details) and sets the PDOM traversal order via a wrapper `Node`'s `pdomOrder` (ScreenView forbids `pdomOrder` on itself)
 - Interactive nodes need `accessibleName` from a11y properties
 - Canvas overlays: `tagName: "div"` + `accessibleName`; data tables need `<caption>` and `aria-label` on headers
 

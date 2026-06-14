@@ -212,6 +212,15 @@
     "toggleVideoVisibility": "Mostrar/ocultar la visibilidad del video",
     "graphPanelHeader": "Encabezado del panel de la gráfica — arrastra o usa las teclas de flecha para moverlo",
     "videoPanelHandle": "Arrastra para mover el panel de video",
-    "videoPanelResizeHandle": "Arrastra para redimensionar el panel de video"
+    "videoPanelResizeHandle": "Arrastra para redimensionar el panel de video",
+    "screenSummary": {
+      "playArea": "El área de juego muestra un fotograma de video con herramientas superpuestas — ejes de coordenadas, regla de calibración, cinta métrica y herramienta de ángulo — para digitalizar el movimiento de los objetos en el video.",
+      "controlArea": "Los controles cargan o graban un video, reproducen y recorren los fotogramas, establecen el sistema de coordenadas y la calibración, rastrean automáticamente o digitalizan puntos manualmente, y grafican o exportan la cinemática resultante. Un botón Restablecer todo devuelve la simulación a su estado inicial.",
+      "interactionHint": "Carga un video, establece el sistema de coordenadas y la calibración, luego digitaliza la posición del objeto fotograma a fotograma."
+    },
+    "currentDetailsNoVideo": "No hay ningún video cargado. Carga o graba un video para comenzar a digitalizar el movimiento.",
+    "currentDetailsWithVideo": "Hay un video cargado con {{tracks}} pista(s) digitalizada(s). La reproducción está {{state}}.",
+    "playingLabel": "en marcha",
+    "pausedLabel": "en pausa"
   }
 }
