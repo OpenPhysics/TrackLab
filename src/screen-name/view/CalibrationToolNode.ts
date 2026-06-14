@@ -187,6 +187,7 @@ export class CalibrationToolNode extends DigitizingAwareOverlayNode {
       buttonFill: TrackLabColors.comboBoxButtonFillProperty,
       listFill: TrackLabColors.comboBoxListFillProperty,
       highlightFill: TrackLabColors.comboBoxHighlightFillProperty,
+      accessibleName: StringManager.getInstance().getA11yStrings().calibrationUnitStringProperty,
       tandem: Tandem.OPT_OUT,
     });
 

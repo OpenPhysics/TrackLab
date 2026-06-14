@@ -11,6 +11,7 @@ import { DragListener, Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
@@ -216,6 +217,7 @@ export class SimScreenView extends ScreenView {
         infoDialogNode.visible = !infoDialogNode.visible;
       },
       scale: 0.5,
+      accessibleName: StringManager.getInstance().getA11yStrings().infoButtonStringProperty,
       tandem: Tandem.OPT_OUT,
     });
     this.addChild(infoButton);

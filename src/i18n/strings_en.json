@@ -221,6 +221,8 @@
     "currentDetailsNoVideo": "No video is loaded. Load or record a video to begin digitizing motion.",
     "currentDetailsWithVideo": "A video is loaded with {{tracks}} track(s) digitized. Playback is {{state}}.",
     "playingLabel": "playing",
-    "pausedLabel": "paused"
+    "pausedLabel": "paused",
+    "infoButton": "Information",
+    "calibrationUnit": "Calibration length unit"
   }
 }

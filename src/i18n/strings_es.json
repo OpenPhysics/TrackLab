@@ -221,6 +221,8 @@
     "currentDetailsNoVideo": "No hay ningún video cargado. Carga o graba un video para comenzar a digitalizar el movimiento.",
     "currentDetailsWithVideo": "Hay un video cargado con {{tracks}} pista(s) digitalizada(s). La reproducción está {{state}}.",
     "playingLabel": "en marcha",
-    "pausedLabel": "en pausa"
+    "pausedLabel": "en pausa",
+    "infoButton": "Información",
+    "calibrationUnit": "Unidad de longitud de calibración"
   }
 }
