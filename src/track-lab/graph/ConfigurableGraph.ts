@@ -3,7 +3,7 @@
  *
  * ## Subsystem overview
  *
- * The graph subsystem lives in `src/screen-name/graph/` and consists of seven files:
+ * The graph subsystem lives in `src/track-lab/graph/` and consists of seven files:
  *
  * | File | Role |
  * |------|------|

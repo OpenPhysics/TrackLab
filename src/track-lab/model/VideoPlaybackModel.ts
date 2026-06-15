@@ -3,7 +3,7 @@
  *
  * Reactive state for video playback: current time, duration, frame rate,
  * playback speed, display dimensions, and the video-layer transform
- * (translate + uniform scale). Extracted from SimModel to keep playback
+ * (translate + uniform scale). Extracted from TrackLabModel to keep playback
  * concerns separate from track management and video source management.
  */
 
@@ -89,8 +89,8 @@ export class VideoPlaybackModel {
     (d) => d > 0,
   );
 
-  // ── Video panel position in SimScreenView coordinates (top-left of VideoPlayerNode) ──
-  // Default is Vector2.ZERO; SimScreenView sets the initial position on first layout.
+  // ── Video panel position in TrackLabScreenView coordinates (top-left of VideoPlayerNode) ──
+  // Default is Vector2.ZERO; TrackLabScreenView sets the initial position on first layout.
   public readonly panelPositionProperty = new Property<Vector2>(Vector2.ZERO);
 
   // ── Uniform scale applied to the video content wrapper (not source controls) ──
@@ -147,7 +147,7 @@ export class VideoPlaybackModel {
     this.videoDimensionsProperty.reset();
     this.videoScaleProperty.reset();
     this.videoOffsetProperty.reset();
-    // panelPositionProperty is intentionally NOT reset here — SimScreenView
+    // panelPositionProperty is intentionally NOT reset here — TrackLabScreenView
     // restores the initial layout position via the ResetAllButton listener.
     this.panelSizeScaleProperty.reset();
   }

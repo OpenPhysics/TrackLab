@@ -20,15 +20,15 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "./i18n/StringManager.js";
 import { TrackLabPreferencesModel } from "./preferences/TrackLabPreferencesModel.js";
 import { TrackLabPreferencesNode } from "./preferences/TrackLabPreferencesNode.js";
-import { SimScreen } from "./screen-name/SimScreen.js";
 import TrackLabColors from "./TrackLabColors.js";
+import { TrackLabScreen } from "./track-lab/TrackLabScreen.js";
 
 onReadyToLaunch(() => {
   const stringManager = StringManager.getInstance();
   const trackLabPreferences = new TrackLabPreferencesModel();
 
   const screens = [
-    new SimScreen({
+    new TrackLabScreen({
       tandem: Tandem.ROOT.createTandem("simScreen"),
       backgroundColorProperty: TrackLabColors.backgroundColorProperty,
       trackLabPreferences,

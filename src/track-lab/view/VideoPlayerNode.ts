@@ -11,7 +11,7 @@ import { Circle, DOM, DragListener, Node, Rectangle, Text } from "scenerystack/s
 import { PhetFont } from "scenerystack/scenery-phet";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { TrackLabModel } from "../model/TrackLabModel.js";
 import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
 // ── Frame / header geometry ────────────────────────────────────────────────────
@@ -37,9 +37,9 @@ import type { WebcamPanel } from "./WebcamPanel.js";
 export class VideoPlayerNode extends Node {
   /** The underlying HTML video element used for display and pixel capture. */
   private readonly videoElement: HTMLVideoElement;
-  /** Webcam recording panel; positioned by SimScreenView for correct z-ordering. */
+  /** Webcam recording panel; positioned by TrackLabScreenView for correct z-ordering. */
   public readonly webcamPanel: WebcamPanel;
-  /** Playback controls bar; positioned by SimScreenView at the bottom of the screen. */
+  /** Playback controls bar; positioned by TrackLabScreenView at the bottom of the screen. */
   public readonly playbackControlsNode: PlaybackControlsNode;
   /**
    * Video content layer containing the video element and all overlays (auto-tracker,
@@ -57,7 +57,7 @@ export class VideoPlayerNode extends Node {
   private readonly videoContentWrapper: Node;
   /**
    * Background frame rectangle that encloses the source controls.  Its cursor and
-   * DragListener (added by SimScreenView) make the entire header area a move handle.
+   * DragListener (added by TrackLabScreenView) make the entire header area a move handle.
    * Width tracks the visual width of the scaled video content.
    */
   public readonly panelHeaderBar: Rectangle;
@@ -72,7 +72,7 @@ export class VideoPlayerNode extends Node {
    * @param model - Simulation model providing reactive playback and track state.
    * @param listParent - Scene-graph node used as the popup list parent for combo boxes.
    */
-  public constructor(model: SimModel, listParent: Node) {
+  public constructor(model: TrackLabModel, listParent: Node) {
     super();
     this.playback = model.playback;
 
@@ -220,7 +220,7 @@ export class VideoPlayerNode extends Node {
     };
     model.playback.playbackRateProperty.link(playbackRateListener);
 
-    // ── Playback controls (positioned by SimScreenView at screen bottom) ──
+    // ── Playback controls (positioned by TrackLabScreenView at screen bottom) ──
     this.playbackControlsNode = new PlaybackControlsNode(
       model.playback,
       this.videoElement,
@@ -412,7 +412,7 @@ export class VideoPlayerNode extends Node {
   }
 
   /** Factory for the document-level keyboard handler for this player instance. */
-  private createKeyboardHandler(model: SimModel): (e: KeyboardEvent) => void {
+  private createKeyboardHandler(model: TrackLabModel): (e: KeyboardEvent) => void {
     return (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;

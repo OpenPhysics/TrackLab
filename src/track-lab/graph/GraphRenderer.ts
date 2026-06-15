@@ -16,6 +16,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import type { ChartTransform } from "scenerystack/bamboo";
 import { ChartRectangle, GridLineSet, TickLabelSet, TickMarkSet } from "scenerystack/bamboo";
+import { toFixed } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Orientation } from "scenerystack/phet-core";
 import { FireListener, HBox, Node, Rectangle, Text } from "scenerystack/scenery";
@@ -137,7 +138,7 @@ export default class GraphRenderer {
     const xTickLabelSet = new TickLabelSet(chartTransform, Orientation.HORIZONTAL, initialSpacing, {
       edge: "min",
       createLabel: (value: number) =>
-        new Text(value.toFixed(TICK_LABEL_DECIMALS), {
+        new Text(toFixed(value, TICK_LABEL_DECIMALS), {
           font: TICK_LABEL_FONT,
           fill: TrackLabColors.textProperty,
         }),
@@ -147,7 +148,7 @@ export default class GraphRenderer {
     const yTickLabelSet = new TickLabelSet(chartTransform, Orientation.VERTICAL, initialSpacing, {
       edge: "min",
       createLabel: (value: number) =>
-        new Text(value.toFixed(TICK_LABEL_DECIMALS), {
+        new Text(toFixed(value, TICK_LABEL_DECIMALS), {
           font: TICK_LABEL_FONT,
           fill: TrackLabColors.textProperty,
         }),

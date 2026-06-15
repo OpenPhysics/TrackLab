@@ -10,6 +10,7 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Multilink } from "scenerystack/axon";
+import { toFixed } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Line, Node, RichDragListener, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -126,7 +127,7 @@ export class MeasuringTapeNode extends Node {
       (p1, p2, mvt, unit) => {
         const m1 = mvt.inversePosition2(p1);
         const m2 = mvt.inversePosition2(p2);
-        distanceText.string = `${m1.distance(m2).toFixed(DISTANCE_DECIMAL_PLACES)} ${unit}`;
+        distanceText.string = `${toFixed(m1.distance(m2), DISTANCE_DECIMAL_PLACES)} ${unit}`;
       },
     );
 

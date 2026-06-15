@@ -1,5 +1,5 @@
 /**
- * SimModel.ts
+ * TrackLabModel.ts
  *
  * Thin coordinator that composes four focused sub-models:
  *
@@ -8,7 +8,7 @@
  *   model.tracking      – TrackingModel:       particle tracks, kinematics, OpenCV facade
  *   model.overlayTools  – OverlayToolsModel:   axes, calibration, measurement tools
  *
- * SimModel itself handles cross-cutting orchestration only:
+ * TrackLabModel itself handles cross-cutting orchestration only:
  *   - activating a video source (coordinates sources + playback properties)
  *   - converting pixel → model coordinates (uses overlayTools MVT)
  *   - re-expressing track points when the model-view transform changes
@@ -21,7 +21,7 @@ import { TrackingModel } from "./TrackingModel.js";
 import { VideoPlaybackModel } from "./VideoPlaybackModel.js";
 import { type UploadedVideo, VideoSourceModel, type WebcamRecording } from "./VideoSourceModel.js";
 
-// ── Re-export constants so existing imports from SimModel continue to work ─
+// ── Re-export constants so existing imports from TrackLabModel continue to work ─
 export {
   DEFAULT_FRAME_RATE,
   DEFAULT_PLAYBACK_RATE,
@@ -31,7 +31,7 @@ export {
 } from "./VideoPlaybackModel.js";
 export type { UploadedVideo, WebcamRecording } from "./VideoSourceModel.js";
 
-export class SimModel {
+export class TrackLabModel {
   // ── Composed sub-models ───────────────────────────────────────────────
   public readonly overlayTools = new OverlayToolsModel();
   public readonly playback = new VideoPlaybackModel();
@@ -112,4 +112,4 @@ export class SimModel {
   }
 }
 
-TrackLabNamespace.register("SimModel", SimModel);
+TrackLabNamespace.register("TrackLabModel", TrackLabModel);

@@ -127,7 +127,7 @@ function makeRow(icon: Node, property: import("scenerystack/axon").BooleanProper
 
 /**
  * Compact toggle panel for the measuring tape and angle tool overlays.
- * Positioned above the Info button by SimScreenView.
+ * Positioned above the Info button by TrackLabScreenView.
  */
 export class MeasurementToolsPanel extends Panel {
   public constructor(overlayTools: OverlayToolsModel) {

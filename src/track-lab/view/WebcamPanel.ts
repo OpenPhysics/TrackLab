@@ -18,7 +18,7 @@ import TrackLabColors from "../../TrackLabColors.js";
 import { WEBCAM_PREVIEW_HEIGHT, WEBCAM_PREVIEW_WIDTH } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { estimateVideoFrameRate, type FPSEstimate, fixWebmDuration, WebcamRecorder } from "../../webcam.js";
-import { FRAME_RATE_RANGE } from "../model/SimModel.js";
+import { FRAME_RATE_RANGE } from "../model/TrackLabModel.js";
 
 const FONT = new PhetFont(14);
 const SMALL_FONT = new PhetFont(12);

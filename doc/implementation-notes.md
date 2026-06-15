@@ -8,12 +8,12 @@ TrackLab is a browser-based physics video analysis application built on SceneryS
 
 The simulation follows a composed Model-View pattern:
 
-- **Model Layer (`src/screen-name/model/`)**: Four sub-models coordinated by `SimModel`
-- **View Layer (`src/screen-name/view/`)**: Video player, overlay tools, graph, and data table
-- **Graph subsystem (`src/screen-name/graph/`)**: Configurable kinematics plots
+- **Model Layer (`src/track-lab/model/`)**: Four sub-models coordinated by `TrackLabModel`
+- **View Layer (`src/track-lab/view/`)**: Video player, overlay tools, graph, and data table
+- **Graph subsystem (`src/track-lab/graph/`)**: Configurable kinematics plots
 - **Tracking (`src/tracking/`)**: OpenCV template matching in a Web Worker
 
-`SimModel` is a thin coordinator that delegates to specialized sub-models and handles cross-cutting concerns such as retransforming track points when the model-view transform changes.
+`TrackLabModel` is a thin coordinator that delegates to specialized sub-models and handles cross-cutting concerns such as retransforming track points when the model-view transform changes.
 
 For extended developer detail (OpenCV, graph gestures, gotchas), see also [`architecture.md`](architecture.md).
 
@@ -29,7 +29,7 @@ from coordinate-system position/rotation and calibration endpoints. `OverlayTool
 
 ### Core Model Design
 
-`SimModel` composes four sub-models:
+`TrackLabModel` composes four sub-models:
 
 1. **VideoPlaybackModel** — frame timing, playback rate, display transform
 2. **VideoSourceModel** — uploads, webcam recordings, current source
@@ -49,7 +49,7 @@ OpenCV WASM requires COOP/COEP headers (configured in Vite dev and production bu
 
 ## View Components
 
-### SimScreenView as Coordinator
+### TrackLabScreenView as Coordinator
 
 The root view positions the control panel, video player, overlay stack, kinematics graph, and data table.
 
@@ -65,7 +65,7 @@ Specialized view classes handle specific aspects:
 8. **MeasuringTapeNode**, **AngleToolNode**: Measurement tools
 9. **WebcamPanel**: Record from webcam
 
-The graph subsystem (`ConfigurableGraph`, `GraphDataManager`, `GraphRenderer`, gesture handlers) is self-contained under `src/screen-name/graph/`.
+The graph subsystem (`ConfigurableGraph`, `GraphDataManager`, `GraphRenderer`, gesture handlers) is self-contained under `src/track-lab/graph/`.
 
 ### Color Scheme
 

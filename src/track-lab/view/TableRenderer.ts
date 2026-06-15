@@ -22,6 +22,7 @@
  * tracks added/removed, unit change, color-theme change, or locale change.
  */
 
+import { toFixed } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
 import type { Track } from "../model/Track.js";
 import { buildDataRows, type DataRow } from "../model/TrackExporter.js";
@@ -221,12 +222,12 @@ function buildDataRow(
   };
 
   addCell(String(row.frame));
-  addCell(row.time.toFixed(CELL_DECIMAL_PLACES));
+  addCell(toFixed(row.time, CELL_DECIMAL_PLACES));
   for (const track of tracks) {
     const val = row.values.get(track.id);
     if (val) {
-      addCell(val.x.toFixed(CELL_DECIMAL_PLACES));
-      addCell(val.y.toFixed(CELL_DECIMAL_PLACES));
+      addCell(toFixed(val.x, CELL_DECIMAL_PLACES));
+      addCell(toFixed(val.y, CELL_DECIMAL_PLACES));
     } else {
       addCell("—");
       addCell("—");
@@ -388,10 +389,10 @@ export class TableRenderer {
           const xCell = cells[cellIdx];
           const yCell = cells[cellIdx + 1];
           if (xCell) {
-            xCell.textContent = val ? val.x.toFixed(CELL_DECIMAL_PLACES) : "—";
+            xCell.textContent = val ? toFixed(val.x, CELL_DECIMAL_PLACES) : "—";
           }
           if (yCell) {
-            yCell.textContent = val ? val.y.toFixed(CELL_DECIMAL_PLACES) : "—";
+            yCell.textContent = val ? toFixed(val.y, CELL_DECIMAL_PLACES) : "—";
           }
           cellIdx += 2;
         }

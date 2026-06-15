@@ -65,10 +65,10 @@ src/
 ├── tracking/
 │   └── OpenCVTracker.ts        # Main-thread facade for the OpenCV Web Worker
 │
-└── screen-name/
-    ├── SimScreen.ts            # Wires SimModel + SimScreenView into a PhET Screen
+└── track-lab/
+    ├── TrackLabScreen.ts            # Wires TrackLabModel + TrackLabScreenView into a PhET Screen
     ├── model/
-    │   ├── SimModel.ts         # Top-level coordinator; composes the four sub-models
+    │   ├── TrackLabModel.ts         # Top-level coordinator; composes the four sub-models
     │   ├── OverlayToolsModel.ts  # Axes, calibration, measuring tape, angle tool, MVT
     │   ├── VideoPlaybackModel.ts # Timing, frame rate, display transform
     │   ├── VideoSourceModel.ts   # Webcam blobs, uploaded files, current source
@@ -79,7 +79,7 @@ src/
     │   └── TrackExporter.ts      # Pure: serializes tracks to CSV
     │
     ├── view/
-    │   ├── SimScreenView.ts      # Root layout node; positions all panels + overlays
+    │   ├── TrackLabScreenView.ts      # Root layout node; positions all panels + overlays
     │   ├── VideoPlayerNode.ts    # <video> element + stacked overlay nodes
     │   ├── ControlPanel.ts       # Left sidebar controls
     │   ├── TrackListPanel.ts     # Track list + per-track controls
@@ -113,7 +113,7 @@ scripts/                        # Icon generation utilities (run with `npm run i
 
 ## 3. Model layer
 
-`SimModel` is a thin coordinator that composes four sub-models. Each sub-model
+`TrackLabModel` is a thin coordinator that composes four sub-models. Each sub-model
 owns a specific slice of state and exposes it as Axon Properties.
 
 | Sub-model | Owns |
@@ -123,7 +123,7 @@ owns a specific slice of state and exposes it as Axon Properties.
 | `VideoSourceModel` | Current video blob (uploaded file or webcam recording) |
 | `TrackingModel` | Tracks array, active track ID, kinematics cache, `OpenCVTracker` instance |
 
-`SimModel` also owns cross-model logic that cannot live in a single sub-model,
+`TrackLabModel` also owns cross-model logic that cannot live in a single sub-model,
 most importantly `retransformTrackPoints()` — called whenever the MVT changes to
 re-express all stored track points in the new coordinate system.
 
@@ -136,7 +136,7 @@ UI dependencies and are stateless pure functions. Keep them that way.
 
 ## 4. View layer
 
-`SimScreenView` is the root `ScreenView` node. It creates and positions every
+`TrackLabScreenView` is the root `ScreenView` node. It creates and positions every
 panel and overlay, then passes the relevant model slices down.
 
 The overlay nodes (`CoordinateSystemNode`, `CalibrationToolNode`,
@@ -210,7 +210,7 @@ const areaProperty = new DerivedProperty(
 
 **Always use `lazyLink` when the reaction would be expensive or has side
 effects that must not fire on initialization.** For example, the MVT `lazyLink`
-in `SimModel` only re-expresses track points when the transform actually changes,
+in `TrackLabModel` only re-expresses track points when the transform actually changes,
 not on every construction.
 
 ---
@@ -229,7 +229,7 @@ Exposed as `OverlayToolsModel.modelViewTransformProperty` (a
 `DerivedProperty`). Anything that stores model coordinates and renders them on
 the video must listen to this property and re-project when it changes.
 
-`SimModel.retransformTrackPoints()` handles this for track data — it rewrites
+`TrackLabModel.retransformTrackPoints()` handles this for track data — it rewrites
 every stored point into the new coordinate system so points remain visually
 pinned to the same pixel after the user moves the axes.
 
@@ -282,7 +282,7 @@ Because tracks are immutable — mutations always create a new `Track` with a ne
 
 ## 9. Graph subsystem
 
-The graph subsystem lives entirely in `src/screen-name/graph/` and is
+The graph subsystem lives entirely in `src/track-lab/graph/` and is
 deliberately self-contained. Its seven files each own one responsibility:
 
 | File | Responsibility |
@@ -424,7 +424,7 @@ either crashing or silently corrupting state.
 ### Switching video sources does not auto-reset overlays
 
 `VideoSourceModel` changing does not automatically reset the MVT, calibration,
-or tracks. `SimModel` explicitly calls `model.tracking.reset()` and reverts the
+or tracks. `TrackLabModel` explicitly calls `model.tracking.reset()` and reverts the
 MVT to identity. If you add a new tool with persistent state, add a reset call to
 that same code path.
 

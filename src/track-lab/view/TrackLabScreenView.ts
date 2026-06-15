@@ -1,5 +1,5 @@
 /**
- * SimScreenView.ts
+ * TrackLabScreenView.ts
  *
  * Root layout for the simulation screen, composing all UI components and computing
  * the model-view transform between real-world and video-pixel coordinates.
@@ -15,7 +15,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
-import type { SimModel } from "../model/SimModel.js";
+import type { TrackLabModel } from "../model/TrackLabModel.js";
 import { AngleToolNode } from "./AngleToolNode.js";
 import { CalibrationToolNode } from "./CalibrationToolNode.js";
 import { ControlPanel } from "./ControlPanel.js";
@@ -42,7 +42,7 @@ const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph botto
  * and reset button. The webcam modal is placed above all other content for
  * correct z-ordering.
  */
-export class SimScreenView extends ScreenView {
+export class TrackLabScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
 
   /**
@@ -50,7 +50,7 @@ export class SimScreenView extends ScreenView {
    * @param trackLabPreferences - User preference flags (e.g. auto-tracking toggle).
    * @param options - Optional ScreenView configuration passed to the superclass.
    */
-  public constructor(model: SimModel, trackLabPreferences: TrackLabPreferencesModel, options?: ScreenViewOptions) {
+  public constructor(model: TrackLabModel, trackLabPreferences: TrackLabPreferencesModel, options?: ScreenViewOptions) {
     // Register the accessible screen summary (Interactive Description); current
     // details are derived live from the model.
     super({
@@ -91,7 +91,7 @@ export class SimScreenView extends ScreenView {
 
     // ── Video player (shifted right of control panel) ────────────────────
     // Uses model.modelViewTransformProperty (a DerivedProperty computed inside
-    // SimModel from the tool state properties above).
+    // TrackLabModel from the tool state properties above).
     this.videoPlayerNode = new VideoPlayerNode(model, this);
     this.addChild(this.videoPlayerNode);
 
@@ -115,8 +115,8 @@ export class SimScreenView extends ScreenView {
     });
 
     // ── Panel move drag (on the header bar) ───────────────────────────────
-    // The DragListener lives in SimScreenView so it naturally operates in
-    // SimScreenView's coordinate space.
+    // The DragListener lives in TrackLabScreenView so it naturally operates in
+    // TrackLabScreenView's coordinate space.
     let panelDragStartPos: Vector2 | null = null;
     let panelDragStartPointerPoint: Vector2 | null = null;
     this.videoPlayerNode.panelHeaderBar.addInputListener(
@@ -306,4 +306,4 @@ export class SimScreenView extends ScreenView {
   }
 }
 
-TrackLabNamespace.register("SimScreenView", SimScreenView);
+TrackLabNamespace.register("TrackLabScreenView", TrackLabScreenView);

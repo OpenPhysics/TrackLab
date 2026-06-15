@@ -6,7 +6,7 @@
  */
 
 import { DerivedProperty, EnumerationProperty } from "scenerystack/axon";
-import { Dimension2, Range } from "scenerystack/dot";
+import { Dimension2, Range, toFixed } from "scenerystack/dot";
 import { HBox, HStrut, Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont, TimeControlNode, TimeSpeed } from "scenerystack/scenery-phet";
 import { HSlider } from "scenerystack/sun";
@@ -219,9 +219,9 @@ export class PlaybackControlsNode extends HBox {
         }
         const current = Number.isFinite(time) && time >= 0 ? Math.min(time, duration) : 0;
         if (!Number.isFinite(duration)) {
-          return `${current.toFixed(2)}/? ${secondsUnit}`;
+          return `${toFixed(current, 2)}/? ${secondsUnit}`;
         }
-        return `${current.toFixed(2)}/${duration.toFixed(2)} ${secondsUnit}`;
+        return `${toFixed(current, 2)}/${toFixed(duration, 2)} ${secondsUnit}`;
       },
     );
 

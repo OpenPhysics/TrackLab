@@ -30,14 +30,14 @@ import {
   TOUCH_AREA_DILATION,
 } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
-import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/SimModel.js";
+import { DEFAULT_FRAME_RATE, type UploadedVideo, type WebcamRecording } from "../model/TrackLabModel.js";
 import type { VideoSourceModel } from "../model/VideoSourceModel.js";
 import { WebcamPanel } from "./WebcamPanel.js";
 
 /**
- * The three atomic activation methods from SimModel that VideoSourceControlNode
+ * The three atomic activation methods from TrackLabModel that VideoSourceControlNode
  * needs to call when the user switches video source.  Using a structural interface
- * rather than the full SimModel keeps this node decoupled from the overall model.
+ * rather than the full TrackLabModel keeps this node decoupled from the overall model.
  */
 export type VideoSourceActivation = {
   activateRecording: (recording: WebcamRecording) => void;

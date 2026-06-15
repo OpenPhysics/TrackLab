@@ -11,6 +11,7 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Multilink } from "scenerystack/axon";
+import { toFixed } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Line, Node, Path, RichDragListener, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -193,7 +194,7 @@ export class AngleToolNode extends Node {
 
         // Angle value
         const angleDeg = (Math.abs(diff) * 180) / Math.PI;
-        angleText.string = `${angleDeg.toFixed(ANGLE_DECIMAL_PLACES)}\u00b0`;
+        angleText.string = `${toFixed(angleDeg, ANGLE_DECIMAL_PLACES)}\u00b0`;
 
         // Label along the bisector, outside the arc
         const bisectorAngle = a1 + diff / 2;

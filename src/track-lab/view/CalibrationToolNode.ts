@@ -7,6 +7,7 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, Multilink } from "scenerystack/axon";
+import { toFixed } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, HBox, Line, type Node, RichDragListener, Text } from "scenerystack/scenery";
 import { Keypad, PhetFont } from "scenerystack/scenery-phet";
@@ -148,7 +149,7 @@ export class CalibrationToolNode extends DigitizingAwareOverlayNode {
     // Button showing current value + unit; clicking it opens the keypad.
     const buttonLabelProperty = new DerivedProperty(
       [overlayTools.calibDistanceProperty, overlayTools.calibUnitProperty],
-      (dist, unit) => `${dist.toFixed(CALIBRATION_DECIMAL_PLACES)} ${unit}`,
+      (dist, unit) => `${toFixed(dist, CALIBRATION_DECIMAL_PLACES)} ${unit}`,
     );
 
     const distanceButton = new TextPushButton(buttonLabelProperty, {

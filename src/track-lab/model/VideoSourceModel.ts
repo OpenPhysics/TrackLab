@@ -3,7 +3,7 @@
  *
  * Reactive state for video source management: webcam recordings, uploaded
  * videos, the currently active video blob, and whether the active video is
- * user-provided. Extracted from SimModel to keep source management concerns
+ * user-provided. Extracted from TrackLabModel to keep source management concerns
  * separate from playback and track management.
  */
 

@@ -2,12 +2,12 @@
  * TrackingModel.ts
  *
  * Reactive state for particle track management and the OpenCV tracker facade.
- * Extracted from SimModel so that track digitizing, kinematics caching, and
+ * Extracted from TrackLabModel so that track digitizing, kinematics caching, and
  * auto-tracking logic are independent of video playback and source management.
  *
  * Track point coordinates are expressed in the model coordinate system defined
  * by OverlayToolsModel.modelViewTransformProperty. When that transform changes,
- * SimModel calls retransformTrackPoints() to keep every point anchored to the
+ * TrackLabModel calls retransformTrackPoints() to keep every point anchored to the
  * same pixel on the video.
  */
 
@@ -34,7 +34,7 @@ export class TrackingModel {
   // ── Manual particle tracks ────────────────────────────────────────────
   // INVARIANT: every TrackPoint's (x, y) is expressed in the coordinate
   // system defined by the *current* overlayTools.modelViewTransformProperty.
-  // Whenever the MVT changes, SimModel calls retransformTrackPoints() to
+  // Whenever the MVT changes, TrackLabModel calls retransformTrackPoints() to
   // re-express every stored point in the new coordinate system so that each
   // point remains visually anchored to the same pixel on the video.
   public readonly tracksProperty = new Property<readonly Track[]>([]);
@@ -160,7 +160,7 @@ export class TrackingModel {
   /**
    * Re-expresses every stored track point in the coordinate system of `newMVT`,
    * preserving the pixel-space position of each point on the video.
-   * Called by SimModel whenever the model-view transform changes.
+   * Called by TrackLabModel whenever the model-view transform changes.
    */
   public retransformTrackPoints(prevMvt: Transform3, newMvt: Transform3): void {
     const tracks = this.tracksProperty.value;

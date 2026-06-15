@@ -3,7 +3,7 @@
  *
  * Reactive state for all measurement and coordinate-system overlay tools:
  * axes, calibration ruler, measuring tape, angle tool, and their derived
- * model-view transform. Extracted from SimModel to keep video-playback and
+ * model-view transform. Extracted from TrackLabModel to keep video-playback and
  * track-management state separate from geometric tool state.
  */
 

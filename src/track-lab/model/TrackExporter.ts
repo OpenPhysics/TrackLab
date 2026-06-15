@@ -6,6 +6,7 @@
  * and can be reused independently of the view.
  */
 
+import { toFixed } from "scenerystack/dot";
 import type { Track } from "./Track.js";
 
 const CSV_DECIMAL_PLACES = 4;
@@ -60,11 +61,11 @@ export function generateCsv(tracks: readonly Track[], unit: string, labels: CsvL
   const lines = [headers.join(",")];
 
   for (const row of dataRows) {
-    const cells: string[] = [String(row.frame), row.time.toFixed(CSV_DECIMAL_PLACES)];
+    const cells: string[] = [String(row.frame), toFixed(row.time, CSV_DECIMAL_PLACES)];
     for (const track of tracks) {
       const val = row.values.get(track.id);
       if (val) {
-        cells.push(val.x.toFixed(CSV_DECIMAL_PLACES), val.y.toFixed(CSV_DECIMAL_PLACES));
+        cells.push(toFixed(val.x, CSV_DECIMAL_PLACES), toFixed(val.y, CSV_DECIMAL_PLACES));
       } else {
         cells.push("", "");
       }
