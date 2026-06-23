@@ -5,6 +5,7 @@
  * for the physics video analysis tool.
  */
 
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { Screen, type ScreenOptions } from "scenerystack/sim";
 import type { TrackLabPreferencesModel } from "../preferences/TrackLabPreferencesModel.js";
 import TrackLabNamespace from "../TrackLabNamespace.js";
@@ -26,10 +27,12 @@ export class TrackLabScreen extends Screen<TrackLabModel, TrackLabScreenView> {
     super(
       () => new TrackLabModel(),
       (model) => new TrackLabScreenView(model, options.trackLabPreferences),
-      {
-        ...options,
-        createKeyboardHelpNode: () => new TrackLabKeyboardHelpContent(),
-      },
+      optionize<TrackLabScreenOptions, EmptySelfOptions, ScreenOptions>()(
+        {
+          createKeyboardHelpNode: () => new TrackLabKeyboardHelpContent(),
+        },
+        options,
+      ),
     );
   }
 }
