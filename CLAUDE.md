@@ -18,6 +18,17 @@ src/tracking/OpenCVTracker.ts   ← OpenCV template matching in Web Worker
 
 - **Colors** → `TrackLabColors.ts` (`ProfileColorProperty` only; no hardcoded rgb/hex in views)
 - **Layout** → `TrackLabConstants.ts` (margins, drag speeds, touch dilation)
+- **CSS-string carve-out:** `track-lab/view/TableRenderer.ts` builds the data table as real DOM
+  and needs CSS color **strings**, so it uses `TRACK_COLORS[…].toCSS()` with a `"#000000"`
+  fallback literal — the one allowed hardcoded color outside `TrackLabColors.ts` (same rationale
+  as RadioWaves' canvas backdrop carve-out).
+
+## Documented deviations (CONVENTIONS.md §2)
+
+Extra `src/` root files beyond the standard set, each justified by cross-screen use:
+`TrackLabIcons.ts` (programmatic icons), `TrackLabButton.ts` (shared themed button),
+`webcam.ts` (camera acquisition helper used by model and view), and the `src/tracking/`
+folder (OpenCV template-matching Web Worker — infrastructure, not a screen).
 
 ## Model-view transform
 
