@@ -28,8 +28,6 @@ jobs:
 
   compliance:
     uses: OpenPhysics/Baton/.github/workflows/shared-compliance-check.yml@main
-    with:
-      repo-name: TrackLab
 
   dependency-review:
     if: github.event_name == 'pull_request'
@@ -37,4 +35,3 @@ jobs:
 
   codeql:
     uses: OpenPhysics/Baton/.github/workflows/shared-codeql.yml@main
-
