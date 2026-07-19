@@ -1,86 +1,88 @@
-# Implementation Notes - TrackLab Simulation
+# Implementation Notes - TrackLab
+
+Developer-facing notes on the architecture. The measurement math is documented for educators in
+[model.md](./model.md). Extended OpenCV and graph-gesture detail also lives in
+[architecture.md](./architecture.md).
 
 ## Architecture Overview
 
-TrackLab is a browser-based physics video analysis application built on SceneryStack. Unlike traditional physics sims, it digitizes motion from video rather than integrating differential equations. The core workflow is: load video → set coordinate system → calibrate → digitize or auto-track → graph kinematics → export CSV.
+TrackLab is a single-screen SceneryStack application for video kinematics. Unlike forward physics
+sims, playback is driven by the HTML `<video>` element — `TrackLabModel.step()` is a no-op. The code
+separates into:
 
-### High-Level Architecture
+```
+src/track-lab/model/
+  ├─ TrackLabModel.ts           thin coordinator: pixel→model, source activation, retransform hook
+  ├─ VideoPlaybackModel.ts      current time, frame rate, playback rate, frame count
+  ├─ VideoSourceModel.ts        uploads, webcam blobs, bundled vs user video flag
+  ├─ TrackingModel.ts           tracks[], kinematics cache, OpenCVTracker facade
+  ├─ OverlayToolsModel.ts       axes, calibration, tape, angle tool, modelViewTransformProperty
+  ├─ ModelViewTransformFactory.ts   T(origin)·R(θ)·S(s,−s)
+  ├─ Track.ts / TrackExporter.ts    data shapes and CSV export
+  └─ KinematicsComputer.ts      pure finite-difference kinematics (no axon deps)
 
-The simulation follows a composed Model-View pattern:
+src/track-lab/view/
+  ├─ TrackLabScreenView.ts      layout: panel, video, graph, table
+  ├─ VideoPlayerNode.ts         hosts <video> + overlay stack
+  ├─ CoordinateSystemNode / CalibrationToolNode / DigitizingOverlayNode / AutoTrackerNode
+  ├─ KinematicsGraphNode / DataTableNode / ControlPanel / …
+  └─ TrackLabScreenSummaryContent.ts, TrackLabKeyboardHelpContent.ts
 
-- **Model Layer (`src/track-lab/model/`)**: Four sub-models coordinated by `TrackLabModel`
-- **View Layer (`src/track-lab/view/`)**: Video player, overlay tools, graph, and data table
-- **Graph subsystem (`src/track-lab/graph/`)**: Configurable kinematics plots
-- **Tracking (`src/tracking/`)**: OpenCV template matching in a Web Worker
+src/track-lab/graph/
+  ├─ ConfigurableGraph.ts       draggable/resizable plot shell
+  ├─ GraphDataManager.ts / GraphRenderer.ts / PlottableProperty.ts
+  └─ *GestureHandler.ts          pan, zoom, resize, axis drag
 
-`TrackLabModel` is a thin coordinator that delegates to specialized sub-models and handles cross-cutting concerns such as retransforming track points when the model-view transform changes.
+src/tracking/
+  └─ OpenCVTracker.ts           main-thread facade → Web Worker template matcher
 
-For extended developer detail (OpenCV, graph gestures, gotchas), see also [`architecture.md`](architecture.md).
+src/webcam.ts                   camera acquisition (used by model and view)
+src/TrackLabColors.ts / TrackLabConstants.ts
+```
 
-### Model-View Transform
+Data flows Model → View through AXON `Property` objects. `KinematicsComputer` and
+`ModelViewTransformFactory` are pure and unit-testable without SceneryStack.
 
-`ModelViewTransformFactory.buildModelViewTransform()` builds a `Transform3`:
+## Key design decisions
 
-`T(origin) · R(θ) · S(s, −s)`
+- **Composed sub-models.** `TrackLabModel` delegates to four focused models and only handles
+  cross-cutting orchestration (e.g. `recordTrackPoint`, `activateUpload`, MVT change → retransform).
+- **MVT retransform invariant.** Track points are stored in **model coordinates**. When axes or
+  calibration change, `overlayTools.modelViewTransformProperty` fires and
+  `TrackingModel.retransformTrackPoints(prev, next)` maps each point through pixel space so marks
+  stay visually anchored.
+- **Kinematics cache.** `trackKinematicsProperty` is a `DerivedProperty` keyed by track id; cache
+  validity uses **array identity** (`cached.points === track.points`). `removeTrack()` evicts cache
+  entries to avoid unbounded growth.
+- **OpenCV off the main thread.** Template matching runs in a Web Worker; `TrackingModel.initTracker`
+  uses a monotonic `initVersion` to discard stale async results after `resetTracker()`.
+- **Wall-clock timers (documented exceptions).** Webcam init, FPS sampling, and source-switch debounce
+  use `setTimeout`/`setInterval` — real hardware timing, not sim clock (see `CLAUDE.md`).
 
-from coordinate-system position/rotation and calibration endpoints. `OverlayToolsModel` exposes this as `modelViewTransformProperty`. Track points are stored in model coordinates; `retransformTrackPoints()` runs when axes or calibration change.
+## Model / view design
 
-## Model Components
+- `TrackLabModel.recordTrackPoint(trackId, pixelPoint)` reads playback time/frame from
+  `VideoPlaybackModel`, converts pixels via the current MVT, and calls `TrackingModel.addPointToTrack`.
+- Activating a new source (`activateRecording`, `activateUpload`, `activateBundledVideo`) resets
+  tracking atomically.
+- `TableRenderer.ts` builds the data table as real DOM; track colors use `TRACK_COLORS[i].toCSS()`
+  (documented carve-out for CSS strings).
+- Colors: `ProfileColorProperty` in `TrackLabColors.ts`; layout in `TrackLabConstants.ts`.
 
-### Core Model Design
+## Disposal conventions
 
-`TrackLabModel` composes four sub-models:
+`OpenCVTracker.dispose()` is called from `TrackingModel.reset()` and `resetTracker()`. Overlay and
+graph nodes are screen-lifetime; verify listener cleanup when adding dynamic Property links (fleet
+pattern in `tests/memory-leak.test.ts`).
 
-1. **VideoPlaybackModel** — frame timing, playback rate, display transform
-2. **VideoSourceModel** — uploads, webcam recordings, current source
-3. **TrackingModel** — particle tracks, kinematics cache, OpenCV facade
-4. **OverlayToolsModel** — axes, calibration, measuring tape, angle tool, MVT
+## Testing
 
-### Component Specialization
+`npm test` (vitest):
 
-Additional model utilities:
+- `tests/track-lab/model/KinematicsComputer.test.ts` — finite-difference edge cases (endpoints,
+  null gaps, single-point tracks)
+- `tests/memory-leak.test.ts` — fleet-standard WeakRef/GC regression suite
 
-1. **Track** / **TrackPoint**: Digitized position data per frame
-2. **KinematicsComputer**: Pure functions deriving velocity and acceleration from positions
-3. **TrackExporter**: CSV serialization
-4. **OpenCVTracker.ts**: Main-thread facade for the Web Worker template matcher
+## Multi-screen simulations
 
-OpenCV WASM requires COOP/COEP headers (configured in Vite dev and production builds).
-
-## View Components
-
-### TrackLabScreenView as Coordinator
-
-The root view positions the control panel, video player, overlay stack, kinematics graph, and data table.
-
-Specialized view classes handle specific aspects:
-
-1. **VideoPlayerNode**: `<video>` element hosting overlay nodes
-2. **CoordinateSystemNode**: Draggable, rotatable XY axes
-3. **CalibrationToolNode**: Draggable ruler for distance calibration
-4. **DigitizingOverlayNode**: Crosshair and magnifier for manual digitizing
-5. **AutoTrackerNode**: ROI selection and OpenCV tracking overlay
-6. **KinematicsGraphNode**: Draggable, resizable graph panel
-7. **DataTableNode**: Scrollable tabular data with accessibility caption
-8. **MeasuringTapeNode**, **AngleToolNode**: Measurement tools
-9. **WebcamPanel**: Record from webcam
-
-The graph subsystem (`ConfigurableGraph`, `GraphDataManager`, `GraphRenderer`, gesture handlers) is self-contained under `src/track-lab/graph/`.
-
-### Color Scheme
-
-All UI colors are `ProfileColorProperty` instances in `TrackLabColors.ts`. Track series use the `TRACK_COLORS` palette. Layout constants live in `TrackLabConstants.ts`.
-
-### Accessibility
-
-A11y strings are in the `a11y` section of locale JSON files, accessed via `StringManager.getA11y()`. Interactive overlays use `accessibleName`; data tables include `<caption>` and `aria-label` on headers.
-
-### Performance Optimizations
-
-- OpenCV runs off the main thread in a Web Worker
-- Kinematics are cached on the model and invalidated when track data changes
-- Graph rendering uses a dedicated renderer with zoom/pan gesture handlers
-
-Sample videos ship in `public/videos/` for offline demos.
-
-Note that disposal patterns should be verified when adding new Property links or overlay listeners.
+Single-screen sim. See fleet `doc/multi-screen.md` if the app ever splits capture vs analysis.
