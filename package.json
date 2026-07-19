@@ -37,7 +37,9 @@
     "clean": "rm -rf dist",
     "generate-svg-icon": "tsx scripts/bouncingBallToSVG.ts",
     "icons": "npm run generate-svg-icon && tsx scripts/generate-icons.ts",
-    "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
+    "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
+    "test:fuzz": "playwright test --project=chromium",
+    "test:fuzz:quick": "FUZZ_DURATION=10 playwright test --project=chromium"
   },
   "dependencies": {
     "@techstark/opencv-js": "^5.0.0-release.1",
@@ -54,7 +56,9 @@
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vite-plugin-pwa": "^1.3.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@playwright/test": "^1.61.1",
+    "playwright": "^1.61.1"
   },
   "engines": {
     "node": ">=22.0.0"
