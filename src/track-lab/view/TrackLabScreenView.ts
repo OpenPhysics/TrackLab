@@ -11,6 +11,7 @@ import { DragListener, Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
+import { FLAT_RESET_ALL_BUTTON_OPTIONS } from "../../common/TrackLabButtonOptions.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
 import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
@@ -175,6 +176,7 @@ export class TrackLabScreenView extends ScreenView {
 
     // ── Reset all (bottom right) ─────────────────────────────────────────
     const resetAllButton = new ResetAllButton({
+      ...FLAT_RESET_ALL_BUTTON_OPTIONS,
       listener: () => {
         this.videoPlayerNode.reset(); // clear selection before model clears recordings list
         model.reset(); // resets all model state including tool positions

@@ -314,6 +314,28 @@ const TrackLabColors = {
     new Color(102, 102, 102),
     new Color(80, 80, 80),
   ),
+
+  // Fleet-standard aliases for shared Panel + ButtonOptions modules.
+  panelBackgroundColorProperty: profileColor(
+    "panelBackground",
+    new Color(25, 25, 45, 0.95),
+    new Color(245, 245, 250, 0.98),
+  ),
+  panelBorderColorProperty: profileColor("panelBorder", new Color(120, 120, 140), new Color(180, 180, 200)),
+  textColorProperty: profileColor("textColor", WHITE, BLACK),
+
+  // ── Light control surfaces ───────────────────────────────────────────────────
+  // White chrome (combo boxes, flat push buttons, editable input fields) stays light
+  // in both profiles; its text stays dark.
+
+  /** Fill of light control surfaces: combo-box button/list, editable input fields. */
+  controlSurfaceColorProperty: profileColor("controlSurface", "#ffffff", "#ffffff"),
+
+  /** Fill of a disabled control surface (grayed-out editable input field). */
+  controlSurfaceDisabledColorProperty: profileColor("controlSurfaceDisabled", "#cccccc", "#cccccc"),
+
+  /** Text on light control surfaces: combo items, flat-button labels, field values, preferences. */
+  controlSurfaceTextColorProperty: profileColor("controlSurfaceText", "#1a1a1a", "#1a1a1a"),
 };
 
 export default TrackLabColors;
