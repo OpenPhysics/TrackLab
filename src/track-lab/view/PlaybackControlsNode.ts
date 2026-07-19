@@ -270,7 +270,7 @@ export class PlaybackControlsNode extends HBox {
     const rewindButton = createTrackLabButton(
       new Text("\u23EE", {
         font: new PhetFont(REWIND_BUTTON_ICON_SIZE),
-        fill: "black",
+        fill: TrackLabColors.playbackButtonIconColorProperty,
       }),
       {
         baseColor: TrackLabColors.playbackButtonBaseProperty,

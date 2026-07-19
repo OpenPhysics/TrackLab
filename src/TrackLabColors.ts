@@ -196,7 +196,15 @@ const TrackLabColors = {
   // Matches scenery-phet's default ColorConstants.LIGHT_BLUE used by the
   // play/pause and step buttons inside TimeControlNode.
   playbackButtonBaseProperty: profileColor("playbackButtonBase", new Color(153, 206, 255), new Color(153, 206, 255)),
-  buttonBaseDarkerProperty: profileColor("buttonBaseDarker", new Color(51, 51, 68), new Color(68, 68, 102)),
+  // Icon/glyph on the light-blue playback buttons (stays dark in both profiles).
+  playbackButtonIconColorProperty: profileColor("playbackButtonIcon", BLACK, BLACK),
+  // Darker sibling of buttonBaseDark — must lighten in projector so textOnDark
+  // (white→black) stays readable, matching buttonBaseDark / comboBox fills.
+  buttonBaseDarkerProperty: profileColor(
+    "buttonBaseDarker",
+    new Color(51, 51, 68),
+    new Color(200, 200, 220), // Light enough for black textOnDark in projector
+  ),
   buttonRecordProperty: profileColor("buttonRecord", new Color(204, 0, 0), new Color(238, 0, 0)),
   buttonStopProperty: profileColor("buttonStop", new Color(136, 0, 0), new Color(170, 0, 0)),
   buttonSuccessProperty: profileColor("buttonSuccess", new Color(34, 170, 34), new Color(60, 204, 60)),
