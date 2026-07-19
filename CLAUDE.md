@@ -49,6 +49,10 @@ Follows the shared [OpenPhysics accessibility convention](https://github.com/Ope
 - Sample videos in `public/videos/`
 - **Wall-clock timers (allowed exception)** — the webcam/video code uses raw `setTimeout`/`setInterval` rather than `stepTimer`: a camera-init timeout in `webcam.ts`, the FPS-sampling interval in `track-lab/view/WebcamPanel.ts`, and a source-switch debounce in `track-lab/view/VideoSourceControlNode.ts`. These track real hardware/wall-clock time (independent of the sim clock), so they are the documented exceptions to the "no `setTimeout`/`setInterval`" rule (CONVENTIONS.md §2.9 / §7).
 
+## Compliance carve-outs
+
+- **Hardcoded colors:** track color CSS in `TableRenderer.ts` uses the track’s own color index (data visualization), not `TrackLabColors` UI tokens.
+
 ## Testing
 
 No test suite at this stage — do not add Vitest/Playwright without an explicit request. APIs are still evolving.

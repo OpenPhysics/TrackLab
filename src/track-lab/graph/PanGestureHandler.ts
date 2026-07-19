@@ -6,7 +6,7 @@
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, type Vector2 } from "scenerystack/dot";
-import { DragListener } from "scenerystack/scenery";
+import { DragListener, KeyboardDragListener } from "scenerystack/scenery";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig } from "./GraphInteractionHandler.js";
@@ -104,6 +104,29 @@ export default class PanGestureHandler {
     });
 
     this.chartRectangle.addInputListener(dragListener);
+
+    // Keyboard pan (complements toolbar/programmatic pan()).
+    this.chartRectangle.focusable = true;
+    this.chartRectangle.tagName = "div";
+    this.chartRectangle.addInputListener(
+      new KeyboardDragListener({
+        dragSpeed: 200,
+        shiftDragSpeed: 60,
+        drag: (_event, listener) => {
+          const xRange = this.chartTransform.modelXRange;
+          const yRange = this.chartTransform.modelYRange;
+          const bounds = this.chartRectangle.localBounds;
+          const viewW = Math.max(1, bounds.width);
+          const viewH = Math.max(1, bounds.height);
+          const deltaX = (-listener.modelDelta.x * xRange.getLength()) / viewW;
+          const deltaY = (listener.modelDelta.y * yRange.getLength()) / viewH;
+          this.dataManager.setRange(
+            new Range(xRange.min + deltaX, xRange.max + deltaX),
+            new Range(yRange.min + deltaY, yRange.max + deltaY),
+          );
+        },
+      }),
+    );
   }
 }
 
