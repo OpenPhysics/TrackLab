@@ -49,6 +49,7 @@ Follows the shared [OpenPhysics accessibility convention](https://github.com/Ope
 ## Compliance carve-outs
 
 - **Hardcoded colors:** `view/TableRenderer.ts` builds the data table as real DOM and uses `TRACK_COLORS[…].toCSS()` with a `"#000000"` fallback literal — CSS-string carve-out for track visualization colors, not `TrackLabColors` UI tokens.
+- **Domain clock:** `VideoPlaybackModel` drives video timing/scrubbing instead of composing fleet-standard `TimeModel` (`src/common/TimeModel.ts` is present for shared reference only).
 
 ## Testing
 
