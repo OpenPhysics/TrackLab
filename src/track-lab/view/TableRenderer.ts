@@ -24,6 +24,7 @@
 
 import { toFixed } from "scenerystack/dot";
 import { TRACK_COLORS } from "../../TrackLabColors.js";
+import { DATA_DECIMAL_PLACES } from "../../TrackLabConstants.js";
 import type { Track } from "../model/Track.js";
 import { buildDataRows, type DataRow } from "../model/TrackExporter.js";
 
@@ -33,7 +34,6 @@ export const MIN_TABLE_HEIGHT = 100;
 export const MAX_TABLE_HEIGHT = 220;
 
 // ── Precision ─────────────────────────────────────────────────────────────────
-const CELL_DECIMAL_PLACES = 4;
 const MIN_EMPTY_COL_COUNT = 4;
 
 // ── CSS dimensions ────────────────────────────────────────────────────────────
@@ -222,12 +222,12 @@ function buildDataRow(
   };
 
   addCell(String(row.frame));
-  addCell(toFixed(row.time, CELL_DECIMAL_PLACES));
+  addCell(toFixed(row.time, DATA_DECIMAL_PLACES));
   for (const track of tracks) {
     const val = row.values.get(track.id);
     if (val) {
-      addCell(toFixed(val.x, CELL_DECIMAL_PLACES));
-      addCell(toFixed(val.y, CELL_DECIMAL_PLACES));
+      addCell(toFixed(val.x, DATA_DECIMAL_PLACES));
+      addCell(toFixed(val.y, DATA_DECIMAL_PLACES));
     } else {
       addCell("—");
       addCell("—");
@@ -389,10 +389,10 @@ export class TableRenderer {
           const xCell = cells[cellIdx];
           const yCell = cells[cellIdx + 1];
           if (xCell) {
-            xCell.textContent = val ? toFixed(val.x, CELL_DECIMAL_PLACES) : "—";
+            xCell.textContent = val ? toFixed(val.x, DATA_DECIMAL_PLACES) : "—";
           }
           if (yCell) {
-            yCell.textContent = val ? toFixed(val.y, CELL_DECIMAL_PLACES) : "—";
+            yCell.textContent = val ? toFixed(val.y, DATA_DECIMAL_PLACES) : "—";
           }
           cellIdx += 2;
         }

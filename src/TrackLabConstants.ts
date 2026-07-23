@@ -4,6 +4,9 @@
  * Central repository for numeric constants shared across the application.
  * Component-specific constants that are only used within a single file live
  * at the top of that file instead.
+ *
+ * Units: layout sizes and spacings in pixels (px) unless noted; speeds in
+ * pixels/second (px/s); dimensionless fractions are marked as such.
  */
 
 // ── Panel styling ─────────────────────────────────────────────────────────────
@@ -23,8 +26,10 @@ export const CALIB_HALF_LENGTH = 100;
 
 // ── Screen layout offsets ─────────────────────────────────────────────────────
 export const CONTROL_PANEL_LEFT_MARGIN = 10; // control panel inset from layout left edge
-export const TRACK_LIST_LEFT_SPACING = -100; // offset from video right edge (negative moves panels left)
-export const DATA_TABLE_TOP_SPACING = 8; // gap between track list bottom and data table
+export const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
+export const VIDEO_PLAYER_LEFT_SPACING = 60; // gap between control panel right and video player left
+export const DATA_TABLE_TOP_SPACING = 8; // gap between control panel bottom and track list / table
+export const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph bottom and reset button top
 export const RESET_BUTTON_MARGIN = 10; // reset button inset from layout right/bottom edges
 
 // ── Track symbol limits ───────────────────────────────────────────────────────
@@ -35,6 +40,7 @@ export const TRACK_SYMBOL_LAST_CODE = 90; // ASCII 'Z'
 
 // Maximum number of simultaneous tracks a user may have active.
 // Symbols are never reused: removing track B and adding a new one yields E, not B.
+// The A–Z palette supports up to 26, but the UI caps concurrent tracks here.
 export const MAX_TRACKS = 4;
 
 // ── Model-view transform precision thresholds ─────────────────────────────────
@@ -42,6 +48,10 @@ export const MAX_TRACKS = 4;
 // would produce a singular transform matrix.
 export const MIN_PIXEL_DISTANCE = 1e-6; // minimum pixel distance between calibration points
 export const MIN_CALIB_DISTANCE = 1e-9; // minimum real-world calibration distance
+
+// ── Numeric display / export precision ────────────────────────────────────────
+// Shared decimal places for table cells and CSV export of track coordinates.
+export const DATA_DECIMAL_PLACES = 4;
 
 // ── Button sizing ──────────────────────────────────────────────────────────────
 // Shared margins applied to every RectangularPushButton (and TextPushButton) in
@@ -76,6 +86,10 @@ export const DIGITIZING_DIM_OPACITY = 0.35;
 export const OVERLAY_DRAG_SPEED = 200; // normal keyboard drag
 export const OVERLAY_SHIFT_DRAG_SPEED = 40; // shift-key fine adjustment
 
+// Graph pan uses the same normal speed, but a slightly faster shift speed so
+// fine panning remains usable across large model ranges.
+export const GRAPH_PAN_SHIFT_DRAG_SPEED = 60;
+
 // ── Shared overlay label panel styling ────────────────────────────────────────
 // Label panels that float near the measuring tape midpoint and angle tool vertex.
 export const LABEL_PANEL_CORNER_RADIUS = 4;
@@ -86,17 +100,40 @@ export const LABEL_PANEL_SCALE = 0.8;
 // ── Shared overlay endpoint touch dilation ────────────────────────────────────
 export const OVERLAY_TOUCH_DILATION = 12;
 
-// ── Video panel drag & resize ──────────────────────────────────────────────────
-// Height of the thin header bar between the source controls and video content.
-// This bar is the drag target for moving the video panel.
-export const PANEL_HEADER_HEIGHT = 6;
+// ── Shared resize-handle geometry ─────────────────────────────────────────────
+// Corner resize knobs used by the data table and kinematics graph panels.
+export const RESIZE_HANDLE_SIZE = 12; // width and height of each corner handle (px)
+export const RESIZE_HANDLE_OFFSET = -6; // centers the handle on each corner
+export const RESIZE_HANDLE_TOUCH_DILATION = 6;
+export const RESIZE_HANDLE_MOUSE_DILATION = 4;
+export const RESIZE_HANDLE_CORNER_RADIUS = 2;
+export const RESIZE_HANDLE_LINE_WIDTH = 2;
 
 // ── Control panel icon and layout ─────────────────────────────────────────────
-// Shared by ControlPanel, MeasurementToolsPanel, and InfoDialogNode.
+// Shared by ControlPanel, MeasurementToolsPanel, InfoDialogNode, and TrackLabIcons.
 export const CONTROL_ICON_SIZE = 20;
 export const CONTROL_PANEL_ROWS_SPACING = 12;
 export const CONTROL_PANEL_X_MARGIN = 12;
 export const CONTROL_PANEL_Y_MARGIN = 12;
+
+// Geometry for the shared control / info-dialog icons (axes, calibration,
+// magnifier, tracking).  Sizes are in pixels; fractions are of CONTROL_ICON_SIZE.
+export const CONTROL_ICON_ARROW_HEAD_SIZE = 5;
+export const CONTROL_ICON_ARROW_TAIL_WIDTH = 1.5;
+export const CONTROL_ICON_LINE_WIDTH_THICK = 1.5;
+export const CONTROL_ICON_LINE_WIDTH_THIN = 1;
+export const CONTROL_ICON_LINE_WIDTH_MAGNIFIER = 2;
+export const CONTROL_ICON_DOT_RADIUS = 3;
+export const CONTROL_ICON_CENTER_DOT_RADIUS = 2;
+export const CONTROL_ICON_LINE_DASH: readonly number[] = [3, 2];
+export const CONTROL_ICON_ORIGIN_FRACTION = 0.7;
+export const CONTROL_ICON_X_ARROW_END_FRACTION = 0.85;
+export const CONTROL_ICON_Y_ARROW_END_FRACTION = 0.05;
+export const CONTROL_ICON_HALF_FRACTION = 0.4;
+export const CONTROL_ICON_CENTER_FRACTION = 0.5;
+export const CONTROL_ICON_MAGNIFIER_RADIUS_FRACTION = 0.32;
+export const CONTROL_ICON_TRACKING_RADIUS_FRACTION = 0.35;
+export const CONTROL_ICON_TRACKING_GAP_FRACTION = 0.15;
 
 // ── Graph zoom ─────────────────────────────────────────────────────────────
 // Multiplicative zoom step applied by wheel ticks and the zoom-in/zoom-out

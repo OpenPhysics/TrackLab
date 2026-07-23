@@ -7,9 +7,8 @@
  */
 
 import { toFixed } from "scenerystack/dot";
+import { DATA_DECIMAL_PLACES } from "../../TrackLabConstants.js";
 import type { Track } from "./Track.js";
-
-const CSV_DECIMAL_PLACES = 4;
 
 export type DataRow = {
   frame: number;
@@ -61,11 +60,11 @@ export function generateCsv(tracks: readonly Track[], unit: string, labels: CsvL
   const lines = [headers.join(",")];
 
   for (const row of dataRows) {
-    const cells: string[] = [String(row.frame), toFixed(row.time, CSV_DECIMAL_PLACES)];
+    const cells: string[] = [String(row.frame), toFixed(row.time, DATA_DECIMAL_PLACES)];
     for (const track of tracks) {
       const val = row.values.get(track.id);
       if (val) {
-        cells.push(toFixed(val.x, CSV_DECIMAL_PLACES), toFixed(val.y, CSV_DECIMAL_PLACES));
+        cells.push(toFixed(val.x, DATA_DECIMAL_PLACES), toFixed(val.y, DATA_DECIMAL_PLACES));
       } else {
         cells.push("", "");
       }

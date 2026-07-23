@@ -14,7 +14,14 @@ import { Tandem } from "scenerystack/tandem";
 import { FLAT_RESET_ALL_BUTTON_OPTIONS } from "../../common/TrackLabButtonOptions.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import type { TrackLabPreferencesModel } from "../../preferences/TrackLabPreferencesModel.js";
-import { CONTROL_PANEL_LEFT_MARGIN, DATA_TABLE_TOP_SPACING, RESET_BUTTON_MARGIN } from "../../TrackLabConstants.js";
+import {
+  CONTROL_PANEL_LEFT_MARGIN,
+  DATA_TABLE_TOP_SPACING,
+  KINEMATICS_GRAPH_BOTTOM_MARGIN,
+  RESET_BUTTON_MARGIN,
+  SCREEN_TOP_MARGIN,
+  VIDEO_PLAYER_LEFT_SPACING,
+} from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { TrackLabModel } from "../model/TrackLabModel.js";
 import { AngleToolNode } from "./AngleToolNode.js";
@@ -29,11 +36,6 @@ import { MeasuringTapeNode } from "./MeasuringTapeNode.js";
 import { TrackLabScreenSummaryContent } from "./TrackLabScreenSummaryContent.js";
 import { TrackListPanel } from "./TrackListPanel.js";
 import { VideoPlayerNode } from "./VideoPlayerNode.js";
-
-// ── Layout constants ──────────────────────────────────────────────────────────
-const SCREEN_TOP_MARGIN = 10; // inset from layout top edge for control panel and video
-const VIDEO_PLAYER_LEFT_SPACING = 60; // gap between control panel right and video player left
-const KINEMATICS_GRAPH_BOTTOM_MARGIN = 50; // gap between kinematics graph bottom and reset button top
 
 /**
  * Root layout for the simulation screen.

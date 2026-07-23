@@ -26,7 +26,17 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import { createTrackLabButton, makeDownloadIcon } from "../../TrackLabButton.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import {
+  OVERLAY_DRAG_SPEED,
+  OVERLAY_SHIFT_DRAG_SPEED,
+  PANEL_CORNER_RADIUS,
+  RESIZE_HANDLE_CORNER_RADIUS,
+  RESIZE_HANDLE_LINE_WIDTH,
+  RESIZE_HANDLE_MOUSE_DILATION,
+  RESIZE_HANDLE_OFFSET,
+  RESIZE_HANDLE_SIZE,
+  RESIZE_HANDLE_TOUCH_DILATION,
+} from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { generateCsv } from "../model/TrackExporter.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
@@ -43,11 +53,7 @@ const CONTENT_SPACING = 6;
 const TITLE_ROW_SPACING = 8;
 const EXPORT_BUTTON_ICON_SPACING = 3;
 
-// ── Resize handle geometry ────────────────────────────────────────────────────
-const HANDLE_SIZE = 12;
-const HANDLE_OFFSET = -6;
-const RESIZE_TOUCH_DILATION = 6;
-const RESIZE_MOUSE_DILATION = 4;
+// ── Resize constraints (handle geometry lives in TrackLabConstants) ───────────
 const MIN_TABLE_RESIZE_WIDTH = 200;
 const MIN_TABLE_RESIZE_HEIGHT = 80;
 
@@ -220,17 +226,25 @@ export class DataTableNode extends Node {
     ] as const;
 
     resizeCorners.forEach(({ cursor, accessibleName }, cornerIndex) => {
-      const handle = new Rectangle(0, 0, HANDLE_SIZE, HANDLE_SIZE, 2, 2, {
-        fill: TrackLabColors.controlPanelFillProperty,
-        stroke: TrackLabColors.controlPanelStrokeProperty,
-        lineWidth: 2,
-        cursor,
-        tagName: "div",
-        focusable: true,
-        accessibleName,
-      });
-      handle.touchArea = handle.localBounds.dilated(RESIZE_TOUCH_DILATION);
-      handle.mouseArea = handle.localBounds.dilated(RESIZE_MOUSE_DILATION);
+      const handle = new Rectangle(
+        0,
+        0,
+        RESIZE_HANDLE_SIZE,
+        RESIZE_HANDLE_SIZE,
+        RESIZE_HANDLE_CORNER_RADIUS,
+        RESIZE_HANDLE_CORNER_RADIUS,
+        {
+          fill: TrackLabColors.controlPanelFillProperty,
+          stroke: TrackLabColors.controlPanelStrokeProperty,
+          lineWidth: RESIZE_HANDLE_LINE_WIDTH,
+          cursor,
+          tagName: "div",
+          focusable: true,
+          accessibleName,
+        },
+      );
+      handle.touchArea = handle.localBounds.dilated(RESIZE_HANDLE_TOUCH_DILATION);
+      handle.mouseArea = handle.localBounds.dilated(RESIZE_HANDLE_MOUSE_DILATION);
 
       let dragStartState: { maxWidth: number; maxHeight: number; nodeX: number; nodeY: number } | null = null;
       let dragStartPointerPoint: Vector2 | null = null;
@@ -418,9 +432,14 @@ export class DataTableNode extends Node {
     this.resizeHandles.forEach((handle, index) => {
       const corner = corners[index];
       if (corner) {
-        handle.setRect(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE);
-        handle.touchArea = handle.localBounds.dilated(RESIZE_TOUCH_DILATION);
-        handle.mouseArea = handle.localBounds.dilated(RESIZE_MOUSE_DILATION);
+        handle.setRect(
+          corner.x + RESIZE_HANDLE_OFFSET,
+          corner.y + RESIZE_HANDLE_OFFSET,
+          RESIZE_HANDLE_SIZE,
+          RESIZE_HANDLE_SIZE,
+        );
+        handle.touchArea = handle.localBounds.dilated(RESIZE_HANDLE_TOUCH_DILATION);
+        handle.mouseArea = handle.localBounds.dilated(RESIZE_HANDLE_MOUSE_DILATION);
       }
     });
   }

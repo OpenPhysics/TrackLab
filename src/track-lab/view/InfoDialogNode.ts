@@ -11,13 +11,21 @@
 
 import type { ReadOnlyProperty } from "scenerystack/axon";
 import { Shape } from "scenerystack/kite";
-import { Circle, FireListener, HBox, Line, Node, Path, Rectangle, RichText, Text, VBox } from "scenerystack/scenery";
-import { ArrowNode, CloseButton, PhetFont } from "scenerystack/scenery-phet";
+import { FireListener, HBox, Line, Node, Path, Rectangle, RichText, Text, VBox } from "scenerystack/scenery";
+import { CloseButton, PhetFont } from "scenerystack/scenery-phet";
 import { Panel } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors from "../../TrackLabColors.js";
-import { CONTROL_ICON_SIZE, PANEL_CORNER_RADIUS } from "../../TrackLabConstants.js";
+import {
+  CONTROL_ICON_CENTER_FRACTION,
+  CONTROL_ICON_HALF_FRACTION,
+  CONTROL_ICON_LINE_WIDTH_THICK,
+  CONTROL_ICON_LINE_WIDTH_THIN,
+  CONTROL_ICON_SIZE,
+  PANEL_CORNER_RADIUS,
+} from "../../TrackLabConstants.js";
+import { makeAxesIcon, makeCalibrationIcon, makeMagnifyIcon, makeTrackingIcon } from "../../TrackLabIcons.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -38,26 +46,7 @@ const TAB_UNDERLINE_HEIGHT = 2; // thickness of active-tab indicator
 const TAB_ACTIVE_OPACITY = 1;
 const TAB_INACTIVE_OPACITY = 0.4;
 
-// ── Icon shared constants ────────────────────────────────────────────────────
-const ICON_ARROW_HEAD_SIZE = 5;
-const ICON_ARROW_TAIL_WIDTH = 1.5;
-const ICON_LINE_WIDTH_THICK = 1.5;
-const ICON_LINE_WIDTH_MAGNIFIER = 2;
-const ICON_DOT_RADIUS = 3;
-const ICON_CENTER_DOT_RADIUS = 2;
-const ICON_LINE_DASH: number[] = [3, 2];
-
-// Icon layout fractions
-const ICON_ORIGIN_FRACTION = 0.7;
-const ICON_X_ARROW_END_FRACTION = 0.85;
-const ICON_Y_ARROW_END_FRACTION = 0.05;
-const ICON_HALF_FRACTION = 0.4;
-const ICON_CENTER_FRACTION = 0.5;
-const ICON_MAGNIFIER_RADIUS_FRACTION = 0.32;
-const ICON_TRACKING_RADIUS_FRACTION = 0.35;
-const ICON_TRACKING_GAP_FRACTION = 0.15;
-
-// ── Tab 1 icon helpers ────────────────────────────────────────────────────────
+// ── Dialog-only icon helpers ──────────────────────────────────────────────────
 
 /** Video/file icon - folder with video symbol. */
 function videoIcon(): Node {
@@ -70,65 +59,15 @@ function videoIcon(): Node {
     .lineTo(18, 16)
     .lineTo(2, 16)
     .close();
-  const folder = new Path(folderShape, { stroke: gray, lineWidth: ICON_LINE_WIDTH_THICK, fill: null });
+  const folder = new Path(folderShape, { stroke: gray, lineWidth: CONTROL_ICON_LINE_WIDTH_THICK, fill: null });
   const play = new Path(new Shape().moveTo(8, 7).lineTo(8, 13).lineTo(13, 10).close(), { fill: gray });
   return new Node({ children: [folder, play] });
-}
-
-/** Two small XY arrows for coordinate system. */
-function axesIcon(): Node {
-  const xArrow = new ArrowNode(
-    0,
-    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
-    CONTROL_ICON_SIZE * ICON_X_ARROW_END_FRACTION,
-    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
-    {
-      fill: TrackLabColors.axisXColorProperty,
-      stroke: null,
-      headWidth: ICON_ARROW_HEAD_SIZE,
-      headHeight: ICON_ARROW_HEAD_SIZE,
-      tailWidth: ICON_ARROW_TAIL_WIDTH,
-    },
-  );
-  const yArrow = new ArrowNode(
-    0,
-    CONTROL_ICON_SIZE * ICON_ORIGIN_FRACTION,
-    0,
-    CONTROL_ICON_SIZE * ICON_Y_ARROW_END_FRACTION,
-    {
-      fill: TrackLabColors.axisYColorProperty,
-      stroke: null,
-      headWidth: ICON_ARROW_HEAD_SIZE,
-      headHeight: ICON_ARROW_HEAD_SIZE,
-      tailWidth: ICON_ARROW_TAIL_WIDTH,
-    },
-  );
-  return new Node({ children: [xArrow, yArrow] });
-}
-
-/** Two endpoint dots joined by a dashed line for calibration. */
-function calibrationIcon(): Node {
-  const cx = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const cy = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const half = CONTROL_ICON_SIZE * ICON_HALF_FRACTION;
-  const calColor = TrackLabColors.calibrationFillProperty;
-  return new Node({
-    children: [
-      new Line(cx - half, cy, cx + half, cy, {
-        stroke: calColor,
-        lineWidth: ICON_LINE_WIDTH_THICK,
-        lineDash: ICON_LINE_DASH,
-      }),
-      new Circle(ICON_DOT_RADIUS, { fill: calColor, x: cx - half, y: cy }),
-      new Circle(ICON_DOT_RADIUS, { fill: calColor, x: cx + half, y: cy }),
-    ],
-  });
 }
 
 /** Plus sign for adding tracks. */
 function addTrackIcon(): Node {
   const gray = TrackLabColors.iconGrayProperty;
-  const center = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
+  const center = CONTROL_ICON_SIZE * CONTROL_ICON_CENTER_FRACTION;
   const size = CONTROL_ICON_SIZE * 0.6;
   return new Node({
     children: [
@@ -138,75 +77,25 @@ function addTrackIcon(): Node {
   });
 }
 
-/** Magnifying glass for digitizing. */
-function magnifyIcon(): Node {
-  const r = CONTROL_ICON_SIZE * ICON_MAGNIFIER_RADIUS_FRACTION;
-  const cx = r + 1;
-  const cy = r + 1;
-  const gray = TrackLabColors.iconGrayProperty;
-  return new Node({
-    children: [
-      new Circle(r, {
-        stroke: gray,
-        lineWidth: ICON_LINE_WIDTH_THICK,
-        fill: null,
-        x: cx,
-        y: cy,
-      }),
-      new Line(
-        cx + r * ICON_ORIGIN_FRACTION,
-        cy + r * ICON_ORIGIN_FRACTION,
-        CONTROL_ICON_SIZE - 1,
-        CONTROL_ICON_SIZE - 1,
-        {
-          stroke: gray,
-          lineWidth: ICON_LINE_WIDTH_MAGNIFIER,
-        },
-      ),
-    ],
-  });
-}
-
-// ── Tab 2 icon helpers ────────────────────────────────────────────────────────
-
-/** Crosshair with centre dot for auto-tracking. */
-function trackingIcon(): Node {
-  const cx = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const cy = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const r = CONTROL_ICON_SIZE * ICON_TRACKING_RADIUS_FRACTION;
-  const gap = CONTROL_ICON_SIZE * ICON_TRACKING_GAP_FRACTION;
-  const gray = TrackLabColors.iconGrayProperty;
-  return new Node({
-    children: [
-      new Circle(r, {
-        stroke: gray,
-        lineWidth: ICON_LINE_WIDTH_THICK,
-        fill: null,
-        x: cx,
-        y: cy,
-      }),
-      new Circle(ICON_CENTER_DOT_RADIUS, { fill: gray, x: cx, y: cy }),
-      new Line(cx, cy - r - gap, cx, cy - gap, { stroke: gray, lineWidth: 1 }),
-      new Line(cx, cy + gap, cx, cy + r + gap, { stroke: gray, lineWidth: 1 }),
-      new Line(cx - r - gap, cy, cx - gap, cy, { stroke: gray, lineWidth: 1 }),
-      new Line(cx + gap, cy, cx + r + gap, cy, { stroke: gray, lineWidth: 1 }),
-    ],
-  });
-}
-
 /** Horizontal tape with end ticks — measuring tape. */
 function measuringTapeIcon(): Node {
-  const cx = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const cy = CONTROL_ICON_SIZE * ICON_CENTER_FRACTION;
-  const half = CONTROL_ICON_SIZE * ICON_HALF_FRACTION;
+  const cx = CONTROL_ICON_SIZE * CONTROL_ICON_CENTER_FRACTION;
+  const cy = CONTROL_ICON_SIZE * CONTROL_ICON_CENTER_FRACTION;
+  const half = CONTROL_ICON_SIZE * CONTROL_ICON_HALF_FRACTION;
   const color = TrackLabColors.measuringTapeColorProperty;
   const tickH = 4;
   return new Node({
     children: [
-      new Line(cx - half, cy, cx + half, cy, { stroke: color, lineWidth: ICON_LINE_WIDTH_THICK }),
-      new Line(cx - half, cy - tickH / 2, cx - half, cy + tickH / 2, { stroke: color, lineWidth: 1 }),
-      new Line(cx, cy - tickH / 4, cx, cy + tickH / 4, { stroke: color, lineWidth: 1 }),
-      new Line(cx + half, cy - tickH / 2, cx + half, cy + tickH / 2, { stroke: color, lineWidth: 1 }),
+      new Line(cx - half, cy, cx + half, cy, { stroke: color, lineWidth: CONTROL_ICON_LINE_WIDTH_THICK }),
+      new Line(cx - half, cy - tickH / 2, cx - half, cy + tickH / 2, {
+        stroke: color,
+        lineWidth: CONTROL_ICON_LINE_WIDTH_THIN,
+      }),
+      new Line(cx, cy - tickH / 4, cx, cy + tickH / 4, { stroke: color, lineWidth: CONTROL_ICON_LINE_WIDTH_THIN }),
+      new Line(cx + half, cy - tickH / 2, cx + half, cy + tickH / 2, {
+        stroke: color,
+        lineWidth: CONTROL_ICON_LINE_WIDTH_THIN,
+      }),
     ],
   });
 }
@@ -221,17 +110,17 @@ function angleToolIcon(): Node {
 
   const arm1 = new Line(vx, vy, vx + armLen, vy, {
     stroke: color,
-    lineWidth: ICON_LINE_WIDTH_THICK,
+    lineWidth: CONTROL_ICON_LINE_WIDTH_THICK,
   });
   const arm2 = new Line(vx, vy, vx + armLen * Math.cos(armAngle), vy - armLen * Math.sin(armAngle), {
     stroke: color,
-    lineWidth: ICON_LINE_WIDTH_THICK,
+    lineWidth: CONTROL_ICON_LINE_WIDTH_THICK,
   });
   // Arc sweeping from the diagonal arm (−armAngle) to horizontal (0), clockwise on screen
   const arcR = armLen * 0.32;
   const arc = new Path(new Shape().arc(vx, vy, arcR, -armAngle, 0, false), {
     stroke: color,
-    lineWidth: 1,
+    lineWidth: CONTROL_ICON_LINE_WIDTH_THIN,
     fill: null,
   });
 
@@ -249,12 +138,12 @@ function graphIcon(): Node {
   const top = m + 1;
   const w = right - left;
 
-  const xAxis = new Line(left, bottom, right, bottom, { stroke: gray, lineWidth: 1 });
-  const yAxis = new Line(left, bottom, left, top, { stroke: gray, lineWidth: 1 });
+  const xAxis = new Line(left, bottom, right, bottom, { stroke: gray, lineWidth: CONTROL_ICON_LINE_WIDTH_THIN });
+  const yAxis = new Line(left, bottom, left, top, { stroke: gray, lineWidth: CONTROL_ICON_LINE_WIDTH_THIN });
   const curveShape = new Shape()
     .moveTo(left + 1, bottom - 2)
     .cubicCurveTo(left + w * 0.25, bottom - 3, left + w * 0.55, top + 5, right - 1, top + 2);
-  const curve = new Path(curveShape, { stroke: curveColor, lineWidth: 1.5, fill: null });
+  const curve = new Path(curveShape, { stroke: curveColor, lineWidth: CONTROL_ICON_LINE_WIDTH_THICK, fill: null });
 
   return new Node({ children: [xAxis, yAxis, curve] });
 }
@@ -274,7 +163,7 @@ function tableIcon(): Node {
       // header fill
       new Rectangle(m, m, w, headerH, { fill: TrackLabColors.tableHeaderBackgroundProperty, stroke: null }),
       // outer border (drawn after fill so it appears on top)
-      new Rectangle(m, m, w, h, { stroke: gray, lineWidth: 1, fill: null }),
+      new Rectangle(m, m, w, h, { stroke: gray, lineWidth: CONTROL_ICON_LINE_WIDTH_THIN, fill: null }),
       // horizontal dividers
       new Line(m, m + headerH, m + w, m + headerH, { stroke: gray, lineWidth: 0.5 }),
       new Line(m, m + headerH + Math.round((h - headerH) / 2), m + w, m + headerH + Math.round((h - headerH) / 2), {
@@ -405,10 +294,14 @@ export class InfoDialogNode extends Node {
     const tab1Content = new VBox({
       children: [
         makeStep(videoIcon(), strings.loadVideoTitleStringProperty, strings.loadVideoBodyStringProperty),
-        makeStep(axesIcon(), strings.coordinateSystemTitleStringProperty, strings.coordinateSystemBodyStringProperty),
-        makeStep(calibrationIcon(), strings.calibrationTitleStringProperty, strings.calibrationBodyStringProperty),
+        makeStep(
+          makeAxesIcon(),
+          strings.coordinateSystemTitleStringProperty,
+          strings.coordinateSystemBodyStringProperty,
+        ),
+        makeStep(makeCalibrationIcon(), strings.calibrationTitleStringProperty, strings.calibrationBodyStringProperty),
         makeStep(addTrackIcon(), strings.addTrackTitleStringProperty, strings.addTrackBodyStringProperty),
-        makeStep(magnifyIcon(), strings.digitizeTitleStringProperty, strings.digitizeBodyStringProperty),
+        makeStep(makeMagnifyIcon(), strings.digitizeTitleStringProperty, strings.digitizeBodyStringProperty),
       ],
       spacing: STEPS_SPACING,
       align: "left",
@@ -417,7 +310,7 @@ export class InfoDialogNode extends Node {
     // ── Tab 2 content (Tools) ─────────────────────────────────────────────────
     const tab2Content = new VBox({
       children: [
-        makeStep(trackingIcon(), strings.autoTrackTitleStringProperty, strings.autoTrackBodyStringProperty),
+        makeStep(makeTrackingIcon(), strings.autoTrackTitleStringProperty, strings.autoTrackBodyStringProperty),
         makeStep(
           measuringTapeIcon(),
           strings.measuringTapeTitleStringProperty,
