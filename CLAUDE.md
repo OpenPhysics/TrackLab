@@ -34,7 +34,7 @@ Physics for educators: `doc/model.md`. Architecture: `doc/implementation-notes.m
 
 - `ModelViewTransformFactory.buildModelViewTransform()` maps real-world units to video pixels from coordinate-system position/rotation and calibration endpoints. Moving axes or calibration **re-expresses** digitized track points so they stay pinned on the video.
 - Velocity and acceleration are **finite-difference estimates** from position series — noise amplifies on differentiation.
-- Up to 26 tracks (labels A–Z) with independent colors for graphs and table rows.
+- Up to 4 concurrent tracks (labels A–Z available; symbols are not reused) with independent colors for graphs and table rows.
 
 ## Accessibility
 

@@ -37,8 +37,8 @@ The key ideas a student should take away:
 | Velocity | v_x, v_y, speed | user unit / s | Finite-difference estimate |
 | Acceleration | a_x, a_y, \|a\| | user unit / s² | Finite-difference of velocity |
 
-Up to **26 tracks** (labels A–Z) can be recorded simultaneously, each with its own color for graphs
-and the data table.
+Up to **4 concurrent tracks** (labels drawn from A–Z; symbols are not reused after removal) can be
+recorded, each with its own color for graphs and the data table.
 
 ## Governing equations
 

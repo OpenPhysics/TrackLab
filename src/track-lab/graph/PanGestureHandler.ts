@@ -7,6 +7,7 @@
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, type Vector2 } from "scenerystack/dot";
 import { DragListener, KeyboardDragListener } from "scenerystack/scenery";
+import { GRAPH_PAN_SHIFT_DRAG_SPEED, OVERLAY_DRAG_SPEED } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig } from "./GraphInteractionHandler.js";
@@ -110,8 +111,8 @@ export default class PanGestureHandler {
     this.chartRectangle.tagName = "div";
     this.chartRectangle.addInputListener(
       new KeyboardDragListener({
-        dragSpeed: 200,
-        shiftDragSpeed: 60,
+        dragSpeed: OVERLAY_DRAG_SPEED,
+        shiftDragSpeed: GRAPH_PAN_SHIFT_DRAG_SPEED,
         drag: (_event, listener) => {
           const xRange = this.chartTransform.modelXRange;
           const yRange = this.chartTransform.modelYRange;

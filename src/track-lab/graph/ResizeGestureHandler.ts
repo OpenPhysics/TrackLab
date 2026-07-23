@@ -13,14 +13,20 @@ import type { Vector2 } from "scenerystack/dot";
 import { type Node, Rectangle, RichDragListener } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import TrackLabColors from "../../TrackLabColors.js";
-import { OVERLAY_DRAG_SPEED, OVERLAY_SHIFT_DRAG_SPEED } from "../../TrackLabConstants.js";
+import {
+  OVERLAY_DRAG_SPEED,
+  OVERLAY_SHIFT_DRAG_SPEED,
+  RESIZE_HANDLE_CORNER_RADIUS,
+  RESIZE_HANDLE_LINE_WIDTH,
+  RESIZE_HANDLE_MOUSE_DILATION,
+  RESIZE_HANDLE_OFFSET,
+  RESIZE_HANDLE_SIZE,
+  RESIZE_HANDLE_TOUCH_DILATION,
+} from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type { GraphDimensions } from "./GraphInteractionHandler.js";
 
-const HANDLE_SIZE = 12;
-const HANDLE_OFFSET = -6; // centers the 12px handle on each corner
-const TOUCH_AREA_DILATION = 6;
-const MOUSE_AREA_DILATION = 4;
+// Minimum graph dimensions enforced while resizing (px).
 const MIN_WIDTH = 200;
 const MIN_HEIGHT = 150;
 
@@ -79,18 +85,26 @@ export default class ResizeGestureHandler {
     ];
 
     corners.forEach((corner, index) => {
-      const handle = new Rectangle(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE, 2, 2, {
-        fill: TrackLabColors.controlPanelFillProperty,
-        stroke: TrackLabColors.controlPanelStrokeProperty,
-        lineWidth: 2,
-        cursor: corner.cursor,
-        tagName: "div",
-        focusable: true,
-        accessibleName: cornerA11yNames[index as 0 | 1 | 2 | 3],
-      });
+      const handle = new Rectangle(
+        corner.x + RESIZE_HANDLE_OFFSET,
+        corner.y + RESIZE_HANDLE_OFFSET,
+        RESIZE_HANDLE_SIZE,
+        RESIZE_HANDLE_SIZE,
+        RESIZE_HANDLE_CORNER_RADIUS,
+        RESIZE_HANDLE_CORNER_RADIUS,
+        {
+          fill: TrackLabColors.controlPanelFillProperty,
+          stroke: TrackLabColors.controlPanelStrokeProperty,
+          lineWidth: RESIZE_HANDLE_LINE_WIDTH,
+          cursor: corner.cursor,
+          tagName: "div",
+          focusable: true,
+          accessibleName: cornerA11yNames[index as 0 | 1 | 2 | 3],
+        },
+      );
 
-      handle.touchArea = handle.localBounds.dilated(TOUCH_AREA_DILATION);
-      handle.mouseArea = handle.localBounds.dilated(MOUSE_AREA_DILATION);
+      handle.touchArea = handle.localBounds.dilated(RESIZE_HANDLE_TOUCH_DILATION);
+      handle.mouseArea = handle.localBounds.dilated(RESIZE_HANDLE_MOUSE_DILATION);
 
       this.handles.push(handle);
       this.attachDragListener(handle, index);
@@ -114,9 +128,14 @@ export default class ResizeGestureHandler {
     this.handles.forEach((handle, index) => {
       const corner = corners[index];
       if (corner) {
-        handle.setRect(corner.x + HANDLE_OFFSET, corner.y + HANDLE_OFFSET, HANDLE_SIZE, HANDLE_SIZE);
-        handle.touchArea = handle.localBounds.dilated(TOUCH_AREA_DILATION);
-        handle.mouseArea = handle.localBounds.dilated(MOUSE_AREA_DILATION);
+        handle.setRect(
+          corner.x + RESIZE_HANDLE_OFFSET,
+          corner.y + RESIZE_HANDLE_OFFSET,
+          RESIZE_HANDLE_SIZE,
+          RESIZE_HANDLE_SIZE,
+        );
+        handle.touchArea = handle.localBounds.dilated(RESIZE_HANDLE_TOUCH_DILATION);
+        handle.mouseArea = handle.localBounds.dilated(RESIZE_HANDLE_MOUSE_DILATION);
       }
     });
   }
