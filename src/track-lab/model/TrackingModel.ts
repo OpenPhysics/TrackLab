@@ -250,7 +250,7 @@ export class TrackingModel {
       return false;
     }
     const track = this.tracksProperty.value.find((t) => t.id === id);
-    return track !== undefined && track.points.some((p) => p.frame === frame);
+    return track?.points.some((p) => p.frame === frame) ?? false;
   }
 
   /**
