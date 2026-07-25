@@ -112,7 +112,15 @@ self.onmessage = async (event) => {
 
         if (templateMat) templateMat.delete();
         const roi = new cv.Rect(clampedX, clampedY, roiW, roiH);
-        templateMat = blurred.roi(roi).clone();
+        // roi() returns a new Mat header sharing `blurred`'s buffer; it must be
+        // deleted explicitly.  Only the clone owns memory that outlives this
+        // message, and WASM heap allocations are never reclaimed by the JS GC.
+        const roiMat = blurred.roi(roi);
+        try {
+          templateMat = roiMat.clone();
+        } finally {
+          roiMat.delete();
+        }
 
         self.postMessage({
           id,
@@ -129,7 +137,10 @@ self.onmessage = async (event) => {
       }
     } else if (type === 'track') {
       if (!cv || !templateMat) {
-        self.postMessage({ id, type: 'track-result', x: null, y: null, confidence: 0 });
+        // confidence 0 is below any threshold, so the main thread discards this
+        // result.  x/y are still numbers so the payload matches the declared
+        // WorkerResponse shape in OpenCVTracker.ts.
+        self.postMessage({ id, type: 'track-result', x: 0, y: 0, confidence: 0 });
         return;
       }
 

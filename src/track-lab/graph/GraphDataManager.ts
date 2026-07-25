@@ -20,6 +20,9 @@ export interface GridVisualizationConfig {
 }
 
 export default class GraphDataManager {
+  /** Upper bound on ticks per axis; spacing escalates until the count fits. */
+  private static readonly MAX_TICKS = 20;
+
   // ── Circular buffer ──────────────────────────────────────────────────────
   // Fixed-size ring buffer so that oldest-point eviction is O(1) rather than
   // O(n) (Array.shift reindexes every remaining element after removal).
@@ -316,7 +319,17 @@ export default class GraphDataManager {
       spacing = 10 * magnitude;
     }
 
-    return Math.max(spacing, rangeLength / 20);
+    // Cap the tick count by stepping up through the 1-2-5 sequence rather than
+    // clamping to rangeLength / MAX_TICKS, which would hand back an arbitrary
+    // non-round spacing (visible at targetTicks = 15, where the nice value can
+    // fall just under the cap).
+    while (rangeLength / spacing > GraphDataManager.MAX_TICKS) {
+      const decade = 10 ** Math.floor(Math.log10(spacing));
+      const step = Math.round(spacing / decade);
+      spacing = step < 2 ? 2 * decade : step < 5 ? 5 * decade : 10 * decade;
+    }
+
+    return spacing;
   }
 
   /**

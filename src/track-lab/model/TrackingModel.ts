@@ -287,6 +287,59 @@ export class TrackingModel {
     }));
   }
 
+  /**
+   * Re-derive every stored point's frame index from its recorded timestamp
+   * using `frameRate`.  Called by TrackLabModel when the frame rate changes.
+   *
+   * `time` is the authoritative quantity — it is captured from the video
+   * element — while `frame` is a derived index that must stay consistent with
+   * `VideoPlaybackModel.currentFrameProperty`, which recomputes as
+   * `round(time × fps)`.  Without this, changing the frame rate after
+   * digitizing leaves stored points labelled with indices from the old rate,
+   * and everything keyed on `frame` (the erase target, the current-frame ring,
+   * the table row highlight) silently addresses the wrong point.
+   *
+   * Lowering the frame rate can map two points onto the same index.  Frames are
+   * unique keys within a track, so a collision keeps the earlier point,
+   * matching addPointToTrack()'s first-wins policy.
+   */
+  public retimeTrackPoints(frameRate: number): void {
+    if (!(frameRate > 0)) {
+      return;
+    }
+    const tracks = this.tracksProperty.value;
+    if (tracks.length === 0) {
+      return;
+    }
+
+    this.tracksProperty.value = tracks.map((track) => {
+      const seen = new Set<number>();
+      const points: TrackPoint[] = [];
+      // Points are already sorted by ascending frame, and frame is monotonic in
+      // time, so this walks the track in time order — the first point to claim
+      // an index is the earliest one.
+      for (const pt of track.points) {
+        const frame = Math.round(pt.time * frameRate);
+        if (seen.has(frame)) {
+          continue;
+        }
+        seen.add(frame);
+        points.push({ ...pt, frame });
+      }
+      return { ...track, points };
+    });
+
+    // The stash holds a point carrying an index from the previous frame rate.
+    // Restoring it would place it at the wrong frame, so re-derive it too.
+    const deleted = this.lastDeletedPointProperty.value;
+    if (deleted) {
+      this.lastDeletedPointProperty.value = {
+        trackId: deleted.trackId,
+        point: { ...deleted.point, frame: Math.round(deleted.point.time * frameRate) },
+      };
+    }
+  }
+
   // ── Tracker facade ──────────────────────────────────────────────────────
   // Views interact with the tracker exclusively through these methods so that
   // the tracker implementation stays encapsulated inside the model layer.

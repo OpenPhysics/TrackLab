@@ -146,8 +146,17 @@ export class DataTableNode extends Node {
           const link = document.createElement("a");
           link.href = url;
           link.download = `export${this.exportCounter}.csv`;
+          // The anchor must be in the document for the synthetic click to start
+          // a download in Firefox, and the object URL must outlive the click:
+          // revoking it synchronously cancels the download in some browsers.
+          // Wall-clock setTimeout is deliberate here — this is browser download
+          // plumbing, not simulation time, so it must not follow the sim clock.
+          document.body.appendChild(link);
           link.click();
-          URL.revokeObjectURL(url);
+          setTimeout(() => {
+            link.remove();
+            URL.revokeObjectURL(url);
+          }, 0);
           this.exportCounter++;
         },
       },
@@ -196,16 +205,6 @@ export class DataTableNode extends Node {
       );
     };
 
-    const runRebuild = () => {
-      tableRenderer.rebuild(
-        tracking.tracksProperty.value,
-        unitProperty.value,
-        getTableColors(),
-        getLabels(),
-        getA11yLabels(),
-      );
-    };
-
     const tracksListener = () => runUpdate();
     tracking.tracksProperty.link(tracksListener);
 
@@ -215,13 +214,37 @@ export class DataTableNode extends Node {
     const currentFrameListener = (frame: number) => tableRenderer.setCurrentFrame(frame);
     playback.currentFrameProperty.link(currentFrameListener);
 
-    // Color-theme and locale changes require a full rebuild because cell colours
-    // and label strings are baked into the DOM.
-    const tableHeaderBgListener = () => runRebuild();
-    TrackLabColors.tableHeaderBackgroundProperty.lazyLink(tableHeaderBgListener);
-
-    const frameStringListener = () => runRebuild();
-    dataTableStrings.frameStringProperty.lazyLink(frameStringListener);
+    // Colour-theme and locale changes are baked into the DOM as CSS strings and
+    // text nodes, so they need a rebuild.  Every contributing property is
+    // observed rather than one representative of each group: switching colour
+    // profile or locale updates these properties one at a time, so a single
+    // representative can fire while its siblings still hold their old values.
+    // TableRenderer.update() compares the full colour/label snapshot and
+    // rebuilds when it differs, so the last notification wins with final values.
+    const themeProperties = [
+      TrackLabColors.tableHeaderBackgroundProperty,
+      TrackLabColors.tableHeaderTextProperty,
+      TrackLabColors.tableRowOddProperty,
+      TrackLabColors.tableRowEvenProperty,
+      TrackLabColors.tableGridStrokeProperty,
+      TrackLabColors.tableEmptyTextProperty,
+      TrackLabColors.tableSymbolShadowProperty,
+      TrackLabColors.tableBackgroundProperty,
+      TrackLabColors.tableCurrentRowProperty,
+    ];
+    const localeProperties = [
+      dataTableStrings.frameStringProperty,
+      dataTableStrings.timeSecondsStringProperty,
+      dataTableStrings.noDataStringProperty,
+      a11yStrings.dataTableStringProperty,
+    ];
+    const themeOrLocaleListener = () => runUpdate();
+    for (const property of themeProperties) {
+      property.lazyLink(themeOrLocaleListener);
+    }
+    for (const property of localeProperties) {
+      property.lazyLink(themeOrLocaleListener);
+    }
 
     const videoLoadedListener = (loaded: boolean) => {
       this.visible = loaded;
@@ -420,8 +443,12 @@ export class DataTableNode extends Node {
       tracking.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
       playback.currentFrameProperty.unlink(currentFrameListener);
-      TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
-      dataTableStrings.frameStringProperty.unlink(frameStringListener);
+      for (const property of themeProperties) {
+        property.unlink(themeOrLocaleListener);
+      }
+      for (const property of localeProperties) {
+        property.unlink(themeOrLocaleListener);
+      }
       videoLoadedProperty.unlink(videoLoadedListener);
       exportButton.dispose();
       panel.localBoundsProperty.unlink(localBoundsListener);

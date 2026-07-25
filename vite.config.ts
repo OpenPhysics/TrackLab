@@ -118,7 +118,7 @@ function serveOpenCV(): Plugin {
 
 /**
  * Security headers required for:
- *  - COOP/COEP: SharedArrayBuffer (FFmpeg WASM)
+ *  - COOP/COEP: SharedArrayBuffer (OpenCV WASM in the tracking worker)
  *  - CSP: restrict resource loading to same-origin + known blob/data exceptions
  *  - X-Content-Type-Options: prevent MIME sniffing
  *  - X-Frame-Options: prevent clickjacking (belt-and-suspenders alongside frame-ancestors)
@@ -128,10 +128,10 @@ const securityHeaders: Record<string, string> = {
   "Cross-Origin-Embedder-Policy": "require-corp",
   "Content-Security-Policy": [
     "default-src 'self'",
-    // 'wasm-unsafe-eval' is required for FFmpeg/OpenCV WASM modules
+    // 'wasm-unsafe-eval' is required for the OpenCV WASM module
     // 'unsafe-eval' is required for SceneryStack query parameter parsing
     "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
-    // FFmpeg and OpenCV spin up blob: workers
+    // OpenCV spins up blob: workers
     "worker-src blob: 'self'",
     // Inline styles are set via element.style / cssText throughout the UI layer
     "style-src 'self' 'unsafe-inline'",

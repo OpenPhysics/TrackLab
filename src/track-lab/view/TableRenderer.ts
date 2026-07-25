@@ -75,6 +75,26 @@ export type A11yLabels = {
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 
+/** Stable serialisation of every colour baked into the table DOM. */
+function colorsKey(colors: TableColors): string {
+  return [
+    colors.headerBg,
+    colors.headerText,
+    colors.rowOdd,
+    colors.rowEven,
+    colors.gridStroke,
+    colors.emptyText,
+    colors.symbolShadow,
+    colors.background,
+    colors.currentRow,
+  ].join("|");
+}
+
+/** Stable serialisation of every string baked into the table DOM. */
+function labelsKey(labels: TableLabels, a11y: A11yLabels): string {
+  return [labels.frame, labels.timeSeconds, labels.noData, a11y.tableCaption].join("|");
+}
+
 function makeCellStyle(colors: TableColors): string {
   return `padding: ${TABLE_CELL_PADDING_Y}px ${TABLE_CELL_PADDING_X}px; border: 1px solid ${colors.gridStroke}; text-align: center;`;
 }
@@ -262,6 +282,13 @@ export class TableRenderer {
   // ── Incremental-update state ───────────────────────────────────────────────
   private lastTrackIds: string[] = [];
   private lastUnit: string = "";
+  // Colours and labels are baked into the DOM as CSS strings and text nodes, so
+  // a change to any of them needs a structural rebuild.  Comparing serialised
+  // snapshots means correctness does not depend on *which* colour or string
+  // property happened to fire the update: whichever notification arrives last
+  // with the final values is the one that rebuilds.
+  private lastColorsKey: string = "";
+  private lastLabelsKey: string = "";
   private tableBodyRef: HTMLTableSectionElement | null = null;
   private readonly frameRowMap: Map<number, HTMLTableRowElement> = new Map();
   private maxRenderedFrame: number = -Infinity;
@@ -402,6 +429,8 @@ export class TableRenderer {
 
     this.lastTrackIds = tracks.map((t) => t.id);
     this.lastUnit = unit;
+    this.lastColorsKey = colorsKey(colors);
+    this.lastLabelsKey = labelsKey(labels, a11y);
 
     // The rebuild discarded the highlighted <tr>; restore it on the new DOM.
     // No scroll — the frame has not moved, only the rows around it.
@@ -429,7 +458,9 @@ export class TableRenderer {
     const isStructural =
       unit !== this.lastUnit ||
       trackIds.length !== this.lastTrackIds.length ||
-      trackIds.some((id, i) => id !== this.lastTrackIds[i]);
+      trackIds.some((id, i) => id !== this.lastTrackIds[i]) ||
+      colorsKey(colors) !== this.lastColorsKey ||
+      labelsKey(labels, a11y) !== this.lastLabelsKey;
 
     if (isStructural || !this.tableBodyRef) {
       this.rebuild(tracks, unit, colors, labels, a11y);

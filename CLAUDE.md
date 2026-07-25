@@ -34,6 +34,8 @@ Physics for educators: `doc/model.md`. Architecture: `doc/implementation-notes.m
 
 - `ModelViewTransformFactory.buildModelViewTransform()` maps real-world units to video pixels from coordinate-system position/rotation and calibration endpoints. Moving axes or calibration **re-expresses** digitized track points so they stay pinned on the video.
 - Velocity and acceleration are **finite-difference estimates** from position series — noise amplifies on differentiation.
+- **Time sync is one-way and centralized.** `VideoPlayerNode` links `currentTimeProperty` → `videoElement.currentTime` (guarded by the `scrubbing` flag and a half-frame deadband). Writers of `currentTimeProperty` should *not* seek the element themselves; the video follows the model automatically.
+- **`TrackPoint.time` is authoritative, `frame` is derived.** Changing the frame rate renumbers `currentFrameProperty`, so `TrackingModel.retimeTrackPoints()` re-derives every stored point's index from its timestamp (wired in `TrackLabModel`). Lowering the rate can collide two points onto one index; first wins.
 - Up to 4 concurrent tracks (labels A–Z available; symbols are not reused) with independent colors for graphs and table rows.
 
 ## Accessibility
@@ -67,7 +69,12 @@ Actual specs:
 
 - `tests/track-lab/model/KinematicsComputer.test.ts`
 - `tests/track-lab/model/TrackingModel.test.ts`
-- `tests/memory-leak.test.ts`
+- `tests/track-lab/model/TrackRetiming.test.ts` — frame indices re-derived from timestamps on frame-rate change
+- `tests/track-lab/model/ModelViewTransformFactory.test.ts` — includes the retransform round-trip (points stay pinned to the same video pixel)
+- `tests/track-lab/model/TrackExporter.test.ts`
+- `tests/track-lab/model/VideoPlaybackModel.test.ts`
+- `tests/track-lab/graph/GraphDataManager.test.ts` — tick spacing stays on the 1-2-5 sequence
+- `tests/memory-leak.test.ts` — WeakRef dispose regression, plus listener-count regressions for `PlaybackControlsNode` (an HSlider that is rebuilt but never inserted must still be disposed, or it retains listeners on `currentTimeProperty`)
 
 Run `npm test`. CI runs the suite when a `test` script is present.
 
@@ -89,5 +96,5 @@ npm run generate-svg-icon   # bouncing-ball icon SVG
 Extra `src/` root files beyond the standard set, each justified by cross-screen use:
 `TrackLabIcons.ts`, `TrackLabButton.ts`, `webcam.ts`, and the `src/tracking/` folder (OpenCV Web Worker).
 
-- **OpenCV WASM** requires COOP/COEP headers (configured in Vite dev + production). Sample videos in `public/videos/`.
+- **OpenCV WASM** requires COOP/COEP headers (configured in Vite dev + production). Sample videos live in top-level `videos/`, served at `/videos/` by the `serveVideos()` Vite plugin (Range-request support for seeking) and copied to `dist/videos/` on build — they are not under `public/`.
 - **Wall-clock timers (allowed exception)** — webcam/video code uses raw `setTimeout`/`setInterval` rather than `stepTimer`: camera-init timeout in `webcam.ts`, FPS-sampling interval in `WebcamPanel.ts`, source-switch debounce in `VideoSourceControlNode.ts`. These track real hardware time, independent of the sim clock.
