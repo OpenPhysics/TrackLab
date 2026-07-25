@@ -30,14 +30,27 @@ async function forceGC(earlyExitRef?: WeakRef<object>): Promise<void> {
   }
 }
 
-const SAMPLE_PLOTTABLES: PlottableProperty[] = [
-  { name: "t", accessor: (point) => point.t ?? 0 },
-  { name: "x", accessor: (point) => point.x ?? 0 },
-];
+// Named separately from the array so callers can reference them without an
+// index lookup, which under noUncheckedIndexedAccess would widen to
+// `PlottableProperty | undefined` and force a non-null assertion.
+// Bracket access because `point` is a Record<string, number> and the project
+// sets noPropertyAccessFromIndexSignature.
+const TIME_PLOTTABLE: PlottableProperty = {
+  name: "t",
+  accessor: (point: Record<string, number>) => point["t"] ?? 0,
+};
+const POSITION_PLOTTABLE: PlottableProperty = {
+  name: "x",
+  accessor: (point: Record<string, number>) => point["x"] ?? 0,
+};
+
+const SAMPLE_PLOTTABLES: PlottableProperty[] = [TIME_PLOTTABLE, POSITION_PLOTTABLE];
 
 function createAndDisposeGraphControlsPanel(): WeakRef<object> {
-  const xPropertyProperty = new Property(SAMPLE_PLOTTABLES[0]!);
-  const yPropertyProperty = new Property(SAMPLE_PLOTTABLES[1]!);
+  // Explicit type argument: TypeScript narrows these consts to RecordPlottable
+  // from their initializers, and Property<T> is invariant in T.
+  const xPropertyProperty = new Property<PlottableProperty>(TIME_PLOTTABLE);
+  const yPropertyProperty = new Property<PlottableProperty>(POSITION_PLOTTABLE);
   const panel = new GraphControlsPanel(SAMPLE_PLOTTABLES, xPropertyProperty, yPropertyProperty, 200);
   const ref = new WeakRef<object>(panel);
   panel.dispose();
@@ -64,8 +77,8 @@ describe("Memory leak regression", () => {
   });
 
   it("double dispose() does not throw", () => {
-    const xPropertyProperty = new Property(SAMPLE_PLOTTABLES[0]!);
-    const yPropertyProperty = new Property(SAMPLE_PLOTTABLES[1]!);
+    const xPropertyProperty = new Property<PlottableProperty>(TIME_PLOTTABLE);
+    const yPropertyProperty = new Property<PlottableProperty>(POSITION_PLOTTABLE);
     const panel = new GraphControlsPanel(SAMPLE_PLOTTABLES, xPropertyProperty, yPropertyProperty, 200);
     panel.dispose();
     expect(() => panel.dispose()).not.toThrow();
