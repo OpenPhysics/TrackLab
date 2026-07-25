@@ -18,8 +18,10 @@ import TrackLabColors from "../../TrackLabColors.js";
 
 const a11yStrings = StringManager.getInstance().getA11y();
 
+import { makeEraserIcon, makeRestoreIcon } from "../../TrackLabIcons.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import GraphDataManager from "../graph/GraphDataManager.js";
+import type { TrackingModel } from "../model/TrackingModel.js";
 import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 
 const LABEL_FONT = new PhetFont(14);
@@ -46,9 +48,11 @@ export class PlaybackControlsNode extends HBox {
 
   public constructor(
     playback: VideoPlaybackModel,
+    tracking: TrackingModel,
     videoElement: HTMLVideoElement,
     onStepBackward: () => void,
     onStepForward: () => void,
+    onErasePoint: () => void,
   ) {
     super({ spacing: CONTROLS_SPACING, align: "center" });
 
@@ -288,9 +292,45 @@ export class PlaybackControlsNode extends HBox {
       },
     );
 
-    this.children = [timeControlNode, this.scrubber, rewindButton, infoDisplay];
+    // ── Erase / restore point buttons ──────────────────────────────────────
+    // These act on the *current frame* of the *active track*, which together
+    // identify exactly one digitized point — no hit-testing and no selection
+    // state.  They live beside the step buttons because that is where
+    // "act on this frame" already lives, and deliberately not in
+    // TrackListPanel, where they would sit one target away from the trash
+    // button that deletes an entire track.
+    const canErasePointProperty = new DerivedProperty(
+      [tracking.tracksProperty, tracking.activeTrackIdProperty, playback.currentFrameProperty],
+      (_tracks, activeId, frame) => tracking.hasPointAtFrame(activeId, frame),
+    );
+
+    // Dim background and icon together, matching the rewind button.
+    const dimWhenDisabled = (enabled: boolean, button: import("scenerystack/scenery").Node) => {
+      button.opacity = enabled ? 1 : 0.45;
+    };
+
+    const erasePointButton = createTrackLabButton(makeEraserIcon(), {
+      baseColor: TrackLabColors.playbackButtonBaseProperty,
+      enabledAppearanceStrategy: dimWhenDisabled,
+      enabledProperty: canErasePointProperty,
+      accessibleName: a11yStrings.erasePointStringProperty,
+      listener: onErasePoint,
+    });
+
+    const restorePointButton = createTrackLabButton(makeRestoreIcon(), {
+      baseColor: TrackLabColors.playbackButtonBaseProperty,
+      enabledAppearanceStrategy: dimWhenDisabled,
+      enabledProperty: tracking.canRestorePointProperty,
+      accessibleName: a11yStrings.restorePointStringProperty,
+      listener: () => tracking.restoreLastDeletedPoint(),
+    });
+
+    this.children = [timeControlNode, this.scrubber, rewindButton, erasePointButton, restorePointButton, infoDisplay];
 
     this.disposePlaybackControlsNode = () => {
+      erasePointButton.dispose();
+      restorePointButton.dispose();
+      canErasePointProperty.dispose();
       timeSpeedProperty.unlink(onSpeedChange);
       playback.playbackRateProperty.unlink(onRateChange);
       playback.currentTimeProperty.unlink(onTimeChange);

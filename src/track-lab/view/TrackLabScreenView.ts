@@ -169,6 +169,7 @@ export class TrackLabScreenView extends ScreenView {
     // ── Data table (top right, shifts left when window is wider than layoutBounds) ─
     const dataTableNode = new DataTableNode(
       model.tracking,
+      model.playback,
       model.playback.videoLoadedProperty,
       model.overlayTools.calibUnitProperty,
     );

@@ -40,6 +40,7 @@ import {
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import { generateCsv } from "../model/TrackExporter.js";
 import type { TrackingModel } from "../model/TrackingModel.js";
+import type { VideoPlaybackModel } from "../model/VideoPlaybackModel.js";
 import { type A11yLabels, type TableColors, type TableLabels, TableRenderer } from "./TableRenderer.js";
 
 // ── Fonts ────────────────────────────────────────────────────────────────────
@@ -69,6 +70,7 @@ function getTableColors(): TableColors {
     emptyText: TrackLabColors.tableEmptyTextProperty.value.toCSS(),
     symbolShadow: TrackLabColors.tableSymbolShadowProperty.value.toCSS(),
     background: TrackLabColors.tableBackgroundProperty.value.toCSS(),
+    currentRow: TrackLabColors.tableCurrentRowProperty.value.toCSS(),
   };
 }
 
@@ -86,6 +88,7 @@ export class DataTableNode extends Node {
 
   public constructor(
     tracking: TrackingModel,
+    playback: VideoPlaybackModel,
     videoLoadedProperty: TReadOnlyProperty<boolean>,
     unitProperty: TReadOnlyProperty<string>,
   ) {
@@ -103,7 +106,12 @@ export class DataTableNode extends Node {
     });
 
     // ── TableRenderer owns all DOM and incremental-update state ───────────────
-    const tableRenderer = new TableRenderer(getTableColors(), getLabels(), getA11yLabels());
+    // Clicking a data row seeks the video to that frame, which makes the table
+    // a navigation surface: find a bad point here, then erase it from the
+    // playback controls without hunting for a 2px dot on the video.
+    const tableRenderer = new TableRenderer(getTableColors(), getLabels(), getA11yLabels(), (frame: number) => {
+      playback.currentTimeProperty.value = frame / playback.frameRateProperty.value;
+    });
 
     const tableDomNode = new DOM(tableRenderer.wrapper, { allowInput: true });
 
@@ -203,6 +211,9 @@ export class DataTableNode extends Node {
 
     const unitListener = () => runUpdate();
     unitProperty.link(unitListener);
+
+    const currentFrameListener = (frame: number) => tableRenderer.setCurrentFrame(frame);
+    playback.currentFrameProperty.link(currentFrameListener);
 
     // Color-theme and locale changes require a full rebuild because cell colours
     // and label strings are baked into the DOM.
@@ -408,6 +419,7 @@ export class DataTableNode extends Node {
       resizeObserver.disconnect();
       tracking.tracksProperty.unlink(tracksListener);
       unitProperty.unlink(unitListener);
+      playback.currentFrameProperty.unlink(currentFrameListener);
       TrackLabColors.tableHeaderBackgroundProperty.unlink(tableHeaderBgListener);
       dataTableStrings.frameStringProperty.unlink(frameStringListener);
       videoLoadedProperty.unlink(videoLoadedListener);

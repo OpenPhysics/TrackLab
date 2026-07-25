@@ -88,11 +88,13 @@ export class StringManager {
     titleStringProperty: ReadOnlyProperty<string>;
     simulationControlsStringProperty: ReadOnlyProperty<string>;
     graphInteractionsStringProperty: ReadOnlyProperty<string>;
+    digitizingStringProperty: ReadOnlyProperty<string>;
     playPauseSimulationStringProperty: ReadOnlyProperty<string>;
     resetSimulationStringProperty: ReadOnlyProperty<string>;
     stepBackwardStringProperty: ReadOnlyProperty<string>;
     stepForwardStringProperty: ReadOnlyProperty<string>;
     rewindToStartStringProperty: ReadOnlyProperty<string>;
+    erasePointStringProperty: ReadOnlyProperty<string>;
     resetZoomStringProperty: ReadOnlyProperty<string>;
     zoomInOutStringProperty: ReadOnlyProperty<string>;
     panViewStringProperty: ReadOnlyProperty<string>;
@@ -101,11 +103,13 @@ export class StringManager {
       titleStringProperty: stringProperties.keyboardShortcuts.titleStringProperty,
       simulationControlsStringProperty: stringProperties.keyboardShortcuts.simulationControlsStringProperty,
       graphInteractionsStringProperty: stringProperties.keyboardShortcuts.graphInteractionsStringProperty,
+      digitizingStringProperty: stringProperties.keyboardShortcuts.digitizingStringProperty,
       playPauseSimulationStringProperty: stringProperties.keyboardShortcuts.playPauseSimulationStringProperty,
       resetSimulationStringProperty: stringProperties.keyboardShortcuts.resetSimulationStringProperty,
       stepBackwardStringProperty: stringProperties.keyboardShortcuts.stepBackwardStringProperty,
       stepForwardStringProperty: stringProperties.keyboardShortcuts.stepForwardStringProperty,
       rewindToStartStringProperty: stringProperties.keyboardShortcuts.rewindToStartStringProperty,
+      erasePointStringProperty: stringProperties.keyboardShortcuts.erasePointStringProperty,
       resetZoomStringProperty: stringProperties.keyboardShortcuts.resetZoomStringProperty,
       zoomInOutStringProperty: stringProperties.keyboardShortcuts.zoomInOutStringProperty,
       panViewStringProperty: stringProperties.keyboardShortcuts.panViewStringProperty,
@@ -441,6 +445,8 @@ export class StringManager {
     digitizingAreaStringProperty: ReadOnlyProperty<string>;
     digitizeTrackStringProperty: ReadOnlyProperty<string>;
     removeTrackStringProperty: ReadOnlyProperty<string>;
+    erasePointStringProperty: ReadOnlyProperty<string>;
+    restorePointStringProperty: ReadOnlyProperty<string>;
     dataTableStringProperty: ReadOnlyProperty<string>;
     exportCSVStringProperty: ReadOnlyProperty<string>;
     measuringTapeBaseStringProperty: ReadOnlyProperty<string>;
@@ -485,6 +491,8 @@ export class StringManager {
       digitizingAreaStringProperty: stringProperties.a11y.digitizingAreaStringProperty,
       digitizeTrackStringProperty: stringProperties.a11y.digitizeTrackStringProperty,
       removeTrackStringProperty: stringProperties.a11y.removeTrackStringProperty,
+      erasePointStringProperty: stringProperties.a11y.erasePointStringProperty,
+      restorePointStringProperty: stringProperties.a11y.restorePointStringProperty,
       dataTableStringProperty: stringProperties.a11y.dataTableStringProperty,
       exportCSVStringProperty: stringProperties.a11y.exportCSVStringProperty,
       measuringTapeBaseStringProperty: stringProperties.a11y.measuringTapeBaseStringProperty,

@@ -141,6 +141,22 @@ class MockAudioContext {
 (globalThis as Record<string, unknown>)["AudioContext"] = MockAudioContext;
 (globalThis as Record<string, unknown>)["webkitAudioContext"] = MockAudioContext;
 
+// ── Web Worker mock ──────────────────────────────────────────────────────────
+// TrackingModel constructs an OpenCVTracker (and therefore a Worker) as a field
+// initializer, so model tests need Worker to exist. happy-dom does not provide
+// it. Messages are swallowed: no test drives the OpenCV worker protocol, and a
+// real worker cannot run under happy-dom anyway.
+class MockWorker {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  postMessage: () => void = noop;
+  terminate: () => void = noop;
+  addEventListener: () => void = noop;
+  removeEventListener: () => void = noop;
+  dispatchEvent: () => boolean = () => false;
+}
+(globalThis as Record<string, unknown>)["Worker"] = MockWorker;
+
 // ── patch getContext("2d") before any scenerystack import ────────────────────
 const origGetContext: typeof HTMLCanvasElement.prototype.getContext = HTMLCanvasElement.prototype.getContext;
 HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) {

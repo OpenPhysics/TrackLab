@@ -144,6 +144,76 @@ export function makeTrashIcon(): Node {
 }
 
 /**
+ * Eraser icon: a tilted eraser block with a divider between the rubber and the
+ * sleeve.  Deliberately unlike makeTrashIcon() — the erase-point and
+ * remove-track actions must never be mistaken for one another.
+ */
+export function makeEraserIcon(): Node {
+  const w = 12; // eraser block length
+  const h = 6.5; // eraser block height
+  const lw = 1.2;
+  const sleeveX = 4.5; // divider between rubber tip and sleeve
+  const tilt = -Math.PI / 6; // block leans like a held eraser
+
+  const body = new Rectangle(0, 0, w, h, 1, 1, {
+    stroke: TrackLabColors.playbackButtonIconColorProperty,
+    lineWidth: lw,
+    fill: null,
+  });
+  const divider = new Line(sleeveX, 0, sleeveX, h, {
+    stroke: TrackLabColors.playbackButtonIconColorProperty,
+    lineWidth: lw,
+  });
+
+  const block = new Node({ children: [body, divider] });
+  block.rotation = tilt;
+  // Re-wrap so the caller receives an unrotated node whose origin is its centre.
+  return new Node({ children: [block] });
+}
+
+/**
+ * Restore icon: a counter-clockwise arrow looping back on itself ("undo the
+ * last delete").
+ */
+export function makeRestoreIcon(): Node {
+  const r = 5; // arc radius
+  const lw = 1.6;
+  const headLength = 5; // tip-to-base distance of the arrowhead
+  const headHalfWidth = 3; // half the arrowhead's base
+  // The glyph is only ~12px on screen, so the head has to be large relative to
+  // the arc — a subtle one just reads as a letter "C".
+  const headAngle = Math.PI * 0.4;
+  const tailAngle = Math.PI * 1.75;
+
+  const arc = new Path(new Shape().arc(0, 0, r, headAngle, tailAngle, false), {
+    stroke: TrackLabColors.playbackButtonIconColorProperty,
+    lineWidth: lw,
+    fill: null,
+  });
+
+  // Arrowhead at the arc's start, pointing back against the sweep so the loop
+  // reads as "go backwards". Tangent at headAngle is (-sin, cos); negate it.
+  const hx = r * Math.cos(headAngle);
+  const hy = r * Math.sin(headAngle);
+  const tipX = Math.sin(headAngle);
+  const tipY = -Math.cos(headAngle);
+  // Perpendicular to the tip direction, used to lay out the base corners.
+  const perpX = -tipY;
+  const perpY = tipX;
+
+  const head = new Path(
+    new Shape()
+      .moveTo(hx + tipX * headLength, hy + tipY * headLength)
+      .lineTo(hx + perpX * headHalfWidth, hy + perpY * headHalfWidth)
+      .lineTo(hx - perpX * headHalfWidth, hy - perpY * headHalfWidth)
+      .close(),
+    { fill: TrackLabColors.playbackButtonIconColorProperty },
+  );
+
+  return new Node({ children: [arc, head] });
+}
+
+/**
  * Two small XY arrows for the coordinate-system control / info-dialog row.
  */
 export function makeAxesIcon(): Node {

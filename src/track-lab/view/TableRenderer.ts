@@ -57,7 +57,11 @@ export type TableColors = {
   emptyText: string;
   symbolShadow: string;
   background: string;
+  currentRow: string;
 };
+
+/** Seek the video to `frame`. Invoked when the user clicks a data row. */
+export type FrameSelectedCallback = (frame: number) => void;
 
 export type TableLabels = {
   frame: string;
@@ -83,6 +87,7 @@ function buildHtmlTable(
   a11y: A11yLabels,
   maxWidth: number,
   maxHeight: number,
+  onFrameSelected: FrameSelectedCallback,
 ): HTMLDivElement {
   const dataRows = buildDataRows(tracks);
 
@@ -196,7 +201,7 @@ function buildHtmlTable(
       if (!row) {
         continue;
       }
-      tbody.appendChild(buildDataRow(row, tracks, makeCellStyle(colors), i % 2 !== 0, colors));
+      tbody.appendChild(buildDataRow(row, tracks, makeCellStyle(colors), i % 2 !== 0, colors, onFrameSelected));
     }
   }
   table.appendChild(tbody);
@@ -210,9 +215,21 @@ function buildDataRow(
   cellStyle: string,
   isEven: boolean,
   colors: TableColors,
+  onFrameSelected: FrameSelectedCallback,
 ): HTMLTableRowElement {
   const tr = document.createElement("tr");
   tr.style.background = isEven ? colors.rowEven : colors.rowOdd;
+
+  // Clicking a row seeks the video to that frame. This is what lets the table
+  // act as a navigation surface: spot a bad point here, click it, and the
+  // erase button in the playback controls lights up on the right frame.
+  tr.style.cursor = "pointer";
+  tr.addEventListener("click", (event) => {
+    // The whole panel is wrapped in a pan DragListener; without this the click
+    // can be swallowed as the tail of a drag.
+    event.stopPropagation();
+    onFrameSelected(row.frame);
+  });
 
   const addCell = (text: string) => {
     const td = document.createElement("td");
@@ -253,9 +270,23 @@ export class TableRenderer {
   private currentMaxWidth: number;
   private currentMaxHeight: number;
 
-  public constructor(initialColors: TableColors, initialLabels: TableLabels, initialA11y: A11yLabels) {
+  // ── Current-frame highlight state ──────────────────────────────────────────
+  // The frame the video is parked on. Re-applied after every rebuild, since a
+  // rebuild throws away the highlighted <tr>.
+  private currentFrame: number | null = null;
+  private currentRowColor: string;
+  private readonly onFrameSelected: FrameSelectedCallback;
+
+  public constructor(
+    initialColors: TableColors,
+    initialLabels: TableLabels,
+    initialA11y: A11yLabels,
+    onFrameSelected: FrameSelectedCallback,
+  ) {
     this.currentMaxWidth = MAX_TABLE_WIDTH;
     this.currentMaxHeight = MAX_TABLE_HEIGHT;
+    this.currentRowColor = initialColors.currentRow;
+    this.onFrameSelected = onFrameSelected;
     this.wrapper = buildHtmlTable(
       [],
       "m",
@@ -264,7 +295,38 @@ export class TableRenderer {
       initialA11y,
       this.currentMaxWidth,
       this.currentMaxHeight,
+      onFrameSelected,
     );
+  }
+
+  /**
+   * Mark the row for `frame` as the current one and scroll it into view.
+   * Cheap — moves styling between two existing rows, never rebuilds.
+   */
+  public setCurrentFrame(frame: number | null): void {
+    this.currentFrame = frame;
+    this.applyCurrentFrameHighlight(true);
+  }
+
+  /**
+   * Paint the current-frame highlight onto the live DOM.
+   *
+   * @param scrollIntoView - true for user-driven frame changes; false after a
+   *   rebuild, where the frame did not actually move and yanking the scroll
+   *   position would fight the user's own scrolling.
+   */
+  private applyCurrentFrameHighlight(scrollIntoView: boolean): void {
+    for (const [frame, tr] of this.frameRowMap) {
+      const isCurrent = frame === this.currentFrame;
+      tr.style.outline = isCurrent ? `2px solid ${this.currentRowColor}` : "";
+      // Draw the outline inside the cell box so it is not clipped by the
+      // scroll container at the first and last rows.
+      tr.style.outlineOffset = isCurrent ? "-2px" : "";
+      tr.setAttribute("aria-current", isCurrent ? "true" : "false");
+      if (isCurrent && scrollIntoView) {
+        tr.scrollIntoView({ block: "nearest" });
+      }
+    }
   }
 
   /** Apply user-set max-width / max-height to the wrapper CSS. */
@@ -297,7 +359,17 @@ export class TableRenderer {
     labels: TableLabels,
     a11y: A11yLabels,
   ): void {
-    const newWrapper = buildHtmlTable(tracks, unit, colors, labels, a11y, this.currentMaxWidth, this.currentMaxHeight);
+    this.currentRowColor = colors.currentRow;
+    const newWrapper = buildHtmlTable(
+      tracks,
+      unit,
+      colors,
+      labels,
+      a11y,
+      this.currentMaxWidth,
+      this.currentMaxHeight,
+      this.onFrameSelected,
+    );
 
     this.wrapper.innerHTML = "";
     if (newWrapper.firstChild) {
@@ -330,6 +402,10 @@ export class TableRenderer {
 
     this.lastTrackIds = tracks.map((t) => t.id);
     this.lastUnit = unit;
+
+    // The rebuild discarded the highlighted <tr>; restore it on the new DOM.
+    // No scroll — the frame has not moved, only the rows around it.
+    this.applyCurrentFrameHighlight(false);
   }
 
   /**
@@ -363,6 +439,24 @@ export class TableRenderer {
     // ── Incremental path: same track structure, only new points ──────────────
     const dataRows = buildDataRows(tracks);
 
+    // The incremental path can append rows but never remove them, so a deleted
+    // point would leave its <tr> behind showing stale coordinates. If any
+    // rendered frame is gone from the data, fall back to a full rebuild — that
+    // also re-stripes the positional row backgrounds and resets frameRowMap /
+    // maxRenderedFrame. Same bail-out idiom as the hasOutOfOrder guard below.
+    const currentFrames = new Set(dataRows.map((row) => row.frame));
+    let hasRemovedRow = false;
+    for (const frame of this.frameRowMap.keys()) {
+      if (!currentFrames.has(frame)) {
+        hasRemovedRow = true;
+        break;
+      }
+    }
+    if (hasRemovedRow) {
+      this.rebuild(tracks, unit, colors, labels, a11y);
+      return;
+    }
+
     // If any new row precedes the last rendered frame the sort order breaks;
     // fall back to full rebuild (rare: out-of-order manual digitizing).
     const hasOutOfOrder = dataRows.some((row) => !this.frameRowMap.has(row.frame) && row.frame < this.maxRenderedFrame);
@@ -378,6 +472,7 @@ export class TableRenderer {
       this.tableBodyRef.innerHTML = "";
     }
 
+    let appendedRow = false;
     for (const row of dataRows) {
       const tr = this.frameRowMap.get(row.frame);
       if (tr !== undefined) {
@@ -399,13 +494,21 @@ export class TableRenderer {
       } else {
         // Append a brand-new row.
         const rowIndex = this.frameRowMap.size;
-        const newRow = buildDataRow(row, tracks, cellStyle, rowIndex % 2 !== 0, colors);
+        const newRow = buildDataRow(row, tracks, cellStyle, rowIndex % 2 !== 0, colors, this.onFrameSelected);
         this.tableBodyRef.appendChild(newRow);
         this.frameRowMap.set(row.frame, newRow);
+        appendedRow = true;
         if (row.frame > this.maxRenderedFrame) {
           this.maxRenderedFrame = row.frame;
         }
       }
+    }
+
+    // A row appended for the current frame starts out unhighlighted — this is
+    // the common case while digitizing, where each click adds the row the
+    // video is parked on.
+    if (appendedRow) {
+      this.applyCurrentFrameHighlight(true);
     }
   }
 }
