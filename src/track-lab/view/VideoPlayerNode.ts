@@ -173,6 +173,7 @@ export class VideoPlayerNode extends Node {
         magnifyVideoProperty: model.overlayTools.magnifyVideoProperty,
         modelViewTransformProperty: model.overlayTools.modelViewTransformProperty,
         recordPoint: (trackId, pixelPoint) => model.recordTrackPoint(trackId, pixelPoint),
+        erasePoint: () => model.deleteTrackPointAtCurrentFrame(),
       },
       () => this.stepForward(),
     );
@@ -223,9 +224,11 @@ export class VideoPlayerNode extends Node {
     // ── Playback controls (positioned by TrackLabScreenView at screen bottom) ──
     this.playbackControlsNode = new PlaybackControlsNode(
       model.playback,
+      model.tracking,
       this.videoElement,
       () => this.seekByFrames(-1),
       () => this.seekByFrames(1),
+      () => model.deleteTrackPointAtCurrentFrame(),
     );
     // Pin to the video width so internal text changes never shift the row.
     this.playbackControlsNode.preferredWidth = VIDEO_WIDTH;

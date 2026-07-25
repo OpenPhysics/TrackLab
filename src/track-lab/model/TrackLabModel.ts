@@ -61,12 +61,36 @@ export class TrackLabModel {
    * The view passes raw inputs (track id + pixel position); this method
    * coordinates all sub-model interactions so the view does not need to reach
    * into playback or overlayTools directly.
+   *
+   * Clicking a frame that already holds a point *replaces* it: re-clicking is
+   * how a user corrects a misclick, and silently ignoring the second click
+   * reads as the tool being broken.  Auto-tracking keeps the first-wins policy
+   * so it never clobbers a hand-placed point.
    */
   public recordTrackPoint(trackId: string, pixelPoint: Vector2): void {
     const time = this.playback.currentTimeProperty.value;
-    const frame = Math.round(time * this.playback.frameRateProperty.value);
+    // Same derivation as deleteTrackPointAtCurrentFrame(), so the frame a click
+    // writes is exactly the frame the erase button targets.
+    const frame = this.playback.currentFrameProperty.value;
     const modelPt = this.overlayTools.modelViewTransformProperty.value.inversePosition2(pixelPoint);
-    this.tracking.addPointToTrack(trackId, frame, time, modelPt.x, modelPt.y);
+    this.tracking.addOrReplacePointOnTrack(trackId, frame, time, modelPt.x, modelPt.y);
+  }
+
+  /**
+   * Delete the active track's point at the current playback frame, if any.
+   * Returns true when a point was actually removed.
+   */
+  public deleteTrackPointAtCurrentFrame(): boolean {
+    const trackId = this.tracking.activeTrackIdProperty.value;
+    if (trackId === null) {
+      return false;
+    }
+    const frame = this.playback.currentFrameProperty.value;
+    if (!this.tracking.hasPointAtFrame(trackId, frame)) {
+      return false;
+    }
+    this.tracking.removePointFromTrack(trackId, frame);
+    return true;
   }
 
   // ── Video source activation ─────────────────────────────────────────────

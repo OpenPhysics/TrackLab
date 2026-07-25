@@ -27,6 +27,24 @@ import { computeTrackKinematics } from "./KinematicsComputer.js";
 import type { Track, TrackKinematics, TrackPoint } from "./Track.js";
 
 /**
+ * Insert `point` into `points`, keeping the array sorted by ascending frame.
+ * Always returns a new array so the kinematics cache (keyed on array identity)
+ * invalidates.
+ *
+ * Sorted insertion matters because KinematicsComputer differentiates by array
+ * index and assumes time increases along it.  Appending is only safe while
+ * digitizing runs forwards; restoring a deleted interior point, or digitizing
+ * out of order after scrubbing backwards, both break that assumption.
+ */
+function insertPointSorted(points: readonly TrackPoint[], point: TrackPoint): TrackPoint[] {
+  const index = points.findIndex((p) => p.frame > point.frame);
+  if (index === -1) {
+    return [...points, point];
+  }
+  return [...points.slice(0, index), point, ...points.slice(index)];
+}
+
+/**
  * Owns all reactive state for particle tracks, kinematics caching, and the
  * OpenCV template-matching tracker facade.
  */
@@ -44,17 +62,30 @@ export class TrackingModel {
     (tracks) => tracks.length < MAX_TRACKS,
   );
 
+  // ── Single-level undo for point deletion ──────────────────────────────
+  // Only the most recently deleted point is remembered.  A deletion is a
+  // deliberate, low-stakes action (the video frame is still there to
+  // re-digitize), so one level of undo covers the "wrong button" mistake
+  // without introducing a general command history.
+  private readonly lastDeletedPointProperty = new Property<{ trackId: string; point: TrackPoint } | null>(null);
+
+  public readonly canRestorePointProperty: TReadOnlyProperty<boolean> = new DerivedProperty(
+    [this.lastDeletedPointProperty],
+    (deleted) => deleted !== null,
+  );
+
   // ── Derived kinematics for all tracks ───────────────────────────────────
   // Cache keyed by track ID; only recomputes kinematics for tracks whose
   // point array reference has changed since the last derivation.
   //
   // CACHE INVARIANT: validity is determined by object identity
   // (`cached.points === track.points`). This is correct because every
-  // mutation path (addPointToTrack, retransformTrackPoints) replaces the
-  // entire Track object and its points array, so a stale entry always has a
-  // different reference. removeTrack() explicitly evicts the entry for the
-  // removed track to prevent an unbounded memory leak when tracks are added
-  // and removed repeatedly.
+  // mutation path (addPointToTrack, addOrReplacePointOnTrack,
+  // removePointFromTrack, retransformTrackPoints) replaces the entire Track
+  // object and its points array, so a stale entry always has a different
+  // reference. removeTrack() explicitly evicts the entry for the removed
+  // track to prevent an unbounded memory leak when tracks are added and
+  // removed repeatedly.
   private readonly kinematicsCache = new Map<string, { points: Track["points"]; kinematics: TrackKinematics }>();
 
   public readonly trackKinematicsProperty: TReadOnlyProperty<readonly TrackKinematics[]> = new DerivedProperty(
@@ -119,6 +150,12 @@ export class TrackingModel {
     }
     this.tracksProperty.value = this.tracksProperty.value.filter((t) => t.id !== id);
     this.kinematicsCache.delete(id);
+
+    // The undo stash points at a track that no longer exists; restoring it
+    // would be a silent no-op, so drop it and let the button disable.
+    if (this.lastDeletedPointProperty.value?.trackId === id) {
+      this.lastDeletedPointProperty.value = null;
+    }
   }
 
   /**
@@ -138,10 +175,82 @@ export class TrackingModel {
       }
 
       const point: TrackPoint = { frame, time, x, y };
-      const updated: Track = { ...track, points: [...track.points, point] };
+      const updated: Track = { ...track, points: insertPointSorted(track.points, point) };
       return updated;
     });
     this.tracksProperty.value = tracks;
+  }
+
+  /**
+   * Record a digitized position for `frame` on the track identified by `id`,
+   * overwriting any position already recorded for that frame.
+   *
+   * This is the manual-digitizing entry point.  Re-clicking a frame is the
+   * natural way a user corrects a misclick, so the *last* recorded position
+   * wins here — the opposite of addPointToTrack()'s first-wins policy, which
+   * auto-tracking relies on to avoid clobbering hand-placed points.
+   */
+  public addOrReplacePointOnTrack(id: string, frame: number, time: number, x: number, y: number): void {
+    const point: TrackPoint = { frame, time, x, y };
+
+    this.tracksProperty.value = this.tracksProperty.value.map((track) => {
+      if (track.id !== id) {
+        return track;
+      }
+
+      const existing = track.points.some((p) => p.frame === frame);
+      const points = existing
+        ? track.points.map((p) => (p.frame === frame ? point : p))
+        : insertPointSorted(track.points, point);
+
+      return { ...track, points };
+    });
+  }
+
+  /**
+   * Delete the point recorded for `frame` on the track identified by `id`.
+   * Does nothing if the track or the point does not exist.
+   *
+   * The removed point is stashed so that restoreLastDeletedPoint() can undo
+   * this call.  Deleting an interior point leaves a gap in the frame series;
+   * that is safe — KinematicsComputer differentiates against each point's
+   * recorded timestamp, not against an assumed constant frame interval.
+   */
+  public removePointFromTrack(id: string, frame: number): void {
+    const track = this.tracksProperty.value.find((t) => t.id === id);
+    const removed = track?.points.find((p) => p.frame === frame);
+    if (!(track && removed)) {
+      return;
+    }
+
+    this.tracksProperty.value = this.tracksProperty.value.map((t) =>
+      // filter() allocates a new array, which invalidates the kinematics cache.
+      t.id === id ? { ...t, points: t.points.filter((p) => p.frame !== frame) } : t,
+    );
+    this.lastDeletedPointProperty.value = { trackId: id, point: removed };
+  }
+
+  /**
+   * Re-insert the most recently deleted point. Does nothing if no point has
+   * been deleted, or if its track has since been removed.
+   */
+  public restoreLastDeletedPoint(): void {
+    const deleted = this.lastDeletedPointProperty.value;
+    if (!deleted) {
+      return;
+    }
+    const { trackId, point } = deleted;
+    this.lastDeletedPointProperty.value = null;
+    this.addOrReplacePointOnTrack(trackId, point.frame, point.time, point.x, point.y);
+  }
+
+  /** True when the given track has a point recorded at `frame`. */
+  public hasPointAtFrame(id: string | null, frame: number): boolean {
+    if (id === null) {
+      return false;
+    }
+    const track = this.tracksProperty.value.find((t) => t.id === id);
+    return track !== undefined && track.points.some((p) => p.frame === frame);
   }
 
   /**
@@ -239,6 +348,7 @@ export class TrackingModel {
     this.kinematicsCache.clear();
     this.tracksProperty.value = [];
     this.activeTrackIdProperty.value = null;
+    this.lastDeletedPointProperty.value = null;
     this.nextSymbolCode = TRACK_SYMBOL_FIRST_CODE;
     this.initVersion++;
     this.tracker.dispose();

@@ -8,7 +8,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { type Dimension2, type Transform3, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { DOM, FireListener, Node, Path, Rectangle } from "scenerystack/scenery";
+import { DOM, FireListener, KeyboardListener, Node, Path, Rectangle } from "scenerystack/scenery";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import TrackLabColors, { getTrackColor } from "../../TrackLabColors.js";
@@ -25,6 +25,8 @@ type DigitizingOverlayNodeOptions = {
   modelViewTransformProperty: TReadOnlyProperty<Transform3>;
   /** Record a digitized point on the given track at the given pixel position. */
   recordPoint: (trackId: string, pixelPoint: Vector2) => void;
+  /** Delete the active track's point at the current frame, if there is one. */
+  erasePoint: () => void;
 };
 
 const OUTER_R = 20;
@@ -45,6 +47,12 @@ const MAG_CROSSHAIR_GAP = 2;
 const MAG_CROSSHAIR_LINE_WIDTH = 1;
 
 const MARK_DOT_RADIUS = 2; // radius of each digitized-point dot drawn on the video
+
+// Ring drawn around the active track's point at the current frame — the point
+// the erase button and the Delete key act on.  Showing the target before the
+// user commits is what makes frame-based deletion legible.
+const CURRENT_MARK_RING_RADIUS = 6;
+const CURRENT_MARK_RING_LINE_WIDTH = 1.5;
 
 // Magnifier canvas box-shadow: "offsetX offsetY blur color"
 const MAG_SHADOW_OFFSET_X = 0; // px, horizontal shadow offset
@@ -246,6 +254,7 @@ export class DigitizingOverlayNode extends Node {
       cursor: "none",
       visible: false,
       tagName: "div",
+      focusable: true,
       accessibleName: a11yStrings.digitizingAreaStringProperty,
     });
     digitizingOverlay.addChild(cursorNode);
@@ -308,6 +317,15 @@ export class DigitizingOverlayNode extends Node {
     const marksLayer = new Node({ pickable: false });
     const trackPaths = new Map<string, Path>(); // track id → Path
 
+    // A single reused Path holding at most one ring — never one node per point,
+    // which is what the per-track batching above exists to avoid.
+    const currentMarkRing = new Path(null, {
+      stroke: TrackLabColors.digitizingCursorStrokeProperty,
+      lineWidth: CURRENT_MARK_RING_LINE_WIDTH,
+      fill: null,
+      pickable: false,
+    });
+
     const rebuildMarks = () => {
       const currentFrame = playback.currentFrameProperty.value;
       const mvt = modelViewTransformProperty.value;
@@ -340,6 +358,17 @@ export class DigitizingOverlayNode extends Node {
           trackPaths.delete(id);
         }
       }
+
+      // Ring the erase target: the active track's point at the current frame.
+      const activeId = tracking.activeTrackIdProperty.value;
+      const activeTrack = activeId === null ? undefined : tracks.find((t) => t.id === activeId);
+      const currentPoint = activeTrack?.points.find((p) => p.frame === currentFrame);
+      if (currentPoint) {
+        const localPt = mvt.transformPosition2(new Vector2(currentPoint.x, currentPoint.y));
+        currentMarkRing.shape = new Shape().circle(localPt.x, localPt.y, CURRENT_MARK_RING_RADIUS);
+      } else {
+        currentMarkRing.shape = null;
+      }
     };
 
     const currentTimeListener = () => {
@@ -362,6 +391,9 @@ export class DigitizingOverlayNode extends Node {
       if (!activeId) {
         cursorNode.visible = false;
       }
+      // The erase-target ring follows the active track, so it must be redrawn
+      // when the active track changes, not only when points change.
+      rebuildMarks();
     };
     tracking.activeTrackIdProperty.link(activeTrackListener);
 
@@ -398,6 +430,17 @@ export class DigitizingOverlayNode extends Node {
       }),
     );
 
+    // Delete/Backspace erases the point under the ring. The overlay is
+    // focusable so keyboard users reach this without a pointer; the erase
+    // button in the playback controls does the same thing.
+    digitizingOverlay.addInputListener(
+      new KeyboardListener({
+        keys: ["delete", "backspace"],
+        fire: () => options.erasePoint(),
+      }),
+    );
+
+    marksLayer.addChild(currentMarkRing);
     this.addChild(digitizingOverlay);
     this.addChild(marksLayer);
 
@@ -418,6 +461,7 @@ export class DigitizingOverlayNode extends Node {
         path.dispose();
       }
       trackPaths.clear();
+      currentMarkRing.dispose();
     };
   }
 

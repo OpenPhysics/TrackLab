@@ -253,6 +253,8 @@ const TrackLabColors = {
   tableEmptyTextProperty: profileColor("tableEmptyText", new Color(136, 136, 136), new Color(120, 120, 120)),
   tableSymbolShadowProperty: profileColor("tableSymbolShadow", new Color(0, 0, 0, 0.5), new Color(0, 0, 0, 0.3)),
   tableBackgroundProperty: profileColor("tableBackground", WHITE, new Color(250, 250, 250)),
+  // Outline marking the row for the frame the video is parked on.
+  tableCurrentRowProperty: profileColor("tableCurrentRow", new Color(232, 119, 34), new Color(214, 100, 20)),
   exportButtonProperty: profileColor("exportButton", new Color(76, 175, 80), new Color(60, 150, 65)),
 
   // Graph (ConfigurableGraph, GraphDataManager, GraphControlsPanel)
