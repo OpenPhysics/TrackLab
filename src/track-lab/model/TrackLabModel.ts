@@ -45,6 +45,14 @@ export class TrackLabModel {
     this.overlayTools.modelViewTransformProperty.lazyLink((newMvt, oldMvt) => {
       this.tracking.retransformTrackPoints(oldMvt, newMvt);
     });
+
+    // currentFrameProperty is derived as round(time × fps), so changing the
+    // frame rate renumbers the *current* frame.  Already-digitized points store
+    // a frame index too, so they must be renumbered from their timestamps in
+    // the same step or they stop lining up with the frame the UI is on.
+    this.playback.frameRateProperty.lazyLink((frameRate) => {
+      this.tracking.retimeTrackPoints(frameRate);
+    });
   }
 
   /**

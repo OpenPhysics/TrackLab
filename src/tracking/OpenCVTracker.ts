@@ -162,8 +162,21 @@ export class OpenCVTracker {
     }
   }
 
-  /** Send a message to the worker and return a Promise that resolves with the response. */
+  /**
+   * Send a message to the worker and return a Promise that resolves with the response.
+   *
+   * Only one request may be in flight at a time.  Callers currently serialise
+   * their own calls, but overwriting the pending handlers without settling them
+   * would strand the earlier Promise forever (an `await` that never returns),
+   * so a superseded request is rejected explicitly.
+   */
   private send(msg: object): Promise<WorkerResponse> {
+    if (this.pendingReject) {
+      this.pendingReject(new Error("Tracker request superseded by a newer request"));
+      this.pendingResolve = null;
+      this.pendingReject = null;
+      this.pendingId = -1;
+    }
     const id = this.nextMsgId++;
     return new Promise<WorkerResponse>((resolve, reject) => {
       this.pendingId = id;

@@ -144,10 +144,20 @@ export class PlaybackControlsNode extends HBox {
         minorTickLength: 4,
         minorTickStroke: TrackLabColors.textOnDarkProperty,
         minorTickLineWidth: 1,
+        // startDrag/endDrag fire for pointer interaction only.  Keyboard input
+        // goes through AccessibleValueHandler's startInput/endInput, so both
+        // pairs are wired — otherwise arrow-key scrubbing would leave
+        // isScrubbing false and the video would never follow the thumb.
         startDrag: () => {
           this.isScrubbing = true;
         },
         endDrag: () => {
+          this.isScrubbing = false;
+        },
+        startInput: () => {
+          this.isScrubbing = true;
+        },
+        endInput: () => {
           this.isScrubbing = false;
         },
         enabledProperty: playback.videoLoadedProperty,
@@ -185,14 +195,20 @@ export class PlaybackControlsNode extends HBox {
 
     this.scrubber = createScrubber();
 
-    // Update range and ticks when duration changes
+    // Update range and ticks when duration changes.
+    // lazyLink, not link: the scrubber built just above already reflects the
+    // current duration, and a synchronous first firing would run
+    // replaceScrubber() before this.children is assigned at the end of the
+    // constructor — indexOf() would return -1 and the freshly built slider
+    // would be dropped undisposed, permanently retaining its listeners on
+    // currentTimeProperty.
     const durationListener = (duration: number) => {
       // Update scrubber range — guard against Infinity (reported by WebM files)
       this.scrubberRange.max = Number.isFinite(duration) && duration > 0 ? duration : 1;
       // Recreate scrubber with new tick marks
       this.replaceScrubber(createScrubber());
     };
-    playback.durationProperty.link(durationListener);
+    playback.durationProperty.lazyLink(durationListener);
 
     // Recreate scrubber when frame rate changes
     const frameRateListener = () => {
@@ -352,19 +368,26 @@ export class PlaybackControlsNode extends HBox {
     const oldScrubber = this.scrubber;
     const scrubberIndex = this.children.indexOf(oldScrubber);
 
-    if (scrubberIndex !== -1) {
-      // Remove old scrubber from scene graph first
-      this.removeChild(oldScrubber);
-
-      // Update reference
-      this.scrubber = newScrubber;
-
-      // Insert new scrubber at the same position
-      this.insertChild(scrubberIndex, newScrubber);
-
-      // Dispose old scrubber after it's removed from scene graph
-      oldScrubber.dispose();
+    if (scrubberIndex === -1) {
+      // The current scrubber is not in the scene graph, so there is nothing to
+      // swap it with.  Dispose the replacement rather than dropping it on the
+      // floor: an undisposed HSlider keeps listeners on currentTimeProperty
+      // alive forever.
+      newScrubber.dispose();
+      return;
     }
+
+    // Remove old scrubber from scene graph first
+    this.removeChild(oldScrubber);
+
+    // Update reference
+    this.scrubber = newScrubber;
+
+    // Insert new scrubber at the same position
+    this.insertChild(scrubberIndex, newScrubber);
+
+    // Dispose old scrubber after it's removed from scene graph
+    oldScrubber.dispose();
   }
 
   public get scrubbing(): boolean {

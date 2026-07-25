@@ -10,7 +10,7 @@ export.
 - Draggable coordinate system and calibration tool for real-world units
 - OpenCV auto-tracking and manual frame-by-frame digitizing with magnifier
 - Kinematics graph, data table, measuring tape, and angle tool
-- English and French UI, projector color profile, and installable PWA
+- English, French, and Spanish UI, projector color profile, and installable PWA
 - OpenCV.js WASM tracking in a Web Worker (requires COOP/COEP headers)
 
 ## Quick Start

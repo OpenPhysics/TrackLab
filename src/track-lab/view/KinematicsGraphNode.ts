@@ -6,7 +6,7 @@
  * The velocity and acceleration groups can be hidden via user preferences.
  */
 
-import { Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { DerivedProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
@@ -35,7 +35,12 @@ export class KinematicsGraphNode extends Node {
   private readonly tracking: TrackingModel;
   private readonly selectedTracksProperty: Property<Set<string>>;
   private readonly trackCheckboxPanel: Node;
-  private readonly trackCheckboxes: Map<string, { checkbox: Checkbox; property: Property<boolean> }> = new Map();
+  private readonly trackCheckboxes: Map<
+    string,
+    { checkbox: Checkbox; property: Property<boolean>; nameProperty: TReadOnlyProperty<string> }
+  > = new Map();
+  /** VBox wrapping the current checkboxes; disposed and replaced on each rebuild. */
+  private checkboxContainer: VBox | null = null;
   private readonly disposeKinematicsGraph: () => void;
 
   public constructor(
@@ -108,9 +113,10 @@ export class KinematicsGraphNode extends Node {
     // Update checkboxes when tracks change (link fires immediately, building initial checkboxes)
     const tracksListener = (tracks: readonly Track[]) => {
       // Dispose old checkboxes
-      for (const [, { checkbox, property }] of this.trackCheckboxes) {
+      for (const [, { checkbox, property, nameProperty }] of this.trackCheckboxes) {
         checkbox.dispose();
         property.dispose();
+        nameProperty.dispose();
       }
       this.trackCheckboxes.clear();
 
@@ -191,11 +197,14 @@ export class KinematicsGraphNode extends Node {
       preferencesModel.showAccelerationInGraphProperty.unlink(accelerationPrefListener);
       videoLoadedProperty.unlink(videoLoadedListener);
       this.graph.localBoundsProperty.unlink(graphBoundsListener);
-      for (const [, { checkbox, property }] of this.trackCheckboxes) {
+      for (const [, { checkbox, property, nameProperty }] of this.trackCheckboxes) {
         checkbox.dispose();
         property.dispose();
+        nameProperty.dispose();
       }
       this.trackCheckboxes.clear();
+      this.checkboxContainer?.dispose();
+      this.checkboxContainer = null;
       this.selectedTracksProperty.dispose();
       this.graph.dispose();
     };
@@ -213,8 +222,13 @@ export class KinematicsGraphNode extends Node {
   private rebuildTrackCheckboxes(): void {
     const tracks = this.tracking.tracksProperty.value;
 
+    // The previous container is detached here and disposed either way; leaving
+    // it to be garbage collected would leak a VBox on every track change.
+    this.trackCheckboxPanel.children = [];
+    this.checkboxContainer?.dispose();
+    this.checkboxContainer = null;
+
     if (tracks.length === 0) {
-      this.trackCheckboxPanel.children = [];
       return;
     }
 
@@ -241,18 +255,23 @@ export class KinematicsGraphNode extends Node {
         fill: getTrackColor(track.colorIndex),
       });
 
-      // Create checkbox with accessibility label
+      // Create checkbox with accessibility label.  Derived rather than a
+      // `.value` snapshot so the name re-translates when the user switches
+      // language (the sim enables supportsDynamicLocale).
       const kinematicsGraphStrings = StringManager.getInstance().getKinematicsGraph();
+      const nameProperty = new DerivedProperty([kinematicsGraphStrings.trackItemStringProperty], (pattern) =>
+        pattern.split("{{symbol}}").join(track.symbol),
+      );
       const checkbox = new Checkbox(checkboxProperty, label, {
         checkboxColor: TrackLabColors.checkboxColorProperty,
         checkboxColorBackground: TrackLabColors.checkboxColorBackgroundProperty,
         spacing: 4,
-        accessibleName: kinematicsGraphStrings.trackItemStringProperty.value.split("{{symbol}}").join(track.symbol),
+        accessibleName: nameProperty,
       });
       checkbox.addInputListener({ down: () => checkbox.focus() });
 
       // Store for later disposal
-      this.trackCheckboxes.set(track.id, { checkbox, property: checkboxProperty });
+      this.trackCheckboxes.set(track.id, { checkbox, property: checkboxProperty, nameProperty });
 
       checkboxNodes.push(checkbox);
     }
@@ -264,6 +283,7 @@ export class KinematicsGraphNode extends Node {
       align: "left",
     });
 
+    this.checkboxContainer = checkboxContainer;
     this.trackCheckboxPanel.children = [checkboxContainer];
     this.updateCheckboxPositions();
   }

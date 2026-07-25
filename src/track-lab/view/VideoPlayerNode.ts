@@ -85,7 +85,12 @@ export class VideoPlayerNode extends Node {
     this.videoElement.preload = "metadata";
     this.videoElement.crossOrigin = "anonymous";
     this.videoElement.style.display = "block";
-    this.videoElement.setAttribute("aria-label", a11yStrings.videoPlayerStringProperty.value);
+    // Linked rather than snapshotted so the label re-translates when the user
+    // switches language (the sim enables supportsDynamicLocale).
+    const videoAriaLabelListener = (label: string) => {
+      this.videoElement.setAttribute("aria-label", label);
+    };
+    a11yStrings.videoPlayerStringProperty.link(videoAriaLabelListener);
     const videoBackgroundListener = (c: import("scenerystack").Color) => {
       this.videoElement.style.background = c.toCSS();
     };
@@ -373,6 +378,32 @@ export class VideoPlayerNode extends Node {
     };
     this.videoElement.addEventListener("timeupdate", onTimeUpdate, { signal });
 
+    // ── Sync video element from model time (model → video) ─────────────────
+    // Every writer of currentTimeProperty used to be responsible for also
+    // assigning videoElement.currentTime itself.  Two writers did not — the
+    // data-table row click and the scrubber's *keyboard* interaction (Scenery's
+    // Slider routes keyboard input through startInput/endInput, not the
+    // startDrag/endDrag that set `scrubbing`) — so the model clock moved while
+    // the displayed frame stayed put.  This single listener makes the sync
+    // structural instead of a convention each call site has to remember.
+    //
+    // Two guards keep it from fighting the other direction of the loop:
+    //   - `scrubbing`: pointer drags are already synced in PlaybackControlsNode.
+    //   - half-frame deadband: during playback onTimeUpdate writes the video's
+    //     own time into the model, which lands back here; seeking the element
+    //     to the time it already holds would stutter playback.
+    const syncVideoFromModelTime = (time: number) => {
+      if (this.playbackControlsNode.scrubbing || !Number.isFinite(time)) {
+        return;
+      }
+      const halfFrame = model.playback.frameDurationProperty.value / 2;
+      if (Math.abs(this.videoElement.currentTime - time) < halfFrame) {
+        return;
+      }
+      this.videoElement.currentTime = time;
+    };
+    model.playback.currentTimeProperty.lazyLink(syncVideoFromModelTime);
+
     // ── Apply video transform (translate + uniform scale) ────────────────
     const videoTransformListener = (matrix: import("scenerystack/dot").Matrix3) => {
       this.videoContentLayer.matrix = matrix;
@@ -394,6 +425,8 @@ export class VideoPlayerNode extends Node {
       model.playback.playbackRateProperty.unlink(playbackRateListener);
       model.playback.videoTransformProperty.unlink(videoTransformListener);
       model.playback.panelSizeScaleProperty.unlink(panelSizeScaleListener);
+      model.playback.currentTimeProperty.unlink(syncVideoFromModelTime);
+      a11yStrings.videoPlayerStringProperty.unlink(videoAriaLabelListener);
       if (this.currentBlobUrl) {
         URL.revokeObjectURL(this.currentBlobUrl);
         this.currentBlobUrl = null;

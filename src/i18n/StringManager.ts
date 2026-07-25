@@ -36,11 +36,18 @@ function applyStringTest<T>(obj: T): T {
 }
 
 // ── Compile-time key-parity check ─────────────────────────────────────────────
-// satisfies errors immediately if either locale file is missing keys from the other.
+// satisfies errors immediately if any locale file is missing keys from another.
+// Every shipped locale is checked against English in both directions; omitting
+// one lets it drift silently, which matters because the language picker
+// (supportsDynamicLocale) exposes all of them at runtime.
 // biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
 void (stringsEn satisfies typeof stringsFr);
 // biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
 void (stringsFr satisfies typeof stringsEn);
+// biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
+void (stringsEn satisfies typeof stringsEs);
+// biome-ignore lint/complexity/noVoid: intentional compile-time type assertion
+void (stringsEs satisfies typeof stringsEn);
 
 // ── Build the reactive string property tree ───────────────────────────────────
 const stringProperties = LocalizedString.getNestedStringProperties({
