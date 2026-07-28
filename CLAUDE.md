@@ -63,7 +63,7 @@ Fleet-standard Vitest layout:
 | `tests/setup.ts` | Canvas / AudioContext mocks + `init({ name: "…" })` before SceneryStack imports |
 | `tests/**/*.test.ts` | Model/physics unit tests — mirror `src/` under `tests/` |
 | `tests/memory-leak.test.ts` | WeakRef + `forceGC` dispose regression (fleet pattern) |
-| `tsconfig.tests.json` | Typecheck config for `tests/` (adds `node` types), run by `npm run check` |
+| `tsconfig.test.json` | Typecheck config for `tests/` (adds `node` types), run by `npm run check` |
 
 Actual specs:
 
@@ -79,7 +79,7 @@ Actual specs:
 Run `npm test`. CI runs the suite when a `test` script is present.
 
 `npm run check` typechecks three programs — `src` (root `tsconfig.json`), `scripts`
-(`tsconfig.scripts.json`), and `tests` (`tsconfig.tests.json`). Vitest transpiles without
+(`tsconfig.scripts.json`), and `tests` (`tsconfig.test.json`). Vitest transpiles without
 typechecking, so a passing `npm test` does not imply the specs typecheck; `npm run check` is what
 catches that.
 
