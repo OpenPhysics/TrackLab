@@ -7,7 +7,7 @@
  * loaded, how many tracks are digitized, and playback state).
  *
  * Follows the OpenPhysics accessibility convention; see the canonical
- * TemplateSingleSim/TrackLabScreenSummaryContent.ts.
+ * SceneryStackTemplate/TrackLabScreenSummaryContent.ts.
  */
 import { DerivedProperty } from "scenerystack/axon";
 import { StringUtils } from "scenerystack/phetcommon";
