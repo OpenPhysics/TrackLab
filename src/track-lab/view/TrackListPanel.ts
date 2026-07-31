@@ -115,6 +115,8 @@ class TrackRowNode extends Node {
 
     const checkbox = new Checkbox(isDigitizingProperty, new Rectangle(0, 0, 0, 0), {
       boxWidth: CHECKBOX_BOX_WIDTH,
+      checkboxColor: TrackLabColors.textColorProperty,
+      checkboxColorBackground: TrackLabColors.panelBackgroundColorProperty,
       tandem: Tandem.OPT_OUT,
       accessibleName: digitizeNameProperty,
     });
