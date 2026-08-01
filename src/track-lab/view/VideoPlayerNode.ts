@@ -7,7 +7,7 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Bounds2, Dimension2, Vector2 } from "scenerystack/dot";
-import { Circle, DOM, DragListener, Node, Rectangle, Text } from "scenerystack/scenery";
+import { Circle, DOM, Node, Rectangle, RichDragListener, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import TrackLabColors from "../../TrackLabColors.js";
 import { VIDEO_HEIGHT, VIDEO_WIDTH } from "../../TrackLabConstants.js";
@@ -296,6 +296,7 @@ export class VideoPlayerNode extends Node {
     const resizeHandle = new Circle(RESIZE_HANDLE_RADIUS, {
       cursor: "nwse-resize",
       tagName: "div",
+      focusable: true,
       accessibleName: a11yStrings.videoPanelResizeHandleStringProperty,
     });
     const resizeHandleColorListener = (c: import("scenerystack").Color) => {
@@ -329,18 +330,32 @@ export class VideoPlayerNode extends Node {
     let resizeStartHandleX = 0;
     let resizeStartPointerX = 0;
     resizeHandle.addInputListener(
-      new DragListener({
-        start: (event) => {
-          resizeStartScale = model.playback.panelSizeScaleProperty.value;
-          resizeStartHandleX = this.videoContentWrapper.right;
-          resizeStartPointerX = event.pointer.point.x;
+      new RichDragListener({
+        dragListenerOptions: {
+          start: (event) => {
+            resizeStartScale = model.playback.panelSizeScaleProperty.value;
+            resizeStartHandleX = this.videoContentWrapper.right;
+            resizeStartPointerX = event.pointer.point.x;
+          },
+          drag: (event) => {
+            const deltaX = event.pointer.point.x - resizeStartPointerX;
+            // Proportional scaling: new scale = startScale × (newRightEdge / startRightEdge)
+            const newScale = (resizeStartScale * (resizeStartHandleX + deltaX)) / resizeStartHandleX;
+            const range = model.playback.panelSizeScaleProperty.range;
+            model.playback.panelSizeScaleProperty.value = Math.max(range.min, Math.min(range.max, newScale));
+          },
         },
-        drag: (event) => {
-          const deltaX = event.pointer.point.x - resizeStartPointerX;
-          // Proportional scaling: new scale = startScale × (newRightEdge / startRightEdge)
-          const newScale = (resizeStartScale * (resizeStartHandleX + deltaX)) / resizeStartHandleX;
-          const range = model.playback.panelSizeScaleProperty.range;
-          model.playback.panelSizeScaleProperty.value = Math.max(range.min, Math.min(range.max, newScale));
+        keyboardDragListenerOptions: {
+          keyboardDragDirection: "leftRight",
+          dragSpeed: 80,
+          shiftDragSpeed: 30,
+          drag: (_event, listener) => {
+            const current = model.playback.panelSizeScaleProperty.value;
+            const handleX = Math.max(1, this.videoContentWrapper.right);
+            const newScale = current * (1 + listener.modelDelta.x / handleX);
+            const range = model.playback.panelSizeScaleProperty.range;
+            model.playback.panelSizeScaleProperty.value = Math.max(range.min, Math.min(range.max, newScale));
+          },
         },
       }),
     );

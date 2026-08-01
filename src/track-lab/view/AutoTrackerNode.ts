@@ -169,6 +169,8 @@ export class AutoTrackerNode extends Node {
     this.addChild(this.crosshairV);
 
     // ── Drag listener: region selection ──────────────────────────────────
+    // Rubber-band ROI selection is pointer-only; there is no sensible keyboard
+    // mapping for freeform region drawing (auto-tracker init needs a box).
     const dragListener = new DragListener({
       start: (event) => {
         this.trailHead = 0;

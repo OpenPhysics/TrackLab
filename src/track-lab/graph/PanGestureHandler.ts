@@ -6,7 +6,7 @@
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, type Vector2 } from "scenerystack/dot";
-import { DragListener, KeyboardDragListener } from "scenerystack/scenery";
+import { RichDragListener } from "scenerystack/scenery";
 import { GRAPH_PAN_SHIFT_DRAG_SPEED, OVERLAY_DRAG_SPEED } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
@@ -72,59 +72,56 @@ export default class PanGestureHandler {
     let dragStartXRange: Range | null = null;
     let dragStartYRange: Range | null = null;
 
-    const dragListener = new DragListener({
-      start: (event) => {
-        const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
-        dragStartModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
-        dragStartXRange = this.chartTransform.modelXRange.copy();
-        dragStartYRange = this.chartTransform.modelYRange.copy();
-      },
-
-      drag: (event) => {
-        if (!(dragStartModelPoint && dragStartXRange && dragStartYRange)) {
-          return;
-        }
-
-        const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
-        const currentModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
-
-        const deltaX = dragStartModelPoint.x - currentModelPoint.x;
-        const deltaY = dragStartModelPoint.y - currentModelPoint.y;
-
-        const newXRange = new Range(dragStartXRange.min + deltaX, dragStartXRange.max + deltaX);
-        const newYRange = new Range(dragStartYRange.min + deltaY, dragStartYRange.max + deltaY);
-
-        this.dataManager.setRange(newXRange, newYRange);
-      },
-
-      end: () => {
-        dragStartModelPoint = null;
-        dragStartXRange = null;
-        dragStartYRange = null;
-      },
-    });
-
-    this.chartRectangle.addInputListener(dragListener);
-
     // Keyboard pan (complements toolbar/programmatic pan()).
     this.chartRectangle.focusable = true;
     this.chartRectangle.tagName = "div";
     this.chartRectangle.addInputListener(
-      new KeyboardDragListener({
-        dragSpeed: OVERLAY_DRAG_SPEED,
-        shiftDragSpeed: GRAPH_PAN_SHIFT_DRAG_SPEED,
-        drag: (_event, listener) => {
-          const xRange = this.chartTransform.modelXRange;
-          const yRange = this.chartTransform.modelYRange;
-          const bounds = this.chartRectangle.localBounds;
-          const viewW = Math.max(1, bounds.width);
-          const viewH = Math.max(1, bounds.height);
-          const deltaX = (-listener.modelDelta.x * xRange.getLength()) / viewW;
-          const deltaY = (listener.modelDelta.y * yRange.getLength()) / viewH;
-          this.dataManager.setRange(
-            new Range(xRange.min + deltaX, xRange.max + deltaX),
-            new Range(yRange.min + deltaY, yRange.max + deltaY),
-          );
+      new RichDragListener({
+        dragListenerOptions: {
+          start: (event) => {
+            const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
+            dragStartModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
+            dragStartXRange = this.chartTransform.modelXRange.copy();
+            dragStartYRange = this.chartTransform.modelYRange.copy();
+          },
+          drag: (event) => {
+            if (!(dragStartModelPoint && dragStartXRange && dragStartYRange)) {
+              return;
+            }
+
+            const viewPoint = this.chartRectangle.globalToLocalPoint(event.pointer.point);
+            const currentModelPoint = this.chartTransform.viewToModelPosition(viewPoint);
+
+            const deltaX = dragStartModelPoint.x - currentModelPoint.x;
+            const deltaY = dragStartModelPoint.y - currentModelPoint.y;
+
+            const newXRange = new Range(dragStartXRange.min + deltaX, dragStartXRange.max + deltaX);
+            const newYRange = new Range(dragStartYRange.min + deltaY, dragStartYRange.max + deltaY);
+
+            this.dataManager.setRange(newXRange, newYRange);
+          },
+          end: () => {
+            dragStartModelPoint = null;
+            dragStartXRange = null;
+            dragStartYRange = null;
+          },
+        },
+        keyboardDragListenerOptions: {
+          dragSpeed: OVERLAY_DRAG_SPEED,
+          shiftDragSpeed: GRAPH_PAN_SHIFT_DRAG_SPEED,
+          drag: (_event, listener) => {
+            const xRange = this.chartTransform.modelXRange;
+            const yRange = this.chartTransform.modelYRange;
+            const bounds = this.chartRectangle.localBounds;
+            const viewW = Math.max(1, bounds.width);
+            const viewH = Math.max(1, bounds.height);
+            const deltaX = (-listener.modelDelta.x * xRange.getLength()) / viewW;
+            const deltaY = (listener.modelDelta.y * yRange.getLength()) / viewH;
+            this.dataManager.setRange(
+              new Range(xRange.min + deltaX, xRange.max + deltaX),
+              new Range(yRange.min + deltaY, yRange.max + deltaY),
+            );
+          },
         },
       }),
     );

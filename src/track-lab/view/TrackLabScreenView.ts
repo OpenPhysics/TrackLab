@@ -8,7 +8,7 @@
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
-import { DragListener, Node } from "scenerystack/scenery";
+import { Node, RichDragListener } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
@@ -128,26 +128,39 @@ export class TrackLabScreenView extends ScreenView {
     });
 
     // ── Panel move drag (on the header bar) ───────────────────────────────
-    // The DragListener lives in TrackLabScreenView so it naturally operates in
-    // TrackLabScreenView's coordinate space.
+    // The RichDragListener lives in TrackLabScreenView so it naturally operates in
+    // TrackLabScreenView's coordinate space. Keyboard nudges panelPositionProperty.
     let panelDragStartPos: Vector2 | null = null;
     let panelDragStartPointerPoint: Vector2 | null = null;
+    this.videoPlayerNode.panelHeaderBar.focusable = true;
+    this.videoPlayerNode.panelHeaderBar.tagName = "div";
     this.videoPlayerNode.panelHeaderBar.addInputListener(
-      new DragListener({
-        start: (event) => {
-          panelDragStartPos = model.playback.panelPositionProperty.value.copy();
-          panelDragStartPointerPoint = event.pointer.point.copy();
+      new RichDragListener({
+        dragListenerOptions: {
+          start: (event) => {
+            panelDragStartPos = model.playback.panelPositionProperty.value.copy();
+            panelDragStartPointerPoint = event.pointer.point.copy();
+          },
+          drag: (event) => {
+            if (!(panelDragStartPos && panelDragStartPointerPoint)) {
+              return;
+            }
+            const delta = event.pointer.point.minus(panelDragStartPointerPoint);
+            model.playback.panelPositionProperty.value = panelDragStartPos.plus(delta);
+          },
+          end: () => {
+            panelDragStartPos = null;
+            panelDragStartPointerPoint = null;
+          },
         },
-        drag: (event) => {
-          if (!(panelDragStartPos && panelDragStartPointerPoint)) {
-            return;
-          }
-          const delta = event.pointer.point.minus(panelDragStartPointerPoint);
-          model.playback.panelPositionProperty.value = panelDragStartPos.plus(delta);
-        },
-        end: () => {
-          panelDragStartPos = null;
-          panelDragStartPointerPoint = null;
+        keyboardDragListenerOptions: {
+          dragSpeed: 120,
+          shiftDragSpeed: 40,
+          drag: (_event, listener) => {
+            model.playback.panelPositionProperty.value = model.playback.panelPositionProperty.value.plus(
+              listener.modelDelta,
+            );
+          },
         },
       }),
     );

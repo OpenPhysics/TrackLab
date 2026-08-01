@@ -16,8 +16,8 @@
 
 import type { ChartRectangle, ChartTransform } from "scenerystack/bamboo";
 import { Range, Vector2 } from "scenerystack/dot";
-import { DragListener, type Pointer, type Rectangle } from "scenerystack/scenery";
-import { GRAPH_ZOOM_FACTOR } from "../../TrackLabConstants.js";
+import { type Pointer, type Rectangle, RichDragListener } from "scenerystack/scenery";
+import { GRAPH_PAN_SHIFT_DRAG_SPEED, GRAPH_ZOOM_FACTOR, OVERLAY_DRAG_SPEED } from "../../TrackLabConstants.js";
 import TrackLabNamespace from "../../TrackLabNamespace.js";
 import type GraphDataManager from "./GraphDataManager.js";
 import type { ChartConfig, GraphDimensions } from "./GraphInteractionHandler.js";
@@ -219,27 +219,45 @@ export default class AxisGestureHandler {
     let mouseDragStart: number | null = null;
     let mouseDragInitialRange: Range | null = null;
 
-    const dragListener = new DragListener({
-      start: (event) => {
-        mouseDragStart = coord(event.pointer.point);
-        mouseDragInitialRange = getRange().copy();
-      },
+    region.focusable = true;
+    region.tagName = "div";
 
-      drag: (event) => {
-        if (mouseDragStart === null || !mouseDragInitialRange) {
-          return;
-        }
-        const axisSize = isX ? this.graphWidth : this.graphHeight;
-        const delta = coord(event.pointer.point) - mouseDragStart;
-        // X: negate (screen X and model X share direction; negation makes content follow drag).
-        // Y: keep positive (screen Y is inverted from model Y; signs cancel, content follows drag).
-        const modelDelta = (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
-        setRange(new Range(mouseDragInitialRange.min + modelDelta, mouseDragInitialRange.max + modelDelta));
-      },
+    const dragListener = new RichDragListener({
+      dragListenerOptions: {
+        start: (event) => {
+          mouseDragStart = coord(event.pointer.point);
+          mouseDragInitialRange = getRange().copy();
+        },
 
-      end: () => {
-        mouseDragStart = null;
-        mouseDragInitialRange = null;
+        drag: (event) => {
+          if (mouseDragStart === null || !mouseDragInitialRange) {
+            return;
+          }
+          const axisSize = isX ? this.graphWidth : this.graphHeight;
+          const delta = coord(event.pointer.point) - mouseDragStart;
+          // X: negate (screen X and model X share direction; negation makes content follow drag).
+          // Y: keep positive (screen Y is inverted from model Y; signs cancel, content follows drag).
+          const modelDelta = (isX ? -1 : 1) * delta * (mouseDragInitialRange.getLength() / axisSize);
+          setRange(new Range(mouseDragInitialRange.min + modelDelta, mouseDragInitialRange.max + modelDelta));
+        },
+
+        end: () => {
+          mouseDragStart = null;
+          mouseDragInitialRange = null;
+        },
+      },
+      keyboardDragListenerOptions: {
+        keyboardDragDirection: isX ? "leftRight" : "upDown",
+        dragSpeed: OVERLAY_DRAG_SPEED,
+        shiftDragSpeed: GRAPH_PAN_SHIFT_DRAG_SPEED,
+        drag: (_event, listener) => {
+          const range = getRange();
+          const axisSize = Math.max(1, isX ? this.graphWidth : this.graphHeight);
+          const viewDelta = isX ? listener.modelDelta.x : listener.modelDelta.y;
+          // Match pointer sign convention so keyboard pan feels the same as drag.
+          const modelDelta = (isX ? -1 : 1) * viewDelta * (range.getLength() / axisSize);
+          setRange(new Range(range.min + modelDelta, range.max + modelDelta));
+        },
       },
     });
 
