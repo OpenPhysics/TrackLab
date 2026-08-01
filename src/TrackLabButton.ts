@@ -22,6 +22,7 @@
  *   });
  */
 
+import { combineOptions, type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { HStrut, Node, VStrut } from "scenerystack/scenery";
 import { ButtonNode, RectangularPushButton } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
@@ -41,7 +42,7 @@ export { makeDownloadIcon, makeUploadIcon } from "./TrackLabIcons.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type PushButtonOptions = ConstructorParameters<typeof RectangularPushButton>[0];
+type PushButtonOptions = NonNullable<ConstructorParameters<typeof RectangularPushButton>[0]>;
 
 /**
  * Options accepted by createTrackLabButton.
@@ -84,21 +85,21 @@ function sizeContent(icon: Node): Node {
  * The content is always wrapped with HStrut/VStrut to guarantee a minimum
  * icon area so that all icon buttons share identical dimensions.
  */
-export function createTrackLabButton(content: Node, options?: TrackLabButtonOptions): RectangularPushButton {
-  return new RectangularPushButton({
-    // ── Defaults ────────────────────────────────────────────────────────────
-    baseColor: TrackLabColors.buttonBaseDarkProperty,
-    buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
-    xMargin: BUTTON_X_MARGIN,
-    yMargin: BUTTON_Y_MARGIN,
-    touchAreaXDilation: TOUCH_AREA_DILATION,
-    touchAreaYDilation: TOUCH_AREA_DILATION,
-    mouseAreaXDilation: MOUSE_AREA_DILATION,
-    mouseAreaYDilation: MOUSE_AREA_DILATION,
-    tandem: Tandem.OPT_OUT,
-    // ── Caller overrides ────────────────────────────────────────────────────
-    ...options,
-    // ── Content: always the min-sized wrapper ────────────────────────────────
-    content: sizeContent(content),
-  });
+export function createTrackLabButton(content: Node, providedOptions?: TrackLabButtonOptions): RectangularPushButton {
+  const options = optionize<TrackLabButtonOptions, EmptySelfOptions, PushButtonOptions>()(
+    {
+      baseColor: TrackLabColors.buttonBaseDarkProperty,
+      buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
+      xMargin: BUTTON_X_MARGIN,
+      yMargin: BUTTON_Y_MARGIN,
+      touchAreaXDilation: TOUCH_AREA_DILATION,
+      touchAreaYDilation: TOUCH_AREA_DILATION,
+      mouseAreaXDilation: MOUSE_AREA_DILATION,
+      mouseAreaYDilation: MOUSE_AREA_DILATION,
+      tandem: Tandem.OPT_OUT,
+    },
+    providedOptions,
+  );
+
+  return new RectangularPushButton(combineOptions<PushButtonOptions>(options, { content: sizeContent(content) }));
 }

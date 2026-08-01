@@ -25,21 +25,26 @@
  *   const panel = new TrackLabPanel(content, { fill: "transparent" });
  */
 
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import type { Node } from "scenerystack/scenery";
-import type { PanelOptions } from "scenerystack/sun";
-import { Panel } from "scenerystack/sun";
+import { Panel, type PanelOptions } from "scenerystack/sun";
 import TrackLabColors from "../TrackLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../TrackLabConstants.js";
 
+export type TrackLabPanelOptions = PanelOptions;
+
 export class TrackLabPanel extends Panel {
-  public constructor(content: Node, providedOptions?: PanelOptions) {
-    super(content, {
-      fill: TrackLabColors.panelBackgroundColorProperty,
-      stroke: TrackLabColors.panelBorderColorProperty,
-      cornerRadius: PANEL_CORNER_RADIUS,
-      xMargin: 12,
-      yMargin: 10,
-      ...providedOptions,
-    });
+  public constructor(content: Node, providedOptions?: TrackLabPanelOptions) {
+    const options = optionize<TrackLabPanelOptions, EmptySelfOptions, PanelOptions>()(
+      {
+        fill: TrackLabColors.panelBackgroundColorProperty,
+        stroke: TrackLabColors.panelBorderColorProperty,
+        cornerRadius: PANEL_CORNER_RADIUS,
+        xMargin: 12,
+        yMargin: 10,
+      },
+      providedOptions,
+    );
+    super(content, options);
   }
 }

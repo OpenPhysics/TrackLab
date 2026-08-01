@@ -7,6 +7,7 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { DragListener, Node } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
@@ -45,6 +46,8 @@ import { VideoPlayerNode } from "./VideoPlayerNode.js";
  * and reset button. The webcam modal is placed above all other content for
  * correct z-ordering.
  */
+export type TrackLabScreenViewOptions = ScreenViewOptions;
+
 export class TrackLabScreenView extends ScreenView {
   private readonly videoPlayerNode: VideoPlayerNode;
 
@@ -53,13 +56,20 @@ export class TrackLabScreenView extends ScreenView {
    * @param trackLabPreferences - User preference flags (e.g. auto-tracking toggle).
    * @param options - Optional ScreenView configuration passed to the superclass.
    */
-  public constructor(model: TrackLabModel, trackLabPreferences: TrackLabPreferencesModel, options?: ScreenViewOptions) {
+  public constructor(
+    model: TrackLabModel,
+    trackLabPreferences: TrackLabPreferencesModel,
+    providedOptions?: TrackLabScreenViewOptions,
+  ) {
     // Register the accessible screen summary (Interactive Description); current
     // details are derived live from the model.
-    super({
-      screenSummaryContent: new TrackLabScreenSummaryContent(model),
-      ...options,
-    });
+    const options = optionize<TrackLabScreenViewOptions, EmptySelfOptions, ScreenViewOptions>()(
+      {
+        screenSummaryContent: new TrackLabScreenSummaryContent(model),
+      },
+      providedOptions,
+    );
+    super(options);
 
     // Combined visibility: video loaded AND user-toggled model flag.
     const axesShownProperty = new DerivedProperty(
