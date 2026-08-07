@@ -158,6 +158,8 @@ export default defineConfig({
   build: {
     // Requires Vite 8+ / esbuild ≥0.24. Run `npm ci` if build errors on ES2024.
     target: "es2024",
+    // SceneryStack bundles exceed Vite's default 500 kB chunk warning.
+    chunkSizeWarningLimit: 5000,
   },
   server: {
     headers: securityHeaders,
