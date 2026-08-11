@@ -1,5 +1,7 @@
 # TrackLab
 
+[![CI](https://github.com/OpenPhysics/TrackLab/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/TrackLab/actions/workflows/ci.yml)
+
 A browser-based video analysis tool built with [SceneryStack](https://scenerystack.org/). Load a physics
 video, calibrate real-world distances, and track or digitize object motion with kinematics graphs and CSV
 export.

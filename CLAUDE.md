@@ -53,6 +53,20 @@ Follows the shared [OpenPhysics accessibility convention](https://github.com/Ope
 - **Hardcoded colors:** `view/TableRenderer.ts` builds the data table as real DOM and uses `TRACK_COLORS[…].toCSS()` with a `"#000000"` fallback literal — CSS-string carve-out for track visualization colors, not `TrackLabColors` UI tokens.
 - **Domain clock:** `VideoPlaybackModel` drives video timing/scrubbing instead of composing fleet-standard `TimeModel` (`src/common/TimeModel.ts` is present for shared reference only).
 
+
+### `package.json` overrides
+
+JSON cannot carry comments, so the rationale for forced transitive pins lives here. Prefer
+**tilde (`~`) or exact** versions — caret (`^`) lets minors drift under what is meant to be a
+hard pin. Dependabot ignores these three names (see `.github/dependabot.yml`) so it does not
+open PRs that fight the overrides. Revisit when SceneryStack drops or re-pins them upstream.
+
+| Override | Pin | Why |
+|---|---|---|
+| `lodash` | `~4.18.1` | SceneryStack declares `~4.17.12`. Bump clears Dependabot/npm advisories patched in 4.18.x (e.g. GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh). |
+| `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq (ReDoS). Staying on the 0.125 line avoids a larger API jump; **0.125.x still has open CVEs** (e.g. XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove this override if/when SceneryStack stops depending on `three` or pins a patched line itself. LightPropagation keeps a higher `three` pin — do not force 0.125 there. |
+| `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (originally GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
+
 ## Testing
 
 Fleet-standard Vitest layout:
@@ -90,6 +104,8 @@ npm run lint && npm run check && npm run build
 npm test
 npm run generate-svg-icon   # bouncing-ball icon SVG
 ```
+
+`npm run release` intentionally skips `npm test` in some sims — append `&& npm test` before the version bump so a release cannot ship a failing suite.
 
 ## Conventions & deliberate deviations
 
