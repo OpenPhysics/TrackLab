@@ -71,9 +71,8 @@ export function countWebmFrames(blob: Blob): Promise<{ frameCount: number; durat
     const video = document.createElement("video");
     video.preload = "auto";
     video.muted = true;
-
-    const blobUrl = URL.createObjectURL(blob);
-    video.src = blobUrl;
+    // Prefer srcObject over createObjectURL+.src so the blob is not reinterpreted as an HTML URL.
+    video.srcObject = blob;
 
     let lastPresentedFrames = 0;
     let settled = false;
@@ -81,14 +80,14 @@ export function countWebmFrames(blob: Blob): Promise<{ frameCount: number; durat
     const timeoutId = setTimeout(() => {
       if (!settled) {
         settled = true;
-        URL.revokeObjectURL(blobUrl);
+        video.srcObject = null;
         reject(new Error("Timeout counting WebM frames"));
       }
     }, 60000);
 
     const cleanup = () => {
       clearTimeout(timeoutId);
-      URL.revokeObjectURL(blobUrl);
+      video.srcObject = null;
     };
 
     video.addEventListener("ended", () => {
@@ -509,7 +508,7 @@ export async function estimateVideoFrameRate(
     );
 
     const deviation = Math.abs(empiricalFps - closestCommon);
-    let confidence: "high" | "medium" | "low" = "medium";
+    let confidence: "high" | "medium" | "low";
 
     if (deviation < 1) {
       confidence = "high";
@@ -638,11 +637,12 @@ export async function extractVideoFileMetadata(file: File, defaultFps: number): 
 
   // Generic video: probe duration via a temporary video element.
   return new Promise<VideoFileMetadata>((resolve) => {
-    const tempUrl = URL.createObjectURL(file);
     const tempVideo = document.createElement("video");
     tempVideo.preload = "metadata";
-    tempVideo.src = tempUrl;
-    const cleanup = () => URL.revokeObjectURL(tempUrl);
+    tempVideo.srcObject = file;
+    const cleanup = () => {
+      tempVideo.srcObject = null;
+    };
     tempVideo.addEventListener(
       "loadedmetadata",
       () => {

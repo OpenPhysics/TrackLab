@@ -83,6 +83,11 @@ function blurGray(src, dst) {
 }
 
 self.onmessage = async (event) => {
+  // Dedicated worker messages should only come from the creating page.
+  if (event.origin !== "" && event.origin !== self.location.origin) {
+    return;
+  }
+
   const msg = event.data;
   const { id, type } = msg;
 
