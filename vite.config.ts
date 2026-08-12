@@ -120,6 +120,7 @@ function serveOpenCV(): Plugin {
  * Security headers required for:
  *  - COOP/COEP: SharedArrayBuffer (OpenCV WASM in the tracking worker)
  *  - CSP: restrict resource loading to same-origin + known blob/data exceptions
+ *  - Referrer / Permissions: tighten default browser leakage
  *  - X-Content-Type-Options: prevent MIME sniffing
  *  - X-Frame-Options: prevent clickjacking (belt-and-suspenders alongside frame-ancestors)
  */
@@ -129,10 +130,18 @@ const securityHeaders: Record<string, string> = {
   "Content-Security-Policy": [
     "default-src 'self'",
     // 'wasm-unsafe-eval' is required for the OpenCV WASM module
+    // TODO(scenerystack): drop 'unsafe-eval' when SceneryStack no longer needs
+
+    // Function/eval for query-parameter parsing — reopen a CSP audit then.
+
     // 'unsafe-eval' is required for SceneryStack query parameter parsing
     "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
     // OpenCV spins up blob: workers
     "worker-src blob: 'self'",
+    // TODO(scenerystack): drop 'unsafe-inline' when SceneryStack stops setting
+
+    // element.style / cssText for theming (same CSP revisit as unsafe-eval).
+
     // Inline styles are set via element.style / cssText throughout the UI layer
     "style-src 'self' 'unsafe-inline'",
     // blob: for video playback and CSV download; data: for icons
@@ -147,9 +156,17 @@ const securityHeaders: Record<string, string> = {
     "base-uri 'self'",
     "frame-ancestors 'none'",
   ].join("; "),
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };
+
+/** Single-file mode: inline every imported asset as base64 (effectively unlimited). */
+const INLINE_LIMIT_BYTES = 100 * 1024 * 1024;
+
+/** Workbox precache ceiling — SceneryStack bundles exceed the default 2 MB limit. */
+const WORKBOX_MAX_FILE_BYTES = 12 * 1024 * 1024;
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -174,16 +191,20 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
       manifest: {
+        id: "track-lab",
         name: "trackLab",
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         short_name: "trackLab",
         description: "trackLab simulation",
+              categories: ["education", "science"],
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         theme_color: "#1a1a2e",
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         background_color: "#000000",
         display: "standalone",
-        orientation: "landscape",
+              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+              display_override: ["window-controls-overlay", "standalone"],
+              // No `orientation` — leave free so portrait-friendly sims are not forced landscape.
         icons: [
           {
             src: "icons/icon-192.png",
@@ -202,9 +223,28 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
+              // Placeholder shots from `npm run icons`; replace with real sim screenshots before shipping.
+              screenshots: [
+                {
+                  src: "screenshots/wide.png",
+                  sizes: "1280x720",
+                  type: "image/png",
+                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+                  form_factor: "wide",
+                  label: "trackLab",
+                },
+                {
+                  src: "screenshots/narrow.png",
+                  sizes: "720x1280",
+                  type: "image/png",
+                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+                  form_factor: "narrow",
+                  label: "trackLab",
+                },
+              ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_BYTES,
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         // opencv.js (≈11 MB) is loaded on-demand; skip precaching to speed up
         // the initial service-worker install.  It is still cached at runtime by

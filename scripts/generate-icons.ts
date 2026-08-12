@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import pngToIco from "png-to-ico";
@@ -33,3 +33,24 @@ for (const size of faviconSizes) {
 const icoBuffer: Buffer = await pngToIco(faviconPngs);
 const faviconDest: string = resolve(root, "public", "favicon.ico");
 writeFileSync(faviconDest, icoBuffer);
+
+/** Branded placeholder screenshots for the Web App Manifest `screenshots` member. */
+async function writeScreenshot(width: number, height: number, file: string): Promise<void> {
+  const iconSize = Math.round(Math.min(width, height) * 0.4);
+  const icon = await sharp(svg, { density }).resize(iconSize, iconSize).png().toBuffer();
+  await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: THEME_BG,
+    },
+  })
+    .composite([{ input: icon, gravity: "center" }])
+    .png()
+    .toFile(resolve(publicDir, file));
+}
+
+mkdirSync(resolve(publicDir, "screenshots"), { recursive: true });
+await writeScreenshot(1280, 720, "screenshots/wide.png");
+await writeScreenshot(720, 1280, "screenshots/narrow.png");
