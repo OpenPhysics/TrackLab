@@ -157,13 +157,10 @@ const securityHeaders: Record<string, string> = {
     "frame-ancestors 'none'",
   ].join("; "),
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(self), microphone=(self), geolocation=()",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };
-
-/** Single-file mode: inline every imported asset as base64 (effectively unlimited). */
-const INLINE_LIMIT_BYTES = 100 * 1024 * 1024;
 
 /** Workbox precache ceiling — SceneryStack bundles exceed the default 2 MB limit. */
 const WORKBOX_MAX_FILE_BYTES = 12 * 1024 * 1024;
@@ -196,15 +193,15 @@ export default defineConfig({
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         short_name: "trackLab",
         description: "trackLab simulation",
-              categories: ["education", "science"],
+        categories: ["education", "science"],
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         theme_color: "#1a1a2e",
         // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
         background_color: "#000000",
         display: "standalone",
-              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              display_override: ["window-controls-overlay", "standalone"],
-              // No `orientation` — leave free so portrait-friendly sims are not forced landscape.
+        // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+        display_override: ["window-controls-overlay", "standalone"],
+        // No `orientation` — leave free so portrait-friendly sims are not forced landscape.
         icons: [
           {
             src: "icons/icon-192.png",
@@ -223,25 +220,25 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
-              // Placeholder shots from `npm run icons`; replace with real sim screenshots before shipping.
-              screenshots: [
-                {
-                  src: "screenshots/wide.png",
-                  sizes: "1280x720",
-                  type: "image/png",
-                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-                  form_factor: "wide",
-                  label: "trackLab",
-                },
-                {
-                  src: "screenshots/narrow.png",
-                  sizes: "720x1280",
-                  type: "image/png",
-                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-                  form_factor: "narrow",
-                  label: "trackLab",
-                },
-              ],
+        // Placeholder shots from `npm run icons`; replace with real sim screenshots before shipping.
+        screenshots: [
+          {
+            src: "screenshots/wide.png",
+            sizes: "1280x720",
+            type: "image/png",
+            // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+            form_factor: "wide",
+            label: "trackLab",
+          },
+          {
+            src: "screenshots/narrow.png",
+            sizes: "720x1280",
+            type: "image/png",
+            // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
+            form_factor: "narrow",
+            label: "trackLab",
+          },
+        ],
       },
       workbox: {
         maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_BYTES,
