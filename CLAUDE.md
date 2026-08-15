@@ -52,6 +52,8 @@ Follows the shared [OpenPhysics accessibility convention](https://github.com/Ope
 
 - **Hardcoded colors:** `view/TableRenderer.ts` builds the data table as real DOM and uses `TRACK_COLORS[…].toCSS()` with a `"#000000"` fallback literal — CSS-string carve-out for track visualization colors, not `TrackLabColors` UI tokens.
 - **Domain clock:** `VideoPlaybackModel` drives video timing/scrubbing instead of composing fleet-standard `TimeModel` (`src/common/TimeModel.ts` is present for shared reference only).
+- **Vite plugins / PWA:** `serveVideos` + `serveOpenCV` are extra Vite plugins (ranged `/videos/` and OpenCV WASM). Workbox `globIgnores: ["opencv.js"]` plus `runtimeCaching` keep the ~11 MB OpenCV payload off the precache. There is no `inlineSingleFile` / `--mode single` wiring — OpenCV WASM and video files cannot collapse into a self-contained HTML file. `npm run icons` prefixes `generate-svg-icon` so `icon.svg` is regenerated from the bouncing-ball script.
+- **Permissions-Policy / CSP:** camera and microphone are allowed (`self`) for video capture; `connect-src` includes `data:` because `@techstark/opencv-js` loads WASM as a base64 data URI.
 
 
 ### `package.json` overrides

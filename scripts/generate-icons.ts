@@ -1,49 +1,47 @@
+/**
+ * generate-icons.ts
+ *
+ * Rasterizes public/icons/icon.svg into the PNG icons, favicon.ico, and placeholder
+ * PWA install screenshots used by the manifest. Run with: npm run icons
+ *
+ * Replace public/screenshots/{wide,narrow}.png with real sim shots before shipping
+ * (e.g. Baton/scripts/generate-screenshots.sh → copy into public/screenshots/).
+ */
+
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import pngToIco from "png-to-ico";
 import sharp from "sharp";
 
-const Dirname: string = dirname(fileURLToPath(import.meta.url));
-const root: string = resolve(Dirname, "..");
-
-const svgBuffer: Buffer = readFileSync(resolve(root, "public/icons/icon.svg"));
+const here = dirname(fileURLToPath(import.meta.url));
+const publicDir = resolve(here, "..", "public");
+const svg = readFileSync(resolve(publicDir, "icons", "icon.svg"));
 
 /** Theme background matching `theme_color` / icon.svg fill (`#1a1a2e`). */
 const THEME_BG = { r: 0x1a, g: 0x1a, b: 0x2e, alpha: 1 };
 
 const density = 512;
-const publicDir = resolve(root, "public");
 
-const pngIcons: Array<{ name: string; size: number }> = [
-  { name: "icons/apple-touch-icon.png", size: 180 },
-  { name: "icons/icon-192.png", size: 192 },
-  { name: "icons/icon-512.png", size: 512 },
+const pngTargets = [
+  { size: 180, file: "icons/apple-touch-icon.png" },
+  { size: 192, file: "icons/icon-192.png" },
+  { size: 512, file: "icons/icon-512.png" },
 ];
 
-// Generate PNG icons
-for (const { name, size } of pngIcons) {
-  const dest = resolve(root, "public", name);
-  await sharp(svgBuffer).resize(size, size).png().toFile(dest);
+for (const { size, file } of pngTargets) {
+  await sharp(svg, { density }).resize(size, size).png().toFile(resolve(publicDir, file));
 }
 
-// Generate multi-size favicon.ico (16, 32, 48, 64)
-const faviconSizes: number[] = [16, 32, 48, 64];
-const faviconPngs: Buffer[] = [];
-
-for (const size of faviconSizes) {
-  const pngBuffer = await sharp(svgBuffer).resize(size, size).png().toBuffer();
-  faviconPngs.push(pngBuffer);
-}
-
-const icoBuffer: Buffer = await pngToIco(faviconPngs);
-const faviconDest: string = resolve(root, "public", "favicon.ico");
-writeFileSync(faviconDest, icoBuffer);
+const icoBuffers = await Promise.all(
+  [16, 32, 48, 64].map((size) => sharp(svg, { density }).resize(size, size).png().toBuffer()),
+);
+writeFileSync(resolve(publicDir, "favicon.ico"), await pngToIco(icoBuffers));
 
 /** Branded placeholder screenshots for the Web App Manifest `screenshots` member. */
 async function writeScreenshot(width: number, height: number, file: string): Promise<void> {
   const iconSize = Math.round(Math.min(width, height) * 0.4);
-  const icon = await sharp(svgBuffer, { density }).resize(iconSize, iconSize).png().toBuffer();
+  const icon = await sharp(svg, { density }).resize(iconSize, iconSize).png().toBuffer();
   await sharp({
     create: {
       width,
