@@ -9,6 +9,5 @@ export default defineConfig({
     // --expose-gc lets us call global.gc() to force garbage collection
     execArgv: ["--expose-gc"],
     testTimeout: 30_000,
-    passWithNoTests: true,
   },
 });

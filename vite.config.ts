@@ -131,17 +131,13 @@ const securityHeaders: Record<string, string> = {
     "default-src 'self'",
     // 'wasm-unsafe-eval' is required for the OpenCV WASM module
     // TODO(scenerystack): drop 'unsafe-eval' when SceneryStack no longer needs
-
     // Function/eval for query-parameter parsing — reopen a CSP audit then.
-
     // 'unsafe-eval' is required for SceneryStack query parameter parsing
     "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
     // OpenCV spins up blob: workers
     "worker-src blob: 'self'",
     // TODO(scenerystack): drop 'unsafe-inline' when SceneryStack stops setting
-
     // element.style / cssText for theming (same CSP revisit as unsafe-eval).
-
     // Inline styles are set via element.style / cssText throughout the UI layer
     "style-src 'self' 'unsafe-inline'",
     // blob: for video playback and CSV download; data: for icons
