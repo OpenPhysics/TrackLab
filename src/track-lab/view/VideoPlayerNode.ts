@@ -395,12 +395,9 @@ export class VideoPlayerNode extends Node {
 
     // ── Sync video element from model time (model → video) ─────────────────
     // Every writer of currentTimeProperty used to be responsible for also
-    // assigning videoElement.currentTime itself.  Two writers did not — the
-    // data-table row click and the scrubber's *keyboard* interaction (Scenery's
-    // Slider routes keyboard input through startInput/endInput, not the
-    // startDrag/endDrag that set `scrubbing`) — so the model clock moved while
-    // the displayed frame stayed put.  This single listener makes the sync
-    // structural instead of a convention each call site has to remember.
+    // assigning videoElement.currentTime itself.  Call sites that skip that
+    // (data-table row click) left the model clock moving while the displayed
+    // frame stayed put.  This single listener makes the sync structural.
     //
     // Two guards keep it from fighting the other direction of the loop:
     //   - `scrubbing`: pointer drags are already synced in PlaybackControlsNode.

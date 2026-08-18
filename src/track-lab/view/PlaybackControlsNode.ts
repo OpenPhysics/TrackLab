@@ -144,20 +144,13 @@ export class PlaybackControlsNode extends HBox {
         minorTickLength: 4,
         minorTickStroke: TrackLabColors.textOnDarkProperty,
         minorTickLineWidth: 1,
-        // startDrag/endDrag fire for pointer interaction only.  Keyboard input
-        // goes through AccessibleValueHandler's startInput/endInput, so both
-        // pairs are wired — otherwise arrow-key scrubbing would leave
-        // isScrubbing false and the video would never follow the thumb.
+        // AccessibleSlider forwards startDrag/endDrag to startInput/endInput, so
+        // pointer and keyboard both set isScrubbing. Passing startInput here
+        // asserts: "AccessibleSlider sets startInput through options.startDrag".
         startDrag: () => {
           this.isScrubbing = true;
         },
         endDrag: () => {
-          this.isScrubbing = false;
-        },
-        startInput: () => {
-          this.isScrubbing = true;
-        },
-        endInput: () => {
           this.isScrubbing = false;
         },
         enabledProperty: playback.videoLoadedProperty,
