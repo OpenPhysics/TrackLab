@@ -24,6 +24,10 @@ let templateMat = null;
 // Singleton Promise so concurrent init messages share one importScripts call.
 let cvLoadPromise = null;
 
+// Emscripten compiles ~11 MB of WASM on first use. 30 s is not enough when the
+// tab is competing with other Chromium processes (fuzz, projector, etc.).
+const OPENCV_WASM_INIT_TIMEOUT_MS = 120_000;
+
 function _doLoadOpenCV() {
   // importScripts is synchronous — it blocks this worker thread (not the main
   // thread) until opencv.js is parsed and the Emscripten wrapper is set up.
@@ -44,7 +48,7 @@ function _doLoadOpenCV() {
     // Wait for the Emscripten WASM initialisation callback.
     const timer = setTimeout(
       () => reject(new Error('OpenCV WASM initialisation timed out')),
-      30_000,
+      OPENCV_WASM_INIT_TIMEOUT_MS,
     );
     raw.onRuntimeInitialized = () => {
       clearTimeout(timer);

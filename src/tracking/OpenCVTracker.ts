@@ -103,7 +103,7 @@ export class OpenCVTracker {
     this.offscreen = document.createElement("canvas");
     this.offscreen.width = videoWidth;
     this.offscreen.height = videoHeight;
-    const ctx = this.offscreen.getContext("2d");
+    const ctx = this.offscreen.getContext("2d", { willReadFrequently: true });
     if (!ctx) {
       throw new Error("Could not get 2D context from offscreen canvas");
     }

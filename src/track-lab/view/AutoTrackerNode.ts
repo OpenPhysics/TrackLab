@@ -248,12 +248,11 @@ export class AutoTrackerNode extends Node {
                 this.tracking.resetTracker();
                 this.hintText.visible = true;
               }
-            } catch (err: unknown) {
-              // biome-ignore lint/suspicious/noConsole: error logging for tracker init failure
-              console.error("AutoTracker: failed to initialise OpenCV tracker:", err);
-              const message =
-                err instanceof Error ? err.message : autoTrackerStrings.trackingInitFailedStringProperty.value;
-              this.errorText.string = message;
+            } catch {
+              // Recoverable: WASM can take a long time or fail under load. Show
+              // the overlay message instead of console.error (fuzz treats that
+              // as a sim crash).
+              this.errorText.string = autoTrackerStrings.trackingInitFailedStringProperty.value;
               this.errorText.visible = true;
               this.hintText.visible = true;
             }
