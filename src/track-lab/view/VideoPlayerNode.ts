@@ -385,9 +385,12 @@ export class VideoPlayerNode extends Node {
     };
     this.videoElement.addEventListener("loadedmetadata", onDimensionsLoaded, { signal });
 
-    // Sync model time from video during playback (event-driven, not polled)
+    // Sync model time from video during playback (event-driven, not polled).
+    // currentTime can be non-finite (e.g. while probing an unknown WebM
+    // duration by seeking to the end); the Property range rejects Infinity,
+    // so only accept finite times.
     const onTimeUpdate = () => {
-      if (!this.playbackControlsNode.scrubbing) {
+      if (!this.playbackControlsNode.scrubbing && Number.isFinite(this.videoElement.currentTime)) {
         model.playback.currentTimeProperty.value = this.videoElement.currentTime;
       }
     };
