@@ -6,7 +6,7 @@
  * LIVE "current details" paragraph derived from the model (whether a video is
  * loaded, how many tracks are digitized, and playback state).
  *
- * Follows the OpenPhysics accessibility convention; see the canonical
+ * Follows the OpenLyceum accessibility convention; see the canonical
  * SceneryStackTemplate/TrackLabScreenSummaryContent.ts.
  */
 import { DerivedProperty } from "scenerystack/axon";

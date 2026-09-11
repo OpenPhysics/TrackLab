@@ -1,6 +1,6 @@
 # TrackLab
 
-[![CI](https://github.com/OpenPhysics/TrackLab/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/TrackLab/actions/workflows/ci.yml)
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 
 A browser-based video analysis tool built with [SceneryStack](https://scenerystack.org/). Load a physics
 video, calibrate real-world distances, and track or digitize object motion with kinematics graphs and CSV
@@ -52,9 +52,9 @@ npm start        # dev server → http://localhost:5173
 
 ## License
 
-GNU Affero General Public License v3.0 — see [OpenPhysics org license](https://github.com/OpenPhysics/.github/blob/main/LICENSE).
+GNU Affero General Public License v3.0 — see [OpenLyceum org license](https://github.com/OpenLyceum/.github/blob/main/LICENSE).
 
 ## Contributing
 
-See [OpenPhysics contributing guidelines](https://github.com/OpenPhysics/.github/blob/main/CONTRIBUTING.md).
+See [OpenLyceum contributing guidelines](https://github.com/OpenLyceum/.github/blob/main/CONTRIBUTING.md).
 Report bugs via GitHub Issues; use org issue templates.

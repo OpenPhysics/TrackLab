@@ -437,7 +437,7 @@ export class StringManager {
    * Full accessibility (Interactive Description) string tree, including the
    * screen-summary regions and live current-details templates. Complements the
    * explicitly-typed getA11y() control-name accessor. See the shared
-   * OpenPhysics ACCESSIBILITY.md convention.
+   * OpenLyceum ACCESSIBILITY.md convention.
    */
   public getA11yStrings() {
     return stringProperties.a11y;
